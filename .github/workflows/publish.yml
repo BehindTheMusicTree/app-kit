@@ -1,3 +1,4 @@
+# pnpm install needs GH_PACKAGES_TOKEN_READ: GITHUB_TOKEN cannot read @behindthemusictree/* when published from another repo (403 read_package).
 name: Publish to GitHub Packages
 
 on:
@@ -11,6 +12,8 @@ jobs:
     permissions:
       contents: write
       packages: write
+    env:
+      NPM_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN_READ }}
     steps:
       - uses: actions/checkout@v5
 
