@@ -30,6 +30,7 @@ jobs:
 
       - run: pnpm --filter @behindthemusictree/app-kit publish --no-git-checks
         env:
+          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Release
