@@ -12,8 +12,6 @@ jobs:
     permissions:
       contents: write
       packages: write
-    env:
-      NPM_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN_READ }}
     steps:
       - uses: actions/checkout@v5
 
@@ -25,6 +23,8 @@ jobs:
           registry-url: https://npm.pkg.github.com
 
       - run: pnpm install --frozen-lockfile
+        env:
+          NPM_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN_READ }}
 
       - run: pnpm --filter @behindthemusictree/app-kit run build
 
