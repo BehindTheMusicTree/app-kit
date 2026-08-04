@@ -1,0 +1,42 @@
+## What this is
+
+`@behindthemusictree/app-kit` — shared transport, auth, popup, UI, player, and genre-tree
+plumbing consumed by `grow-the-music-tree-frontend` and `hear-the-music-tree-frontend`. Nothing
+in `packages/app-kit/src` should import from either consuming app; all app-specific behavior
+(data hooks, routes, popups) is passed in via props/callbacks.
+
+## Stack
+
+- TypeScript (strict), React — no framework of its own; consumers are Next.js apps
+- Build: tsup (ESM + CJS + `.d.ts`) — multi-entry, one output per subpath
+- Package manager: pnpm workspaces (`packages/app-kit`, `apps/playground`)
+- Registry: GitHub Packages (`https://npm.pkg.github.com`, scope `@behindthemusictree`)
+
+## Critical paths
+
+- `packages/app-kit/src/{transport,auth,popup,ui,player,genre-tree}/` — one folder per subpath
+  export; each has its own `index.ts` barrel
+- `packages/app-kit/src/index.ts` — root barrel re-exporting every module
+- `packages/app-kit/tsup.config.ts` — entry map; keep in sync with `src/*/index.ts` and the
+  `exports` field in `packages/app-kit/package.json`
+- `apps/playground/` — manual Vite harness for exercising exported components; not published
+- `scripts/release.sh` + `.github/workflows/publish.yml` — version bump → tag → publish pipeline
+- `CHANGELOG.md` — update `[Unreleased]` for every user-facing change
+
+## Conventions
+
+- Adding a module: export it from the module's own barrel AND `src/index.ts`, then add a
+  matching entry to `tsup.config.ts` and `packages/app-kit/package.json`'s `exports` map
+- Keep modules decoupled from any one consumer: inject data loaders and callbacks (see
+  `PlayerProvider`'s `loadTrack` prop and `AuthCallbackHandler`'s callback props) rather than
+  importing a specific app's hooks or routes
+- `genre-tree` is scope-parameterized (`"me" | "reference"`) — do not hardcode either scope's
+  assumptions into shared components
+
+## Forbidden
+
+- Importing anything from `grow-the-music-tree-frontend` or `hear-the-music-tree-frontend` —
+  dependencies flow the other way
+- Notable changes without a `CHANGELOG.md` entry under `[Unreleased]`
+- Publishing directly with `npm publish` — always go through `pnpm release -- <bump>`
+  (`scripts/release.sh`), which also updates the changelog and lockfile
