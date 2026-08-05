@@ -1,6 +1,6 @@
 {
   "name": "@behindthemusictree/app-kit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Shared transport, auth, popup, UI, player, and genre-tree plumbing for BehindTheMusicTree React apps",
   "repository": {
     "type": "git",
@@ -65,7 +65,7 @@
     "next": ">=14.0.0"
   },
   "dependencies": {
-    "@behindthemusictree/genre-tree-view": "0.1.0",
+    "@behindthemusictree/genre-tree-view": "0.3.0",
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.487.0",

@@ -6,5 +6,8 @@ allowBuilds:
   esbuild: true
   sharp: false
 
+minimumReleaseAgeExclude:
+  - '@behindthemusictree/genre-tree-view@0.3.0'
+
 onlyBuiltDependencies:
   - esbuild
