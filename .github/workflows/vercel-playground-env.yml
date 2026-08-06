@@ -1,0 +1,41 @@
+# Syncs the GitHub Packages token to the Vercel project used for `apps/playground`, so
+# `pnpm install` there can authenticate against npm.pkg.github.com for private deps
+# (e.g. @behindthemusictree/genre-tree-view). Without this, Vercel builds fail with
+# ERR_PNPM_TARBALL_URL_MISMATCH because .npmrc's ${NPM_TOKEN} can't be resolved.
+# Runs only via workflow_dispatch (Actions → Sync playground env to Vercel → Run workflow).
+#
+# Configure in the repo:
+#   Secrets:  VERCEL_TOKEN — Vercel token with project env access
+#             GH_PACKAGES_TOKEN_READ — GitHub Packages token for npm auth in playground builds
+#   Variables: VERCEL_PROJECT_ID — Vercel project id (e.g. prj_…)
+#   Optional variables: VERCEL_TEAM_ID — required when the project lives under a Vercel team
+
+name: Sync playground env to Vercel
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: vercel-playground-env
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    if: github.repository == 'BehindTheMusicTree/app-kit'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      NPM_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN_READ }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+      VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Sync NPM_TOKEN to Vercel
+        run: node scripts/sync-vercel-playground-env.mjs
