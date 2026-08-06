@@ -17,6 +17,7 @@ Changes here affect both apps, so please keep that blast radius in mind.
   - [6. Committing](#6-committing)
   - [7. Pull Request Process](#7-pull-request-process)
   - [8. Releasing _(For Maintainers)_](#8-releasing-for-maintainers)
+  - [9. Vercel Playground Env Sync _(For Maintainers)_](#9-vercel-playground-env-sync-for-maintainers)
 - [License \& Attribution](#license--attribution)
 
 ## Contributors vs Maintainers
@@ -109,6 +110,26 @@ This bumps `packages/app-kit/package.json`'s version, moves the `CHANGELOG.md` `
 section under the new version heading, commits, tags (`vX.Y.Z`), and pushes — which triggers
 `.github/workflows/publish.yml` to build and publish `@behindthemusictree/app-kit` to GitHub
 Packages. Must be run from a clean `main` branch.
+
+### 9. Vercel Playground Env Sync _(For Maintainers)_
+
+`apps/playground` is deployed to Vercel for PR previews. Its `.npmrc` requires `NPM_TOKEN` to
+install the private `@behindthemusictree/genre-tree-view` dependency from GitHub Packages —
+without it, Vercel builds fail with `ERR_PNPM_TARBALL_URL_MISMATCH`. Because Vercel doesn't read
+repo secrets directly, `NPM_TOKEN` is pushed into the Vercel project's env vars via
+`.github/workflows/vercel-playground-env.yml` (`workflow_dispatch` only — not run automatically).
+
+Configure once in the repo's GitHub settings:
+
+| Name | Kind | Value |
+| --- | --- | --- |
+| `VERCEL_TOKEN` | Secret | Vercel token with env-write access to the `app-kit-playground` project |
+| `GH_PACKAGES_TOKEN_READ` | Secret | GitHub Packages read token (same one `validate.yml` uses); synced to Vercel as `NPM_TOKEN` |
+| `VERCEL_PROJECT_ID` | Variable | Vercel project id for `app-kit-playground` |
+| `VERCEL_TEAM_ID` | Variable | Vercel team id (only if the project lives under a Vercel team) |
+
+To (re-)sync after rotating any of the above: **Actions → "Sync playground env to Vercel" → Run
+workflow**. Re-run or push a new commit to pick up the synced token on subsequent deployments.
 
 ## License & Attribution
 
