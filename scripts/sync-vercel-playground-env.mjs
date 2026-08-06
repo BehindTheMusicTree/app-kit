@@ -25,7 +25,8 @@ const projectId = requireNonEmpty("VERCEL_PROJECT_ID");
 const npmToken = requireNonEmpty("NPM_TOKEN");
 const teamId = process.env.VERCEL_TEAM_ID?.trim();
 
-const targets = ["production", "preview", "development"];
+// Vercel rejects "sensitive" env vars targeting "development".
+const targets = ["production", "preview"];
 
 const url = new URL(`https://api.vercel.com/v10/projects/${encodeURIComponent(projectId)}/env`);
 url.searchParams.set("upsert", "true");
