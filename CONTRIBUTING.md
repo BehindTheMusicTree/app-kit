@@ -128,6 +128,10 @@ Configure once in the repo's GitHub settings:
 | `VERCEL_PROJECT_ID` | Variable | Vercel project id for `app-kit-playground` |
 | `VERCEL_TEAM_ID` | Variable | Vercel team id (only if the project lives under a Vercel team) |
 
+`VERCEL_TOKEN`'s value comes from a token created under Vercel → Account Settings → Tokens. Name
+it `app-kit-playground-env-sync` there so it's identifiable (and revocable) among other tokens on
+the account, then paste the value into the `VERCEL_TOKEN` GitHub secret above.
+
 To (re-)sync after rotating any of the above: **Actions → "Sync playground env to Vercel" → Run
 workflow**. Re-run or push a new commit to pick up the synced token on subsequent deployments.
 
