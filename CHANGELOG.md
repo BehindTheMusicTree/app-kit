@@ -5,6 +5,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Memoized `SessionProvider`'s context value and its `setSession`/`clearSession` handlers — same
+  unmemoized-context bug as `PopupProvider` (0.1.2) and `TrackListProvider`/
+  `TrackListSidebarVisibilityProvider` (0.1.3). `clearSession`'s instability cascaded through
+  `useFetchWrapper`'s `fetch` (a dependency of nearly every data-fetching hook in this package),
+  through `loadTrack`/`loadTrackForPlayer`, into `TrackListProvider`'s handlers despite those
+  already being memoized, and ultimately into `genre-tree-view`'s tree-rebuilding effect —
+  reproducing the same toolbar hover flicker even after the 0.1.2 and 0.1.3 fixes.
+
 ## [0.1.3] - 2026-08-07
 
 ### Fixed

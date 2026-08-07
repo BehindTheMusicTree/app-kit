@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { createContext, useContext, useState, useCallback, useMemo, ReactNode, useEffect } from "react";
 import { Session } from "./Session";
 import { queryClient } from "../transport/query-client";
 import { clearSpotifyRequiredCached } from "./spotify-required-cache";
@@ -46,23 +46,24 @@ export function SessionProvider({ children }: SessionProviderProps) {
     setSessionRestored(true);
   }, []);
 
-  const setSession = (newSession: Session) => {
+  const setSession = useCallback((newSession: Session) => {
     setSessionState(newSession);
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(newSession));
-  };
+  }, []);
 
-  const clearSession = () => {
+  const clearSession = useCallback(() => {
     setSessionState(defaultSession);
     localStorage.removeItem(SESSION_STORAGE_KEY);
     clearSpotifyRequiredCached();
     queryClient.clear();
-  };
+  }, []);
 
-  return (
-    <SessionContext.Provider value={{ session, setSession, clearSession, sessionRestored }}>
-      {children}
-    </SessionContext.Provider>
+  const value = useMemo(
+    () => ({ session, setSession, clearSession, sessionRestored }),
+    [session, setSession, clearSession, sessionRestored],
   );
+
+  return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
 
 export function useSession() {
