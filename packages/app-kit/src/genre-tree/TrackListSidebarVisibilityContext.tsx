@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useMemo, ReactNode } from "react";
 
 interface TrackListSidebarVisibilityContextType {
   isTrackListSidebarVisible: boolean;
@@ -18,29 +18,30 @@ interface TrackListSidebarVisibilityProviderProps {
 export function TrackListSidebarVisibilityProvider({ children }: TrackListSidebarVisibilityProviderProps) {
   const [isTrackListSidebarVisible, setIsTrackListSidebarVisible] = useState(false);
 
-  const toggleTrackListSidebar = () => {
-    setIsTrackListSidebarVisible(!isTrackListSidebarVisible);
-  };
+  const toggleTrackListSidebar = useCallback(() => {
+    setIsTrackListSidebarVisible((prev) => !prev);
+  }, []);
 
-  const showTrackListSidebar = () => {
+  const showTrackListSidebar = useCallback(() => {
     setIsTrackListSidebarVisible(true);
-  };
+  }, []);
 
-  const hideTrackListSidebar = () => {
+  const hideTrackListSidebar = useCallback(() => {
     setIsTrackListSidebarVisible(false);
-  };
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      isTrackListSidebarVisible,
+      toggleTrackListSidebar,
+      showTrackListSidebar,
+      hideTrackListSidebar,
+    }),
+    [isTrackListSidebarVisible, toggleTrackListSidebar, showTrackListSidebar, hideTrackListSidebar],
+  );
 
   return (
-    <TrackListSidebarVisibilityContext.Provider
-      value={{
-        isTrackListSidebarVisible,
-        toggleTrackListSidebar,
-        showTrackListSidebar,
-        hideTrackListSidebar,
-      }}
-    >
-      {children}
-    </TrackListSidebarVisibilityContext.Provider>
+    <TrackListSidebarVisibilityContext.Provider value={value}>{children}</TrackListSidebarVisibilityContext.Provider>
   );
 }
 

@@ -8,7 +8,7 @@
  * `(track, scope)` signature.
  */
 
-import { createContext, useState, useContext, ReactNode, useMemo } from "react";
+import { createContext, useState, useContext, ReactNode, useCallback, useMemo } from "react";
 import { UploadedTrackDetailed } from "./schemas/uploaded-track/detailed";
 import TrackList, { TrackListFromUploadedTrack, TrackListFromCriteriaPlaylist } from "./models/TrackList";
 import {
@@ -85,55 +85,69 @@ export function TrackListProvider({ children, getBackendBaseUrl }: TrackListProv
     return trackList;
   }, [trackList, uploadedTracksResponse]);
 
-  const toTrackAtPosition = (position: number) => {
-    if (currentTrackList && position >= 0 && position < currentTrackList.uploadedTracks.length) {
-      setSelectedTrack(currentTrackList.uploadedTracks[position]);
-    }
-  };
-
-  const playNewTrackListFromUploadedTrackUuid = (track: UploadedTrackDetailed, scope: Scope) => {
-    const origin = new TrackListOriginFromUploadedTrack(track, scope);
-    const newTrackList = new TrackListFromUploadedTrack([track], origin);
-
-    setTrackList(newTrackList);
-    setSelectedTrack(track);
-    showTrackListSidebar();
-    loadTrackForPlayer(track.uuid);
-  };
-
-  const playNewTrackListFromGenrePlaylist = (genrePlaylist: CriteriaPlaylistDetailed, scope: Scope) => {
-    const tracks = genrePlaylist.uploadedTrackPlaylistRelations
-      .sort((a, b) => a.position - b.position)
-      .map((rel) => rel.uploadedTrack);
-
-    if (tracks.length === 0) {
-      console.warn("No tracks found in genre playlist");
-      return;
-    }
-
-    const origin = new TrackListOriginFromCriteriaPlaylist(genrePlaylist, scope);
-    const newTrackList = new TrackListFromCriteriaPlaylist(tracks, origin);
-
-    setTrackList(newTrackList);
-    setSelectedTrack(tracks[0]);
-    showTrackListSidebar();
-    loadTrackForPlayer(tracks[0].uuid);
-  };
-
-  return (
-    <TrackListContext.Provider
-      value={{
-        trackList: currentTrackList,
-        selectedTrack,
-        setSelectedTrack,
-        toTrackAtPosition,
-        playNewTrackListFromUploadedTrackUuid,
-        playNewTrackListFromGenrePlaylist,
-      }}
-    >
-      {children}
-    </TrackListContext.Provider>
+  const toTrackAtPosition = useCallback(
+    (position: number) => {
+      if (currentTrackList && position >= 0 && position < currentTrackList.uploadedTracks.length) {
+        setSelectedTrack(currentTrackList.uploadedTracks[position]);
+      }
+    },
+    [currentTrackList],
   );
+
+  const playNewTrackListFromUploadedTrackUuid = useCallback(
+    (track: UploadedTrackDetailed, scope: Scope) => {
+      const origin = new TrackListOriginFromUploadedTrack(track, scope);
+      const newTrackList = new TrackListFromUploadedTrack([track], origin);
+
+      setTrackList(newTrackList);
+      setSelectedTrack(track);
+      showTrackListSidebar();
+      loadTrackForPlayer(track.uuid);
+    },
+    [showTrackListSidebar, loadTrackForPlayer],
+  );
+
+  const playNewTrackListFromGenrePlaylist = useCallback(
+    (genrePlaylist: CriteriaPlaylistDetailed, scope: Scope) => {
+      const tracks = genrePlaylist.uploadedTrackPlaylistRelations
+        .sort((a, b) => a.position - b.position)
+        .map((rel) => rel.uploadedTrack);
+
+      if (tracks.length === 0) {
+        console.warn("No tracks found in genre playlist");
+        return;
+      }
+
+      const origin = new TrackListOriginFromCriteriaPlaylist(genrePlaylist, scope);
+      const newTrackList = new TrackListFromCriteriaPlaylist(tracks, origin);
+
+      setTrackList(newTrackList);
+      setSelectedTrack(tracks[0]);
+      showTrackListSidebar();
+      loadTrackForPlayer(tracks[0].uuid);
+    },
+    [showTrackListSidebar, loadTrackForPlayer],
+  );
+
+  const value = useMemo(
+    () => ({
+      trackList: currentTrackList,
+      selectedTrack,
+      setSelectedTrack,
+      toTrackAtPosition,
+      playNewTrackListFromUploadedTrackUuid,
+      playNewTrackListFromGenrePlaylist,
+    }),
+    [
+      currentTrackList,
+      selectedTrack,
+      toTrackAtPosition,
+      playNewTrackListFromUploadedTrackUuid,
+      playNewTrackListFromGenrePlaylist,
+    ],
+  );
+
+  return <TrackListContext.Provider value={value}>{children}</TrackListContext.Provider>;
 }
 
 export function useTrackList() {

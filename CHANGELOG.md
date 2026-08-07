@@ -5,6 +5,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Memoized `TrackListProvider`'s context value and its `toTrackAtPosition`/
+  `playNewTrackListFromUploadedTrackUuid`/`playNewTrackListFromGenrePlaylist` handlers, and
+  `TrackListSidebarVisibilityProvider`'s context value and its `toggleTrackListSidebar`/
+  `showTrackListSidebar`/`hideTrackListSidebar` handlers — same unmemoized-context bug as
+  `PopupProvider` (see 0.1.2), left unfixed here and still causing the toolbar hover flicker via
+  `genre-tree-view`'s tree-rebuilding effect.
+
 ## [0.1.2] - 2026-08-07
 
 ### Fixed
