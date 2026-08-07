@@ -5,6 +5,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Memoized `PopupProvider`'s context value and `showPopup`/`hidePopup` handlers, which were being
+  recreated on every render. This broke memoization for any consumer, causing downstream effects
+  (e.g. `genre-tree-view`'s tree-rebuilding effect) to rerun on unrelated re-renders and produce a
+  toolbar show/hide flicker on hover.
+
+### Added
+
+- Vitest + `@vitest/coverage-v8` test infrastructure for `packages/app-kit`, with an 80% coverage
+  threshold scoped to files exercised by tests, wired into `turbo run test` and CI.
+
 ### Removed
 
 - Removed the large root genre name heading rendered behind each tree in `GenreTreeView`.
