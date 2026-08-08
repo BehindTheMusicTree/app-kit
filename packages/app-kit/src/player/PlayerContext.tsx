@@ -84,6 +84,8 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
   const [onTrackEnd, setOnTrackEnd] = useState<(() => void) | null>(null);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const currentTimeRef = useRef(0);
+  const onTrackEndRef = useRef(onTrackEnd);
+  onTrackEndRef.current = onTrackEnd;
 
   const loadTrackForPlayer = useCallback(
     (trackId: string) => {
@@ -114,7 +116,7 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
           audio.addEventListener("ended", () => {
             setPlayState(PlayStates.STOPPED);
             setIsPlaying(false);
-            onTrackEnd?.();
+            onTrackEndRef.current?.();
           });
 
           audio.addEventListener("error", (e) => {
@@ -141,7 +143,7 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
           setIsLoading(false);
         });
     },
-    [loadTrack, volume, onTrackEnd],
+    [loadTrack, volume],
   );
 
   const handleNextTrack = useCallback(
