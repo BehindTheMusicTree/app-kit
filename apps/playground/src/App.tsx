@@ -7,7 +7,6 @@ import {
   usePopup,
   BasePopup,
   GenreTreeView,
-  useCreateGenre,
   CriteriaMinimum,
 } from "@behindthemusictree/app-kit";
 import GenreCreationPopup from "./GenreCreationPopup";
@@ -20,23 +19,19 @@ const uploadTimeoutMs = 5 * 60 * 1000;
 
 function ReferenceGenreTree() {
   const { showPopup, hidePopup } = usePopup();
-  const { mutate: createGenre, formErrors } = useCreateGenre("reference", getBackendBaseUrl);
 
   const showCriteriaCreationPopup = useCallback(
     (parent: CriteriaMinimum | null = null) => {
       showPopup(
         <GenreCreationPopup
           parent={parent}
-          onSubmit={({ name, parent }) => {
-            createGenre({ name, parent });
-            hidePopup();
-          }}
+          scope="reference"
+          getBackendBaseUrl={getBackendBaseUrl}
           onClose={hidePopup}
-          formErrors={formErrors}
         />,
       );
     },
-    [formErrors, createGenre, hidePopup, showPopup],
+    [hidePopup, showPopup],
   );
 
   return (
@@ -67,6 +62,11 @@ function DemoPopupButton() {
   );
 }
 
+function PopupHost() {
+  const { activePopup } = usePopup();
+  return <>{activePopup}</>;
+}
+
 export function App() {
   const [loading, setLoading] = useState(false);
 
@@ -87,6 +87,7 @@ export function App() {
 
         {loading ? <Skeleton style={{ height: 32, width: 240 }} /> : <ReferenceGenreTree />}
       </div>
+      <PopupHost />
     </PopupProvider>
   );
 }
