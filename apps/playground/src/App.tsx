@@ -1,23 +1,53 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Button,
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
   RingLoader,
   Skeleton,
   PopupProvider,
   usePopup,
   BasePopup,
+  GenreTreeView,
+  useCreateGenre,
+  CriteriaMinimum,
 } from "@behindthemusictree/app-kit";
+import GenreCreationPopup from "./GenreCreationPopup";
 
-const rows = [
-  { id: "1", name: "Rock" },
-  { id: "2", name: "Electronic" },
-];
+const getBackendBaseUrl = () =>
+  import.meta.env.VITE_VERCEL_ENV === "production"
+    ? "https://hear-api.themusictree.org/v2/"
+    : "https://hear-api-staging.themusictree.org/v2/";
+const uploadTimeoutMs = 5 * 60 * 1000;
+
+function ReferenceGenreTree() {
+  const { showPopup, hidePopup } = usePopup();
+  const { mutate: createGenre, formErrors } = useCreateGenre("reference", getBackendBaseUrl);
+
+  const showCriteriaCreationPopup = useCallback(
+    (parent: CriteriaMinimum | null = null) => {
+      showPopup(
+        <GenreCreationPopup
+          parent={parent}
+          onSubmit={({ name, parent }) => {
+            createGenre({ name, parent });
+            hidePopup();
+          }}
+          onClose={hidePopup}
+          formErrors={formErrors}
+        />,
+      );
+    },
+    [formErrors, createGenre, hidePopup, showPopup],
+  );
+
+  return (
+    <GenreTreeView
+      scope="reference"
+      handleGenreCreationAction={showCriteriaCreationPopup}
+      getBackendBaseUrl={getBackendBaseUrl}
+      uploadTimeoutMs={uploadTimeoutMs}
+    />
+  );
+}
 
 function DemoPopupButton() {
   const { showPopup, hidePopup } = usePopup();
@@ -44,7 +74,10 @@ export function App() {
     <PopupProvider>
       <div style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
         <h1>app-kit playground</h1>
-        <p>Minimal harness exercising `ui` + `popup` exports to confirm the package builds and renders.</p>
+        <p>
+          Minimal harness exercising `ui` + `popup` exports, and `genre-tree`'s `GenreTreeView` against the
+          reference scope on the staging backend.
+        </p>
 
         <div style={{ display: "flex", gap: 12, alignItems: "center", margin: "16px 0" }}>
           <Button onClick={() => setLoading((v) => !v)}>Toggle loading</Button>
@@ -52,24 +85,7 @@ export function App() {
           {loading ? <RingLoader size={20} /> : null}
         </div>
 
-        {loading ? (
-          <Skeleton style={{ height: 32, width: 240 }} />
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Genre</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell>{row.name}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
+        {loading ? <Skeleton style={{ height: 32, width: 240 }} /> : <ReferenceGenreTree />}
       </div>
     </PopupProvider>
   );

@@ -7,3 +7,4 @@ dist
 .env.local
 .local/
 coverage/
+.claude/worktrees/
