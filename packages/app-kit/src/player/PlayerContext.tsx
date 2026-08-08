@@ -85,7 +85,9 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const currentTimeRef = useRef(0);
   const onTrackEndRef = useRef(onTrackEnd);
-  onTrackEndRef.current = onTrackEnd;
+  useEffect(() => {
+    onTrackEndRef.current = onTrackEnd;
+  }, [onTrackEnd]);
 
   const loadTrackForPlayer = useCallback(
     (trackId: string) => {
