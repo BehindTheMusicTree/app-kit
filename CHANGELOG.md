@@ -5,6 +5,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-08-08
+
+### Fixed
+
+- Memoized `ConnectivityErrorProvider`'s context value and its `setConnectivityError`/
+  `clearConnectivityError` handlers — same unmemoized-context bug as `PopupProvider` (0.1.2),
+  `TrackListProvider`/`TrackListSidebarVisibilityProvider` (0.1.3), and `SessionProvider` (0.1.4).
+  `setConnectivityError`'s instability is a dependency of `useFetchWrapper`'s `fetch`, so it
+  cascaded through `loadTrack`/`loadTrackForPlayer` into every `usePlayer()`/`useTrackList()`
+  consumer, and ultimately into `genre-tree-view`'s tree-rebuilding effect, reproducing the same
+  toolbar hover flicker even after the 0.1.2, 0.1.3, and 0.1.4 fixes.
+
 ## [0.1.4] - 2026-08-07
 
 ### Fixed
