@@ -1,7 +1,7 @@
 "use client";
 
 import { ConnectivityError } from "./app-errors/app-error";
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useMemo, ReactNode } from "react";
 
 interface ConnectivityErrorContextType {
   connectivityError: ConnectivityError | null;
@@ -18,25 +18,24 @@ interface ConnectivityErrorProviderProps {
 export function ConnectivityErrorProvider({ children }: ConnectivityErrorProviderProps) {
   const [connectivityError, setConnectivityError] = useState<ConnectivityError | null>(null);
 
-  const clearConnectivityError = () => {
+  const clearConnectivityError = useCallback(() => {
     setConnectivityError(null);
-  };
+  }, []);
 
-  const handleSetConnectivityError = (error: ConnectivityError | null) => {
+  const handleSetConnectivityError = useCallback((error: ConnectivityError | null) => {
     setConnectivityError(error);
-  };
+  }, []);
 
-  return (
-    <ConnectivityErrorContext.Provider
-      value={{
-        connectivityError,
-        setConnectivityError: handleSetConnectivityError,
-        clearConnectivityError,
-      }}
-    >
-      {children}
-    </ConnectivityErrorContext.Provider>
+  const value = useMemo(
+    () => ({
+      connectivityError,
+      setConnectivityError: handleSetConnectivityError,
+      clearConnectivityError,
+    }),
+    [connectivityError, handleSetConnectivityError, clearConnectivityError],
   );
+
+  return <ConnectivityErrorContext.Provider value={value}>{children}</ConnectivityErrorContext.Provider>;
 }
 
 export function useConnectivityError() {
