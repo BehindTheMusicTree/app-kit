@@ -5,6 +5,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-08-08
+
+### Fixed
+
+- Broke a circular dependency in `PlayerProvider` between `onTrackEnd` state and
+  `loadTrackForPlayer`: `loadTrackForPlayer` depended on `onTrackEnd`, and grow's `AutoAdvance`
+  effect called `setOnTrackEnd` with a fresh closure every time `handleNextTrack` (derived from
+  `loadTrackForPlayer`) changed identity, producing an unconditional infinite render loop from
+  page load — unlike the 0.1.2-0.1.5 fixes, this wasn't an unmemoized-context-value bug, but two
+  otherwise-correct dependency arrays forming an actual cycle. Fixed by reading `onTrackEnd` via a
+  ref inside the `ended` event listener instead of listing it as a `loadTrackForPlayer` dependency.
+
 ## [0.1.5] - 2026-08-08
 
 ### Fixed
