@@ -1,19 +1,22 @@
 import { useState } from "react";
-import { BasePopup, CriteriaMinimum } from "@behindthemusictree/app-kit";
+import { BasePopup, CriteriaMinimum, Scope, useCreateGenre } from "@behindthemusictree/app-kit";
 
 type GenreCreationPopupProps = {
   parent: CriteriaMinimum | null;
-  onSubmit: (values: { name: string; parent?: string }) => void;
+  scope: Scope;
+  getBackendBaseUrl: () => string;
   onClose: () => void;
-  formErrors?: { field: string; message: string }[];
 };
 
-export default function GenreCreationPopup({ parent, onSubmit, onClose, formErrors }: GenreCreationPopupProps) {
+export default function GenreCreationPopup({ parent, scope, getBackendBaseUrl, onClose }: GenreCreationPopupProps) {
   const [name, setName] = useState("");
+  const { mutate: createGenre, formErrors } = useCreateGenre(scope, getBackendBaseUrl);
+
+  const submit = () => createGenre({ name, parent: parent?.uuid || undefined }, { onSuccess: onClose });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ name, parent: parent?.uuid || undefined });
+    submit();
   };
 
   return (
@@ -24,7 +27,7 @@ export default function GenreCreationPopup({ parent, onSubmit, onClose, formErro
       showCancelButton
       okButtonText="Save"
       onClose={onClose}
-      onOk={() => onSubmit({ name, parent: parent?.uuid || undefined })}
+      onOk={submit}
       onCancel={onClose}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -49,8 +52,8 @@ export default function GenreCreationPopup({ parent, onSubmit, onClose, formErro
         </div>
         {formErrors && formErrors.length > 0 && (
           <div className="flex flex-col gap-1">
-            {formErrors.map((error) => (
-              <p key={error.field} className="text-red-500 text-sm">
+            {formErrors.map((error, index) => (
+              <p key={`${error.field}-${index}`} className="text-red-500 text-sm">
                 {error.message}
               </p>
             ))}
