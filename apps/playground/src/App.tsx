@@ -18,10 +18,7 @@ import {
 } from "@behindthemusictree/app-kit";
 import GenreCreationPopup from "./GenreCreationPopup";
 
-const getBackendBaseUrl = () =>
-  import.meta.env.VITE_VERCEL_ENV === "production"
-    ? "https://hear-api.themusictree.org/v2/"
-    : "https://hear-api-staging.themusictree.org/v2/";
+const getBackendBaseUrl = () => "https://hear-api-staging.themusictree.org/v2/";
 const uploadTimeoutMs = 5 * 60 * 1000;
 
 function useLoadTrack(): (trackId: string) => Promise<PlayerTrack> {
