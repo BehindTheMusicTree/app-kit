@@ -5,6 +5,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `apps/playground` now always calls `hear-api-staging.themusictree.org`, regardless of
+  `VITE_VERCEL_ENV`. Playground has no stable Vercel domain, so a "Production" deploy was
+  targeting prod `hear-api`, whose CORS allowlist only carries the real prod frontends — the
+  playground's wildcard Vercel-preview origin was never whitelisted there (only on staging),
+  so every request was blocked by CORS.
+
 ## [0.1.7] - 2026-08-10
 
 ### Fixed
