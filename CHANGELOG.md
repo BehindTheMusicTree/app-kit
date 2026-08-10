@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `GenreTreeSkeleton` now renders a static horizontal SVG tree (rounded cards, curved
+  connectors, root accent dot) that visually approximates the real `GenreTree`'s card-based
+  layout, replacing the previous dark, vertically-indented avatar+bar list which looked nothing
+  like the tree it precedes.
+
 ## [0.1.8] - 2026-08-10
 
 ### Fixed
