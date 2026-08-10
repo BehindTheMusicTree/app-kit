@@ -12,18 +12,14 @@ const CONNECTOR_COLOR = "#D4D4D8";
 const CORNER_RADIUS = 8;
 const SHIMMER_HIGHLIGHT_COLOR = "#FFFFFF";
 
-// A real genre tree can fan out into dozens of subgenres, so the skeleton uses a similarly
-// large node count (~50) rather than a token 1-3-2 shape, to read as "a big tree is loading"
-// instead of "a few items are loading".
-const CHILD_COUNT = 10;
-const LEAVES_PER_CHILD = 4;
+// A real genre tree can run several levels deep and fan out into dozens of subgenres, so the
+// skeleton mirrors that with 6 columns (root through 5 descendant levels) and a tapering node
+// count per level, rather than a token 1-3-2 shape, to read as "a big tree is loading" instead
+// of "a few items are loading".
+const LEVEL_COUNTS = [1, 6, 13, 15, 20, 25];
+const LEVEL_WIDTHS = [200, 180, 165, 150, 140, 130];
+const LEVEL_HEIGHTS = [36, 26, 20, 17, 15, 14];
 
-const ROOT_WIDTH = 200;
-const ROOT_HEIGHT = 36;
-const CHILD_WIDTH = 170;
-const CHILD_HEIGHT = 24;
-const LEAF_WIDTH = 140;
-const LEAF_HEIGHT = 14;
 const LEAF_ROW_HEIGHT = 20;
 const GROUP_GAP = 12;
 const COLUMN_GAP = 120;
@@ -33,69 +29,103 @@ const PADDING_Y = 20;
 const SHIMMER_BAND_WIDTH = 160;
 
 type Card = { x: number; y: number; width: number; height: number };
+type Range = { start: number; end: number };
 
-const ROOT_X = PADDING_X;
-const CHILD_X = ROOT_X + ROOT_WIDTH + COLUMN_GAP;
-const LEAF_X = CHILD_X + CHILD_WIDTH + COLUMN_GAP;
+function cardCenterY(card: Card) {
+  return card.y + card.height / 2;
+}
 
-const LEAF_CARDS: Card[] = [];
-const CHILD_LEAF_RANGES: { start: number; end: number }[] = [];
-let cursorY = PADDING_Y;
-for (let c = 0; c < CHILD_COUNT; c++) {
-  const start = LEAF_CARDS.length;
-  for (let l = 0; l < LEAVES_PER_CHILD; l++) {
-    LEAF_CARDS.push({
-      x: LEAF_X,
-      y: cursorY,
-      width: LEAF_WIDTH,
-      height: LEAF_HEIGHT,
-    });
-    cursorY += LEAF_ROW_HEIGHT;
+// Spreads `childCount` nodes as evenly as possible across `parentCount` parents (remainder
+// distributed to the first parents), so level sizes that don't divide evenly (e.g. 13 into 6)
+// still produce a contiguous, evenly-ordered range of children per parent.
+function distributeChildren(parentCount: number, childCount: number): Range[] {
+  const base = Math.floor(childCount / parentCount);
+  const remainder = childCount % parentCount;
+  const ranges: Range[] = [];
+  let cursor = 0;
+  for (let p = 0; p < parentCount; p++) {
+    const count = base + (p < remainder ? 1 : 0);
+    ranges.push({ start: cursor, end: cursor + count - 1 });
+    cursor += count;
   }
-  CHILD_LEAF_RANGES.push({ start, end: LEAF_CARDS.length - 1 });
-  cursorY += GROUP_GAP;
-}
-const VIEWBOX_HEIGHT = cursorY - GROUP_GAP + PADDING_Y;
-const VIEWBOX_WIDTH = LEAF_X + LEAF_WIDTH + PADDING_X;
-
-function leafCenterY(index: number) {
-  return LEAF_CARDS[index].y + LEAF_CARDS[index].height / 2;
+  return ranges;
 }
 
-const CHILD_CARDS: Card[] = CHILD_LEAF_RANGES.map(({ start, end }) => {
-  const centerY = (leafCenterY(start) + leafCenterY(end)) / 2;
-  return {
-    x: CHILD_X,
-    y: centerY - CHILD_HEIGHT / 2,
-    width: CHILD_WIDTH,
-    height: CHILD_HEIGHT,
-  };
-});
+// CHILD_RANGES[i][n] gives the range of level (i+1) node indices that are children of the n-th
+// node at level i.
+const CHILD_RANGES: Range[][] = [];
+for (let i = 0; i < LEVEL_COUNTS.length - 1; i++) {
+  CHILD_RANGES.push(distributeChildren(LEVEL_COUNTS[i], LEVEL_COUNTS[i + 1]));
+}
 
-const ROOT_CARD: Card = {
-  x: ROOT_X,
-  y:
-    (leafCenterY(0) + leafCenterY(LEAF_CARDS.length - 1)) / 2 - ROOT_HEIGHT / 2,
-  width: ROOT_WIDTH,
-  height: ROOT_HEIGHT,
-};
+const LEVEL_X: number[] = [];
+{
+  let x = PADDING_X;
+  for (let i = 0; i < LEVEL_COUNTS.length; i++) {
+    LEVEL_X.push(x);
+    x += LEVEL_WIDTHS[i] + COLUMN_GAP;
+  }
+}
 
-const ALL_CARDS: { card: Card; rootAccent?: boolean }[] = [
-  { card: ROOT_CARD, rootAccent: true },
-  ...CHILD_CARDS.map((card) => ({ card })),
-  ...LEAF_CARDS.map((card) => ({ card })),
-];
+const LAST_LEVEL = LEVEL_COUNTS.length - 1;
+const LEVEL_CARDS: Card[][] = new Array(LEVEL_COUNTS.length);
+let VIEWBOX_HEIGHT: number;
 
-const ALL_LINKS: { from: Card; to: Card }[] = [
-  ...CHILD_CARDS.map((child) => ({ from: ROOT_CARD, to: child })),
-  ...CHILD_CARDS.flatMap((child, childIndex) => {
-    const { start, end } = CHILD_LEAF_RANGES[childIndex];
-    return LEAF_CARDS.slice(start, end + 1).map((leaf) => ({
-      from: child,
-      to: leaf,
-    }));
-  }),
-];
+// Leaf level is laid out first (top to bottom, with an extra gap between sibling groups), then
+// every level above it is positioned from the vertical midpoint of its children, walking up to
+// the root.
+{
+  const leafCards: Card[] = [];
+  let cursorY = PADDING_Y;
+  for (const range of CHILD_RANGES[LAST_LEVEL - 1]) {
+    for (let i = range.start; i <= range.end; i++) {
+      leafCards.push({
+        x: LEVEL_X[LAST_LEVEL],
+        y: cursorY,
+        width: LEVEL_WIDTHS[LAST_LEVEL],
+        height: LEVEL_HEIGHTS[LAST_LEVEL],
+      });
+      cursorY += LEAF_ROW_HEIGHT;
+    }
+    cursorY += GROUP_GAP;
+  }
+  LEVEL_CARDS[LAST_LEVEL] = leafCards;
+  VIEWBOX_HEIGHT = cursorY - GROUP_GAP + PADDING_Y;
+}
+
+for (let i = LAST_LEVEL - 1; i >= 0; i--) {
+  const childCards = LEVEL_CARDS[i + 1];
+  LEVEL_CARDS[i] = CHILD_RANGES[i].map(({ start, end }) => {
+    const centerY =
+      (cardCenterY(childCards[start]) + cardCenterY(childCards[end])) / 2;
+    return {
+      x: LEVEL_X[i],
+      y: centerY - LEVEL_HEIGHTS[i] / 2,
+      width: LEVEL_WIDTHS[i],
+      height: LEVEL_HEIGHTS[i],
+    };
+  });
+}
+
+const ROOT_CARD = LEVEL_CARDS[0][0];
+
+const ALL_CARDS: { card: Card; rootAccent?: boolean }[] = LEVEL_CARDS.flatMap(
+  (cards, level) =>
+    cards.map((card) => ({ card, rootAccent: level === 0 })),
+);
+
+const ALL_LINKS: { from: Card; to: Card }[] = [];
+for (let i = 0; i < LAST_LEVEL; i++) {
+  const parentCards = LEVEL_CARDS[i];
+  const childCards = LEVEL_CARDS[i + 1];
+  CHILD_RANGES[i].forEach(({ start, end }, parentIndex) => {
+    for (let c = start; c <= end; c++) {
+      ALL_LINKS.push({ from: parentCards[parentIndex], to: childCards[c] });
+    }
+  });
+}
+
+const VIEWBOX_WIDTH = LEVEL_X[LAST_LEVEL] + LEVEL_WIDTHS[LAST_LEVEL] + PADDING_X;
 
 function cardCenterLeft(card: Card) {
   return { x: card.x, y: card.y + card.height / 2 };
