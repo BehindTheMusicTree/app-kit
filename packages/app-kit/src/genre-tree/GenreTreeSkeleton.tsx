@@ -9,38 +9,92 @@ import { useId } from "react";
 const CARD_FILL = "#F4F4F5";
 const CARD_BORDER_COLOR = "#E4E4E7";
 const CONNECTOR_COLOR = "#D4D4D8";
-const CORNER_RADIUS = 12;
+const CORNER_RADIUS = 8;
 const SHIMMER_HIGHLIGHT_COLOR = "#FFFFFF";
 
-const VIEWBOX_WIDTH = 1000;
-const VIEWBOX_HEIGHT = 320;
-const SHIMMER_BAND_WIDTH = 220;
+// A real genre tree can fan out into dozens of subgenres, so the skeleton uses a similarly
+// large node count (~50) rather than a token 1-3-2 shape, to read as "a big tree is loading"
+// instead of "a few items are loading".
+const CHILD_COUNT = 10;
+const LEAVES_PER_CHILD = 4;
 
-const ROOT_CARD = { x: 16, y: 128, width: 260, height: 64 };
-const CHILD_CARDS = [
-  { x: 420, y: 36, width: 220, height: 54 },
-  { x: 420, y: 133, width: 220, height: 54 },
-  { x: 420, y: 230, width: 220, height: 54 },
-];
-const GRANDCHILD_CARDS = [
-  { x: 780, y: 16, width: 190, height: 48 },
-  { x: 780, y: 64, width: 190, height: 48 },
-];
+const ROOT_WIDTH = 200;
+const ROOT_HEIGHT = 36;
+const CHILD_WIDTH = 170;
+const CHILD_HEIGHT = 24;
+const LEAF_WIDTH = 140;
+const LEAF_HEIGHT = 14;
+const LEAF_ROW_HEIGHT = 20;
+const GROUP_GAP = 12;
+const COLUMN_GAP = 120;
+const PADDING_X = 16;
+const PADDING_Y = 20;
+
+const SHIMMER_BAND_WIDTH = 160;
 
 type Card = { x: number; y: number; width: number; height: number };
+
+const ROOT_X = PADDING_X;
+const CHILD_X = ROOT_X + ROOT_WIDTH + COLUMN_GAP;
+const LEAF_X = CHILD_X + CHILD_WIDTH + COLUMN_GAP;
+
+const LEAF_CARDS: Card[] = [];
+const CHILD_LEAF_RANGES: { start: number; end: number }[] = [];
+let cursorY = PADDING_Y;
+for (let c = 0; c < CHILD_COUNT; c++) {
+  const start = LEAF_CARDS.length;
+  for (let l = 0; l < LEAVES_PER_CHILD; l++) {
+    LEAF_CARDS.push({
+      x: LEAF_X,
+      y: cursorY,
+      width: LEAF_WIDTH,
+      height: LEAF_HEIGHT,
+    });
+    cursorY += LEAF_ROW_HEIGHT;
+  }
+  CHILD_LEAF_RANGES.push({ start, end: LEAF_CARDS.length - 1 });
+  cursorY += GROUP_GAP;
+}
+const VIEWBOX_HEIGHT = cursorY - GROUP_GAP + PADDING_Y;
+const VIEWBOX_WIDTH = LEAF_X + LEAF_WIDTH + PADDING_X;
+
+function leafCenterY(index: number) {
+  return LEAF_CARDS[index].y + LEAF_CARDS[index].height / 2;
+}
+
+const CHILD_CARDS: Card[] = CHILD_LEAF_RANGES.map(({ start, end }) => {
+  const centerY = (leafCenterY(start) + leafCenterY(end)) / 2;
+  return {
+    x: CHILD_X,
+    y: centerY - CHILD_HEIGHT / 2,
+    width: CHILD_WIDTH,
+    height: CHILD_HEIGHT,
+  };
+});
+
+const ROOT_CARD: Card = {
+  x: ROOT_X,
+  y:
+    (leafCenterY(0) + leafCenterY(LEAF_CARDS.length - 1)) / 2 - ROOT_HEIGHT / 2,
+  width: ROOT_WIDTH,
+  height: ROOT_HEIGHT,
+};
 
 const ALL_CARDS: { card: Card; rootAccent?: boolean }[] = [
   { card: ROOT_CARD, rootAccent: true },
   ...CHILD_CARDS.map((card) => ({ card })),
-  ...GRANDCHILD_CARDS.map((card) => ({ card })),
+  ...LEAF_CARDS.map((card) => ({ card })),
 ];
 
 const ALL_LINKS: { from: Card; to: Card }[] = [
   ...CHILD_CARDS.map((child) => ({ from: ROOT_CARD, to: child })),
-  ...GRANDCHILD_CARDS.map((grandchild) => ({
-    from: CHILD_CARDS[0],
-    to: grandchild,
-  })),
+  ...CHILD_CARDS.flatMap((child, childIndex) => {
+    const { start, end } = CHILD_LEAF_RANGES[childIndex];
+    return LEAF_CARDS.slice(start, end + 1).map((leaf) => ({
+      from: child,
+      to: leaf,
+    }));
+  }),
 ];
 
 function cardCenterLeft(card: Card) {
@@ -76,13 +130,13 @@ function SkeletonCard({
         ry={CORNER_RADIUS}
         fill={CARD_FILL}
         stroke={CARD_BORDER_COLOR}
-        strokeWidth={rootAccent ? 2 : 1.5}
+        strokeWidth={rootAccent ? 1.5 : 1}
       />
       {rootAccent && (
         <circle
-          cx={card.x + 24}
+          cx={card.x + 18}
           cy={card.y + card.height / 2}
-          r={6}
+          r={5}
           fill={CONNECTOR_COLOR}
         />
       )}
@@ -150,7 +204,7 @@ export function GenreTreeSkeleton() {
                 d={connectorPath(link.from, link.to)}
                 fill="none"
                 stroke="#FFFFFF"
-                strokeWidth={2}
+                strokeWidth={1.25}
               />
             ))}
             {ALL_CARDS.map(({ card }, i) => (
@@ -174,7 +228,7 @@ export function GenreTreeSkeleton() {
             d={connectorPath(link.from, link.to)}
             fill="none"
             stroke={CONNECTOR_COLOR}
-            strokeWidth={2}
+            strokeWidth={1.25}
           />
         ))}
         {ALL_CARDS.map(({ card, rootAccent }, i) => (
