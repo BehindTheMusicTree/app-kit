@@ -4,6 +4,9 @@ export function parseWithLog<T>(schema: z.ZodType<T>, data: unknown, context?: s
   const result = schema.safeParse(data);
   if (!result.success) {
     const prefix = context ? `[${context}]` : "";
+    if (data == null) {
+      throw new Error(`${prefix} received null response before schema validation`);
+    }
     console.error(`${prefix} schema validation failed`, result.error.flatten());
     throw result.error;
   }

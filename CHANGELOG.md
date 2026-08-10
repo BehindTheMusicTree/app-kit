@@ -5,6 +5,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `parseWithLog` now throws a clear `"received null response before schema validation"` error
+  when handed a `null`/`undefined` response instead of running it through `schema.safeParse`,
+  which previously produced a confusing `{ fieldErrors: {}, formErrors: ['Expected object,
+  received null'] }` zod-flatten log. `fetchWrapper` legitimately returns `null` when auth isn't
+  ready yet or a connectivity/backend error is handled globally, and several consumers (e.g.
+  `useFetchGenre`, `useFetchGenrePlaylistDetailed`, `useQueryWithParse`) fed that straight into a
+  root `z.object` schema with no guard.
+
 ## [0.1.6] - 2026-08-08
 
 ### Fixed
