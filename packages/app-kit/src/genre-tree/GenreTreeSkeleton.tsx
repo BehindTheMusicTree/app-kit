@@ -9,22 +9,22 @@ import { useId } from "react";
 const CARD_FILL = "#F4F4F5";
 const CARD_BORDER_COLOR = "#E4E4E7";
 const CONNECTOR_COLOR = "#D4D4D8";
-const CORNER_RADIUS = 8;
+const CORNER_RADIUS = 12;
 const SHIMMER_HIGHLIGHT_COLOR = "#FFFFFF";
 
-const VIEWBOX_WIDTH = 630;
-const VIEWBOX_HEIGHT = 200;
-const SHIMMER_BAND_WIDTH = 160;
+const VIEWBOX_WIDTH = 1000;
+const VIEWBOX_HEIGHT = 320;
+const SHIMMER_BAND_WIDTH = 220;
 
-const ROOT_CARD = { x: 10, y: 80, width: 160, height: 40 };
+const ROOT_CARD = { x: 16, y: 128, width: 260, height: 64 };
 const CHILD_CARDS = [
-  { x: 260, y: 23, width: 140, height: 34 },
-  { x: 260, y: 83, width: 140, height: 34 },
-  { x: 260, y: 143, width: 140, height: 34 },
+  { x: 420, y: 36, width: 220, height: 54 },
+  { x: 420, y: 133, width: 220, height: 54 },
+  { x: 420, y: 230, width: 220, height: 54 },
 ];
 const GRANDCHILD_CARDS = [
-  { x: 490, y: 10, width: 120, height: 30 },
-  { x: 490, y: 40, width: 120, height: 30 },
+  { x: 780, y: 16, width: 190, height: 48 },
+  { x: 780, y: 64, width: 190, height: 48 },
 ];
 
 type Card = { x: number; y: number; width: number; height: number };
@@ -76,13 +76,13 @@ function SkeletonCard({
         ry={CORNER_RADIUS}
         fill={CARD_FILL}
         stroke={CARD_BORDER_COLOR}
-        strokeWidth={rootAccent ? 1.5 : 1}
+        strokeWidth={rootAccent ? 2 : 1.5}
       />
       {rootAccent && (
         <circle
-          cx={card.x + 16}
+          cx={card.x + 24}
           cy={card.y + card.height / 2}
-          r={4}
+          r={6}
           fill={CONNECTOR_COLOR}
         />
       )}
@@ -150,7 +150,7 @@ export function GenreTreeSkeleton() {
                 d={connectorPath(link.from, link.to)}
                 fill="none"
                 stroke="#FFFFFF"
-                strokeWidth={1.5}
+                strokeWidth={2}
               />
             ))}
             {ALL_CARDS.map(({ card }, i) => (
@@ -174,7 +174,7 @@ export function GenreTreeSkeleton() {
             d={connectorPath(link.from, link.to)}
             fill="none"
             stroke={CONNECTOR_COLOR}
-            strokeWidth={1.5}
+            strokeWidth={2}
           />
         ))}
         {ALL_CARDS.map(({ card, rootAccent }, i) => (
