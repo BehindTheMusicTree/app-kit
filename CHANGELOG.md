@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.9] - 2026-08-10
+
 ### Changed
 
 - `GenreTreeSkeleton` now renders a horizontal SVG tree (rounded cards, curved connectors, root
