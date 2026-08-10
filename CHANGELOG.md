@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-08-10
+
 ### Fixed
 
 - `parseWithLog` now throws a clear `"received null response before schema validation"` error
