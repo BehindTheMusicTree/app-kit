@@ -1,6 +1,7 @@
-// Placeholder layout mirrors genre-tree-view/src/constants.ts's real tree tokens (not
-// imported directly — that package only exports GenreTree, getGenreTreeColor, and types,
-// not these internal dimension/style constants).
+// These values approximate the real GenreTree's visual tokens (card corner radius, surface
+// and connector colors) rather than importing them, since the @behindthemusictree/genre-tree-view
+// package only publicly exports GenreTree, getGenreTreeColor, and types — not its internal
+// dimension/style constants.
 const CARD_FILL = "#F4F4F5";
 const CARD_BORDER_COLOR = "#E4E4E7";
 const CONNECTOR_COLOR = "#D4D4D8";
