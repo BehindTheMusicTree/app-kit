@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.8] - 2026-08-10
+
 ### Fixed
 
 - `apps/playground` now always calls `hear-api-staging.themusictree.org`, regardless of
