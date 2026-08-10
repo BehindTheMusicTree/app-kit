@@ -5,6 +5,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `GenreTreeSkeleton` now renders 6 levels deep (root through 5 descendant levels, node counts
+  `[1, 6, 13, 15, 20, 25]`) instead of the previous 3-level root/child/leaf layout, so the loading
+  state better matches how deep a real genre tree can run.
+
 ## [0.1.9] - 2026-08-10
 
 ### Changed
