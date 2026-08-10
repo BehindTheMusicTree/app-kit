@@ -7,10 +7,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- `GenreTreeSkeleton` now renders a static horizontal SVG tree (rounded cards, curved
-  connectors, root accent dot) that visually approximates the real `GenreTree`'s card-based
-  layout, replacing the previous dark, vertically-indented avatar+bar list which looked nothing
-  like the tree it precedes.
+- `GenreTreeSkeleton` now renders a horizontal SVG tree (rounded cards, curved connectors, root
+  accent dot) that visually approximates the real `GenreTree`'s card-based layout, replacing the
+  previous dark, vertically-indented avatar+bar list which looked nothing like the tree it
+  precedes. A masked gradient sweeps across the cards and connectors on a loop (the standard
+  shimmer pattern used by content-loader-style skeletons), replacing the flat `animate-pulse`
+  fade so the loading state reads clearly as "in progress" rather than a static illustration.
+  Disabled under `prefers-reduced-motion: reduce`.
 
 ## [0.1.8] - 2026-08-10
 
