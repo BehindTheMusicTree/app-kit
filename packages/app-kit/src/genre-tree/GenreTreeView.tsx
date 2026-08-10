@@ -46,19 +46,21 @@ export function GenreTreeView({
   );
 
   const isLoading = isListingGenrePlaylists || isLoadingTree;
+  const hasAtLeastOneGenre = Object.keys(groupedGenrePlaylistsByRoot).length > 0;
 
   const loadButtonText = scope === "me" ? "Load the example tree genre" : "Load the reference tree genre";
 
   const actions = (
     <>
       <IconTextButton icon={Plus} text="Add root" onClick={() => handleGenreCreationAction(null)} />
-      <IconTextButton
-        icon={FaTree}
-        text={loadButtonText}
-        className="ml-2"
-        onClick={() => loadTreeMutation.mutate()}
-        disabled={isLoading}
-      />
+      {!isLoading && !hasAtLeastOneGenre && (
+        <IconTextButton
+          icon={FaTree}
+          text={loadButtonText}
+          className="ml-2"
+          onClick={() => loadTreeMutation.mutate()}
+        />
+      )}
     </>
   );
 
