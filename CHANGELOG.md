@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.10] - 2026-08-11
+
 ### Added
 
 - `.github/skills/code-review/SKILL.md` — GitHub Copilot code review agent skill encoding this
