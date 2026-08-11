@@ -148,10 +148,13 @@ export default function GenrePlaylistTreePerRoot({
 
   const handleUploadFiles = useCallback(
     (nodeId: string, files: File[]) => {
+      const genrePlaylist = genrePlaylistTreePerRoot.find((g) => g.uuid === nodeId);
+      if (!genrePlaylist?.criteria) return;
+
       showPopup(
         <TrackUploadPopup
           files={files}
-          genre={nodeId}
+          genre={genrePlaylist.criteria.uuid}
           onProcessFile={(file, genre) => uploadedTrackMutateAsync({ file, genre })}
           onComplete={() => {}}
           onClose={hidePopup}
@@ -159,7 +162,7 @@ export default function GenrePlaylistTreePerRoot({
         />,
       );
     },
-    [showPopup, hidePopup, uploadedTrackMutateAsync, uploadTimeoutMs],
+    [genrePlaylistTreePerRoot, showPopup, hidePopup, uploadedTrackMutateAsync, uploadTimeoutMs],
   );
 
   return (
