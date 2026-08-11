@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.11] - 2026-08-11
+
 ### Changed
 
 - `GenreTreeView`'s "Add root" button is now hidden while the tree is loading (listing genres or
