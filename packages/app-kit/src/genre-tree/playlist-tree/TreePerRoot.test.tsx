@@ -1,5 +1,6 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import type { ReactElement } from "react";
 
 import GenrePlaylistTreePerRoot from "./TreePerRoot";
 import { TrackListOriginType } from "../models/TrackListOriginType";
@@ -123,7 +124,7 @@ describe("GenrePlaylistTreePerRoot", () => {
       capturedProps!.onUploadFiles!(playlistUuid, [file]);
 
       expect(showPopup).toHaveBeenCalledTimes(1);
-      const popupElement = showPopup.mock.calls[0][0] as React.ReactElement<{
+      const popupElement = showPopup.mock.calls[0][0] as ReactElement<{
         genre: string | null;
         onProcessFile: (file: File, genre?: string | null) => Promise<unknown>;
       }>;
