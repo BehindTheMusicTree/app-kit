@@ -52,7 +52,9 @@ export function GenreTreeView({
 
   const actions = (
     <>
-      <IconTextButton icon={Plus} text="Add root" onClick={() => handleGenreCreationAction(null)} />
+      {!isLoading && (
+        <IconTextButton icon={Plus} text="Add root" onClick={() => handleGenreCreationAction(null)} />
+      )}
       {!isLoading && !hasAtLeastOneGenre && (
         <IconTextButton
           icon={FaTree}
