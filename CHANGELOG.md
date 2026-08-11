@@ -10,6 +10,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `GenreTreeSkeleton` now renders 6 levels deep (root through 5 descendant levels, node counts
   `[1, 6, 13, 15, 20, 25]`) instead of the previous 3-level root/child/leaf layout, so the loading
   state better matches how deep a real genre tree can run.
+- `GenreTreeView`'s "Load the example/reference tree genre" button is now hidden while the tree is
+  loading or once at least one genre already exists, instead of just being disabled — it only made
+  sense as an empty-state action.
 
 ## [0.1.9] - 2026-08-10
 
