@@ -5,6 +5,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `.github/skills/code-review/SKILL.md` — GitHub Copilot code review agent skill encoding this
+  repo's decoupling, export-wiring, and changelog rules (per
+  [GitHub's Agent Skills for code review](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review#mcp-servers-and-agent-skills)).
+
 ### Changed
 
 - `GenreTreeSkeleton` now renders 6 levels deep (root through 5 descendant levels, node counts
