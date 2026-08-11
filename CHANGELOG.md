@@ -5,6 +5,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.12] - 2026-08-11
+
+### Fixed
+
+- Uploading a file by dropping it onto a genre tree node (`GenrePlaylistTreePerRoot`) now sends the
+  genre's own UUID (`genrePlaylist.criteria.uuid`) instead of the genre-playlist's UUID
+  (`genrePlaylist.uuid`), which the backend's `genre` field never actually matches — every such
+  upload previously failed with an "object does not exist" validation error.
+
 ## [0.1.11] - 2026-08-11
 
 ### Changed
