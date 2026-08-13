@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { FaTree } from "react-icons/fa";
 import { Plus } from "lucide-react";
 import { IconTextButton } from "../ui/IconTextButton";
+import { Button } from "../ui/Button";
 
 import { CriteriaPlaylistSimple } from "./schemas/criteria-playlist/simple";
 import { CriteriaMinimum } from "./schemas/criteria/minimum";
@@ -13,7 +14,10 @@ import { useLoadExampleTreeGenre } from "./useGenre";
 import { getGenrePlaylistsGroupedByRoot } from "./lib/genre-playlist-helpers";
 
 import GenrePlaylistTreePerRoot from "./playlist-tree/TreePerRoot";
+import GenrePlaylistTreeWheel from "./playlist-tree/TreeWheel";
 import { GenreTreeSkeleton } from "./GenreTreeSkeleton";
+
+type GenreTreeViewMode = "stacked" | "wheel";
 
 export type GenreTreeViewProps = {
   scope: Scope;
@@ -31,6 +35,7 @@ export function GenreTreeView({
   uploadTimeoutMs,
 }: GenreTreeViewProps) {
   const [reparentingGenreUuid, setReparentingGenreUuid] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<GenreTreeViewMode>("stacked");
 
   const { data: genrePlaylists, isPending: isListingGenrePlaylists } = useListFullGenrePlaylists(
     scope,
@@ -53,6 +58,20 @@ export function GenreTreeView({
   const actions = (
     <>
       {!isLoading && (
+        <div className="flex items-center gap-1 mr-2" role="group" aria-label="Tree view mode">
+          <Button
+            variant={viewMode === "stacked" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewMode("stacked")}
+          >
+            Stacked
+          </Button>
+          <Button variant={viewMode === "wheel" ? "default" : "outline"} size="sm" onClick={() => setViewMode("wheel")}>
+            Wheel
+          </Button>
+        </div>
+      )}
+      {!isLoading && (
         <IconTextButton icon={Plus} text="Add root" onClick={() => handleGenreCreationAction(null)} />
       )}
       {!isLoading && !hasAtLeastOneGenre && (
@@ -73,6 +92,19 @@ export function GenreTreeView({
       </div>
       {isLoading ? (
         <GenreTreeSkeleton />
+      ) : viewMode === "wheel" ? (
+        <div className="tree-container flex-1 min-h-0 w-full relative">
+          <GenrePlaylistTreeWheel
+            scope={scope}
+            genrePlaylists={(genrePlaylists?.results ?? []) as CriteriaPlaylistSimple[]}
+            reparentingGenreUuid={reparentingGenreUuid}
+            setReparentingGenreUuid={setReparentingGenreUuid}
+            handleGenreCreationAction={handleGenreCreationAction}
+            handleGenreRenameAction={handleGenreRenameAction}
+            getBackendBaseUrl={getBackendBaseUrl}
+            uploadTimeoutMs={uploadTimeoutMs}
+          />
+        </div>
       ) : (
         <div className="tree-container flex flex-col gap-4 text-gray-800 w-full overflow-x-auto overflow-y-auto relative">
           {Object.entries(groupedGenrePlaylistsByRoot).map(([uuid, genrePlaylistTreePerRoot]) => {
