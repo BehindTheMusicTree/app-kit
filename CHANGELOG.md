@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-13
+
 ### Changed
 
 - `ui` components (`Button`, `Pagination`, `RingLoader`, `Skeleton`, `TrackUploadPopup`) now
