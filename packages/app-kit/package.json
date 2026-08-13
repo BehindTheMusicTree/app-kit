@@ -66,6 +66,7 @@
     "react-dom": ">=18.0.0"
   },
   "dependencies": {
+    "@behindthemusictree/brand": "11.6.0",
     "@behindthemusictree/genre-tree-view": "0.3.0",
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",
