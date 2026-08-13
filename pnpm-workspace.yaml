@@ -9,6 +9,7 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - '@behindthemusictree/genre-tree-view@0.3.0'
   - '@behindthemusictree/brand@11.6.0'
+  - '@behindthemusictree/genre-tree-view@0.4.0'
 
 onlyBuiltDependencies:
   - esbuild
