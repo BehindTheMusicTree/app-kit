@@ -95,7 +95,9 @@ export default function Pagination({ currentPage, totalPages, onPageChange, clas
               key={page}
               className={classnames(
                 "mx-1 px-3 py-1 text-sm rounded",
-                currentPage === page ? "bg-green-600 text-white" : "hover:bg-gray-200"
+                currentPage === page
+                  ? "bg-[var(--color-green-600)] text-white"
+                  : "hover:bg-[var(--color-neutral-200)]"
               )}
               onClick={() => onPageChange(page as number)}
               disabled={currentPage === page}

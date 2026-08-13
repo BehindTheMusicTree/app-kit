@@ -5,6 +5,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `ui` components (`Button`, `Pagination`, `RingLoader`, `Skeleton`, `TrackUploadPopup`) now
+  reference `@behindthemusictree/brand`'s CSS var color tokens (`--color-neutral-*`,
+  `--color-red-*`, `--color-green-*`, `--color-blue-*`) instead of hardcoded Tailwind color
+  classes, so palette changes propagate from the brand package. No visual change — the token
+  values match the previously-hardcoded Tailwind colors exactly.
+
 ## [0.1.12] - 2026-08-11
 
 ### Fixed

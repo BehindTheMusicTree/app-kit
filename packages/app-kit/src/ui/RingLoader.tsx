@@ -9,7 +9,7 @@ export default function RingLoader({ size = 24, className = "" }: RingLoaderProp
   return (
     <div className={`inline-block ${className}`} style={{ width: size, height: size }}>
       <div
-        className="animate-spin rounded-full border-2 border-gray-300 border-t-white"
+        className="animate-spin rounded-full border-2 border-[var(--color-neutral-300)] border-t-white"
         style={{ width: size, height: size }}
       />
     </div>
