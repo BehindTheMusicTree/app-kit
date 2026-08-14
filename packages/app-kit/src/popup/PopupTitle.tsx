@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { Button } from "../ui/Button";
+import { Button } from "@behindthemusictree/ui";
 import { LucideIcon } from "lucide-react";
 
 interface PopupTitleProps {

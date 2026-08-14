@@ -4,7 +4,7 @@ import { FaPlay, FaPause } from "react-icons/fa";
 
 import { usePlayer } from "../player/PlayerContext";
 import { PlayStates } from "../player/PlayStates";
-import RingLoader from "../ui/RingLoader";
+import { RingLoader } from "@behindthemusictree/ui";
 
 export interface UploadedTrackPositionPlayPauseProps {
   position: number;

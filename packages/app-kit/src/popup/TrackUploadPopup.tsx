@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { MdError, MdCheckCircle, MdUpload } from "react-icons/md";
-import { BasePopup, BasePopupProps } from "../popup/BasePopup";
+import { BasePopup, BasePopupProps } from "./BasePopup";
 type UploadStatus = "pending" | "uploading" | "success" | "error";
 
 type TrackUploadItem = {

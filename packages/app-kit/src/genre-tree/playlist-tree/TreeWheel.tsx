@@ -11,7 +11,7 @@ import { usePlayer } from "../../player/PlayerContext";
 
 import { TrackListOriginType } from "../models/TrackListOriginType";
 
-import TrackUploadPopup from "../../ui/TrackUploadPopup";
+import TrackUploadPopup from "../../popup/TrackUploadPopup";
 import { CriteriaPlaylistSimple } from "../schemas/criteria-playlist/simple";
 import { CriteriaMinimum } from "../schemas/criteria/minimum";
 import { Scope } from "../../transport/lib/scope";

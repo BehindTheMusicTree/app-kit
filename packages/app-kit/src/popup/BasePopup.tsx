@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { ReactNode } from "react";
 import { PopupTitle } from "./PopupTitle";
 import { PopupButtons } from "./PopupButtons";
-import { Button } from "../ui/Button";
+import { Button } from "@behindthemusictree/ui";
 import { LucideIcon } from "lucide-react";
 
 export interface BasePopupProps {

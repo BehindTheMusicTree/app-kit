@@ -60,7 +60,7 @@ vi.mock("../useUploadedTrack", () => ({
 // Rendering the real popup pulls in its own large, separately-tested tree (Button, BasePopup, etc.)
 // for no benefit here — this test only needs to assert on the props TreePerRoot passes it, which
 // `showPopup`'s captured React element already exposes without the component ever running.
-vi.mock("../../ui/TrackUploadPopup", () => ({
+vi.mock("../../popup/TrackUploadPopup", () => ({
   default: () => null,
 }));
 

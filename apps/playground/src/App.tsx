@@ -1,8 +1,5 @@
 import { useCallback, useState } from "react";
 import {
-  Button,
-  RingLoader,
-  Skeleton,
   PopupProvider,
   usePopup,
   BasePopup,
@@ -16,6 +13,7 @@ import {
   libraryEndpoints,
   UploadedTrackDetailed,
 } from "@behindthemusictree/app-kit";
+import { Button, RingLoader, Skeleton } from "@behindthemusictree/ui";
 import GenreCreationPopup from "./GenreCreationPopup";
 
 const getBackendBaseUrl = () => "https://hear-api-staging.themusictree.org/v2/";
@@ -89,7 +87,7 @@ function DemoPopupButton() {
       onClick={() =>
         showPopup(
           <BasePopup title="Demo popup" onClose={hidePopup} isDismissable>
-            <p>This confirms `popup` + `ui` subpath exports render correctly together.</p>
+            <p>This confirms `popup` exports render correctly alongside `@behindthemusictree/ui`.</p>
           </BasePopup>,
         )
       }
@@ -112,8 +110,8 @@ function AppContent() {
       <div style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
         <h1>app-kit playground</h1>
         <p>
-          Minimal harness exercising `ui` + `popup` exports, and `genre-tree`'s `GenreTreeView` against the
-          reference scope on the staging backend.
+          Minimal harness exercising `popup` exports, `@behindthemusictree/ui` components, and
+          `genre-tree`'s `GenreTreeView` against the reference scope on the staging backend.
         </p>
 
         <div style={{ display: "flex", gap: 12, alignItems: "center", margin: "16px 0" }}>
