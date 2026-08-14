@@ -19,6 +19,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Depends on `@behindthemusictree/ui` (`^0.1.0`) instead of bundling those components directly;
   dropped the now-unused `classnames` dependency.
+- Bumped `@behindthemusictree/brand` to `12.0.0`, which dropped its own duplicate, unused `Button`
+  export — this package never consumed it, so no code change was needed here.
 
 ## [0.2.0] - 2026-08-13
 
