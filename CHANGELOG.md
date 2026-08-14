@@ -5,6 +5,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `apps/playground` was pinned to `@behindthemusictree/genre-tree-view@0.4.0` directly, independent
+  of `packages/app-kit`'s own `0.5.0` dependency, so the playground rendered `0.5.0`'s
+  `GenreTreeWheel`/`GenreTree` markup (new absolutely-positioned pan/zoom stage) styled with
+  `0.4.0`'s CSS (no clipping/positioning rules for it), producing an overlapping, unclipped wheel
+  and tree. Fixed by introducing a pnpm `catalog:` entry in `pnpm-workspace.yaml` for
+  `@behindthemusictree/genre-tree-view`, `@behindthemusictree/ui`, and `@behindthemusictree/brand`,
+  and switching both `packages/app-kit` and `apps/playground` to reference `"catalog:"` instead of
+  hardcoding each version separately — a single source of truth per dependency, so this class of
+  drift can't recur.
+
 ## [1.0.1] - 2026-08-14
 
 ### Changed
