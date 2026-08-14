@@ -5,6 +5,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Bumped `@behindthemusictree/genre-tree-view` to `0.5.0` (shared pan/zoom viewport for
+  `GenreTree`/`GenreTreeWheel`). This package doesn't use the removed `zoomScale`/
+  `onZoomScaleChange` props, so no code change was needed here.
+
 ## [1.0.0] - 2026-08-14
 
 ### Removed
