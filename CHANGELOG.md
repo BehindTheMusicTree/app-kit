@@ -5,6 +5,23 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Removed
+
+- **BREAKING: `./ui` subpath removed.** `Button`, `IconTextButton`, `Input`, `Table`, `Skeleton`,
+  `Pagination`, `RingLoader`, `UploadButtons`, and the `cn()` class-name helper have moved out of
+  `@behindthemusictree/app-kit` into a new dedicated package,
+  [`@behindthemusictree/ui`](https://github.com/BehindTheMusicTree/ui). Import them from
+  `@behindthemusictree/ui` instead of `@behindthemusictree/app-kit/ui`; props are unchanged.
+  `TrackUploadPopup` stays in this package (business logic) but moved from `./ui` to `./popup` —
+  import it from `@behindthemusictree/app-kit/popup` instead.
+
+### Changed
+
+- Depends on `@behindthemusictree/ui` (`^0.1.0`) instead of bundling those components directly;
+  dropped the now-unused `classnames` dependency.
+- Bumped `@behindthemusictree/brand` to `12.0.0`, which dropped its own duplicate, unused `Button`
+  export — this package never consumed it, so no code change was needed here.
+
 ## [0.2.0] - 2026-08-13
 
 ### Changed

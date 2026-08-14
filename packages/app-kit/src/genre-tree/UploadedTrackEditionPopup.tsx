@@ -2,7 +2,7 @@
 
 import { formatTime } from "./lib/formatting";
 import Rating from "./Rating";
-import { Button } from "../ui/Button";
+import { Button } from "@behindthemusictree/ui";
 import { BasePopup, BasePopupProps } from "../popup/BasePopup";
 import { UploadedTrackUpdateValues } from "./schemas/uploaded-track/form/update";
 import { UploadedTrackDetailed } from "./schemas/uploaded-track/detailed";

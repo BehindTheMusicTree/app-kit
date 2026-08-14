@@ -3,8 +3,7 @@
 import { useState, useMemo } from "react";
 import { FaTree } from "react-icons/fa";
 import { Plus } from "lucide-react";
-import { IconTextButton } from "../ui/IconTextButton";
-import { Button } from "../ui/Button";
+import { IconTextButton, Button } from "@behindthemusictree/ui";
 
 import { CriteriaPlaylistSimple } from "./schemas/criteria-playlist/simple";
 import { CriteriaMinimum } from "./schemas/criteria/minimum";

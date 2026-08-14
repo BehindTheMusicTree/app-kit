@@ -5,7 +5,6 @@ const entry = {
   "transport/index": "src/transport/index.ts",
   "auth/index": "src/auth/index.ts",
   "popup/index": "src/popup/index.ts",
-  "ui/index": "src/ui/index.ts",
   "player/index": "src/player/index.ts",
   "genre-tree/index": "src/genre-tree/index.ts",
 };
@@ -15,9 +14,9 @@ const external = ["react", "react-dom", "@tanstack/react-query", "next"];
 /**
  * Several subpaths share stateful singletons across entry points (e.g. `auth`'s SessionContext is
  * used internally by `transport`'s `useFetchWrapper` and `genre-tree`'s data hooks; `player`'s
- * PlayerContext is used by `genre-tree`'s TrackListContext/TrackItem; `ui`'s Button is used by
- * `popup`'s BasePopup). With `splitting: false`, esbuild would bundle a fully independent copy of
- * each shared module into every entry file that imports it — including a *second* `createContext()`
+ * PlayerContext is used by `genre-tree`'s TrackListContext/TrackItem). With `splitting: false`,
+ * esbuild would bundle a fully independent copy of each shared module into every entry file that
+ * imports it — including a *second* `createContext()`
  * call per context — so a consumer wrapping their tree with `<SessionProvider>` (from the `auth`
  * subpath) and calling `useFetchWrapper()` (whose bundled copy of SessionContext would be a
  * different module instance, from the `transport` subpath) would see "must be used within a

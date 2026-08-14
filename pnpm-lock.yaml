@@ -20,6 +20,9 @@ importers:
       '@behindthemusictree/genre-tree-view':
         specifier: 0.4.0
         version: 0.4.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@behindthemusictree/ui':
+        specifier: ^0.1.0
+        version: 0.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@tanstack/react-query':
         specifier: ^5.72.2
         version: 5.101.4(react@18.3.1)
@@ -58,14 +61,14 @@ importers:
   packages/app-kit:
     dependencies:
       '@behindthemusictree/brand':
-        specifier: 11.6.0
-        version: 11.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 12.0.0
+        version: 12.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@behindthemusictree/genre-tree-view':
         specifier: 0.4.0
         version: 0.4.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      classnames:
-        specifier: ^2.5.1
-        version: 2.5.1
+      '@behindthemusictree/ui':
+        specifier: ^0.1.0
+        version: 0.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -243,14 +246,20 @@ packages:
     resolution: {integrity: sha512-6zABk/ECA/QYSCQ1NGiVwwbQerUCZ+TQbp64Q3AgmfNvurHH0j8TtXa1qbShXA6qqkpAj4V5W8pP6mLe1mcMqA==}
     engines: {node: '>=18'}
 
-  '@behindthemusictree/brand@11.6.0':
-    resolution: {integrity: sha512-2IgqqrfLRtxBH54HNk6BG4AYbZV1gxeOVdI66lVuYI6hUJRiS++mo3HFb+lwhS9XW5+an/XI7TBjj6UgsRjJ+Q==, tarball: https://npm.pkg.github.com/download/@behindthemusictree/brand/11.6.0/e11906fcf8895a2eedad085887bc7b08b5767ae5}
+  '@behindthemusictree/brand@12.0.0':
+    resolution: {integrity: sha512-9PrERlo0lHyB3dtSQJYg4XvrM1Pm8sZ6MO0zV/lO/8UBLMNtm3QDTnuWwNW5z8dQhPD3h0Hx8N0W373C69CzDQ==, tarball: https://npm.pkg.github.com/download/@behindthemusictree/brand/12.0.0/aeba06e0b62328472fafecd16f9c1938af05e00f}
     peerDependencies:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
 
   '@behindthemusictree/genre-tree-view@0.4.0':
     resolution: {integrity: sha512-Hjwq3F35kMhl9LrQhmRuwAsIPmmGXIpv8m4r9M4auU+aZtDDKSx3BNYqZfJGPotiGEH/MZsIHdmAxy50OsUwhg==, tarball: https://npm.pkg.github.com/download/@behindthemusictree/genre-tree-view/0.4.0/d881c1965198cc173b8d24e2879c3da85517acd6}
+    peerDependencies:
+      react: '>=18.0.0'
+      react-dom: '>=18.0.0'
+
+  '@behindthemusictree/ui@0.1.0':
+    resolution: {integrity: sha512-qLQup6B1U8ZisC7g63HLNW8B8nnJ/EX7CEJIS3mpQVT1W0xauxHb+q5abtGHFPo54RxLd9eftQqTBiP3eule4A==, tarball: https://npm.pkg.github.com/download/@behindthemusictree/ui/0.1.0/c6dbdf3309d97be45f21d558a292f968e953a668}
     peerDependencies:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
@@ -1272,8 +1281,8 @@ packages:
     resolution: {integrity: sha512-Qgzu8kfBvo+cA4962jnP1KkS6Dop5NS6g7R5LFYJr4b8Ub94PPQXUksCw9PvXoeXPRRddRNC5C1JQUR2SMGtnA==}
     engines: {node: '>= 14.16.0'}
 
-  classnames@2.5.1:
-    resolution: {integrity: sha512-saHYOzhIQs6wy2sVxTM6bUDsQO4F50V9RQ22qBpEdCW+I+/Wmke2HOl6lS6dTpdxVhb88/I6+Hs+438c3lfUow==}
+  class-variance-authority@0.7.1:
+    resolution: {integrity: sha512-Ka+9Trutv7G8M6WT6SeiRWz792K5qEqIGEGzXKhAE6xOWAY6pPH8U+9IY3oCMv6kqTmLsv7Xh/2w2RigkePMsg==}
 
   client-only@0.0.1:
     resolution: {integrity: sha512-IV3Ou0jSMzZrd3pZ48nLkT9DA7Ag1pnPzaiQhpW7c3RbcqqzvzzVu+L8gfqMp/8IM2MQtSiqaCxrrcfu8I8rMA==}
@@ -2490,7 +2499,7 @@ snapshots:
 
   '@bcoe/v8-coverage@1.0.2': {}
 
-  '@behindthemusictree/brand@11.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@behindthemusictree/brand@12.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
@@ -2501,6 +2510,16 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
       react-icons: 5.7.0(react@18.3.1)
+
+  '@behindthemusictree/ui@0.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      class-variance-authority: 0.7.1
+      clsx: 2.1.1
+      lucide-react: 0.487.0(react@18.3.1)
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+      react-icons: 5.7.0(react@18.3.1)
+      tailwind-merge: 3.6.0
 
   '@bramus/specificity@2.4.2':
     dependencies:
@@ -3229,7 +3248,9 @@ snapshots:
     dependencies:
       readdirp: 4.1.2
 
-  classnames@2.5.1: {}
+  class-variance-authority@0.7.1:
+    dependencies:
+      clsx: 2.1.1
 
   client-only@0.0.1: {}
 

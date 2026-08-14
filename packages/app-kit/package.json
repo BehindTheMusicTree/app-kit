@@ -34,11 +34,6 @@
       "import": "./dist/popup/index.js",
       "require": "./dist/popup/index.cjs"
     },
-    "./ui": {
-      "types": "./dist/ui/index.d.ts",
-      "import": "./dist/ui/index.js",
-      "require": "./dist/ui/index.cjs"
-    },
     "./player": {
       "types": "./dist/player/index.d.ts",
       "import": "./dist/player/index.js",
@@ -66,9 +61,9 @@
     "react-dom": ">=18.0.0"
   },
   "dependencies": {
-    "@behindthemusictree/brand": "11.6.0",
+    "@behindthemusictree/brand": "12.0.0",
     "@behindthemusictree/genre-tree-view": "0.4.0",
-    "classnames": "^2.5.1",
+    "@behindthemusictree/ui": "^0.1.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.487.0",
     "react-icons": "^5.5.0",
