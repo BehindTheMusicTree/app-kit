@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-08-14
+
 ### Changed
 
 - Bumped `@behindthemusictree/genre-tree-view` to `0.5.0` (shared pan/zoom viewport for
