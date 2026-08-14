@@ -7,6 +7,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `GenreTreeView`'s root now sizes with `h-full` instead of `h-screen`. `h-screen` (100vh) assumed
+  `GenreTreeView` was the only thing on the page, which is never true for a real consumer (nav
+  header, player bar, popups all share the viewport). Whenever `GenreTreeView` rendered below any
+  other content, its `h-screen` block extended past the actual visible viewport, pushing
+  `GenreTreeWheel`'s bottom-anchored zoom in/out controls below the fold — present in the DOM but
+  invisible without scrolling. `h-full` makes it fill its parent instead; consumers must give that
+  parent an explicit bounded height (as `apps/playground` and both `grow`/`hear`'s `Page` component
+  already do via `flex flex-col` + `min-h-0` chains).
 - `apps/playground` was pinned to `@behindthemusictree/genre-tree-view@0.4.0` directly, independent
   of `packages/app-kit`'s own `0.5.0` dependency, so the playground rendered `0.5.0`'s
   `GenreTreeWheel`/`GenreTree` markup (new absolutely-positioned pan/zoom stage) styled with

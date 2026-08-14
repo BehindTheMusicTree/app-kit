@@ -107,7 +107,16 @@ function AppContent() {
 
   return (
     <>
-      <div style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
+      <div
+        style={{
+          padding: 24,
+          fontFamily: "system-ui, sans-serif",
+          height: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          minHeight: 0,
+        }}
+      >
         <h1>app-kit playground</h1>
         <p>
           Minimal harness exercising `popup` exports, `@behindthemusictree/ui` components, and
@@ -120,7 +129,13 @@ function AppContent() {
           {loading ? <RingLoader size={20} /> : null}
         </div>
 
-        {loading ? <Skeleton style={{ height: 32, width: 240 }} /> : <ReferenceGenreTree />}
+        {loading ? (
+          <Skeleton style={{ height: 32, width: 240 }} />
+        ) : (
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <ReferenceGenreTree />
+          </div>
+        )}
       </div>
       <PopupHost />
     </>
