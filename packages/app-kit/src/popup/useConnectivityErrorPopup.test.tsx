@@ -125,7 +125,7 @@ describe("useConnectivityErrorPopup", () => {
 
     expect(renderers.renderSpotifyAuthErrorPopup).toHaveBeenCalledTimes(1);
 
-    const { onClose } = renderers.renderSpotifyAuthErrorPopup.mock.calls[0][0];
+    const { onClose } = vi.mocked(renderers.renderSpotifyAuthErrorPopup).mock.calls[0][0];
     act(() => onClose());
     expect(getPopupCtx().activePopup).toBeNull();
   });
@@ -146,7 +146,7 @@ describe("useConnectivityErrorPopup", () => {
 
     expect(renderers.renderGoogleAuthErrorPopup).toHaveBeenCalledTimes(1);
 
-    const { onClose } = renderers.renderGoogleAuthErrorPopup.mock.calls[0][0];
+    const { onClose } = vi.mocked(renderers.renderGoogleAuthErrorPopup).mock.calls[0][0];
     act(() => onClose());
     expect(getPopupCtx().activePopup).toBeNull();
   });
