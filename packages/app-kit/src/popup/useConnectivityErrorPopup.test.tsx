@@ -1,11 +1,23 @@
 import { act, render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ReactNode } from "react";
-import { AuthRequired } from "../transport/app-errors/app-error";
+import {
+  AuthRequired,
+  BackendError,
+  BadRequestError,
+  ConnectivityError,
+  InvalidInputError,
+  NetworkError,
+  ServiceError,
+} from "../transport/app-errors/app-error";
 import { ErrorCode } from "../transport/app-errors/app-error-codes";
 import { ConnectivityErrorProvider, useConnectivityError } from "../transport/connectivity-error-context";
 import { PopupProvider, usePopup } from "./PopupContext";
-import { ConnectivityErrorPopupRenderers, useConnectivityErrorPopup } from "./useConnectivityErrorPopup";
+import {
+  ConnectivityErrorPopupRenderers,
+  UseConnectivityErrorPopupOptions,
+  useConnectivityErrorPopup,
+} from "./useConnectivityErrorPopup";
 
 function makeRenderers(): ConnectivityErrorPopupRenderers & Record<string, ReturnType<typeof vi.fn>> {
   return {
@@ -18,58 +30,59 @@ function makeRenderers(): ConnectivityErrorPopupRenderers & Record<string, Retur
   };
 }
 
+type ConsumerOptions = Omit<UseConnectivityErrorPopupOptions, "renderers">;
+
+const DEFAULT_OPTIONS: ConsumerOptions = {
+  isAccountPage: false,
+  routeRequiresAuth: false,
+  routeRequiresSpotify: false,
+};
+
+function setupHarness(options: Partial<ConsumerOptions> = {}) {
+  const renderers = makeRenderers();
+  const resolvedOptions = { ...DEFAULT_OPTIONS, ...options };
+
+  let setError!: (error: ConnectivityError | null) => void;
+  let popupCtx!: ReturnType<typeof usePopup>;
+
+  function Capture({ children }: { children: ReactNode }) {
+    const { setConnectivityError } = useConnectivityError();
+    popupCtx = usePopup();
+    setError = setConnectivityError;
+    return <>{children}</>;
+  }
+
+  render(
+    <PopupProvider>
+      <ConnectivityErrorProvider>
+        <Capture>
+          <Consumer renderers={renderers} options={resolvedOptions} />
+        </Capture>
+      </ConnectivityErrorProvider>
+    </PopupProvider>,
+  );
+
+  return {
+    renderers,
+    setError: (error: ConnectivityError | null) => act(() => setError(error)),
+    getPopupCtx: () => popupCtx,
+  };
+}
+
 describe("useConnectivityErrorPopup", () => {
   it("routes AuthRequired to renderAuthPopup on a route that requires auth", () => {
-    const renderers = makeRenderers();
+    const { renderers, setError } = setupHarness({ routeRequiresAuth: true });
 
-    let setError!: (error: AuthRequired) => void;
-    function SetErrorCapture({ children }: { children: ReactNode }) {
-      const { setConnectivityError } = useConnectivityError();
-      setError = setConnectivityError;
-      return <>{children}</>;
-    }
-
-    render(
-      <PopupProvider>
-        <ConnectivityErrorProvider>
-          <SetErrorCapture>
-            <Consumer renderers={renderers} routeRequiresAuth />
-          </SetErrorCapture>
-        </ConnectivityErrorProvider>
-      </PopupProvider>,
-    );
-
-    act(() => {
-      setError(new AuthRequired(ErrorCode.BACKEND_UNAUTHORIZED));
-    });
+    setError(new AuthRequired(ErrorCode.BACKEND_UNAUTHORIZED));
 
     expect(renderers.renderAuthPopup).toHaveBeenCalledTimes(1);
     expect(renderers.renderInternalErrorPopup).not.toHaveBeenCalled();
   });
 
   it("routes AuthRequired to renderInternalErrorPopup instead of dropping it silently on a route that does not require auth", () => {
-    const renderers = makeRenderers();
+    const { renderers, setError } = setupHarness({ routeRequiresAuth: false });
 
-    let setError!: (error: AuthRequired) => void;
-    function SetErrorCapture({ children }: { children: ReactNode }) {
-      const { setConnectivityError } = useConnectivityError();
-      setError = setConnectivityError;
-      return <>{children}</>;
-    }
-
-    render(
-      <PopupProvider>
-        <ConnectivityErrorProvider>
-          <SetErrorCapture>
-            <Consumer renderers={renderers} routeRequiresAuth={false} />
-          </SetErrorCapture>
-        </ConnectivityErrorProvider>
-      </PopupProvider>,
-    );
-
-    act(() => {
-      setError(new AuthRequired(ErrorCode.BACKEND_UNAUTHORIZED));
-    });
+    setError(new AuthRequired(ErrorCode.BACKEND_UNAUTHORIZED));
 
     expect(renderers.renderInternalErrorPopup).toHaveBeenCalledTimes(1);
     expect(renderers.renderInternalErrorPopup).toHaveBeenCalledWith(ErrorCode.BACKEND_UNAUTHORIZED);
@@ -77,53 +90,91 @@ describe("useConnectivityErrorPopup", () => {
   });
 
   it("hides the popup once the connectivity error clears", () => {
-    const renderers = makeRenderers();
+    const { setError, getPopupCtx } = setupHarness({ routeRequiresAuth: false });
 
-    let setError!: (error: AuthRequired | null) => void;
-    let popupCtx!: ReturnType<typeof usePopup>;
+    setError(new AuthRequired(ErrorCode.BACKEND_UNAUTHORIZED));
+    expect(getPopupCtx().activePopup).not.toBeNull();
 
-    function SetErrorCapture({ children }: { children: ReactNode }) {
-      const { setConnectivityError } = useConnectivityError();
-      setError = setConnectivityError;
-      return <>{children}</>;
-    }
+    setError(null);
+    expect(getPopupCtx().activePopup).toBeNull();
+  });
 
-    function PopupCapture({ children }: { children: ReactNode }) {
-      popupCtx = usePopup();
-      return <>{children}</>;
-    }
+  it("routes a Spotify-authorization-required BackendError to renderSpotifyOnlyAuthPopup on a route that requires Spotify", () => {
+    const { renderers, setError } = setupHarness({ routeRequiresSpotify: true });
 
-    render(
-      <PopupProvider>
-        <PopupCapture>
-          <ConnectivityErrorProvider>
-            <SetErrorCapture>
-              <Consumer renderers={renderers} routeRequiresAuth={false} />
-            </SetErrorCapture>
-          </ConnectivityErrorProvider>
-        </PopupCapture>
-      </PopupProvider>,
-    );
+    setError(new BackendError(ErrorCode.BACKEND_SPOTIFY_AUTHORIZATION_REQUIRED));
 
-    act(() => {
-      setError(new AuthRequired(ErrorCode.BACKEND_UNAUTHORIZED));
-    });
-    expect(popupCtx.activePopup).not.toBeNull();
+    expect(renderers.renderSpotifyOnlyAuthPopup).toHaveBeenCalledTimes(1);
+  });
 
-    act(() => {
-      setError(null);
-    });
-    expect(popupCtx.activePopup).toBeNull();
+  it("routes InvalidInputError to renderInternalErrorPopup", () => {
+    const { renderers, setError } = setupHarness();
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    setError(new InvalidInputError(ErrorCode.BACKEND_INVALID_INPUT, { field: "name" }));
+
+    expect(renderers.renderInternalErrorPopup).toHaveBeenCalledWith(ErrorCode.BACKEND_INVALID_INPUT);
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
+  });
+
+  it("routes a Spotify allowlist BackendError to renderSpotifyAuthErrorPopup on a route that requires Spotify", () => {
+    const { renderers, setError } = setupHarness({ routeRequiresSpotify: true });
+
+    setError(new BackendError(ErrorCode.BACKEND_SPOTIFY_USER_NOT_IN_ALLOWLIST));
+
+    expect(renderers.renderSpotifyAuthErrorPopup).toHaveBeenCalledTimes(1);
+  });
+
+  it("hides the popup and clears the error for a Spotify allowlist BackendError on a route that does not require Spotify", () => {
+    const { renderers, setError, getPopupCtx } = setupHarness({ routeRequiresSpotify: false });
+
+    setError(new BackendError(ErrorCode.BACKEND_SPOTIFY_USER_NOT_IN_ALLOWLIST));
+
+    expect(renderers.renderSpotifyAuthErrorPopup).not.toHaveBeenCalled();
+    expect(getPopupCtx().activePopup).toBeNull();
+  });
+
+  it("routes a Google-authentication BackendError to renderGoogleAuthErrorPopup", () => {
+    const { renderers, setError } = setupHarness();
+
+    setError(new BackendError(ErrorCode.BACKEND_GOOGLE_AUTHENTICATION_ERROR));
+
+    expect(renderers.renderGoogleAuthErrorPopup).toHaveBeenCalledTimes(1);
+  });
+
+  it("routes a plain BadRequestError to renderInternalErrorPopup", () => {
+    const { renderers, setError } = setupHarness();
+
+    setError(new BadRequestError(ErrorCode.BACKEND_BAD_REQUEST));
+
+    expect(renderers.renderInternalErrorPopup).toHaveBeenCalledWith(ErrorCode.BACKEND_BAD_REQUEST);
+  });
+
+  it("routes a plain ServiceError to renderInternalErrorPopup", () => {
+    const { renderers, setError } = setupHarness();
+
+    setError(new ServiceError(ErrorCode.SERVICE_INTERNAL_ERROR));
+
+    expect(renderers.renderInternalErrorPopup).toHaveBeenCalledWith(ErrorCode.SERVICE_INTERNAL_ERROR);
+  });
+
+  it("routes NetworkError to renderNetworkErrorPopup", () => {
+    const { renderers, setError } = setupHarness();
+
+    setError(new NetworkError(ErrorCode.NETWORK_ERROR));
+
+    expect(renderers.renderNetworkErrorPopup).toHaveBeenCalledTimes(1);
   });
 });
 
 function Consumer({
   renderers,
-  routeRequiresAuth,
+  options,
 }: {
   renderers: ConnectivityErrorPopupRenderers;
-  routeRequiresAuth: boolean;
+  options: ConsumerOptions;
 }) {
-  useConnectivityErrorPopup({ isAccountPage: false, routeRequiresAuth, routeRequiresSpotify: false, renderers });
+  useConnectivityErrorPopup({ ...options, renderers });
   return null;
 }
