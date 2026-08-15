@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-08-15
+
 ### Fixed
 
 - `GenreTreeView`'s root now sizes with `h-full` instead of `h-screen`. `h-screen` (100vh) assumed
