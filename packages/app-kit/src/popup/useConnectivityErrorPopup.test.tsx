@@ -1,7 +1,9 @@
 import { act, render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ReactNode } from "react";
-import { AuthRequired, ErrorCode, ConnectivityErrorProvider, useConnectivityError } from "../transport";
+import { AuthRequired } from "../transport/app-errors/app-error";
+import { ErrorCode } from "../transport/app-errors/app-error-codes";
+import { ConnectivityErrorProvider, useConnectivityError } from "../transport/connectivity-error-context";
 import { PopupProvider, usePopup } from "./PopupContext";
 import { ConnectivityErrorPopupRenderers, useConnectivityErrorPopup } from "./useConnectivityErrorPopup";
 

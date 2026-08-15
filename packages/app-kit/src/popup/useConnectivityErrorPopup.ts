@@ -7,12 +7,12 @@ import {
   BadRequestError,
   ClientError,
   ConnectivityError,
-  ErrorCode,
   InvalidInputError,
   NetworkError,
   ServiceError,
-  useConnectivityError,
-} from "../transport";
+} from "../transport/app-errors/app-error";
+import { ErrorCode } from "../transport/app-errors/app-error-codes";
+import { useConnectivityError } from "../transport/connectivity-error-context";
 import { AUTH_POPUP_TYPE, usePopup } from "./PopupContext";
 
 export interface ConnectivityErrorPopupRenderers {
