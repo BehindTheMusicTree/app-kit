@@ -119,11 +119,15 @@ describe("useConnectivityErrorPopup", () => {
   });
 
   it("routes a Spotify allowlist BackendError to renderSpotifyAuthErrorPopup on a route that requires Spotify", () => {
-    const { renderers, setError } = setupHarness({ routeRequiresSpotify: true });
+    const { renderers, setError, getPopupCtx } = setupHarness({ routeRequiresSpotify: true });
 
     setError(new BackendError(ErrorCode.BACKEND_SPOTIFY_USER_NOT_IN_ALLOWLIST));
 
     expect(renderers.renderSpotifyAuthErrorPopup).toHaveBeenCalledTimes(1);
+
+    const { onClose } = renderers.renderSpotifyAuthErrorPopup.mock.calls[0][0];
+    act(() => onClose());
+    expect(getPopupCtx().activePopup).toBeNull();
   });
 
   it("hides the popup and clears the error for a Spotify allowlist BackendError on a route that does not require Spotify", () => {
@@ -136,11 +140,15 @@ describe("useConnectivityErrorPopup", () => {
   });
 
   it("routes a Google-authentication BackendError to renderGoogleAuthErrorPopup", () => {
-    const { renderers, setError } = setupHarness();
+    const { renderers, setError, getPopupCtx } = setupHarness();
 
     setError(new BackendError(ErrorCode.BACKEND_GOOGLE_AUTHENTICATION_ERROR));
 
     expect(renderers.renderGoogleAuthErrorPopup).toHaveBeenCalledTimes(1);
+
+    const { onClose } = renderers.renderGoogleAuthErrorPopup.mock.calls[0][0];
+    act(() => onClose());
+    expect(getPopupCtx().activePopup).toBeNull();
   });
 
   it("routes a plain BadRequestError to renderInternalErrorPopup", () => {
