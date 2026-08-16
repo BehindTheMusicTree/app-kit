@@ -5,6 +5,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Popup**: Added `AuthErrorPopup`, `InternalErrorPopup`, `NetworkErrorPopup`, `AuthPopup`, and
+  `SpotifyAuthErrorPopup`, extracted from `grow`/`hear`'s local copies (which were near-identical
+  apart from `topOffset` and env-var reads). `InternalErrorPopup` and `SpotifyAuthErrorPopup` now
+  take an explicit `contactEmail` prop instead of reading `process.env.NEXT_PUBLIC_CONTACT_EMAIL`
+  directly, and `AuthPopup` takes `spotifyOnlyDescription`/`defaultDescription` props instead of
+  hardcoded copy, since both env var name and body copy differ per consuming app.
+
 ## [1.0.2] - 2026-08-15
 
 ### Fixed
