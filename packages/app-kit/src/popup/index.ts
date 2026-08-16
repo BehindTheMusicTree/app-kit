@@ -4,3 +4,8 @@ export * from "./PopupButtons";
 export * from "./BasePopup";
 export * from "./useConnectivityErrorPopup";
 export { default as TrackUploadPopup } from "./TrackUploadPopup";
+export { default as AuthErrorPopup } from "./AuthErrorPopup";
+export { default as InternalErrorPopup } from "./InternalErrorPopup";
+export { default as NetworkErrorPopup } from "./NetworkErrorPopup";
+export { default as AuthPopup } from "./AuthPopup";
+export { default as SpotifyAuthErrorPopup } from "./SpotifyAuthErrorPopup";
