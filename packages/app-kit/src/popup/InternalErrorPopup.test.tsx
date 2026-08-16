@@ -2,7 +2,7 @@
 
 import { describe, it, expect, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
-import { ErrorCode } from "../transport";
+import { ErrorCode } from "../transport/app-errors/app-error-codes";
 import InternalErrorPopup from "./InternalErrorPopup";
 
 describe("InternalErrorPopup", () => {

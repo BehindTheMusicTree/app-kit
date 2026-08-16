@@ -2,7 +2,7 @@
 
 import { AlertTriangle, AlertCircle } from "lucide-react";
 import { BasePopup, BasePopupProps } from "./BasePopup";
-import { ErrorCode } from "../transport";
+import { ErrorCode } from "../transport/app-errors/app-error-codes";
 
 type InternalErrorPopupProps = Omit<BasePopupProps, "title" | "children" | "icon" | "isDismissable"> & {
   errorCode: ErrorCode;

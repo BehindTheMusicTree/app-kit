@@ -4,7 +4,7 @@ import { FaSpotify } from "react-icons/fa";
 import { BasePopup, BasePopupProps } from "./BasePopup";
 import { Button } from "@behindthemusictree/ui";
 import { User } from "lucide-react";
-import { getSpotifyAllowlistMailtoHref } from "../transport";
+import { getSpotifyAllowlistMailtoHref } from "../transport/app-errors/app-error-messages";
 
 type SpotifyAuthErrorPopupProps = Omit<BasePopupProps, "title" | "children" | "icon" | "isDismissable"> & {
   message: string;
