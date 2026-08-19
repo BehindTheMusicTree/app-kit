@@ -3,7 +3,7 @@ import { z } from "zod";
 import { UuidResourceSchema } from "../uuid-resource";
 import { CriteriaMinimumSchema } from "./minimum";
 import { CriteriaPlaylistMinimumSchema } from "../criteria-playlist/minimum";
-import { UploadedTrackMinimumSchema } from "../uploaded-track/minimum";
+import { TrackMinimumSchema } from "../track/minimum";
 import { CriteriaLineageRelWithoutAscendantSchema } from "./lineage-rel/without-ascendant";
 import { CriteriaLineageRelWithoutDescendantSchema } from "./lineage-rel/without-descendant";
 
@@ -15,9 +15,9 @@ export const CriteriaDetailedSchema = UuidResourceSchema.extend({
   root: CriteriaMinimumSchema,
   children: z.array(CriteriaMinimumSchema),
   criteriaPlaylist: CriteriaPlaylistMinimumSchema,
-  uploadedTracks: z.array(UploadedTrackMinimumSchema),
-  uploadedTracksCount: z.number(),
-  uploadedTracksArchivedCount: z.number(),
+  tracks: z.array(TrackMinimumSchema),
+  tracksCount: z.number(),
+  tracksArchivedCount: z.number(),
   updatedOn: z.string().datetime().nullable(),
 });
 

@@ -62,7 +62,7 @@ export default function GenrePlaylistTreePerRoot({
         id: genrePlaylist.uuid,
         parentId: genrePlaylist.parent?.uuid ?? null,
         name: genrePlaylist.name,
-        itemCount: genrePlaylist.uploadedTracksCount,
+        itemCount: genrePlaylist.tracksCount,
         actionable: Boolean(genrePlaylist.criteria),
       })),
     [genrePlaylistTreePerRoot],
@@ -85,7 +85,7 @@ export default function GenrePlaylistTreePerRoot({
         return;
       }
 
-      if (genrePlaylist.uploadedTracksCount === 0) {
+      if (genrePlaylist.tracksCount === 0) {
         return;
       }
 

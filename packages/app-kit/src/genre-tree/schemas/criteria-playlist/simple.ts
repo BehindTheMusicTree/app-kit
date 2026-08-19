@@ -7,7 +7,7 @@ export const CriteriaPlaylistSimpleSchema = CriteriaPlaylistDetailedSchema.pick(
   criteria: true,
   parent: true,
   root: true,
-  uploadedTracksCount: true,
+  tracksCount: true,
   createdOn: true,
   updatedOn: true,
 });

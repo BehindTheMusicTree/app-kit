@@ -9,7 +9,7 @@
  */
 
 import { createContext, useState, useContext, ReactNode, useCallback, useMemo } from "react";
-import { UploadedTrackDetailed } from "./schemas/uploaded-track/detailed";
+import { TrackDetailed } from "./schemas/track/detailed";
 import TrackList, { TrackListFromUploadedTrack, TrackListFromCriteriaPlaylist } from "./models/TrackList";
 import {
   TrackListOriginFromUploadedTrack,
@@ -20,14 +20,14 @@ import { CriteriaPlaylistDetailed } from "./schemas/criteria-playlist/detailed";
 import { Scope } from "../transport/lib/scope";
 import { usePlayer } from "../player/PlayerContext";
 import { useTrackListSidebarVisibility } from "./TrackListSidebarVisibilityContext";
-import { useListUploadedTracks } from "./useUploadedTrack";
+import { useListTracks } from "./useUploadedTrack";
 
 interface TrackListContextType {
   trackList: TrackList | null;
-  selectedTrack: UploadedTrackDetailed | null;
-  setSelectedTrack: (track: UploadedTrackDetailed | null) => void;
+  selectedTrack: TrackDetailed | null;
+  setSelectedTrack: (track: TrackDetailed | null) => void;
   toTrackAtPosition: (position: number) => void;
-  playNewTrackListFromUploadedTrackUuid: (track: UploadedTrackDetailed, scope: Scope) => void;
+  playNewTrackListFromUploadedTrackUuid: (track: TrackDetailed, scope: Scope) => void;
   playNewTrackListFromGenrePlaylist: (genrePlaylist: CriteriaPlaylistDetailed, scope: Scope) => void;
 }
 
@@ -40,11 +40,11 @@ interface TrackListProviderProps {
 
 export function TrackListProvider({ children, getBackendBaseUrl }: TrackListProviderProps) {
   const [trackList, setTrackList] = useState<TrackList | null>(null);
-  const [selectedTrack, setSelectedTrack] = useState<UploadedTrackDetailed | null>(null);
+  const [selectedTrack, setSelectedTrack] = useState<TrackDetailed | null>(null);
   const { loadTrackForPlayer } = usePlayer();
   const { showTrackListSidebar } = useTrackListSidebarVisibility();
   const scope = trackList?.origin?.scope ?? null;
-  const { data: uploadedTracksResponse } = useListUploadedTracks(scope, getBackendBaseUrl);
+  const { data: uploadedTracksResponse } = useListTracks(scope, getBackendBaseUrl);
 
   // Create a memoized track list that updates when uploadedTracks changes
   const currentTrackList = useMemo(() => {
@@ -95,7 +95,7 @@ export function TrackListProvider({ children, getBackendBaseUrl }: TrackListProv
   );
 
   const playNewTrackListFromUploadedTrackUuid = useCallback(
-    (track: UploadedTrackDetailed, scope: Scope) => {
+    (track: TrackDetailed, scope: Scope) => {
       const origin = new TrackListOriginFromUploadedTrack(track, scope);
       const newTrackList = new TrackListFromUploadedTrack([track], origin);
 
@@ -109,9 +109,9 @@ export function TrackListProvider({ children, getBackendBaseUrl }: TrackListProv
 
   const playNewTrackListFromGenrePlaylist = useCallback(
     (genrePlaylist: CriteriaPlaylistDetailed, scope: Scope) => {
-      const tracks = genrePlaylist.uploadedTrackPlaylistRelations
+      const tracks = genrePlaylist.trackPlaylistRelations
         .sort((a, b) => a.position - b.position)
-        .map((rel) => rel.uploadedTrack);
+        .map((rel) => rel.track);
 
       if (tracks.length === 0) {
         console.warn("No tracks found in genre playlist");

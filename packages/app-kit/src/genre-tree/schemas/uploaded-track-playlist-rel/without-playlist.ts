@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { UploadedTrackDetailedSchema } from "../uploaded-track/detailed";
+import { TrackDetailedSchema } from "../track/detailed";
 
-export const UploadedTrackPlaylistRelWithoutPlaylistSchema = z.object({
-  uploadedTrack: UploadedTrackDetailedSchema,
+export const TrackPlaylistRelWithoutPlaylistSchema = z.object({
+  track: TrackDetailedSchema,
   position: z.number().min(0),
 });
 
-export type UploadedTrackPlaylistRel = z.infer<typeof UploadedTrackPlaylistRelWithoutPlaylistSchema>;
+export type TrackPlaylistRel = z.infer<typeof TrackPlaylistRelWithoutPlaylistSchema>;

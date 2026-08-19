@@ -55,7 +55,7 @@ export default function GenrePlaylistTreeWheel({
         id: genrePlaylist.uuid,
         parentId: genrePlaylist.parent?.uuid ?? null,
         name: genrePlaylist.name,
-        itemCount: genrePlaylist.uploadedTracksCount,
+        itemCount: genrePlaylist.tracksCount,
         actionable: Boolean(genrePlaylist.criteria),
       })),
     [genrePlaylists],
@@ -78,7 +78,7 @@ export default function GenrePlaylistTreeWheel({
         return;
       }
 
-      if (genrePlaylist.uploadedTracksCount === 0) {
+      if (genrePlaylist.tracksCount === 0) {
         return;
       }
 

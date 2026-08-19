@@ -63,10 +63,12 @@ export default function UploadedTrackEditionPopup({
                   className="w-full px-3 py-2 border rounded-md"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
-                <div className="px-3 py-2 bg-gray-50 rounded-md">{formatTime(uploadedTrack.file.durationInSec)}</div>
-              </div>
+              {uploadedTrack.file && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+                  <div className="px-3 py-2 bg-gray-50 rounded-md">{formatTime(uploadedTrack.file.durationInSec)}</div>
+                </div>
+              )}
             </div>
 
             <div className="space-y-4">
@@ -98,11 +100,13 @@ export default function UploadedTrackEditionPopup({
             </div>
           </div>
 
-          <div className="space-y-2 text-sm text-gray-500">
-            <div>Filename: {uploadedTrack.file.filename}</div>
-            <div>Size: {uploadedTrack.file.sizeInMo} Mo</div>
-            <div>Bitrate: {uploadedTrack.file.bitrateInKbps} kbps</div>
-          </div>
+          {uploadedTrack.file && (
+            <div className="space-y-2 text-sm text-gray-500">
+              <div>Filename: {uploadedTrack.file.filename}</div>
+              <div>Size: {uploadedTrack.file.sizeInMo} Mo</div>
+              <div>Bitrate: {uploadedTrack.file.bitrateInKbps} kbps</div>
+            </div>
+          )}
 
           <div className="flex justify-end gap-3">
             <Button onClick={onClose} variant="secondary">

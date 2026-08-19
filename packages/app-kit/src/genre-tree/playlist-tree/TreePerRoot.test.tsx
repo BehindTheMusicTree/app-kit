@@ -87,7 +87,7 @@ const genrePlaylist: CriteriaPlaylistSimple = {
   criteria: { uuid: criteriaUuid, name: "Electronic" },
   parent: null,
   root: { uuid: playlistUuid, name: "Electronic" },
-  uploadedTracksCount: 3,
+  tracksCount: 3,
   createdOn: "2026-06-20T20:24:17.718222Z",
   updatedOn: "2026-06-20T20:24:17.718222Z",
 };
@@ -196,7 +196,7 @@ describe("GenrePlaylistTreePerRoot", () => {
     });
 
     it("does nothing for an empty genre playlist", () => {
-      renderTree([{ ...genrePlaylist, uploadedTracksCount: 0 }]);
+      renderTree([{ ...genrePlaylist, tracksCount: 0 }]);
 
       capturedProps!.onPlayPause!(playlistUuid);
 

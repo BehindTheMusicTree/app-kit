@@ -5,6 +5,44 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Player**: `PlayerTrack` is now a discriminated union (`AudioPlayerTrack` | `YoutubePlayerTrack`)
+  instead of a single audio-only shape. Playback for both kinds is driven through a new
+  `MediaController` interface (`AudioMediaController` / `YoutubeMediaController`), so
+  `PlayerContext`'s play/pause/seek code no longer branches on track kind. YouTube tracks play
+  through the YouTube IFrame Player API, lazy-loaded once per page (`loadYoutubeIframeApi`) and
+  mounted into a new `<PlayerVideoSurface />` component that consumers render wherever the video
+  should appear. Needed for `gtmt-api`'s reference tracks, which have no self-hosted audio and are
+  embedded YouTube videos instead.
+
+### Changed
+
+- **genre-tree**: `TrackDetailedSchema` is now a real discriminated union —
+  `UploadedTrackDetailed | YoutubeTrackDetailed`, each tagged with a `kind` field (`"uploaded"` /
+  `"youtube"`) stamped on the parsed output — replacing the old flat schema that made
+  `relativeUrl`/`file`/`youtubeVideoId` all optional on one shape. `UploadedTrackDetailedSchema`
+  keeps `relativeUrl`/`file` required (uploaded tracks always have them); the new
+  `YoutubeTrackDetailedSchema` requires `youtubeVideoId` and has no file fields at all. Upload-only
+  surfaces (`useUploadTrack`, `useUpdateUploadedTrack`, `UploadedTrackEditionPopup`,
+  `useTrackEdition`) are typed against `UploadedTrackDetailed` specifically; list/playback surfaces
+  (`useListTracks`, `TrackList`, `TrackListContext`) stay on the generic `TrackDetailed` union.
+  `TrackItem` now gates its edit affordance on `track.kind === "uploaded"`, since gtmt-api's
+  `YoutubeTrackViewSet` has no update route. Neither backend sends a `kind` field on the wire — each
+  route only ever serves one track kind, so a plain `z.union` (not `z.discriminatedUnion`) is used,
+  with each member schema stamping its own `kind` via `.transform()` on the output.
+
+  Also renamed the playlist-relation fields that mirror gtmt-api's `UploadedTrack` → `Track` rename
+  to match: `UploadedTrackPlaylistRelWithoutPlaylistSchema.uploadedTrack` → `.track`,
+  `CriteriaPlaylistDetailedSchema.uploadedTrackPlaylistRelations` → `.trackPlaylistRelations`,
+  `.uploadedTracksCount`/`.uploadedTracksArchivedCount` → `.tracksCount`/`.tracksArchivedCount`, and
+  `CriteriaDetailedSchema.uploadedTracks` → `.tracks` (same count fields). hear-the-music-tree
+  doesn't consume the criteria/criteria-playlist schemas, so this only affects gtmt-front.
+- **genre-tree**: `libraryEndpoints.reference` now exposes `.youtube` (list/detail/delete only,
+  mirroring `YoutubeTrackViewSet`) instead of `.uploaded` — gtmt-api's `reference/library/uploaded`
+  route is gone. `libraryEndpoints.me.uploaded` (hear-the-music-tree's real uploaded-audio flow) is
+  unchanged.
+
 ## [1.2.0] - 2026-08-16
 
 ### Added
