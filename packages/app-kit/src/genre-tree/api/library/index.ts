@@ -25,6 +25,6 @@ export const libraryEndpoints = {
     uploaded: makeUploadedEndpoints("me"),
   },
   reference: {
-    youtube: makeYoutubeEndpoints("reference"),
+    youtube: makeYoutubeEndpoints(),
   },
 };

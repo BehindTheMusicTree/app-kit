@@ -13,10 +13,10 @@ export const genrePlaylistEndpoints = {
     delete: (uuid: string) => `me/genre-playlists/${uuid}/`,
   },
   reference: {
-    list: () => "reference/genre-playlists/",
-    detail: (uuid: string) => `reference/genre-playlists/${uuid}/`,
-    create: () => "reference/genre-playlists/",
-    update: (uuid: string) => `reference/genre-playlists/${uuid}/`,
-    delete: (uuid: string) => `reference/genre-playlists/${uuid}/`,
+    list: () => "genre-playlists/",
+    detail: (uuid: string) => `genre-playlists/${uuid}/`,
+    create: () => "genre-playlists/",
+    update: (uuid: string) => `genre-playlists/${uuid}/`,
+    delete: (uuid: string) => `genre-playlists/${uuid}/`,
   },
 };
