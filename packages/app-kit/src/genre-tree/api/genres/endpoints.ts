@@ -1,18 +1,13 @@
+const makeGenreEndpoints = (prefix: string) => ({
+  list: () => `${prefix}genres/`,
+  detail: (id: string) => `${prefix}genres/${id}/`,
+  loadExampleTree: () => `${prefix}genres/tree/load-example/`,
+  create: () => `${prefix}genres/`,
+  update: (id: string) => `${prefix}genres/${id}/`,
+  delete: (id: string) => `${prefix}genres/${id}/`,
+});
+
 export const genreEndpoints = {
-  me: {
-    list: () => "me/genres/",
-    detail: (id: string) => `me/genres/${id}/`,
-    loadExampleTree: () => "me/genres/tree/load-example/",
-    create: () => "me/genres/",
-    update: (id: string) => `me/genres/${id}/`,
-    delete: (id: string) => `me/genres/${id}/`,
-  },
-  reference: {
-    list: () => "genres/",
-    detail: (id: string) => `genres/${id}/`,
-    loadExampleTree: () => "genres/tree/load-example/",
-    create: () => "genres/",
-    update: (id: string) => `genres/${id}/`,
-    delete: (id: string) => `genres/${id}/`,
-  },
+  me: makeGenreEndpoints("me/"),
+  reference: makeGenreEndpoints(""),
 };

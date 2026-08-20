@@ -4,19 +4,15 @@
  * for this package). Scope-parameterized identically for grow's reference tree and hear's personal
  * tree, per grow's original `src/api/domains/playlists/endpoints.ts`.
  */
+const makeGenrePlaylistEndpoints = (prefix: string) => ({
+  list: () => `${prefix}genre-playlists/`,
+  detail: (uuid: string) => `${prefix}genre-playlists/${uuid}/`,
+  create: () => `${prefix}genre-playlists/`,
+  update: (uuid: string) => `${prefix}genre-playlists/${uuid}/`,
+  delete: (uuid: string) => `${prefix}genre-playlists/${uuid}/`,
+});
+
 export const genrePlaylistEndpoints = {
-  me: {
-    list: () => "me/genre-playlists/",
-    detail: (uuid: string) => `me/genre-playlists/${uuid}/`,
-    create: () => "me/genre-playlists/",
-    update: (uuid: string) => `me/genre-playlists/${uuid}/`,
-    delete: (uuid: string) => `me/genre-playlists/${uuid}/`,
-  },
-  reference: {
-    list: () => "genre-playlists/",
-    detail: (uuid: string) => `genre-playlists/${uuid}/`,
-    create: () => "genre-playlists/",
-    update: (uuid: string) => `genre-playlists/${uuid}/`,
-    delete: (uuid: string) => `genre-playlists/${uuid}/`,
-  },
+  me: makeGenrePlaylistEndpoints("me/"),
+  reference: makeGenrePlaylistEndpoints(""),
 };
