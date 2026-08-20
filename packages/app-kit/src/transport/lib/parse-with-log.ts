@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export function parseWithLog<T>(schema: z.ZodType<T>, data: unknown, context?: string): T {
+export function parseWithLog<T>(schema: z.ZodType<T, z.ZodTypeDef, unknown>, data: unknown, context?: string): T {
   const result = schema.safeParse(data);
   if (!result.success) {
     const prefix = context ? `[${context}]` : "";
