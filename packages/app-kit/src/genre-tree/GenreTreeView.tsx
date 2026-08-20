@@ -21,7 +21,7 @@ type GenreTreeViewMode = "stacked" | "wheel";
 export type GenreTreeViewProps = {
   scope: Scope;
   handleGenreCreationAction: (parent: CriteriaMinimum | null) => void;
-  handleGenreRenameAction?: (genre: CriteriaMinimum) => void;
+  handleGenreRenameAction: (genre: CriteriaMinimum) => void;
   getBackendBaseUrl: () => string;
   uploadTimeoutMs: number;
 };

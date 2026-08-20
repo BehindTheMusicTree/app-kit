@@ -285,6 +285,7 @@ describe("GenrePlaylistTreePerRoot", () => {
           reparentingGenreUuid={null}
           setReparentingGenreUuid={setReparentingGenreUuid}
           handleGenreCreationAction={handleGenreCreationAction}
+          handleGenreRenameAction={handleGenreRenameAction}
           getBackendBaseUrl={() => "https://api.example.com"}
           uploadTimeoutMs={30000}
         />,
@@ -306,6 +307,7 @@ describe("GenrePlaylistTreePerRoot", () => {
           reparentingGenreUuid={playlistUuid}
           setReparentingGenreUuid={setReparentingGenreUuid}
           handleGenreCreationAction={handleGenreCreationAction}
+          handleGenreRenameAction={handleGenreRenameAction}
           getBackendBaseUrl={() => "https://api.example.com"}
           uploadTimeoutMs={30000}
         />,

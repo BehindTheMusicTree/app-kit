@@ -24,8 +24,7 @@ export type GenrePlaylistTreeWheelProps = {
   reparentingGenreUuid: string | null;
   setReparentingGenreUuid: (uuid: string | null) => void;
   handleGenreCreationAction: (parent: CriteriaMinimum | null) => void;
-  /** See `GenrePlaylistTreePerRoot`'s doc comment on the same prop. */
-  handleGenreRenameAction?: (genre: CriteriaMinimum) => void;
+  handleGenreRenameAction: (genre: CriteriaMinimum) => void;
   getBackendBaseUrl: () => string;
   /** Passed straight through to `TrackUploadPopup`. See its own doc comment. */
   uploadTimeoutMs: number;
@@ -107,7 +106,7 @@ export default function GenrePlaylistTreeWheel({
     (node: GenreTreeNode) => {
       const genrePlaylist = genrePlaylists.find((g) => g.uuid === node.id);
       if (!genrePlaylist?.criteria) return;
-      handleGenreRenameAction?.(genrePlaylist.criteria);
+      handleGenreRenameAction(genrePlaylist.criteria);
     },
     [genrePlaylists, handleGenreRenameAction],
   );
