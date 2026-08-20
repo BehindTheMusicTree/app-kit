@@ -25,13 +25,7 @@ export type GenrePlaylistTreePerRootProps = {
   reparentingGenreUuid: string | null;
   setReparentingGenreUuid: (uuid: string | null) => void;
   handleGenreCreationAction: (parent: CriteriaMinimum | null) => void;
-  /**
-   * Opens a rename UI for `genre` (e.g. a popup collecting the new name). Not provided by this
-   * package (grow's original `GenreRenamePopup`/`InvalidInputPopup` are app-specific, not moved
-   * here) — the consumer implements its own popup and calls `useUpdateGenre` (exported from this
-   * same `genre-tree` module) to submit it. If omitted, rename is a no-op.
-   */
-  handleGenreRenameAction?: (genre: CriteriaMinimum) => void;
+  handleGenreRenameAction: (genre: CriteriaMinimum) => void;
   getBackendBaseUrl: () => string;
   /** Passed straight through to `TrackUploadPopup`. See its own doc comment. */
   uploadTimeoutMs: number;
@@ -62,7 +56,7 @@ export default function GenrePlaylistTreePerRoot({
         id: genrePlaylist.uuid,
         parentId: genrePlaylist.parent?.uuid ?? null,
         name: genrePlaylist.name,
-        itemCount: genrePlaylist.uploadedTracksCount,
+        itemCount: genrePlaylist.tracksCount,
         actionable: Boolean(genrePlaylist.criteria),
       })),
     [genrePlaylistTreePerRoot],
@@ -85,7 +79,7 @@ export default function GenrePlaylistTreePerRoot({
         return;
       }
 
-      if (genrePlaylist.uploadedTracksCount === 0) {
+      if (genrePlaylist.tracksCount === 0) {
         return;
       }
 
@@ -114,7 +108,7 @@ export default function GenrePlaylistTreePerRoot({
     (node: GenreTreeNode) => {
       const genrePlaylist = genrePlaylistTreePerRoot.find((g) => g.uuid === node.id);
       if (!genrePlaylist?.criteria) return;
-      handleGenreRenameAction?.(genrePlaylist.criteria);
+      handleGenreRenameAction(genrePlaylist.criteria);
     },
     [genrePlaylistTreePerRoot, handleGenreRenameAction],
   );

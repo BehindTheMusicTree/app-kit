@@ -45,7 +45,7 @@ export default function TrackListSidebar({ className, getBackendBaseUrl }: Track
       <ul className={"track-list overflow-auto max-h-[calc(100vh-63.5px-79px-56px-3.5px)] list-none p-0 m-0"}>
         {trackList.uploadedTracks.map((track, index) => (
           <li key={track.uuid}>
-            <TrackItem uploadedTrack={track} position={index + 1} getBackendBaseUrl={getBackendBaseUrl} />
+            <TrackItem track={track} position={index + 1} getBackendBaseUrl={getBackendBaseUrl} />
           </li>
         ))}
       </ul>

@@ -6,7 +6,7 @@
  * workspace — are kept.
  */
 import { CriteriaPlaylistDetailed } from "../schemas/criteria-playlist/detailed";
-import { UploadedTrackDetailed } from "../schemas/uploaded-track/detailed";
+import { TrackDetailed } from "../schemas/track/detailed";
 import { Scope } from "../../transport/lib/scope";
 import { TrackListOriginType } from "./TrackListOriginType";
 
@@ -20,7 +20,7 @@ export default class TrackListOrigin {
 }
 
 export class TrackListOriginFromUploadedTrack extends TrackListOrigin {
-  constructor(public uploadedTrack: UploadedTrackDetailed, scope: Scope) {
+  constructor(public uploadedTrack: TrackDetailed, scope: Scope) {
     super(
       TrackListOriginType.UPLOADED_TRACK,
       `${uploadedTrack.title} by ${

@@ -1,6 +1,5 @@
 "use client";
 
-import { z } from "zod";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { useFetchWrapper } from "../transport/useFetchWrapper";
 import { parseWithLog } from "../transport/lib/parse-with-log";
@@ -76,7 +75,7 @@ export const useFetchGenrePlaylist = (uuid: string, getBackendBaseUrl: () => str
   return useQueryWithParse<CriteriaPlaylistDetailed>({
     queryKey: genrePlaylistQueryKeys.me.detail(uuid),
     queryFn: () => fetch(genrePlaylistEndpoints.me.detail(uuid)),
-    schema: CriteriaPlaylistDetailedSchema as z.ZodType<CriteriaPlaylistDetailed>,
+    schema: CriteriaPlaylistDetailedSchema,
     context: "useFetchGenrePlaylist",
     enabled: !!uuid && sessionRestored && !!session?.accessToken,
   });

@@ -1,27 +1,11 @@
 import { z } from "zod";
-
-import { ArtistMinimumSchema } from "../artist-minimum";
-import { AlbumMinimumSchema } from "../album-minimum";
-import { CriteriaMinimumSchema } from "../criteria/minimum";
+import { TrackBaseSchema } from "../track/base";
 import { FileDetailedSchema } from "./file";
-import { CriteriaPlaylistMinimumSchema } from "../criteria-playlist/minimum";
-import { UuidResourceSchema } from "../uuid-resource";
 
-export const UploadedTrackDetailedSchema = UuidResourceSchema.extend({
+// `kind` is stamped output-side only — see the comment in `../youtube-track/detailed.ts`.
+export const UploadedTrackDetailedSchema = TrackBaseSchema.extend({
   relativeUrl: z.string(),
-  title: z.string(),
   file: FileDetailedSchema,
-  artists: z.array(ArtistMinimumSchema).nullable().optional(),
-  album: AlbumMinimumSchema.nullable().optional(),
-  trackNumber: z.number().nullable().optional(),
-  genre: CriteriaMinimumSchema,
-  rating: z.number().min(0).max(10).nullable().optional(),
-  language: z.string().nullable().optional(),
-  playlists: z.array(CriteriaPlaylistMinimumSchema),
-  playCount: z.number().min(0),
-  archived: z.boolean(),
-  createdOn: z.string().datetime(),
-  updatedOn: z.string().datetime().nullable().optional(),
-});
+}).transform((data) => ({ ...data, kind: "uploaded" as const }));
 
 export type UploadedTrackDetailed = z.infer<typeof UploadedTrackDetailedSchema>;

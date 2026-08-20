@@ -11,10 +11,11 @@ import {
   TrackListSidebarVisibilityProvider,
   useFetchWrapper,
   libraryEndpoints,
-  UploadedTrackDetailed,
+  YoutubeTrackDetailed,
 } from "@behindthemusictree/app-kit";
 import { Button, RingLoader, Skeleton } from "@behindthemusictree/ui";
 import GenreCreationPopup from "./GenreCreationPopup";
+import GenreRenamePopup from "./GenreRenamePopup";
 
 const getBackendBaseUrl = () => "https://hear-api-staging.themusictree.org/v2/";
 const uploadTimeoutMs = 5 * 60 * 1000;
@@ -24,26 +25,18 @@ function useLoadTrack(): (trackId: string) => Promise<PlayerTrack> {
 
   return useCallback(
     async (trackId: string): Promise<PlayerTrack> => {
-      const track = await fetch<UploadedTrackDetailed>(
-        libraryEndpoints.reference.uploaded.detail(trackId),
+      const track = await fetch<YoutubeTrackDetailed>(
+        libraryEndpoints.reference.youtube.detail(trackId),
         true,
         false,
       );
-      const data = await fetch<ArrayBuffer>(
-        libraryEndpoints.reference.uploaded.download(trackId),
-        true,
-        false,
-        {},
-        {},
-        true,
-      );
-      if (!track || !data) {
+      if (!track) {
         throw new Error(`Failed to load track ${trackId}`);
       }
-      const blob = new Blob([data], { type: "audio/mpeg" });
       return {
         id: trackId,
-        streamUrl: URL.createObjectURL(blob),
+        kind: "youtube",
+        youtubeVideoId: track.youtubeVideoId,
         title: track.title,
         artists: track.artists?.map((artist) => ({ name: artist.name })),
       };
@@ -69,10 +62,20 @@ function ReferenceGenreTree() {
     [hidePopup, showPopup],
   );
 
+  const showGenreRenamePopup = useCallback(
+    (genre: CriteriaMinimum) => {
+      showPopup(
+        <GenreRenamePopup genre={genre} scope="reference" getBackendBaseUrl={getBackendBaseUrl} onClose={hidePopup} />,
+      );
+    },
+    [hidePopup, showPopup],
+  );
+
   return (
     <GenreTreeView
       scope="reference"
       handleGenreCreationAction={showCriteriaCreationPopup}
+      handleGenreRenameAction={showGenreRenamePopup}
       getBackendBaseUrl={getBackendBaseUrl}
       uploadTimeoutMs={uploadTimeoutMs}
     />

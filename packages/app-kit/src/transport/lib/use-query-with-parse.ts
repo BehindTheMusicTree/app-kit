@@ -4,7 +4,7 @@ import { parseWithLog } from "./parse-with-log";
 
 type UseQueryWithParseOptions<T> = Omit<UseQueryOptions<T, Error, T>, "queryFn"> & {
   queryFn: () => Promise<unknown>;
-  schema: z.ZodType<T>;
+  schema: z.ZodType<T, z.ZodTypeDef, unknown>;
   context?: string;
 };
 

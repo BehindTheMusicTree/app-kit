@@ -6,6 +6,7 @@ import { useFetchWrapper } from "../transport/useFetchWrapper";
 import { useSession } from "../auth/SessionContext";
 import { useInvalidateAllGenrePlaylistQueries } from "./useGenrePlaylist";
 import { useQueryWithParse } from "../transport/lib/use-query-with-parse";
+import { TrackDetailedSchema } from "./schemas/track/detailed";
 import { UploadedTrackDetailedSchema } from "./schemas/uploaded-track/detailed";
 import { UploadedTrackCreationSchema } from "./schemas/uploaded-track/form/creation";
 import { UploadedTrackUpdateSchema } from "./schemas/uploaded-track/form/update";
@@ -14,7 +15,7 @@ import { useValidatedMutation } from "../transport/lib/use-validated-mutation";
 import { libraryEndpoints, libraryQueryKeys } from "./api/library";
 import { Scope } from "../transport/lib/scope";
 
-export function useListUploadedTracks(
+export function useListTracks(
   scope: Scope | null,
   getBackendBaseUrl: () => string,
   page = 1,
@@ -24,13 +25,20 @@ export function useListUploadedTracks(
   const { session, sessionRestored } = useSession();
 
   return useQueryWithParse({
-    queryKey: scope != null ? libraryQueryKeys[scope].uploaded.list(page) : ["uploadedTracks", "none", page],
+    queryKey:
+      scope === "me"
+        ? libraryQueryKeys.me.uploaded.list(page)
+        : scope === "reference"
+          ? libraryQueryKeys.reference.youtube.list(page)
+          : ["tracks", "none", page],
     queryFn: async () => {
       if (scope == null) return null;
-      return fetch(libraryEndpoints[scope].uploaded.list(), true, scope === "me", {}, { page, pageSize });
+      const endpoint =
+        scope === "me" ? libraryEndpoints.me.uploaded.list() : libraryEndpoints.reference.youtube.list();
+      return fetch(endpoint, true, scope === "me", {}, { page, pageSize });
     },
-    schema: PaginatedResponseSchema(UploadedTrackDetailedSchema),
-    context: "useListUploadedTracks",
+    schema: PaginatedResponseSchema(TrackDetailedSchema),
+    context: "useListTracks",
     enabled: scope != null && (scope === "reference" || (sessionRestored && !!session?.accessToken)),
   });
 }
@@ -44,7 +52,7 @@ export function useUploadTrack(scope: Scope | null, getBackendBaseUrl: () => str
     inputSchema: UploadedTrackCreationSchema,
     outputSchema: UploadedTrackDetailedSchema,
     mutationFn: async (data) => {
-      if (scope == null) throw new Error("Scope is required for uploading tracks");
+      if (scope !== "me") throw new Error("Uploading tracks is only supported for the me scope");
 
       const formData = new FormData();
       formData.append("file", data.file);
@@ -80,16 +88,14 @@ export function useUploadTrack(scope: Scope | null, getBackendBaseUrl: () => str
         formData.append("language", data.language);
       }
 
-      const response = await fetch(libraryEndpoints[scope].uploaded.create(), true, scope === "me", {
+      const response = await fetch(libraryEndpoints.me.uploaded.create(), true, true, {
         method: "POST",
         body: formData,
       });
       return response;
     },
     onSuccess: () => {
-      if (scope != null) {
-        queryClient.invalidateQueries({ queryKey: libraryQueryKeys[scope].uploaded.all });
-      }
+      queryClient.invalidateQueries({ queryKey: libraryQueryKeys.me.uploaded.all });
       invalidateAllGenrePlaylistQueries();
     },
   });
@@ -107,9 +113,9 @@ export function useUpdateUploadedTrack(scope: Scope | null, getBackendBaseUrl: (
     }),
     outputSchema: UploadedTrackDetailedSchema,
     mutationFn: async ({ uuid, data }) => {
-      if (scope == null) throw new Error("Scope is required for updating tracks");
+      if (scope !== "me") throw new Error("Updating tracks is only supported for the me scope");
 
-      const response = await fetch(libraryEndpoints[scope].uploaded.update(uuid), true, scope === "me", {
+      const response = await fetch(libraryEndpoints.me.uploaded.update(uuid), true, true, {
         method: "PUT",
         body: JSON.stringify(data),
       });
@@ -122,10 +128,8 @@ export function useUpdateUploadedTrack(scope: Scope | null, getBackendBaseUrl: (
       return response;
     },
     onSuccess: (_, { uuid }) => {
-      if (scope != null) {
-        queryClient.invalidateQueries({ queryKey: libraryQueryKeys[scope].uploaded.all });
-        queryClient.invalidateQueries({ queryKey: libraryQueryKeys[scope].uploaded.detail(uuid) });
-      }
+      queryClient.invalidateQueries({ queryKey: libraryQueryKeys.me.uploaded.all });
+      queryClient.invalidateQueries({ queryKey: libraryQueryKeys.me.uploaded.detail(uuid) });
       invalidateAllGenrePlaylistQueries();
     },
   });
@@ -150,15 +154,14 @@ export function useDownloadTrack(
   const lastErrorRef = useRef<Error | null>(null);
 
   const result = useQuery({
-    queryKey:
-      scope != null ? libraryQueryKeys[scope].uploaded.download(uuid) : ["uploadedTrack", "download", "none", uuid],
+    queryKey: scope === "me" ? libraryQueryKeys.me.uploaded.download(uuid) : ["uploadedTrack", "download", "none", uuid],
     queryFn: async () => {
-      if (scope == null) return null;
-      const response = await fetch(libraryEndpoints[scope].uploaded.download(uuid), true, scope === "me", {}, {}, true);
+      if (scope !== "me") throw new Error("Downloading tracks is only supported for the me scope");
+      const response = await fetch(libraryEndpoints.me.uploaded.download(uuid), true, true, {}, {}, true);
 
       return response;
     },
-    enabled: !!uuid && scope != null && (scope === "reference" || (sessionRestored && !!session?.accessToken)),
+    enabled: !!uuid && scope === "me" && sessionRestored && !!session?.accessToken,
   });
 
   useEffect(() => {

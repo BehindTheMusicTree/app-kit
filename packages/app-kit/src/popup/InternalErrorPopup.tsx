@@ -7,9 +7,9 @@ import { ErrorCode } from "../transport/app-errors/app-error-codes";
 type InternalErrorPopupProps = Omit<BasePopupProps, "title" | "children" | "icon" | "isDismissable"> & {
   errorCode: ErrorCode;
   /**
-   * Support contact email shown in the "if the problem persists" message. Grow's original
-   * hardcoded `process.env.NEXT_PUBLIC_CONTACT_EMAIL` directly; the consuming app now passes
-   * its own value (from whatever env var / config it uses) so this package doesn't assume that name.
+   * Support contact email shown in the "if the problem persists" message. Passed by the
+   * consuming app (from whatever env var / config it uses) so this package doesn't assume a
+   * specific env var name.
    */
   contactEmail?: string | null;
 };
