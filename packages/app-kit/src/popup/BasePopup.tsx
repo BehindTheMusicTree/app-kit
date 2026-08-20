@@ -26,8 +26,7 @@ export interface BasePopupProps {
   buttonAlignment?: "left" | "center" | "right";
   /**
    * Distance (in px) reserved at the top of the viewport, e.g. for a fixed app header/banner.
-   * Grow's original hardcoded this to its own `BANNER_HEIGHT` layout constant (64px); each
-   * consuming app now passes its own value. Defaults to 0.
+   * Each consuming app passes its own value. Defaults to 0.
    */
   topOffset?: number;
 }

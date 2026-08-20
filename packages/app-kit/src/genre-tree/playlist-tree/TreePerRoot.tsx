@@ -27,9 +27,8 @@ export type GenrePlaylistTreePerRootProps = {
   handleGenreCreationAction: (parent: CriteriaMinimum | null) => void;
   /**
    * Opens a rename UI for `genre` (e.g. a popup collecting the new name). Not provided by this
-   * package (grow's original `GenreRenamePopup`/`InvalidInputPopup` are app-specific, not moved
-   * here) — the consumer implements its own popup and calls `useUpdateGenre` (exported from this
-   * same `genre-tree` module) to submit it. If omitted, rename is a no-op.
+   * package — each consumer implements its own rename popup and calls `useUpdateGenre` (exported
+   * from this same `genre-tree` module) to submit it. If omitted, rename is a no-op.
    */
   handleGenreRenameAction?: (genre: CriteriaMinimum) => void;
   getBackendBaseUrl: () => string;

@@ -2,7 +2,7 @@
  * "Genre playlists" (backend path `genre-playlists/`) are the item-count-bearing nodes that back
  * the genre tree view — not to be confused with a Spotify-library "playlist" feature (out of scope
  * for this package). Scope-parameterized identically for grow's reference tree and hear's personal
- * tree, per grow's original `src/api/domains/playlists/endpoints.ts`.
+ * tree.
  */
 const makeGenrePlaylistEndpoints = (prefix: string) => ({
   list: () => `${prefix}genre-playlists/`,

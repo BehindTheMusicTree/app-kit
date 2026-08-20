@@ -1,10 +1,8 @@
 /**
- * Generic "subdomain + env -> base URL" builder, extracted from
- * `grow-the-music-tree-frontend`'s `src/lib/site-urls.ts`. That file hardcoded HTMT-specific
- * constants (`HTMT_API_SUBDOMAIN`, `NEXT_PUBLIC_HTMT_API_ROOT_SEGMENT`, `@behindthemusictree/brand`
- * imports); this version takes everything as parameters so any BehindTheMusicTree app (grow, hear,
- * future apps) can build its own `getBackendBaseUrl()`-style helper on top of it without this
- * package knowing about any particular app's env var names or subdomains.
+ * Generic "subdomain + env -> base URL" builder. Takes everything as parameters so any
+ * BehindTheMusicTree app (grow, hear, future apps) can build its own `getBackendBaseUrl()`-style
+ * helper on top of it without this package knowing about any particular app's env var names or
+ * subdomains.
  */
 
 export interface BuildSubdomainBaseUrlParams {

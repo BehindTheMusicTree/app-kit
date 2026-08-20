@@ -11,9 +11,9 @@ type SpotifyAuthErrorPopupProps = Omit<BasePopupProps, "title" | "children" | "i
   details?: string;
   onClose: () => void;
   /**
-   * Support contact email used to build the allowlist-request mailto link. Grow's original
-   * hardcoded `process.env.NEXT_PUBLIC_CONTACT_EMAIL` directly; the consuming app now passes
-   * its own value (from whatever env var / config it uses) so this package doesn't assume that name.
+   * Support contact email used to build the allowlist-request mailto link. Passed by the
+   * consuming app (from whatever env var / config it uses) so this package doesn't assume a
+   * specific env var name.
    */
   contactEmail?: string | null;
 };

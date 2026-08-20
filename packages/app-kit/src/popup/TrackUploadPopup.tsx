@@ -22,9 +22,8 @@ type TrackUploadPopupProps = Omit<BasePopupProps, "title" | "children" | "icon" 
   onComplete?: (uploadedTracks: unknown[]) => void;
   onClose?: () => void;
   /**
-   * Timeout (ms) before an in-flight upload is treated as failed. Grow's original hardcoded
-   * `process.env.NEXT_PUBLIC_TRACK_UPLOAD_TIMEOUT_MS` directly; the consuming app now passes its
-   * own value (from whatever env var / config it uses) so this package doesn't assume that name.
+   * Timeout (ms) before an in-flight upload is treated as failed. Passed by the consuming app
+   * (from whatever env var / config it uses) so this package doesn't assume a specific env var name.
    */
   uploadTimeoutMs: number;
 };
