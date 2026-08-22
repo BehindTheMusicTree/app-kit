@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-08-22
+
 ### Changed
 
 - **BREAKING**: **genre-tree**: renamed identifiers to reflect that list/playback plumbing
