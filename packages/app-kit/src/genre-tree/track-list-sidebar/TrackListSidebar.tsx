@@ -32,7 +32,7 @@ export default function TrackListSidebar({ className, getBackendBaseUrl }: Track
           {trackList && trackList.origin.type === TrackListOriginType.GENRE_PLAYLIST
             ? "• Genre playlist • "
             : "• track playlist • "}
-          {trackList.uploadedTracks.length + " track" + (trackList.uploadedTracks.length > 1 ? "s •" : " •")}
+          {trackList.tracks.length + " track" + (trackList.tracks.length > 1 ? "s •" : " •")}
         </div>
         <div
           className="flex-grow flex flex-col items-end justify-center h-full cursor-pointer"
@@ -43,7 +43,7 @@ export default function TrackListSidebar({ className, getBackendBaseUrl }: Track
       </div>
       {/* Use viewport height minus banner, player, header and padding */}
       <ul className={"track-list overflow-auto max-h-[calc(100vh-63.5px-79px-56px-3.5px)] list-none p-0 m-0"}>
-        {trackList.uploadedTracks.map((track, index) => (
+        {trackList.tracks.map((track, index) => (
           <li key={track.uuid}>
             <TrackItem track={track} position={index + 1} getBackendBaseUrl={getBackendBaseUrl} />
           </li>

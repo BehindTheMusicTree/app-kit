@@ -16,17 +16,17 @@ export { default as TrackListSidebar } from "./track-list-sidebar/TrackListSideb
 export type { TrackListSidebarProps } from "./track-list-sidebar/TrackListSidebar";
 export { default as TrackItem } from "./track-list-sidebar/TrackItem";
 export type { TrackItemProps } from "./track-list-sidebar/TrackItem";
-export { default as UploadedTrackPositionPlayPause } from "./UploadedTrackPositionPlayPause";
-export type { UploadedTrackPositionPlayPauseProps } from "./UploadedTrackPositionPlayPause";
+export { default as TrackPositionPlayPause } from "./TrackPositionPlayPause";
+export type { TrackPositionPlayPauseProps } from "./TrackPositionPlayPause";
 export { default as UploadedTrackEditionPopup } from "./UploadedTrackEditionPopup";
 export { default as Rating } from "./Rating";
 export type { RatingProps } from "./Rating";
 
 // Models
-export { default as TrackList, TrackListFromUploadedTrack, TrackListFromCriteriaPlaylist } from "./models/TrackList";
+export { default as TrackList, TrackListFromTrack, TrackListFromCriteriaPlaylist } from "./models/TrackList";
 export {
   default as TrackListOrigin,
-  TrackListOriginFromUploadedTrack,
+  TrackListOriginFromTrack,
   TrackListOriginFromCriteriaPlaylist,
 } from "./models/TrackListOrigin";
 export * from "./models/TrackListOriginType";

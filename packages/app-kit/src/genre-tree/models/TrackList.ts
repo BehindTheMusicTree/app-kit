@@ -1,21 +1,21 @@
 import { TrackDetailed } from "../schemas/track/detailed";
 import TrackListOrigin, {
-  TrackListOriginFromUploadedTrack,
+  TrackListOriginFromTrack,
   TrackListOriginFromCriteriaPlaylist,
 } from "./TrackListOrigin";
 
 export default class TrackList {
-  constructor(public uploadedTracks: TrackDetailed[], public origin: TrackListOrigin) {}
+  constructor(public tracks: TrackDetailed[], public origin: TrackListOrigin) {}
 }
 
-export class TrackListFromUploadedTrack extends TrackList {
-  constructor(public uploadedTracks: TrackDetailed[], public origin: TrackListOriginFromUploadedTrack) {
-    super(uploadedTracks, origin);
+export class TrackListFromTrack extends TrackList {
+  constructor(public tracks: TrackDetailed[], public origin: TrackListOriginFromTrack) {
+    super(tracks, origin);
   }
 }
 
 export class TrackListFromCriteriaPlaylist extends TrackList {
-  constructor(public uploadedTracks: TrackDetailed[], public origin: TrackListOriginFromCriteriaPlaylist) {
-    super(uploadedTracks, origin);
+  constructor(public tracks: TrackDetailed[], public origin: TrackListOriginFromCriteriaPlaylist) {
+    super(tracks, origin);
   }
 }

@@ -6,17 +6,13 @@ import { usePlayer } from "../player/PlayerContext";
 import { PlayStates } from "../player/PlayStates";
 import { RingLoader } from "@behindthemusictree/ui";
 
-export interface UploadedTrackPositionPlayPauseProps {
+export interface TrackPositionPlayPauseProps {
   position: number;
   uuid: string;
   handlePlayPauseClick: (event: React.MouseEvent) => void;
 }
 
-export default function UploadedTrackPositionPlayPause({
-  position,
-  uuid,
-  handlePlayPauseClick,
-}: UploadedTrackPositionPlayPauseProps) {
+export default function TrackPositionPlayPause({ position, uuid, handlePlayPauseClick }: TrackPositionPlayPauseProps) {
   const { playerTrackObject, playState } = usePlayer();
   const isThisTrack = playerTrackObject?.track.id === uuid;
 

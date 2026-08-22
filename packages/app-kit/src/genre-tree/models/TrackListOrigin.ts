@@ -19,14 +19,12 @@ export default class TrackListOrigin {
   ) {}
 }
 
-export class TrackListOriginFromUploadedTrack extends TrackListOrigin {
-  constructor(public uploadedTrack: TrackDetailed, scope: Scope) {
+export class TrackListOriginFromTrack extends TrackListOrigin {
+  constructor(public track: TrackDetailed, scope: Scope) {
     super(
-      TrackListOriginType.UPLOADED_TRACK,
-      `${uploadedTrack.title} by ${
-        uploadedTrack.artists ? uploadedTrack.artists.map((artist) => artist.name).join(", ") : ""
-      }`,
-      uploadedTrack.uuid,
+      TrackListOriginType.TRACK,
+      `${track.title} by ${track.artists ? track.artists.map((artist) => artist.name).join(", ") : ""}`,
+      track.uuid,
       scope,
     );
   }

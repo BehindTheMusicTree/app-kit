@@ -1,4 +1,4 @@
 export enum TrackListOriginType {
-  UPLOADED_TRACK = "UPLOADED_TRACK",
+  TRACK = "TRACK",
   GENRE_PLAYLIST = "GENRE_PLAYLIST",
 }

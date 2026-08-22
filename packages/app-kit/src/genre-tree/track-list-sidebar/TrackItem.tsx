@@ -6,7 +6,7 @@ import { formatTime } from "../lib/formatting";
 import { usePlayer } from "../../player/PlayerContext";
 import { useTrackList } from "../TrackListContext";
 import { useTrackEdition } from "../useTrackEdition";
-import UploadedTrackPositionPlayPause from "../UploadedTrackPositionPlayPause";
+import TrackPositionPlayPause from "../TrackPositionPlayPause";
 import { TrackDetailed } from "../schemas/track/detailed";
 
 export interface TrackItemProps {
@@ -40,7 +40,7 @@ export default function TrackItem({ track, position, getBackendBaseUrl }: TrackI
   return (
     <>
       <div className="track-item flex h-14 text-gray-400 hover:bg-gray-900 group">
-        <UploadedTrackPositionPlayPause position={position} uuid={track.uuid} handlePlayPauseClick={handlePlayPauseClick} />
+        <TrackPositionPlayPause position={position} uuid={track.uuid} handlePlayPauseClick={handlePlayPauseClick} />
         <div className="title-artist-container flex flex-col items-start justify-center w-1/2">
           <div className="title text-lg font-bold text-gray-300 text-overflow">{track.title}</div>
           {track.artists && track.artists.length > 0 ? (

@@ -5,6 +5,25 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **BREAKING**: **genre-tree**: renamed identifiers to reflect that list/playback plumbing
+  operates on the generic `TrackDetailed` union, not just uploaded tracks:
+  - `TrackList.uploadedTracks` → `TrackList.tracks` (and on both subclasses)
+  - `TrackListFromUploadedTrack` → `TrackListFromTrack`
+  - `TrackListOriginFromUploadedTrack` → `TrackListOriginFromTrack` (ctor param
+    `uploadedTrack` → `track`)
+  - `TrackListOriginType.UPLOADED_TRACK` → `TrackListOriginType.TRACK` (value also changed,
+    `"UPLOADED_TRACK"` → `"TRACK"` — this is an in-memory discriminant only, never serialized)
+  - `useTrackList().playNewTrackListFromUploadedTrackUuid` →
+    `playNewTrackListFromTrackUuid` (signature unchanged)
+  - `UploadedTrackPositionPlayPause` (component + props type) → `TrackPositionPlayPause` /
+    `TrackPositionPlayPauseProps`, file renamed accordingly
+
+  `useUploadTrack`, `useUpdateUploadedTrack`, `useDownloadTrack`, `useTrackEdition`,
+  `UploadedTrackEditionPopup`, `UploadedTrackDetailed(Schema)`, `libraryEndpoints.me.uploaded`,
+  and `TrackUploadPopup` are unchanged — they're genuinely upload-specific.
+
 ## [2.0.0] - 2026-08-22
 
 ### Changed

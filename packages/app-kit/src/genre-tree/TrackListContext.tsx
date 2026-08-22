@@ -10,11 +10,8 @@
 
 import { createContext, useState, useContext, ReactNode, useCallback, useMemo } from "react";
 import { TrackDetailed } from "./schemas/track/detailed";
-import TrackList, { TrackListFromUploadedTrack, TrackListFromCriteriaPlaylist } from "./models/TrackList";
-import {
-  TrackListOriginFromUploadedTrack,
-  TrackListOriginFromCriteriaPlaylist,
-} from "./models/TrackListOrigin";
+import TrackList, { TrackListFromTrack, TrackListFromCriteriaPlaylist } from "./models/TrackList";
+import { TrackListOriginFromTrack, TrackListOriginFromCriteriaPlaylist } from "./models/TrackListOrigin";
 import { TrackListOriginType } from "./models/TrackListOriginType";
 import { CriteriaPlaylistDetailed } from "./schemas/criteria-playlist/detailed";
 import { Scope } from "../transport/lib/scope";
@@ -27,7 +24,7 @@ interface TrackListContextType {
   selectedTrack: TrackDetailed | null;
   setSelectedTrack: (track: TrackDetailed | null) => void;
   toTrackAtPosition: (position: number) => void;
-  playNewTrackListFromUploadedTrackUuid: (track: TrackDetailed, scope: Scope) => void;
+  playNewTrackListFromTrackUuid: (track: TrackDetailed, scope: Scope) => void;
   playNewTrackListFromGenrePlaylist: (genrePlaylist: CriteriaPlaylistDetailed, scope: Scope) => void;
 }
 
@@ -44,24 +41,24 @@ export function TrackListProvider({ children, getBackendBaseUrl }: TrackListProv
   const { loadTrackForPlayer } = usePlayer();
   const { showTrackListSidebar } = useTrackListSidebarVisibility();
   const scope = trackList?.origin?.scope ?? null;
-  const { data: uploadedTracksResponse } = useListTracks(scope, getBackendBaseUrl);
+  const { data: tracksResponse } = useListTracks(scope, getBackendBaseUrl);
 
-  // Create a memoized track list that updates when uploadedTracks changes
+  // Create a memoized track list that updates when tracks changes
   const currentTrackList = useMemo(() => {
     if (!trackList) return null;
 
-    const uploadedTracks = uploadedTracksResponse?.results || [];
+    const tracks = tracksResponse?.results || [];
 
-    // If the current track list is from uploaded tracks, update it with fresh data
-    if (trackList.origin.type === TrackListOriginType.UPLOADED_TRACK) {
-      const origin = trackList.origin as TrackListOriginFromUploadedTrack;
+    // If the current track list is from a single track, update it with fresh data
+    if (trackList.origin.type === TrackListOriginType.TRACK) {
+      const origin = trackList.origin as TrackListOriginFromTrack;
 
       // Find the updated version of the original track in the fresh data
-      const updatedOriginalTrack = uploadedTracks.find((track) => track.uuid === origin.uploadedTrack.uuid);
+      const updatedOriginalTrack = tracks.find((track) => track.uuid === origin.track.uuid);
 
       if (updatedOriginalTrack) {
         // Create a new track list with the updated track
-        return new TrackListFromUploadedTrack([updatedOriginalTrack], origin);
+        return new TrackListFromTrack([updatedOriginalTrack], origin);
       }
     }
     // If the current track list is from a genre playlist, update tracks with fresh data
@@ -69,13 +66,13 @@ export function TrackListProvider({ children, getBackendBaseUrl }: TrackListProv
       const origin = trackList.origin as TrackListOriginFromCriteriaPlaylist;
 
       // Update all tracks in the playlist with fresh data
-      const updatedTracks = trackList.uploadedTracks.map((originalTrack) => {
-        const updatedTrack = uploadedTracks.find((track) => track.uuid === originalTrack.uuid);
+      const updatedTracks = trackList.tracks.map((originalTrack) => {
+        const updatedTrack = tracks.find((track) => track.uuid === originalTrack.uuid);
         return updatedTrack || originalTrack; // Use updated track if found, otherwise keep original
       });
 
       // Check if any tracks were actually updated
-      const hasUpdates = updatedTracks.some((updatedTrack, index) => updatedTrack !== trackList.uploadedTracks[index]);
+      const hasUpdates = updatedTracks.some((updatedTrack, index) => updatedTrack !== trackList.tracks[index]);
 
       if (hasUpdates) {
         return new TrackListFromCriteriaPlaylist(updatedTracks, origin);
@@ -83,21 +80,21 @@ export function TrackListProvider({ children, getBackendBaseUrl }: TrackListProv
     }
 
     return trackList;
-  }, [trackList, uploadedTracksResponse]);
+  }, [trackList, tracksResponse]);
 
   const toTrackAtPosition = useCallback(
     (position: number) => {
-      if (currentTrackList && position >= 0 && position < currentTrackList.uploadedTracks.length) {
-        setSelectedTrack(currentTrackList.uploadedTracks[position]);
+      if (currentTrackList && position >= 0 && position < currentTrackList.tracks.length) {
+        setSelectedTrack(currentTrackList.tracks[position]);
       }
     },
     [currentTrackList],
   );
 
-  const playNewTrackListFromUploadedTrackUuid = useCallback(
+  const playNewTrackListFromTrackUuid = useCallback(
     (track: TrackDetailed, scope: Scope) => {
-      const origin = new TrackListOriginFromUploadedTrack(track, scope);
-      const newTrackList = new TrackListFromUploadedTrack([track], origin);
+      const origin = new TrackListOriginFromTrack(track, scope);
+      const newTrackList = new TrackListFromTrack([track], origin);
 
       setTrackList(newTrackList);
       setSelectedTrack(track);
@@ -135,14 +132,14 @@ export function TrackListProvider({ children, getBackendBaseUrl }: TrackListProv
       selectedTrack,
       setSelectedTrack,
       toTrackAtPosition,
-      playNewTrackListFromUploadedTrackUuid,
+      playNewTrackListFromTrackUuid,
       playNewTrackListFromGenrePlaylist,
     }),
     [
       currentTrackList,
       selectedTrack,
       toTrackAtPosition,
-      playNewTrackListFromUploadedTrackUuid,
+      playNewTrackListFromTrackUuid,
       playNewTrackListFromGenrePlaylist,
     ],
   );
