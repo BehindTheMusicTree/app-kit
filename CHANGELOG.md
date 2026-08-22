@@ -5,6 +5,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **BREAKING**: **genre-tree**: `GenreTreeView` (and `GenrePlaylistTreePerRoot`/
+  `GenrePlaylistTreeWheel`) drop the built-in upload wiring — `uploadTimeoutMs` is removed and
+  `onUploadFiles` is no longer wired to `@behindthemusictree/genre-tree-view`'s tree components.
+  In its place, `GenreTreeView` takes an `additionalActions?: (node: GenreTreeNode) =>
+  GenreTreeAction[]` prop forwarded unchanged to the underlying tree/wheel — consumers now supply
+  their own upload (or other) node actions. `GenreTreeAction` is re-exported from `genre-tree` for
+  convenience. `useUploadTrack`/`useUpdateUploadedTrack`/`useDownloadTrack` are unchanged and
+  remain public for consumers to call directly.
+
 ## [1.3.0] - 2026-08-20
 
 ### Added

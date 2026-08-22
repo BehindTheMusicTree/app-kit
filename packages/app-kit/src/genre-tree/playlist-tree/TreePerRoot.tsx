@@ -1,9 +1,13 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { GenreTree, getGenreTreeColor, type GenreTreeNode } from "@behindthemusictree/genre-tree-view";
+import {
+  GenreTree,
+  getGenreTreeColor,
+  type GenreTreeAction,
+  type GenreTreeNode,
+} from "@behindthemusictree/genre-tree-view";
 
-import { usePopup } from "../../popup/PopupContext";
 import { useTrackList } from "../TrackListContext";
 import { useUpdateGenre } from "../useGenre";
 import { useFetchGenrePlaylistDetailed } from "../useGenrePlaylist";
@@ -11,11 +15,9 @@ import { usePlayer } from "../../player/PlayerContext";
 
 import { TrackListOriginType } from "../models/TrackListOriginType";
 
-import TrackUploadPopup from "../../popup/TrackUploadPopup";
 import { CriteriaPlaylistSimple } from "../schemas/criteria-playlist/simple";
 import { CriteriaMinimum } from "../schemas/criteria/minimum";
 import { Scope } from "../../transport/lib/scope";
-import { useUploadTrack } from "../useUploadedTrack";
 
 export type GenrePlaylistTreePerRootProps = {
   scope: Scope;
@@ -27,8 +29,7 @@ export type GenrePlaylistTreePerRootProps = {
   handleGenreCreationAction: (parent: CriteriaMinimum | null) => void;
   handleGenreRenameAction: (genre: CriteriaMinimum) => void;
   getBackendBaseUrl: () => string;
-  /** Passed straight through to `TrackUploadPopup`. See its own doc comment. */
-  uploadTimeoutMs: number;
+  additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
 };
 
 export default function GenrePlaylistTreePerRoot({
@@ -41,14 +42,12 @@ export default function GenrePlaylistTreePerRoot({
   handleGenreCreationAction,
   handleGenreRenameAction,
   getBackendBaseUrl,
-  uploadTimeoutMs,
+  additionalActions,
 }: GenrePlaylistTreePerRootProps) {
   const { isPlaying, setIsPlaying } = usePlayer();
-  const { showPopup, hidePopup } = usePopup();
   const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList();
   const { mutate: updateGenreMutate } = useUpdateGenre(scope, getBackendBaseUrl);
   const { mutate: fetchGenrePlaylistDetailed } = useFetchGenrePlaylistDetailed(scope, getBackendBaseUrl);
-  const { mutateAsync: uploadedTrackMutateAsync } = useUploadTrack(scope, getBackendBaseUrl);
 
   const nodes: GenreTreeNode[] = useMemo(
     () =>
@@ -140,25 +139,6 @@ export default function GenrePlaylistTreePerRoot({
     [updateGenreMutate, setReparentingGenreUuid],
   );
 
-  const handleUploadFiles = useCallback(
-    (nodeId: string, files: File[]) => {
-      const genrePlaylist = genrePlaylistTreePerRoot.find((g) => g.uuid === nodeId);
-      if (!genrePlaylist?.criteria) return;
-
-      showPopup(
-        <TrackUploadPopup
-          files={files}
-          genre={genrePlaylist.criteria.uuid}
-          onProcessFile={(file, genre) => uploadedTrackMutateAsync({ file, genre })}
-          onComplete={() => {}}
-          onClose={hidePopup}
-          uploadTimeoutMs={uploadTimeoutMs}
-        />,
-      );
-    },
-    [genrePlaylistTreePerRoot, showPopup, hidePopup, uploadedTrackMutateAsync, uploadTimeoutMs],
-  );
-
   return (
     <GenreTree
       className={className}
@@ -173,7 +153,7 @@ export default function GenrePlaylistTreePerRoot({
       onDeleteRequest={handleDeleteRequest}
       onReparentRequest={handleReparentRequest}
       onReparent={handleReparent}
-      onUploadFiles={handleUploadFiles}
+      additionalActions={additionalActions}
     />
   );
 }

@@ -1,6 +1,5 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import type { ReactElement } from "react";
 
 import GenrePlaylistTreePerRoot from "./TreePerRoot";
 import { TrackListOriginType } from "../models/TrackListOriginType";
@@ -8,9 +7,6 @@ import type { CriteriaPlaylistSimple } from "../schemas/criteria-playlist/simple
 import type { GenreTreeProps } from "@behindthemusictree/genre-tree-view";
 
 const {
-  showPopup,
-  hidePopup,
-  uploadedTrackMutateAsync,
   setIsPlaying,
   playNewTrackListFromGenrePlaylist,
   updateGenreMutate,
@@ -18,9 +14,6 @@ const {
   handleGenreCreationAction,
   handleGenreRenameAction,
 } = vi.hoisted(() => ({
-  showPopup: vi.fn(),
-  hidePopup: vi.fn(),
-  uploadedTrackMutateAsync: vi.fn(),
   setIsPlaying: vi.fn(),
   playNewTrackListFromGenrePlaylist: vi.fn(),
   updateGenreMutate: vi.fn(),
@@ -32,10 +25,6 @@ const {
 // Mutated per-test to drive `usePlayer`/`useTrackList`'s mocked return values.
 let isPlaying = false;
 let trackList: { origin: { type: TrackListOriginType; uuid: string } } | null = null;
-
-vi.mock("../../popup/PopupContext", () => ({
-  usePopup: () => ({ showPopup, hidePopup }),
-}));
 
 vi.mock("../TrackListContext", () => ({
   useTrackList: () => ({ trackList, playNewTrackListFromGenrePlaylist }),
@@ -51,17 +40,6 @@ vi.mock("../useGenrePlaylist", () => ({
 
 vi.mock("../../player/PlayerContext", () => ({
   usePlayer: () => ({ isPlaying, setIsPlaying }),
-}));
-
-vi.mock("../useUploadedTrack", () => ({
-  useUploadTrack: () => ({ mutateAsync: uploadedTrackMutateAsync }),
-}));
-
-// Rendering the real popup pulls in its own large, separately-tested tree (Button, BasePopup, etc.)
-// for no benefit here — this test only needs to assert on the props TreePerRoot passes it, which
-// `showPopup`'s captured React element already exposes without the component ever running.
-vi.mock("../../popup/TrackUploadPopup", () => ({
-  default: () => null,
 }));
 
 let capturedProps: GenreTreeProps | undefined;
@@ -103,7 +81,6 @@ function renderTree(nodes: CriteriaPlaylistSimple[] = [genrePlaylist]) {
       handleGenreCreationAction={handleGenreCreationAction}
       handleGenreRenameAction={handleGenreRenameAction}
       getBackendBaseUrl={() => "https://api.example.com"}
-      uploadTimeoutMs={30000}
     />,
   );
 }
@@ -114,44 +91,6 @@ describe("GenrePlaylistTreePerRoot", () => {
     isPlaying = false;
     trackList = null;
     vi.clearAllMocks();
-  });
-
-  describe("handleUploadFiles", () => {
-    it("uploads with the genre's own uuid, not the genre-playlist's uuid", () => {
-      renderTree();
-
-      const file = new File(["audio"], "track.mp3", { type: "audio/mpeg" });
-      capturedProps!.onUploadFiles!(playlistUuid, [file]);
-
-      expect(showPopup).toHaveBeenCalledTimes(1);
-      const popupElement = showPopup.mock.calls[0][0] as ReactElement<{
-        genre: string | null;
-        onProcessFile: (file: File, genre?: string | null) => Promise<unknown>;
-      }>;
-
-      expect(popupElement.props.genre).toBe(criteriaUuid);
-      expect(popupElement.props.genre).not.toBe(playlistUuid);
-
-      popupElement.props.onProcessFile(file, popupElement.props.genre);
-      expect(uploadedTrackMutateAsync).toHaveBeenCalledWith({ file, genre: criteriaUuid });
-    });
-
-    it("does nothing when the node has no matching genre-playlist", () => {
-      renderTree();
-
-      capturedProps!.onUploadFiles!("unknown-node-id", [new File(["audio"], "track.mp3")]);
-
-      expect(showPopup).not.toHaveBeenCalled();
-    });
-
-    it("does nothing when the genre-playlist has no criteria (e.g. the criteria-less root playlist)", () => {
-      const criterialess = { ...genrePlaylist, criteria: null } as unknown as CriteriaPlaylistSimple;
-      renderTree([criterialess]);
-
-      capturedProps!.onUploadFiles!(playlistUuid, [new File(["audio"], "track.mp3")]);
-
-      expect(showPopup).not.toHaveBeenCalled();
-    });
   });
 
   describe("handlePlayPause", () => {
@@ -287,7 +226,6 @@ describe("GenrePlaylistTreePerRoot", () => {
           handleGenreCreationAction={handleGenreCreationAction}
           handleGenreRenameAction={handleGenreRenameAction}
           getBackendBaseUrl={() => "https://api.example.com"}
-          uploadTimeoutMs={30000}
         />,
       );
 
@@ -309,7 +247,6 @@ describe("GenrePlaylistTreePerRoot", () => {
           handleGenreCreationAction={handleGenreCreationAction}
           handleGenreRenameAction={handleGenreRenameAction}
           getBackendBaseUrl={() => "https://api.example.com"}
-          uploadTimeoutMs={30000}
         />,
       );
 

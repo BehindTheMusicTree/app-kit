@@ -3,6 +3,7 @@ export * from "./GenreTreeView";
 export * from "./GenreTreeSkeleton";
 export { default as GenrePlaylistTreePerRoot } from "./playlist-tree/TreePerRoot";
 export type { GenrePlaylistTreePerRootProps } from "./playlist-tree/TreePerRoot";
+export type { GenreTreeAction } from "@behindthemusictree/genre-tree-view";
 export * from "./useGenre";
 export * from "./useGenrePlaylist";
 export * from "./useUploadedTrack";
