@@ -18,7 +18,6 @@ import GenreCreationPopup from "./GenreCreationPopup";
 import GenreRenamePopup from "./GenreRenamePopup";
 
 const getBackendBaseUrl = () => "https://hear-api-staging.themusictree.org/v2/";
-const uploadTimeoutMs = 5 * 60 * 1000;
 
 function useLoadTrack(): (trackId: string) => Promise<PlayerTrack> {
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
@@ -77,7 +76,6 @@ function ReferenceGenreTree() {
       handleGenreCreationAction={showCriteriaCreationPopup}
       handleGenreRenameAction={showGenreRenamePopup}
       getBackendBaseUrl={getBackendBaseUrl}
-      uploadTimeoutMs={uploadTimeoutMs}
     />
   );
 }

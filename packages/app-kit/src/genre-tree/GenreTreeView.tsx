@@ -5,6 +5,8 @@ import { FaTree } from "react-icons/fa";
 import { Plus } from "lucide-react";
 import { IconTextButton, Button } from "@behindthemusictree/ui";
 
+import type { GenreTreeAction, GenreTreeNode } from "@behindthemusictree/genre-tree-view";
+
 import { CriteriaPlaylistSimple } from "./schemas/criteria-playlist/simple";
 import { CriteriaMinimum } from "./schemas/criteria/minimum";
 import { Scope } from "../transport/lib/scope";
@@ -23,7 +25,7 @@ export type GenreTreeViewProps = {
   handleGenreCreationAction: (parent: CriteriaMinimum | null) => void;
   handleGenreRenameAction: (genre: CriteriaMinimum) => void;
   getBackendBaseUrl: () => string;
-  uploadTimeoutMs: number;
+  additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
 };
 
 export function GenreTreeView({
@@ -31,7 +33,7 @@ export function GenreTreeView({
   handleGenreCreationAction,
   handleGenreRenameAction,
   getBackendBaseUrl,
-  uploadTimeoutMs,
+  additionalActions,
 }: GenreTreeViewProps) {
   const [reparentingGenreUuid, setReparentingGenreUuid] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<GenreTreeViewMode>("stacked");
@@ -101,7 +103,7 @@ export function GenreTreeView({
             handleGenreCreationAction={handleGenreCreationAction}
             handleGenreRenameAction={handleGenreRenameAction}
             getBackendBaseUrl={getBackendBaseUrl}
-            uploadTimeoutMs={uploadTimeoutMs}
+            additionalActions={additionalActions}
           />
         </div>
       ) : (
@@ -122,7 +124,7 @@ export function GenreTreeView({
                     handleGenreCreationAction={handleGenreCreationAction}
                     handleGenreRenameAction={handleGenreRenameAction}
                     getBackendBaseUrl={getBackendBaseUrl}
-                    uploadTimeoutMs={uploadTimeoutMs}
+                    additionalActions={additionalActions}
                   />
                 </div>
               </div>
