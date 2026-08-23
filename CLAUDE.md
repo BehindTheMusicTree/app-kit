@@ -12,6 +12,10 @@ in `packages/app-kit/src` should import from either consuming app; all app-speci
 - Package manager: pnpm workspaces (`packages/app-kit`, `apps/playground`)
 - Registry: GitHub Packages (`https://npm.pkg.github.com`, scope `@behindthemusictree`)
 
+## Architecture
+
+Full module map, cross-module coupling, and build rationale: `architecture.md`.
+
 ## Critical paths
 
 - `packages/app-kit/src/{transport,auth,popup,ui,player,genre-tree}/` — one folder per subpath
