@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { CriteriaPlaylistDetailedSchema } from "./detailed";
+import { CriteriaPlaylistDetailedBaseSchema } from "./detailed";
 
-export const CriteriaPlaylistSimpleSchema = CriteriaPlaylistDetailedSchema.pick({
+export const CriteriaPlaylistSimpleSchema = CriteriaPlaylistDetailedBaseSchema.pick({
   uuid: true,
   name: true,
   criteria: true,

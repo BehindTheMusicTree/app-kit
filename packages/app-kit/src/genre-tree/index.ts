@@ -6,8 +6,6 @@ export type { GenrePlaylistTreePerRootProps } from "./playlist-tree/TreePerRoot"
 export type { GenreTreeAction } from "@behindthemusictree/genre-tree-view";
 export * from "./useGenre";
 export * from "./useGenrePlaylist";
-export * from "./useUploadedTrack";
-export * from "./useTrackEdition";
 
 // Playback/track-list plumbing
 export * from "./TrackListContext";
@@ -18,7 +16,6 @@ export { default as TrackItem } from "./track-list-sidebar/TrackItem";
 export type { TrackItemProps } from "./track-list-sidebar/TrackItem";
 export { default as TrackPositionPlayPause } from "./TrackPositionPlayPause";
 export type { TrackPositionPlayPauseProps } from "./TrackPositionPlayPause";
-export { default as UploadedTrackEditionPopup } from "./UploadedTrackEditionPopup";
 export { default as Rating } from "./Rating";
 export type { RatingProps } from "./Rating";
 
@@ -29,6 +26,7 @@ export {
   TrackListOriginFromTrack,
   TrackListOriginFromCriteriaPlaylist,
 } from "./models/TrackListOrigin";
+export type { CriteriaPlaylistDetailedLike } from "./models/TrackListOrigin";
 export * from "./models/TrackListOriginType";
 
 // Schemas / domain types
@@ -47,16 +45,10 @@ export * from "./schemas/criteria/lineage-rel/without-descendant";
 export * from "./schemas/criteria-playlist/minimum";
 export * from "./schemas/criteria-playlist/simple";
 export * from "./schemas/criteria-playlist/detailed";
-export * from "./schemas/uploaded-track/file";
-export * from "./schemas/uploaded-track/detailed";
 export * from "./schemas/youtube-track/detailed";
 export * from "./schemas/track/base";
 export * from "./schemas/track/minimum";
-export * from "./schemas/track/detailed";
-export * from "./schemas/uploaded-track/form/form";
-export * from "./schemas/uploaded-track/form/creation";
-export * from "./schemas/uploaded-track/form/update";
-export * from "./schemas/uploaded-track-playlist-rel/without-playlist";
+export * from "./schemas/track-playlist-rel/without-playlist";
 
 // API domain contracts
 export { genreEndpoints, genreQueryKeys } from "./api/genres";
