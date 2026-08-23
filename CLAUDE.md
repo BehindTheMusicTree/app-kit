@@ -16,6 +16,10 @@ in `packages/app-kit/src` should import from either consuming app; all app-speci
 
 Full module map, cross-module coupling, and build rationale: `architecture.md`.
 
+Docs (`architecture.md`, `README.md`, `CONTRIBUTING.md`, `CLAUDE.md` itself) describe the
+current state of the repo only — no origin story, migration history, or "extracted from"/"used
+to be" framing. History belongs in git log and `CHANGELOG.md`, not in reference docs.
+
 ## Critical paths
 
 - `packages/app-kit/src/{transport,auth,popup,ui,player,genre-tree}/` — one folder per subpath

@@ -1,9 +1,9 @@
 # app-kit
 
 `@behindthemusictree/app-kit` — shared transport, auth, popup, UI, player, and genre-tree
-plumbing for BehindTheMusicTree React apps. Extracted from `grow-the-music-tree-frontend` so
-`grow-the-music-tree-frontend` and `hear-the-music-tree-frontend` can share one implementation
-instead of maintaining forked copies.
+plumbing for BehindTheMusicTree React apps. `grow-the-music-tree-frontend` and
+`hear-the-music-tree-frontend` both consume this one implementation instead of maintaining
+forked copies.
 
 ## Package
 

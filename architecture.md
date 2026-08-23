@@ -2,9 +2,9 @@
 
 ## What this is
 
-`@behindthemusictree/app-kit` is a single published npm package (`packages/app-kit`) that
-extracts shared, app-agnostic plumbing out of `grow-the-music-tree-frontend` so both it and
-`hear-the-music-tree-frontend` consume one implementation instead of maintaining forked copies.
+`@behindthemusictree/app-kit` is a single published npm package (`packages/app-kit`) providing
+shared, app-agnostic plumbing consumed by `grow-the-music-tree-frontend` and
+`hear-the-music-tree-frontend`, so both apps run one implementation instead of two.
 `apps/playground` is a local Vite harness for exercising exported components; it is not
 published and has no runtime relationship to the package other than depending on it like any
 other consumer.
