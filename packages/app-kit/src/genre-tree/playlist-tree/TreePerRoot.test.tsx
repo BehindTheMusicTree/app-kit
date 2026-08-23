@@ -1,5 +1,6 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { z } from "zod";
 
 import GenrePlaylistTreePerRoot from "./TreePerRoot";
 import { TrackListOriginType } from "../models/TrackListOriginType";
@@ -81,6 +82,7 @@ function renderTree(nodes: CriteriaPlaylistSimple[] = [genrePlaylist]) {
       handleGenreCreationAction={handleGenreCreationAction}
       handleGenreRenameAction={handleGenreRenameAction}
       getBackendBaseUrl={() => "https://api.example.com"}
+      criteriaPlaylistDetailedSchema={z.any()}
     />,
   );
 }
@@ -226,6 +228,7 @@ describe("GenrePlaylistTreePerRoot", () => {
           handleGenreCreationAction={handleGenreCreationAction}
           handleGenreRenameAction={handleGenreRenameAction}
           getBackendBaseUrl={() => "https://api.example.com"}
+          criteriaPlaylistDetailedSchema={z.any()}
         />,
       );
 
@@ -247,6 +250,7 @@ describe("GenrePlaylistTreePerRoot", () => {
           handleGenreCreationAction={handleGenreCreationAction}
           handleGenreRenameAction={handleGenreRenameAction}
           getBackendBaseUrl={() => "https://api.example.com"}
+          criteriaPlaylistDetailedSchema={z.any()}
         />,
       );
 

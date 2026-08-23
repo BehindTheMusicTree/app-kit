@@ -1,13 +1,15 @@
 import { z } from "zod";
 
 import { UuidResourceSchema } from "../uuid-resource";
-import { TrackPlaylistRelWithoutPlaylistSchema } from "../uploaded-track-playlist-rel/without-playlist";
+import { makeTrackPlaylistRelSchema } from "../track-playlist-rel/without-playlist";
 import { CriteriaMinimumSchema } from "../criteria/minimum";
 import { CriteriaPlaylistMinimumSchema } from "./minimum";
 
-export const CriteriaPlaylistDetailedSchema = UuidResourceSchema.extend({
+// Fields shared by every criteria playlist shape, regardless of track kind. `trackPlaylistRelations`
+// is deliberately excluded here — it's added by `makeCriteriaPlaylistDetailedSchema` below, since
+// its track shape varies per consumer.
+export const CriteriaPlaylistDetailedBaseSchema = UuidResourceSchema.extend({
   name: z.string(),
-  trackPlaylistRelations: z.array(TrackPlaylistRelWithoutPlaylistSchema),
   tracksCount: z.number(),
   durationInSec: z.number(),
   durationStrInHourMinSec: z.string(),
@@ -19,4 +21,11 @@ export const CriteriaPlaylistDetailedSchema = UuidResourceSchema.extend({
   updatedOn: z.string(),
 });
 
-export type CriteriaPlaylistDetailed = z.infer<typeof CriteriaPlaylistDetailedSchema>;
+export const makeCriteriaPlaylistDetailedSchema = <T extends z.ZodTypeAny>(trackSchema: T) =>
+  CriteriaPlaylistDetailedBaseSchema.extend({
+    trackPlaylistRelations: z.array(makeTrackPlaylistRelSchema(trackSchema)),
+  });
+
+export type CriteriaPlaylistDetailed<T extends z.ZodTypeAny> = z.infer<
+  ReturnType<typeof makeCriteriaPlaylistDetailedSchema<T>>
+>;

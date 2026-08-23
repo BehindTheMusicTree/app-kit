@@ -1,5 +1,6 @@
 "use client";
 
+import { z } from "zod";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { useFetchWrapper } from "../transport/useFetchWrapper";
 import { parseWithLog } from "../transport/lib/parse-with-log";
@@ -7,7 +8,6 @@ import { useQueryWithParse } from "../transport/lib/use-query-with-parse";
 import { useSession } from "../auth/SessionContext";
 
 import { CriteriaPlaylistSimpleSchema } from "./schemas/criteria-playlist/simple";
-import { CriteriaPlaylistDetailedSchema, CriteriaPlaylistDetailed } from "./schemas/criteria-playlist/detailed";
 
 import { PaginatedResponseSchema } from "../transport/lib/paginated-response";
 import { genrePlaylistEndpoints, genrePlaylistQueryKeys } from "./api/genre-playlists";
@@ -69,31 +69,39 @@ export const useListFullGenrePlaylists = (scope: Scope, getBackendBaseUrl: () =>
   };
 };
 
-export const useFetchGenrePlaylist = (uuid: string, getBackendBaseUrl: () => string) => {
+export const useFetchGenrePlaylist = <S extends z.ZodTypeAny>(
+  uuid: string,
+  getBackendBaseUrl: () => string,
+  criteriaPlaylistDetailedSchema: S,
+) => {
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
   const { session, sessionRestored } = useSession();
-  return useQueryWithParse<CriteriaPlaylistDetailed>({
+  return useQueryWithParse<z.infer<S>>({
     queryKey: genrePlaylistQueryKeys.me.detail(uuid),
     queryFn: () => fetch(genrePlaylistEndpoints.me.detail(uuid)),
-    schema: CriteriaPlaylistDetailedSchema,
+    schema: criteriaPlaylistDetailedSchema,
     context: "useFetchGenrePlaylist",
     enabled: !!uuid && sessionRestored && !!session?.accessToken,
   });
 };
 
-export const useFetchGenrePlaylistDetailed = (scope: Scope, getBackendBaseUrl: () => string) => {
+export const useFetchGenrePlaylistDetailed = <S extends z.ZodTypeAny>(
+  scope: Scope,
+  getBackendBaseUrl: () => string,
+  criteriaPlaylistDetailedSchema: S,
+) => {
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
 
-  return useMutation<CriteriaPlaylistDetailed, Error, string>({
+  return useMutation<z.infer<S>, Error, string>({
     mutationFn: async (uuid: string) => {
       const endpoint =
         scope === "reference" ? genrePlaylistEndpoints.reference.detail(uuid) : genrePlaylistEndpoints.me.detail(uuid);
       const response = await fetch(endpoint, true, scope === "me");
       return parseWithLog(
-        CriteriaPlaylistDetailedSchema,
+        criteriaPlaylistDetailedSchema,
         response,
         "useFetchGenrePlaylistDetailed",
-      ) as CriteriaPlaylistDetailed;
+      ) as z.infer<S>;
     },
   });
 };

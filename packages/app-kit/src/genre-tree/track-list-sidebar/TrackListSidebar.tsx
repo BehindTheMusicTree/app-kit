@@ -1,17 +1,25 @@
 "use client";
 
+import { ReactNode } from "react";
+
 import TrackItem from "./TrackItem";
 import { useTrackList } from "../TrackListContext";
 import { useTrackListSidebarVisibility } from "../TrackListSidebarVisibilityContext";
 import { TrackListOriginType } from "../models/TrackListOriginType";
+import { TrackBase } from "../schemas/track/base";
 
-export interface TrackListSidebarProps {
+export interface TrackListSidebarProps<T extends TrackBase> {
   className?: string;
-  getBackendBaseUrl: () => string;
+  renderDuration?: (track: T) => ReactNode;
+  renderActions?: (track: T) => ReactNode;
 }
 
-export default function TrackListSidebar({ className, getBackendBaseUrl }: TrackListSidebarProps) {
-  const { trackList } = useTrackList();
+export default function TrackListSidebar<T extends TrackBase>({
+  className,
+  renderDuration,
+  renderActions,
+}: TrackListSidebarProps<T>) {
+  const { trackList } = useTrackList<T>();
   const { hideTrackListSidebar } = useTrackListSidebarVisibility();
 
   return trackList ? (
@@ -45,7 +53,7 @@ export default function TrackListSidebar({ className, getBackendBaseUrl }: Track
       <ul className={"track-list overflow-auto max-h-[calc(100vh-63.5px-79px-56px-3.5px)] list-none p-0 m-0"}>
         {trackList.tracks.map((track, index) => (
           <li key={track.uuid}>
-            <TrackItem track={track} position={index + 1} getBackendBaseUrl={getBackendBaseUrl} />
+            <TrackItem track={track} position={index + 1} renderDuration={renderDuration} renderActions={renderActions} />
           </li>
         ))}
       </ul>

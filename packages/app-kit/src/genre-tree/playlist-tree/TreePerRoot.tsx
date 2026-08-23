@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
+import { z } from "zod";
 import {
   GenreTree,
   getGenreTreeColor,
@@ -14,12 +15,14 @@ import { useFetchGenrePlaylistDetailed } from "../useGenrePlaylist";
 import { usePlayer } from "../../player/PlayerContext";
 
 import { TrackListOriginType } from "../models/TrackListOriginType";
+import { TrackBase } from "../schemas/track/base";
+import { CriteriaPlaylistDetailedLike } from "../models/TrackListOrigin";
 
 import { CriteriaPlaylistSimple } from "../schemas/criteria-playlist/simple";
 import { CriteriaMinimum } from "../schemas/criteria/minimum";
 import { Scope } from "../../transport/lib/scope";
 
-export type GenrePlaylistTreePerRootProps = {
+export type GenrePlaylistTreePerRootProps<T extends TrackBase> = {
   scope: Scope;
   className?: string;
   rootUuid: string;
@@ -29,10 +32,11 @@ export type GenrePlaylistTreePerRootProps = {
   handleGenreCreationAction: (parent: CriteriaMinimum | null) => void;
   handleGenreRenameAction: (genre: CriteriaMinimum) => void;
   getBackendBaseUrl: () => string;
+  criteriaPlaylistDetailedSchema: z.ZodType<CriteriaPlaylistDetailedLike<T>>;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
 };
 
-export default function GenrePlaylistTreePerRoot({
+export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
   scope,
   className,
   rootUuid,
@@ -42,12 +46,17 @@ export default function GenrePlaylistTreePerRoot({
   handleGenreCreationAction,
   handleGenreRenameAction,
   getBackendBaseUrl,
+  criteriaPlaylistDetailedSchema,
   additionalActions,
-}: GenrePlaylistTreePerRootProps) {
+}: GenrePlaylistTreePerRootProps<T>) {
   const { isPlaying, setIsPlaying } = usePlayer();
-  const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList();
+  const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList<T>();
   const { mutate: updateGenreMutate } = useUpdateGenre(scope, getBackendBaseUrl);
-  const { mutate: fetchGenrePlaylistDetailed } = useFetchGenrePlaylistDetailed(scope, getBackendBaseUrl);
+  const { mutate: fetchGenrePlaylistDetailed } = useFetchGenrePlaylistDetailed(
+    scope,
+    getBackendBaseUrl,
+    criteriaPlaylistDetailedSchema,
+  );
 
   const nodes: GenreTreeNode[] = useMemo(
     () =>

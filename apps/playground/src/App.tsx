@@ -11,7 +11,10 @@ import {
   TrackListSidebarVisibilityProvider,
   useFetchWrapper,
   libraryEndpoints,
+  libraryQueryKeys,
   YoutubeTrackDetailed,
+  YoutubeTrackDetailedSchema,
+  makeCriteriaPlaylistDetailedSchema,
 } from "@behindthemusictree/app-kit";
 import { Button, RingLoader, Skeleton } from "@behindthemusictree/ui";
 import GenreCreationPopup from "./GenreCreationPopup";
@@ -43,6 +46,8 @@ function useLoadTrack(): (trackId: string) => Promise<PlayerTrack> {
     [fetch],
   );
 }
+
+const criteriaPlaylistDetailedSchema = makeCriteriaPlaylistDetailedSchema(YoutubeTrackDetailedSchema);
 
 function ReferenceGenreTree() {
   const { showPopup, hidePopup } = usePopup();
@@ -76,6 +81,7 @@ function ReferenceGenreTree() {
       handleGenreCreationAction={showCriteriaCreationPopup}
       handleGenreRenameAction={showGenreRenamePopup}
       getBackendBaseUrl={getBackendBaseUrl}
+      criteriaPlaylistDetailedSchema={criteriaPlaylistDetailedSchema}
     />
   );
 }
@@ -150,7 +156,12 @@ export function App() {
     <PlayerProvider loadTrack={loadTrack}>
       <PopupProvider>
         <TrackListSidebarVisibilityProvider>
-          <TrackListProvider getBackendBaseUrl={getBackendBaseUrl}>
+          <TrackListProvider
+            getBackendBaseUrl={getBackendBaseUrl}
+            schema={YoutubeTrackDetailedSchema}
+            listEndpoint={libraryEndpoints.reference.youtube.list}
+            listQueryKey={libraryQueryKeys.reference.youtube.list}
+          >
             <AppContent />
           </TrackListProvider>
         </TrackListSidebarVisibilityProvider>

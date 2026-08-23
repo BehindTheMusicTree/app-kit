@@ -1,9 +1,9 @@
 # app-kit
 
 `@behindthemusictree/app-kit` — shared transport, auth, popup, UI, player, and genre-tree
-plumbing for BehindTheMusicTree React apps. Extracted from `grow-the-music-tree-frontend` so
-`grow-the-music-tree-frontend` and `hear-the-music-tree-frontend` can share one implementation
-instead of maintaining forked copies.
+plumbing for BehindTheMusicTree React apps. `grow-the-music-tree-frontend` and
+`hear-the-music-tree-frontend` both consume this one implementation instead of maintaining
+forked copies.
 
 ## Package
 
@@ -44,14 +44,22 @@ pnpm dev     # builds the package in watch mode + runs apps/playground
 `apps/playground` is a small Vite app for manually exercising exported components against mock
 data — not published.
 
+## Branching
+
+Strict Gitflow: `main` is release-only (tagged), `develop` is the integration branch and default
+branch for PRs. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full model.
+
 ## Release
+
+_(For maintainers, run from a clean, up-to-date `develop`)_
 
 ```bash
 pnpm release -- patch   # or minor / major
 ```
 
-Bumps the package version, moves `CHANGELOG.md`'s `[Unreleased]` section under the new version,
-tags, and pushes — which triggers `.github/workflows/publish.yml` to build and publish to GitHub
-Packages.
+Cuts a `release/X.Y.Z` branch off `develop`, bumps the package version, moves `CHANGELOG.md`'s
+`[Unreleased]` section under the new version, then merges into both `main` (tagged) and
+`develop` and pushes — the tag push triggers `.github/workflows/publish.yml` to build and
+publish to GitHub Packages.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow, including hotfixes.

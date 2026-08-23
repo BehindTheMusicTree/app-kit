@@ -11,13 +11,14 @@ Changes here affect both apps, so please keep that blast radius in mind.
 - [Development Workflow](#development-workflow)
   - [1. Fork \& Clone](#1-fork--clone)
   - [2. Environment Setup](#2-environment-setup)
-  - [3. Branching](#3-branching)
+  - [3. Branching (Gitflow)](#3-branching-gitflow)
   - [4. Developing](#4-developing)
   - [5. Verifying](#5-verifying)
   - [6. Committing](#6-committing)
   - [7. Pull Request Process](#7-pull-request-process)
   - [8. Releasing _(For Maintainers)_](#8-releasing-for-maintainers)
-  - [9. Vercel Playground Env Sync _(For Maintainers)_](#9-vercel-playground-env-sync-for-maintainers)
+  - [9. Hotfixing _(For Maintainers)_](#9-hotfixing-for-maintainers)
+  - [10. Vercel Playground Env Sync _(For Maintainers)_](#10-vercel-playground-env-sync-for-maintainers)
 - [License \& Attribution](#license--attribution)
 
 ## Contributors vs Maintainers
@@ -59,10 +60,34 @@ Requirements:
 pnpm install
 ```
 
-### 3. Branching
+### 3. Branching (Gitflow)
 
-Branch from `main`: `feature/<short-description>`, `fix/<short-description>`,
-`chore/<short-description>`.
+This repo follows strict [Gitflow](https://nvie.com/posts/a-successful-git-branching-model/):
+
+- **`main`** — always reflects the latest released version. Every commit on `main` is tagged
+  (`vX.Y.Z`). Nothing merges here except `release/*` and `hotfix/*` branches. This is also the
+  GitHub default branch's *sibling of record* for releases, but PRs target `develop` by default.
+- **`develop`** — integration branch, always reflects the latest delivered development changes.
+  All `feature/*`, `fix/*`, and `chore/*` branches are cut from `develop` and merged back into
+  `develop`. This is the GitHub default branch — PRs target it unless noted otherwise.
+- **`feature/<short-description>`**, **`fix/<short-description>`**, **`chore/<short-description>`**
+  — branch from `develop`, merge back into `develop` via PR.
+- **`release/<version>`** — branched from `develop` when it's ready to ship (created
+  automatically by `pnpm release`, see [§8](#8-releasing-for-maintainers)). Only version bump and
+  changelog commits belong here. Merged into both `main` (tagged) and `develop`, then deleted.
+- **`hotfix/<short-description>`** — branched from `main` for urgent production fixes that can't
+  wait for the next `develop` → `release` cycle (see [§9](#9-hotfixing-for-maintainers)). Merged
+  into both `main` (tagged) and `develop`, then deleted.
+
+```
+main       ──●───────────────●───────────────●──   (tags only: v1.0.0, v1.1.0, ...)
+              \             / \             /
+release/*      ●───●───●───●   \           /
+              /             \   \         /
+develop    ──●───●───●───●───●───●───●───●──
+              \     /         \
+feature/*      ●───●           ●  (fix/*, chore/*)
+```
 
 ### 4. Developing
 
@@ -101,22 +126,41 @@ the change being clearly described.
 ### 7. Pull Request Process
 
 1. Ensure `pnpm build && pnpm lint` pass locally.
-2. Open a PR against `main` describing what changed and why.
+2. Open a PR against `develop` describing what changed and why (never against `main` — see
+   [§3](#3-branching-gitflow)).
 3. Add a bullet to `CHANGELOG.md` under `[Unreleased]` for any user-facing change (new export,
    behavior change, breaking change).
 
 ### 8. Releasing _(For Maintainers)_
 
+From a clean, up-to-date `develop`:
+
 ```bash
 pnpm release -- patch   # or minor / major
 ```
 
-This bumps `packages/app-kit/package.json`'s version, moves the `CHANGELOG.md` `[Unreleased]`
-section under the new version heading, commits, tags (`vX.Y.Z`), and pushes — which triggers
+This creates a `release/X.Y.Z` branch off `develop`, bumps `packages/app-kit/package.json`'s
+version, moves the `CHANGELOG.md` `[Unreleased]` section under the new version heading, commits,
+merges the release branch into `main` (tagged `vX.Y.Z`) and back into `develop`, pushes both
+branches and the tag, then deletes the release branch. The pushed tag triggers
 `.github/workflows/publish.yml` to build and publish `@behindthemusictree/app-kit` to GitHub
-Packages. Must be run from a clean `main` branch.
+Packages.
 
-### 9. Vercel Playground Env Sync _(For Maintainers)_
+### 9. Hotfixing _(For Maintainers)_
+
+For an urgent fix to what's already released, without pulling in unreleased `develop` work:
+
+```bash
+git checkout -b hotfix/<short-description> main
+# fix, commit, add a CHANGELOG.md entry
+```
+
+Then merge the hotfix into `main` (tag it `vX.Y.Z` per [semver](https://semver.org/) —
+typically a patch bump) and into `develop`, push both plus the tag, and delete the hotfix branch.
+There is no script for this yet — do it with plain `git merge --no-ff` + `git tag`, mirroring
+what `scripts/release.sh` does for `release/*` branches.
+
+### 10. Vercel Playground Env Sync _(For Maintainers)_
 
 `apps/playground` is deployed to Vercel for PR previews. Its `.npmrc` requires `NPM_TOKEN` to
 install the private `@behindthemusictree/genre-tree-view` dependency from GitHub Packages —

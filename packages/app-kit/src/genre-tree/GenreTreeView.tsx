@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { z } from "zod";
 import { FaTree } from "react-icons/fa";
 import { Plus } from "lucide-react";
 import { IconTextButton, Button } from "@behindthemusictree/ui";
@@ -9,6 +10,8 @@ import type { GenreTreeAction, GenreTreeNode } from "@behindthemusictree/genre-t
 
 import { CriteriaPlaylistSimple } from "./schemas/criteria-playlist/simple";
 import { CriteriaMinimum } from "./schemas/criteria/minimum";
+import { TrackBase } from "./schemas/track/base";
+import { CriteriaPlaylistDetailedLike } from "./models/TrackListOrigin";
 import { Scope } from "../transport/lib/scope";
 import { useListFullGenrePlaylists } from "./useGenrePlaylist";
 import { useLoadExampleTreeGenre } from "./useGenre";
@@ -20,21 +23,23 @@ import { GenreTreeSkeleton } from "./GenreTreeSkeleton";
 
 type GenreTreeViewMode = "stacked" | "wheel";
 
-export type GenreTreeViewProps = {
+export type GenreTreeViewProps<T extends TrackBase> = {
   scope: Scope;
   handleGenreCreationAction: (parent: CriteriaMinimum | null) => void;
   handleGenreRenameAction: (genre: CriteriaMinimum) => void;
   getBackendBaseUrl: () => string;
+  criteriaPlaylistDetailedSchema: z.ZodType<CriteriaPlaylistDetailedLike<T>>;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
 };
 
-export function GenreTreeView({
+export function GenreTreeView<T extends TrackBase>({
   scope,
   handleGenreCreationAction,
   handleGenreRenameAction,
   getBackendBaseUrl,
+  criteriaPlaylistDetailedSchema,
   additionalActions,
-}: GenreTreeViewProps) {
+}: GenreTreeViewProps<T>) {
   const [reparentingGenreUuid, setReparentingGenreUuid] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<GenreTreeViewMode>("stacked");
 
@@ -103,6 +108,7 @@ export function GenreTreeView({
             handleGenreCreationAction={handleGenreCreationAction}
             handleGenreRenameAction={handleGenreRenameAction}
             getBackendBaseUrl={getBackendBaseUrl}
+            criteriaPlaylistDetailedSchema={criteriaPlaylistDetailedSchema}
             additionalActions={additionalActions}
           />
         </div>
@@ -124,6 +130,7 @@ export function GenreTreeView({
                     handleGenreCreationAction={handleGenreCreationAction}
                     handleGenreRenameAction={handleGenreRenameAction}
                     getBackendBaseUrl={getBackendBaseUrl}
+                    criteriaPlaylistDetailedSchema={criteriaPlaylistDetailedSchema}
                     additionalActions={additionalActions}
                   />
                 </div>
