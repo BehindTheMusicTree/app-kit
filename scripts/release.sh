@@ -14,8 +14,8 @@ if [[ "$BUMP" != "patch" && "$BUMP" != "minor" && "$BUMP" != "major" ]]; then
 fi
 
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if [[ "$BRANCH" != "main" ]]; then
-  echo "Error: releases must be cut from main (currently on '$BRANCH')"
+if [[ "$BRANCH" != "develop" ]]; then
+  echo "Error: releases must be cut from develop (currently on '$BRANCH')"
   exit 1
 fi
 
@@ -24,10 +24,20 @@ if [[ -n "$(git status --porcelain)" ]]; then
   exit 1
 fi
 
+git fetch origin main develop
+if [[ "$(git rev-parse develop)" != "$(git rev-parse origin/develop)" ]]; then
+  echo "Error: local develop is not in sync with origin/develop — pull first"
+  exit 1
+fi
+
 OLD_VERSION=$(node -p "require('./packages/app-kit/package.json').version")
 (cd packages/app-kit && npm version "$BUMP" --no-git-tag-version > /dev/null)
 NEW_VERSION=$(node -p "require('./packages/app-kit/package.json').version")
 TODAY=$(date +%Y-%m-%d)
+
+RELEASE_BRANCH="release/$NEW_VERSION"
+git checkout -b "$RELEASE_BRANCH"
+
 pnpm install --lockfile-only
 
 node -e "
@@ -47,9 +57,17 @@ fs.writeFileSync('CHANGELOG.md', s);
 
 git add packages/app-kit/package.json pnpm-lock.yaml CHANGELOG.md
 git commit -m "chore: release $NEW_VERSION"
+
+git checkout main
+git merge --no-ff --no-edit "$RELEASE_BRANCH"
 git tag -a "v$NEW_VERSION" -m "v$NEW_VERSION"
-git push --follow-tags
+
+git checkout develop
+git merge --no-ff --no-edit "$RELEASE_BRANCH"
+
+git push origin main develop --follow-tags
+git branch -d "$RELEASE_BRANCH"
 
 echo ""
 echo "Released v$NEW_VERSION ($OLD_VERSION -> $NEW_VERSION)"
-echo "Publishing to GitHub Packages will start automatically."
+echo "main and develop are both updated; publishing to GitHub Packages will start automatically."

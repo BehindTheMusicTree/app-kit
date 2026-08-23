@@ -12,6 +12,14 @@ in `packages/app-kit/src` should import from either consuming app; all app-speci
 - Package manager: pnpm workspaces (`packages/app-kit`, `apps/playground`)
 - Registry: GitHub Packages (`https://npm.pkg.github.com`, scope `@behindthemusictree`)
 
+## Architecture
+
+Full module map, cross-module coupling, and build rationale: `architecture.md`.
+
+Docs (`architecture.md`, `README.md`, `CONTRIBUTING.md`, `CLAUDE.md` itself) describe the
+current state of the repo only — no origin story, migration history, or "extracted from"/"used
+to be" framing. History belongs in git log and `CHANGELOG.md`, not in reference docs.
+
 ## Critical paths
 
 - `packages/app-kit/src/{transport,auth,popup,ui,player,genre-tree}/` — one folder per subpath
@@ -33,10 +41,23 @@ in `packages/app-kit/src` should import from either consuming app; all app-speci
 - `genre-tree` is scope-parameterized (`"me" | "reference"`) — do not hardcode either scope's
   assumptions into shared components
 
+## Branching (strict Gitflow)
+
+- `main` — released code only, every commit tagged `vX.Y.Z`. Never branch from or PR into it
+  directly; it only receives merges from `release/*` and `hotfix/*`.
+- `develop` — GitHub default branch, integration branch for all in-progress work. Branch
+  `feature/*`, `fix/*`, `chore/*` from here; PR back into here.
+- `release/*` — cut from `develop` by `pnpm release -- <bump>` (`scripts/release.sh`); merges
+  into both `main` (tagged) and `develop`.
+- `hotfix/*` — cut from `main` for urgent production fixes; merges into both `main` (tagged) and
+  `develop`.
+- Full detail: `CONTRIBUTING.md` § Branching (Gitflow).
+
 ## Forbidden
 
 - Importing anything from `grow-the-music-tree-frontend` or `hear-the-music-tree-frontend` —
   dependencies flow the other way
 - Notable changes without a `CHANGELOG.md` entry under `[Unreleased]`
+- Opening PRs against `main` — target `develop` (see Branching above)
 - Publishing directly with `npm publish` — always go through `pnpm release -- <bump>`
   (`scripts/release.sh`), which also updates the changelog and lockfile
