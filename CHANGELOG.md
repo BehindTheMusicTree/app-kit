@@ -5,6 +5,50 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Removed
+
+- **BREAKING**: **genre-tree**: removed the "uploaded track" concept entirely. Shared
+  track-list/playback plumbing is now generic over `T extends TrackBase` instead of being hard-wired
+  to a closed `TrackDetailed = z.union([UploadedTrackDetailedSchema, YoutubeTrackDetailedSchema])`.
+  - Removed modules: `useTrackEdition`, `UploadedTrackEditionPopup`, `useUploadedTrack` (and its
+    `useUploadTrack`, `useUpdateUploadedTrack`, `useDownloadTrack`, `UseDownloadTrackOptions`
+    exports), `schemas/uploaded-track/*` (`detailed`, `file`, `form/{form,creation,update}`),
+    `schemas/track/detailed` (the closed `TrackDetailedSchema` union), and
+    `api/library/uploaded/*` (`libraryEndpoints.me.uploaded`, `libraryQueryKeys.me.uploaded`).
+  - `useListTracks` (formerly in `useUploadedTrack.ts`) moved into `TrackListContext.tsx` and is
+    now generic: `useListTracks<T>(scope, getBackendBaseUrl, schema, listEndpoint, listQueryKey,
+    page?, pageSize?)`, with the endpoint/query-key selection injected by the caller instead of
+    branching internally on `scope`.
+
+### Changed
+
+- **BREAKING**: **genre-tree**: `TrackList`, `TrackListOrigin` (and their `TrackListFromTrack`/
+  `TrackListFromCriteriaPlaylist`/`TrackListOriginFromTrack`/`TrackListOriginFromCriteriaPlaylist`
+  subclasses), `TrackListContext`/`TrackListProvider`, `TrackItem`, and `TrackListSidebar` are now
+  generic over `T extends TrackBase`.
+  - `TrackListProvider` now requires `schema`, `listEndpoint`, and `listQueryKey` props (in
+    addition to `getBackendBaseUrl`) so consumers supply their own track shape and list source.
+  - `TrackItem`/`TrackListSidebar` drop `getBackendBaseUrl` and the built-in edit/duration UI in
+    favor of injected `renderDuration?: (track: T) => ReactNode` and
+    `renderActions?: (track: T) => ReactNode` slots.
+  - `schemas/uploaded-track-playlist-rel/without-playlist` (fixed `TrackPlaylistRelWithoutPlaylistSchema`)
+    is renamed to `schemas/track-playlist-rel/without-playlist` and replaced by a factory,
+    `makeTrackPlaylistRelSchema<T extends z.ZodTypeAny>(trackSchema: T)`.
+  - `schemas/criteria-playlist/detailed`'s fixed `CriteriaPlaylistDetailedSchema`/
+    `CriteriaPlaylistDetailed` are replaced by a factory,
+    `makeCriteriaPlaylistDetailedSchema<T extends z.ZodTypeAny>(trackSchema: T)` (plus a generic
+    `CriteriaPlaylistDetailed<T extends z.ZodTypeAny>` type alias derived from it).
+  - `useFetchGenrePlaylist`/`useFetchGenrePlaylistDetailed` (in `useGenrePlaylist.ts`) each gain a
+    required `criteriaPlaylistDetailedSchema` parameter; `GenreTreeView`,
+    `GenrePlaylistTreePerRoot`, and `GenrePlaylistTreeWheel` are now generic over `T extends
+    TrackBase` and require a `criteriaPlaylistDetailedSchema` prop threaded down to it.
+  - `api/library/index.ts` drops the `me`/`uploaded` branch; only `reference.youtube` remains.
+
+  Consumers must now supply their own track schema (extending `TrackBaseSchema`), list
+  endpoint/query-key, a `criteriaPlaylistDetailedSchema` built via
+  `makeCriteriaPlaylistDetailedSchema`, and their own edit/duration render slots for `TrackItem`/
+  `TrackListSidebar` — upload/edit/download UI is no longer built in.
+
 ## [3.0.0] - 2026-08-22
 
 ### Changed

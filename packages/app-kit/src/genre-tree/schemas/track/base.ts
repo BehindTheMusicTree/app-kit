@@ -22,3 +22,5 @@ export const TrackBaseSchema = UuidResourceSchema.extend({
   createdOn: z.string().datetime(),
   updatedOn: z.string().datetime().nullable().optional(),
 });
+
+export type TrackBase = z.infer<typeof TrackBaseSchema>;

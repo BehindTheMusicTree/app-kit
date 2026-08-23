@@ -9,39 +9,79 @@
  */
 
 import { createContext, useState, useContext, ReactNode, useCallback, useMemo } from "react";
-import { TrackDetailed } from "./schemas/track/detailed";
+import { z } from "zod";
+import { useFetchWrapper } from "../transport/useFetchWrapper";
+import { useSession } from "../auth/SessionContext";
+import { useQueryWithParse } from "../transport/lib/use-query-with-parse";
+import { PaginatedResponseSchema } from "../transport/lib/paginated-response";
+import { TrackBase } from "./schemas/track/base";
 import TrackList, { TrackListFromTrack, TrackListFromCriteriaPlaylist } from "./models/TrackList";
-import { TrackListOriginFromTrack, TrackListOriginFromCriteriaPlaylist } from "./models/TrackListOrigin";
+import {
+  TrackListOriginFromTrack,
+  TrackListOriginFromCriteriaPlaylist,
+  CriteriaPlaylistDetailedLike,
+} from "./models/TrackListOrigin";
 import { TrackListOriginType } from "./models/TrackListOriginType";
-import { CriteriaPlaylistDetailed } from "./schemas/criteria-playlist/detailed";
 import { Scope } from "../transport/lib/scope";
 import { usePlayer } from "../player/PlayerContext";
 import { useTrackListSidebarVisibility } from "./TrackListSidebarVisibilityContext";
-import { useListTracks } from "./useUploadedTrack";
 
-interface TrackListContextType {
-  trackList: TrackList | null;
-  selectedTrack: TrackDetailed | null;
-  setSelectedTrack: (track: TrackDetailed | null) => void;
-  toTrackAtPosition: (position: number) => void;
-  playNewTrackListFromTrackUuid: (track: TrackDetailed, scope: Scope) => void;
-  playNewTrackListFromGenrePlaylist: (genrePlaylist: CriteriaPlaylistDetailed, scope: Scope) => void;
+export function useListTracks<T>(
+  scope: Scope | null,
+  getBackendBaseUrl: () => string,
+  schema: z.ZodType<T>,
+  listEndpoint: (page: number) => string,
+  listQueryKey: (page: number) => readonly unknown[],
+  page = 1,
+  pageSize: number | string = 50,
+) {
+  const { fetch } = useFetchWrapper(getBackendBaseUrl);
+  const { session, sessionRestored } = useSession();
+
+  return useQueryWithParse({
+    queryKey: listQueryKey(page),
+    queryFn: async () => {
+      if (scope == null) return null;
+      return fetch(listEndpoint(page), true, scope === "me", {}, { page, pageSize });
+    },
+    schema: PaginatedResponseSchema(schema),
+    context: "useListTracks",
+    enabled: scope != null && (scope === "reference" || (sessionRestored && !!session?.accessToken)),
+  });
 }
 
-const TrackListContext = createContext<TrackListContextType | undefined>(undefined);
+interface TrackListContextType<T extends TrackBase> {
+  trackList: TrackList<T> | null;
+  selectedTrack: T | null;
+  setSelectedTrack: (track: T | null) => void;
+  toTrackAtPosition: (position: number) => void;
+  playNewTrackListFromTrackUuid: (track: T, scope: Scope) => void;
+  playNewTrackListFromGenrePlaylist: (genrePlaylist: CriteriaPlaylistDetailedLike<T>, scope: Scope) => void;
+}
 
-interface TrackListProviderProps {
+const TrackListContext = createContext<TrackListContextType<TrackBase> | undefined>(undefined);
+
+interface TrackListProviderProps<T extends TrackBase> {
   children: ReactNode;
   getBackendBaseUrl: () => string;
+  schema: z.ZodType<T>;
+  listEndpoint: (page: number) => string;
+  listQueryKey: (page: number) => readonly unknown[];
 }
 
-export function TrackListProvider({ children, getBackendBaseUrl }: TrackListProviderProps) {
-  const [trackList, setTrackList] = useState<TrackList | null>(null);
-  const [selectedTrack, setSelectedTrack] = useState<TrackDetailed | null>(null);
+export function TrackListProvider<T extends TrackBase>({
+  children,
+  getBackendBaseUrl,
+  schema,
+  listEndpoint,
+  listQueryKey,
+}: TrackListProviderProps<T>) {
+  const [trackList, setTrackList] = useState<TrackList<T> | null>(null);
+  const [selectedTrack, setSelectedTrack] = useState<T | null>(null);
   const { loadTrackForPlayer } = usePlayer();
   const { showTrackListSidebar } = useTrackListSidebarVisibility();
   const scope = trackList?.origin?.scope ?? null;
-  const { data: tracksResponse } = useListTracks(scope, getBackendBaseUrl);
+  const { data: tracksResponse } = useListTracks(scope, getBackendBaseUrl, schema, listEndpoint, listQueryKey);
 
   // Create a memoized track list that updates when tracks changes
   const currentTrackList = useMemo(() => {
@@ -51,7 +91,7 @@ export function TrackListProvider({ children, getBackendBaseUrl }: TrackListProv
 
     // If the current track list is from a single track, update it with fresh data
     if (trackList.origin.type === TrackListOriginType.TRACK) {
-      const origin = trackList.origin as TrackListOriginFromTrack;
+      const origin = trackList.origin as TrackListOriginFromTrack<T>;
 
       // Find the updated version of the original track in the fresh data
       const updatedOriginalTrack = tracks.find((track) => track.uuid === origin.track.uuid);
@@ -63,7 +103,7 @@ export function TrackListProvider({ children, getBackendBaseUrl }: TrackListProv
     }
     // If the current track list is from a genre playlist, update tracks with fresh data
     else if (trackList.origin.type === TrackListOriginType.GENRE_PLAYLIST) {
-      const origin = trackList.origin as TrackListOriginFromCriteriaPlaylist;
+      const origin = trackList.origin as TrackListOriginFromCriteriaPlaylist<T>;
 
       // Update all tracks in the playlist with fresh data
       const updatedTracks = trackList.tracks.map((originalTrack) => {
@@ -92,7 +132,7 @@ export function TrackListProvider({ children, getBackendBaseUrl }: TrackListProv
   );
 
   const playNewTrackListFromTrackUuid = useCallback(
-    (track: TrackDetailed, scope: Scope) => {
+    (track: T, scope: Scope) => {
       const origin = new TrackListOriginFromTrack(track, scope);
       const newTrackList = new TrackListFromTrack([track], origin);
 
@@ -105,7 +145,7 @@ export function TrackListProvider({ children, getBackendBaseUrl }: TrackListProv
   );
 
   const playNewTrackListFromGenrePlaylist = useCallback(
-    (genrePlaylist: CriteriaPlaylistDetailed, scope: Scope) => {
+    (genrePlaylist: CriteriaPlaylistDetailedLike<T>, scope: Scope) => {
       const tracks = genrePlaylist.trackPlaylistRelations
         .sort((a, b) => a.position - b.position)
         .map((rel) => rel.track);
@@ -144,13 +184,17 @@ export function TrackListProvider({ children, getBackendBaseUrl }: TrackListProv
     ],
   );
 
-  return <TrackListContext.Provider value={value}>{children}</TrackListContext.Provider>;
+  return (
+    <TrackListContext.Provider value={value as unknown as TrackListContextType<TrackBase>}>
+      {children}
+    </TrackListContext.Provider>
+  );
 }
 
-export function useTrackList() {
+export function useTrackList<T extends TrackBase = TrackBase>() {
   const context = useContext(TrackListContext);
   if (!context) {
     throw new Error("useTrackList must be used within a TrackListProvider");
   }
-  return context;
+  return context as unknown as TrackListContextType<T>;
 }

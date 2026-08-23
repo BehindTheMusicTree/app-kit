@@ -2,13 +2,22 @@
  * Trimmed from grow-the-music-tree-frontend's original `TrackListOrigin.ts`: dropped
  * `TrackListOriginFromPlaylist` (Spotify-library playlist origin, backed by a `PlaylistDetailed`
  * schema that's part of grow's separate Spotify-library feature, out of scope for this package).
- * Only the uploaded-track and genre-playlist origins — which back this shared tree+upload+playback
+ * Only the track and genre-playlist origins — which back this shared tree+upload+playback
  * workspace — are kept.
  */
-import { CriteriaPlaylistDetailed } from "../schemas/criteria-playlist/detailed";
-import { TrackDetailed } from "../schemas/track/detailed";
+import { TrackBase } from "../schemas/track/base";
 import { Scope } from "../../transport/lib/scope";
 import { TrackListOriginType } from "./TrackListOriginType";
+
+// Structural shape of a parsed criteria-playlist-detailed response, generic over its track type —
+// see `../schemas/criteria-playlist/detailed.ts`'s `makeCriteriaPlaylistDetailedSchema`. Kept
+// minimal (only the fields this model touches) so this module doesn't need to import any one
+// consumer's concrete track schema.
+export interface CriteriaPlaylistDetailedLike<T extends TrackBase> {
+  uuid: string;
+  name: string;
+  trackPlaylistRelations: { track: T; position: number }[];
+}
 
 export default class TrackListOrigin {
   constructor(
@@ -19,8 +28,8 @@ export default class TrackListOrigin {
   ) {}
 }
 
-export class TrackListOriginFromTrack extends TrackListOrigin {
-  constructor(public track: TrackDetailed, scope: Scope) {
+export class TrackListOriginFromTrack<T extends TrackBase = TrackBase> extends TrackListOrigin {
+  constructor(public track: T, scope: Scope) {
     super(
       TrackListOriginType.TRACK,
       `${track.title} by ${track.artists ? track.artists.map((artist) => artist.name).join(", ") : ""}`,
@@ -30,8 +39,8 @@ export class TrackListOriginFromTrack extends TrackListOrigin {
   }
 }
 
-export class TrackListOriginFromCriteriaPlaylist extends TrackListOrigin {
-  constructor(public criteriaPlaylist: CriteriaPlaylistDetailed, scope: Scope) {
+export class TrackListOriginFromCriteriaPlaylist<T extends TrackBase = TrackBase> extends TrackListOrigin {
+  constructor(public criteriaPlaylist: CriteriaPlaylistDetailedLike<T>, scope: Scope) {
     super(TrackListOriginType.GENRE_PLAYLIST, criteriaPlaylist.name, criteriaPlaylist.uuid, scope);
   }
 }

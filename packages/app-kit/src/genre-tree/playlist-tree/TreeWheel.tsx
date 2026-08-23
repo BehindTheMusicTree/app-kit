@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
+import { z } from "zod";
 import {
   GenreTreeWheel,
   type GenreTreeAction,
@@ -13,12 +14,14 @@ import { useFetchGenrePlaylistDetailed } from "../useGenrePlaylist";
 import { usePlayer } from "../../player/PlayerContext";
 
 import { TrackListOriginType } from "../models/TrackListOriginType";
+import { TrackBase } from "../schemas/track/base";
+import { CriteriaPlaylistDetailedLike } from "../models/TrackListOrigin";
 
 import { CriteriaPlaylistSimple } from "../schemas/criteria-playlist/simple";
 import { CriteriaMinimum } from "../schemas/criteria/minimum";
 import { Scope } from "../../transport/lib/scope";
 
-export type GenrePlaylistTreeWheelProps = {
+export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
   scope: Scope;
   className?: string;
   genrePlaylists: CriteriaPlaylistSimple[];
@@ -27,10 +30,11 @@ export type GenrePlaylistTreeWheelProps = {
   handleGenreCreationAction: (parent: CriteriaMinimum | null) => void;
   handleGenreRenameAction: (genre: CriteriaMinimum) => void;
   getBackendBaseUrl: () => string;
+  criteriaPlaylistDetailedSchema: z.ZodType<CriteriaPlaylistDetailedLike<T>>;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
 };
 
-export default function GenrePlaylistTreeWheel({
+export default function GenrePlaylistTreeWheel<T extends TrackBase>({
   scope,
   className,
   genrePlaylists,
@@ -39,12 +43,17 @@ export default function GenrePlaylistTreeWheel({
   handleGenreCreationAction,
   handleGenreRenameAction,
   getBackendBaseUrl,
+  criteriaPlaylistDetailedSchema,
   additionalActions,
-}: GenrePlaylistTreeWheelProps) {
+}: GenrePlaylistTreeWheelProps<T>) {
   const { isPlaying, setIsPlaying } = usePlayer();
-  const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList();
+  const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList<T>();
   const { mutate: updateGenreMutate } = useUpdateGenre(scope, getBackendBaseUrl);
-  const { mutate: fetchGenrePlaylistDetailed } = useFetchGenrePlaylistDetailed(scope, getBackendBaseUrl);
+  const { mutate: fetchGenrePlaylistDetailed } = useFetchGenrePlaylistDetailed(
+    scope,
+    getBackendBaseUrl,
+    criteriaPlaylistDetailedSchema,
+  );
 
   const nodes: GenreTreeNode[] = useMemo(
     () =>
