@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **testing**: coverage now includes every source file (`vitest` coverage `all: true`), not just
+  files touched by a test, so untested code shows up in the report instead of being silently
+  excluded from the global average. The 80% threshold block was removed for now since real
+  coverage is currently ~21% — nothing is enforced yet, but the numbers are honest.
+
 ## [4.0.1] - 2026-08-24
 
 ## [4.0.0] - 2026-08-23
