@@ -14,11 +14,12 @@ export const CriteriaPlaylistDetailedBaseSchema = UuidResourceSchema.extend({
   durationInSec: z.number(),
   durationStrInHourMinSec: z.string(),
   tracksArchivedCount: z.number(),
-  criteria: CriteriaMinimumSchema,
+  // Nullable: the "Genreless" root playlist has no criteria attached and is never updated.
+  criteria: CriteriaMinimumSchema.nullable(),
   parent: CriteriaPlaylistMinimumSchema.nullable(),
   root: CriteriaPlaylistMinimumSchema,
   createdOn: z.string(),
-  updatedOn: z.string(),
+  updatedOn: z.string().nullable(),
 });
 
 export const makeCriteriaPlaylistDetailedSchema = <T extends z.ZodTypeAny>(trackSchema: T) =>
