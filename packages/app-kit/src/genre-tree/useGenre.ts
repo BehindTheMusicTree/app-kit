@@ -16,6 +16,8 @@ import { CriteriaCreationSchema } from "./schemas/criteria/creation";
 import { CriteriaUpdateSchema } from "./schemas/criteria/update";
 import { genreEndpoints, genreQueryKeys } from "./api/genres";
 
+const LoadExampleTreeResponseSchema = z.object({ message: z.string() });
+
 export function useListGenres(
   page = 1,
   pageSize: number | string = 50,
@@ -55,7 +57,7 @@ export function useLoadExampleTreeGenre(scope: Scope, getBackendBaseUrl: () => s
 
   return useValidatedMutation({
     inputSchema: z.void(),
-    outputSchema: CriteriaDetailedSchema,
+    outputSchema: LoadExampleTreeResponseSchema,
     mutationFn: async () => {
       const endpoint =
         scope === "reference" ? genreEndpoints.reference.loadExampleTree() : genreEndpoints.me.loadExampleTree();
