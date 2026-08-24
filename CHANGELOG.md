@@ -9,8 +9,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **testing**: coverage now includes every source file (`vitest` coverage `all: true`), not just
   files touched by a test, so untested code shows up in the report instead of being silently
-  excluded from the global average. The 80% threshold block was removed for now since real
-  coverage is currently ~21% — nothing is enforced yet, but the numbers are honest.
+  excluded from the global average. Thresholds are kept at 85%, which is an aspirational target —
+  actual coverage is currently ~21%/41%/66%/21% (lines/functions/branches/statements), so `pnpm
+  test` fails until enough tests are added to close the gap.
 
 ## [4.0.1] - 2026-08-24
 
