@@ -39,26 +39,31 @@ vi.mock("../../player/PlayerContext", () => ({
   usePlayer: () => usePlayerMock(),
 }));
 
-import GenrePlaylistTreeWheel from "./TreeWheel";
+import GenrePlaylistTreeWheel, { type GenrePlaylistTreeWheelProps } from "./TreeWheel";
+import type { TrackBase } from "../schemas/track/base";
+import type { CriteriaPlaylistDetailedLike } from "../models/TrackListOrigin";
 
 const getBackendBaseUrl = () => "https://backend.example.com";
-const schema = z.custom();
+const schema = z.custom<CriteriaPlaylistDetailedLike<TrackBase>>();
 
 function makeGenrePlaylist(overrides: Record<string, unknown> = {}) {
   return {
     uuid: "gp1",
     name: "Jazz",
     parent: null,
+    root: { uuid: "root1", name: "Root" },
     tracksCount: 3,
     criteria: { uuid: "c1", name: "Jazz" },
+    createdOn: "2024-01-01T00:00:00.000Z",
+    updatedOn: null,
     ...overrides,
   };
 }
 
-function renderWheel(overrides: Record<string, unknown> = {}) {
-  const props = {
-    scope: "me" as const,
-    genrePlaylists: [makeGenrePlaylist()],
+function renderWheel(overrides: Partial<GenrePlaylistTreeWheelProps<TrackBase>> = {}) {
+  const props: GenrePlaylistTreeWheelProps<TrackBase> = {
+    scope: "me",
+    genrePlaylists: [makeGenrePlaylist()] as GenrePlaylistTreeWheelProps<TrackBase>["genrePlaylists"],
     reparentingGenreUuid: null,
     setReparentingGenreUuid: vi.fn(),
     handleGenreCreationAction: vi.fn(),
@@ -67,7 +72,7 @@ function renderWheel(overrides: Record<string, unknown> = {}) {
     criteriaPlaylistDetailedSchema: schema,
     ...overrides,
   };
-  render(<GenrePlaylistTreeWheel {...(props as never)} />);
+  render(<GenrePlaylistTreeWheel {...props} />);
   return props;
 }
 

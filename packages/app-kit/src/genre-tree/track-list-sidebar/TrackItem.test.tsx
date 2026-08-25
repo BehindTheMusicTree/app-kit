@@ -20,9 +20,16 @@ function makeTrack(overrides: Record<string, unknown> = {}) {
   return {
     uuid: "track-1",
     title: "My Song",
-    artists: [{ name: "Artist One" }, { name: "Artist Two" }],
-    album: { name: "My Album" },
-    genre: { name: "Rock" },
+    artists: [
+      { name: "Artist One", uuid: "artist-1" },
+      { name: "Artist Two", uuid: "artist-2" },
+    ],
+    album: { name: "My Album", uuid: "album-1" },
+    genre: { name: "Rock", uuid: "genre-1" },
+    createdOn: "2024-01-01T00:00:00.000Z",
+    playlists: [],
+    playCount: 0,
+    archived: false,
     ...overrides,
   };
 }
