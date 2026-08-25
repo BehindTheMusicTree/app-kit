@@ -174,6 +174,36 @@ describe("useConnectivityErrorPopup", () => {
 
     expect(renderers.renderNetworkErrorPopup).toHaveBeenCalledTimes(1);
   });
+
+  it("does not redisplay the popup when the same error class repeats and is not in the always-redisplay list", () => {
+    const { renderers, setError } = setupHarness({ routeRequiresAuth: true });
+
+    setError(new AuthRequired(ErrorCode.BACKEND_UNAUTHORIZED));
+    expect(renderers.renderAuthPopup).toHaveBeenCalledTimes(1);
+
+    setError(new AuthRequired(ErrorCode.BACKEND_UNAUTHORIZED));
+    expect(renderers.renderAuthPopup).toHaveBeenCalledTimes(1);
+  });
+
+  it("displays the new popup when a different error class follows one that is not in the always-redisplay list", () => {
+    const { renderers, setError } = setupHarness({ routeRequiresAuth: true });
+
+    setError(new AuthRequired(ErrorCode.BACKEND_UNAUTHORIZED));
+    expect(renderers.renderAuthPopup).toHaveBeenCalledTimes(1);
+
+    setError(new BadRequestError(ErrorCode.BACKEND_BAD_REQUEST));
+    expect(renderers.renderInternalErrorPopup).toHaveBeenCalledWith(ErrorCode.BACKEND_BAD_REQUEST);
+  });
+
+  it("does not redisplay the popup when the same always-redisplay-listed error class repeats", () => {
+    const { renderers, setError } = setupHarness();
+
+    setError(new NetworkError(ErrorCode.NETWORK_ERROR));
+    expect(renderers.renderNetworkErrorPopup).toHaveBeenCalledTimes(1);
+
+    setError(new NetworkError(ErrorCode.NETWORK_ERROR));
+    expect(renderers.renderNetworkErrorPopup).toHaveBeenCalledTimes(1);
+  });
 });
 
 function Consumer({

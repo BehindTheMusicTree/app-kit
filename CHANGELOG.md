@@ -12,6 +12,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `{ message: string }`. Every load-example-tree call failed output validation even though the
   import succeeded server-side. Now validated against the actual `{ message: string }` shape.
 
+### Changed
+
+- **testing**: coverage now includes every source file (`vitest` coverage `all: true`), not just
+  files touched by a test, so untested code shows up in the report instead of being silently
+  excluded from the global average. Added tests to close the resulting gap; coverage is now
+  99.27%/100%/98.29%/99.27% (lines/functions/branches/statements). CI thresholds raised from the
+  85% placeholder to match: lines 99, functions 100, branches 98, statements 99.
+
 ## [4.0.1] - 2026-08-24
 
 ## [4.0.0] - 2026-08-23
