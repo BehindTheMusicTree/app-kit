@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **genre-tree**: `useLoadExampleTreeGenre` validated the `tree/load-example` mutation's response
+  against `CriteriaDetailedSchema` (a single genre node), but the endpoint actually returns
+  `{ message: string }`. Every load-example-tree call failed output validation even though the
+  import succeeded server-side. Now validated against the actual `{ message: string }` shape.
+
 ### Changed
 
 - **testing**: coverage now includes every source file (`vitest` coverage `all: true`), not just
