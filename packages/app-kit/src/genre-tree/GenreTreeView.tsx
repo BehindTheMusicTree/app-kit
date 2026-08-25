@@ -21,7 +21,7 @@ import GenrePlaylistTreePerRoot from "./playlist-tree/TreePerRoot";
 import GenrePlaylistTreeWheel from "./playlist-tree/TreeWheel";
 import { GenreTreeSkeleton } from "./GenreTreeSkeleton";
 
-type GenreTreeViewMode = "stacked" | "wheel";
+export type GenreTreeViewMode = "stacked" | "wheel";
 
 export type GenreTreeViewProps<T extends TrackBase> = {
   scope: Scope;
@@ -30,6 +30,8 @@ export type GenreTreeViewProps<T extends TrackBase> = {
   getBackendBaseUrl: () => string;
   criteriaPlaylistDetailedSchema: z.ZodType<CriteriaPlaylistDetailedLike<T>>;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
+  /** Controlled view mode. When provided, the internal Stacked/Wheel toggle is not rendered — the consumer owns that UI. */
+  viewMode?: GenreTreeViewMode;
 };
 
 export function GenreTreeView<T extends TrackBase>({
@@ -39,9 +41,12 @@ export function GenreTreeView<T extends TrackBase>({
   getBackendBaseUrl,
   criteriaPlaylistDetailedSchema,
   additionalActions,
+  viewMode: controlledViewMode,
 }: GenreTreeViewProps<T>) {
   const [reparentingGenreUuid, setReparentingGenreUuid] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<GenreTreeViewMode>("stacked");
+  const [internalViewMode, setInternalViewMode] = useState<GenreTreeViewMode>("stacked");
+  const isControlled = controlledViewMode !== undefined;
+  const viewMode = controlledViewMode ?? internalViewMode;
 
   const { data: genrePlaylists, isPending: isListingGenrePlaylists } = useListFullGenrePlaylists(
     scope,
@@ -63,16 +68,20 @@ export function GenreTreeView<T extends TrackBase>({
 
   const actions = (
     <>
-      {!isLoading && (
+      {!isLoading && !isControlled && (
         <div className="flex items-center gap-1 mr-2" role="group" aria-label="Tree view mode">
           <Button
             variant={viewMode === "stacked" ? "default" : "outline"}
             size="sm"
-            onClick={() => setViewMode("stacked")}
+            onClick={() => setInternalViewMode("stacked")}
           >
             Stacked
           </Button>
-          <Button variant={viewMode === "wheel" ? "default" : "outline"} size="sm" onClick={() => setViewMode("wheel")}>
+          <Button
+            variant={viewMode === "wheel" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setInternalViewMode("wheel")}
+          >
             Wheel
           </Button>
         </div>

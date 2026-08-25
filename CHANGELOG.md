@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **genre-tree**: `GenreTreeView` accepts an optional controlled `viewMode` prop (and exports the
+  `GenreTreeViewMode` type). When provided, the internal Stacked/Wheel toggle buttons are not
+  rendered, letting a consumer host that toggle elsewhere (e.g. a global app header). Omitting the
+  prop keeps the existing uncontrolled behavior with the internal toggle.
+
 ## [4.0.2] - 2026-08-25
 
 ### Fixed
