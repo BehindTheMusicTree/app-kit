@@ -10,8 +10,8 @@ catalogs:
       specifier: 12.0.0
       version: 12.0.0
     '@behindthemusictree/genre-tree-view':
-      specifier: 1.0.0
-      version: 1.0.0
+      specifier: 1.0.2
+      version: 1.0.2
     '@behindthemusictree/ui':
       specifier: ^0.1.0
       version: 0.1.0
@@ -31,7 +31,7 @@ importers:
         version: link:../../packages/app-kit
       '@behindthemusictree/genre-tree-view':
         specifier: 'catalog:'
-        version: 1.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 1.0.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@behindthemusictree/ui':
         specifier: 'catalog:'
         version: 0.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -77,7 +77,7 @@ importers:
         version: 12.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@behindthemusictree/genre-tree-view':
         specifier: 'catalog:'
-        version: 1.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 1.0.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@behindthemusictree/ui':
         specifier: 'catalog:'
         version: 0.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -267,8 +267,8 @@ packages:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
 
-  '@behindthemusictree/genre-tree-view@1.0.0':
-    resolution: {integrity: sha512-QO6Od/6Yb7FERW6ANs7NkJ/O7of2GUpiiWY251QyUeish5Ic4A63QPlcl9ZSWxsaykyWeOsXbI6xbz1ra6wzbQ==, tarball: https://npm.pkg.github.com/download/@behindthemusictree/genre-tree-view/1.0.0/1c27892f9b74dd2eaf34bdad365802c5b27ddf4c}
+  '@behindthemusictree/genre-tree-view@1.0.2':
+    resolution: {integrity: sha512-Z0HzqwUgXwnz78N/flHnsS59EfXimyb3XFMAkTZ0iAVGiQs2Hpukko6PifnQNq6cdKqSkPnMF3jFo4ip5N8Ckw==, tarball: https://npm.pkg.github.com/download/@behindthemusictree/genre-tree-view/1.0.2/b9f8bd406356bab913c84b7fea5bb8586ce7b281}
     peerDependencies:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
@@ -824,6 +824,20 @@ packages:
     cpu: [x64]
     os: [darwin]
 
+  '@next/swc-linux-arm64-gnu@15.5.23':
+    resolution: {integrity: sha512-WlNtfepUXKX2u2ZsJZ8c3c8+tJSRZqsYzoMwLOY72A8ucKCCgxgNhiePA3qzFYahVWrwcQd8jOeJmBinc+VFVQ==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  '@next/swc-linux-arm64-musl@15.5.23':
+    resolution: {integrity: sha512-W/6qKk7UG93mg14PmQC+2urt69MIdwTBLNQ6MJyeC4wOCIHCjz+VfgssvS1pK7mgYBtLC1g6VKNoHD9xB0WWGg==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [linux]
+    libc: [musl]
+
   '@next/swc-linux-x64-gnu@15.5.23':
     resolution: {integrity: sha512-vzefI32mi6VMk96RaTAyxApgfGbiFzQBXVsekEjsDv1fr48mlABTWx0sUYhaYCBHWqCalxmz3DxbxFcbFvzNtw==}
     engines: {node: '>= 10'}
@@ -842,6 +856,12 @@ packages:
     resolution: {integrity: sha512-Wc29KFOdT7XBcII3Vtmw7aoU8Uk3Mes/FNJfhFeSHdYBFJWMcR/DsI8U9BCPUhq/uycsUVuqSKGthW15tLsigA==}
     engines: {node: '>= 10'}
     cpu: [arm64]
+    os: [win32]
+
+  '@next/swc-win32-x64-msvc@15.5.23':
+    resolution: {integrity: sha512-/C7wRW4fa9s/PKA18zGPPpVmx8ycgVpP8yOxro4gzGTzjPJdscbAP3ODeFvgiIovxD176Z2J/SXO9t8PJKHLeQ==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
     os: [win32]
 
   '@nodelib/fs.scandir@2.1.5':
@@ -2502,7 +2522,7 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  '@behindthemusictree/genre-tree-view@1.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@behindthemusictree/genre-tree-view@1.0.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       d3: 7.9.0
       react: 18.3.1
@@ -2839,6 +2859,12 @@ snapshots:
   '@next/swc-darwin-x64@15.5.23':
     optional: true
 
+  '@next/swc-linux-arm64-gnu@15.5.23':
+    optional: true
+
+  '@next/swc-linux-arm64-musl@15.5.23':
+    optional: true
+
   '@next/swc-linux-x64-gnu@15.5.23':
     optional: true
 
@@ -2846,6 +2872,9 @@ snapshots:
     optional: true
 
   '@next/swc-win32-arm64-msvc@15.5.23':
+    optional: true
+
+  '@next/swc-win32-x64-msvc@15.5.23':
     optional: true
 
   '@nodelib/fs.scandir@2.1.5':
@@ -3799,9 +3828,12 @@ snapshots:
     optionalDependencies:
       '@next/swc-darwin-arm64': 15.5.23
       '@next/swc-darwin-x64': 15.5.23
+      '@next/swc-linux-arm64-gnu': 15.5.23
+      '@next/swc-linux-arm64-musl': 15.5.23
       '@next/swc-linux-x64-gnu': 15.5.23
       '@next/swc-linux-x64-musl': 15.5.23
       '@next/swc-win32-arm64-msvc': 15.5.23
+      '@next/swc-win32-x64-msvc': 15.5.23
       sharp: 0.34.5
     transitivePeerDependencies:
       - '@babel/core'
