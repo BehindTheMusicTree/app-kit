@@ -7,9 +7,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- Bumped `@behindthemusictree/genre-tree-view` to 1.0.1 — `GenreTreeWheelRadialPopCore`'s boundary
+- Bumped `@behindthemusictree/genre-tree-view` to 1.0.2 — `GenreTreeWheelRadialPopCore`'s boundary
   circles read consistently and the "Mainstream Pop" center chip/subtree now render white for
-  legibility.
+  legibility; a single/childless root's card no longer gets clipped by an undersized svg height.
 
 ## [4.1.0] - 2026-08-26
 
