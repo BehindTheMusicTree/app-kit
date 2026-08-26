@@ -5,6 +5,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.2.0] - 2026-08-26
+
+### Added
+
+- **genre-tree**: app-kit now re-exports `@behindthemusictree/genre-tree-view`'s stylesheet at
+  `@behindthemusictree/app-kit/genre-tree/styles.css` (copied into `dist/genre-tree/styles.css` at
+  build time). Consumers that only needed the CSS no longer need a direct dependency on
+  `@behindthemusictree/genre-tree-view`.
+
 ## [4.1.1] - 2026-08-26
 
 ### Changed
