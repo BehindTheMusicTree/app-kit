@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.1.1] - 2026-08-26
+
 ### Changed
 
 - Bumped `@behindthemusictree/genre-tree-view` to 1.0.3 — `GenreTreeWheelRadialPopCore`'s boundary
