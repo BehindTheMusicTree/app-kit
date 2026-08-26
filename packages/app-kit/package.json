@@ -1,6 +1,6 @@
 {
   "name": "@behindthemusictree/app-kit",
-  "version": "4.1.1",
+  "version": "4.2.0",
   "description": "Shared transport, auth, popup, UI, player, and genre-tree plumbing for BehindTheMusicTree React apps",
   "repository": {
     "type": "git",
@@ -43,14 +43,15 @@
       "types": "./dist/genre-tree/index.d.ts",
       "import": "./dist/genre-tree/index.js",
       "require": "./dist/genre-tree/index.cjs"
-    }
+    },
+    "./genre-tree/styles.css": "./dist/genre-tree/styles.css"
   },
   "files": [
     "dist"
   ],
   "scripts": {
     "dev": "tsup --watch",
-    "build": "tsup",
+    "build": "tsup && node scripts/copy-genre-tree-css.mjs",
     "lint": "tsc --noEmit",
     "test": "vitest run --coverage"
   },
