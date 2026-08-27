@@ -215,6 +215,40 @@ describe("GenrePlaylistTreePerRoot", () => {
     });
   });
 
+  describe("readOnly", () => {
+    it("omits create/rename/reparent handlers but keeps delete when readOnly is true", () => {
+      render(
+        <GenrePlaylistTreePerRoot
+          scope="reference"
+          rootUuid={playlistUuid}
+          genrePlaylistTreePerRoot={[genrePlaylist]}
+          reparentingGenreUuid={null}
+          setReparentingGenreUuid={vi.fn()}
+          handleGenreCreationAction={handleGenreCreationAction}
+          handleGenreRenameAction={handleGenreRenameAction}
+          getBackendBaseUrl={() => "https://api.example.com"}
+          criteriaPlaylistDetailedSchema={z.any()}
+          readOnly
+        />,
+      );
+
+      expect(capturedProps!.onAddChild).toBeUndefined();
+      expect(capturedProps!.onRenameRequest).toBeUndefined();
+      expect(capturedProps!.onReparentRequest).toBeUndefined();
+      expect(capturedProps!.onReparent).toBeUndefined();
+      expect(capturedProps!.onDeleteRequest).toBeInstanceOf(Function);
+    });
+
+    it("keeps create/rename/reparent handlers when readOnly is omitted", () => {
+      renderTree();
+
+      expect(capturedProps!.onAddChild).toBeInstanceOf(Function);
+      expect(capturedProps!.onRenameRequest).toBeInstanceOf(Function);
+      expect(capturedProps!.onReparentRequest).toBeInstanceOf(Function);
+      expect(capturedProps!.onReparent).toBeInstanceOf(Function);
+    });
+  });
+
   describe("handleReparentRequest / handleReparent", () => {
     it("sets the reparenting genre uuid on request", () => {
       const setReparentingGenreUuid = vi.fn();

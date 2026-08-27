@@ -178,6 +178,23 @@ describe("GenreTreeView", () => {
     expect(screen.getByTestId("tree-per-root")).toBeInTheDocument();
   });
 
+  it("hides the Add root and load-tree buttons when readOnly", () => {
+    renderView({ readOnly: true });
+
+    expect(screen.queryByRole("button", { name: /Add root/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Load the example tree genre/ })).not.toBeInTheDocument();
+  });
+
+  it("passes readOnly through to the tree components", () => {
+    useListFullGenrePlaylistsMock.mockReturnValue({ data: { results: [makePlaylist()] }, isPending: false });
+    renderView({ readOnly: true });
+
+    expect(treePerRootPropsMock.mock.calls[0][0].readOnly).toBe(true);
+
+    fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+    expect(treeWheelPropsMock.mock.calls[0][0].readOnly).toBe(true);
+  });
+
   it("passes reparentingGenreUuid updates through to the tree components", () => {
     useListFullGenrePlaylistsMock.mockReturnValue({ data: { results: [makePlaylist()] }, isPending: false });
     renderView();

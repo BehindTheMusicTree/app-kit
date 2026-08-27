@@ -5,6 +5,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.3.0] - 2026-08-27
+
+### Added
+
+- **genre-tree**: `GenreTreeView` accepts an optional `readOnly` prop. When true, it hides the
+  "Add root" and load-tree buttons and suppresses per-node create/rename/reparent affordances in
+  both the stacked and wheel tree views, for a read-only/prototype consumer. Defaults to false,
+  preserving existing behavior.
+
 ## [4.2.0] - 2026-08-26
 
 ### Added
