@@ -5,6 +5,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **playground**: points at `grow-api-staging` instead of `hear-api-staging` — the playground
+  exercises `GenreTreeView`'s `reference` scope, which is backed by grow-the-music-tree-api's
+  unauthenticated `genres`/`genre-playlists`/`library/youtube` routes, not hear's.
+
 ## [4.4.3] - 2026-08-27
 
 ### Fixed
