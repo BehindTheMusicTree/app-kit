@@ -5,6 +5,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.4.2] - 2026-08-27
+
+### Fixed
+
+- **genre-tree**: `useListFullGenrePlaylists` now follows pagination (`next`) until every result
+  is collected, instead of relying on a single request with `pageSize: 1000` to return the whole
+  list in one page. Backends that clamp `pageSize` below what's requested (e.g. a server-side
+  `PAGINATION_PAGE_SIZE_MAX`) were silently truncating the "full" tree fetch — on trees larger
+  than the cap, `overallTotal` correctly reported the true count but `results` only held the
+  first page, so downstream checks like `hasMainstreamPopRoot` could report `false` even when the
+  tree genuinely had a matching root further down the (unfetched) list.
+
 ## [4.4.1] - 2026-08-27
 
 ### Fixed

@@ -15,6 +15,36 @@ import { Scope } from "../transport/lib/scope";
 
 const FULL_LIST_PAGE_SIZE = 1000;
 
+type RawPaginatedResponse = {
+  overallTotal: number;
+  next: string | null;
+  previous: string | null;
+  results: unknown[];
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+/**
+ * Backends may clamp `pageSize` below what's requested (e.g. a server-side max page size), so a
+ * single request can silently return fewer results than `overallTotal`. Follows `next` until every
+ * result has been collected, so callers that need "the whole list" actually get it regardless of
+ * the effective page size the backend applies.
+ */
+const fetchAllPages = async (fetchPage: (page: number) => Promise<unknown>): Promise<RawPaginatedResponse> => {
+  let page = 1;
+  let response = (await fetchPage(page)) as RawPaginatedResponse;
+  const results = [...response.results];
+
+  while (results.length < response.overallTotal && response.next) {
+    page += 1;
+    response = (await fetchPage(page)) as RawPaginatedResponse;
+    results.push(...response.results);
+  }
+
+  return { ...response, results, page: 1, pageSize: results.length, totalPages: 1 };
+};
+
 export const useListGenrePlaylists = (page = 1, pageSize: number | string = 50, getBackendBaseUrl: () => string) => {
   const queryClient = useQueryClient();
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
@@ -48,12 +78,14 @@ export const useListFullGenrePlaylists = (scope: Scope, getBackendBaseUrl: () =>
   const query = useQueryWithParse({
     queryKey,
     queryFn: () =>
-      fetch(
-        scope === "reference" ? genrePlaylistEndpoints.reference.list() : genrePlaylistEndpoints.me.list(),
-        true,
-        scope === "me",
-        {},
-        { page: 1, pageSize: FULL_LIST_PAGE_SIZE },
+      fetchAllPages((page) =>
+        fetch(
+          scope === "reference" ? genrePlaylistEndpoints.reference.list() : genrePlaylistEndpoints.me.list(),
+          true,
+          scope === "me",
+          {},
+          { page, pageSize: FULL_LIST_PAGE_SIZE },
+        ),
       ),
     schema: PaginatedResponseSchema(CriteriaPlaylistSimpleSchema),
     context: "useListFullGenrePlaylists",
