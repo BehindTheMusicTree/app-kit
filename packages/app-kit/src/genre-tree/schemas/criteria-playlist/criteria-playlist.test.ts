@@ -32,6 +32,12 @@ describe("CriteriaPlaylistDetailedBaseSchema", () => {
     const { name: _name, ...invalid } = validCriteriaPlaylistBase;
     expect(() => CriteriaPlaylistDetailedBaseSchema.parse(invalid)).toThrow();
   });
+
+  it("accepts null/omitted duration fields", () => {
+    const { durationInSec: _durationInSec, durationStrInHourMinSec: _durationStrInHourMinSec, ...rest } =
+      validCriteriaPlaylistBase;
+    expect(() => CriteriaPlaylistDetailedBaseSchema.parse(rest)).not.toThrow();
+  });
 });
 
 describe("makeCriteriaPlaylistDetailedSchema", () => {
