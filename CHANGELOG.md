@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.4.0] - 2026-08-27
+
 ### Added
 
 - **genre-tree**: `GenreTreeView` supports a new `"pop-core"` view mode, delegating to a new
