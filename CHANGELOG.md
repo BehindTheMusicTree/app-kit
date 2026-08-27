@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **genre-tree**: `GenreTreeWheelSkeleton` — a radial loading skeleton for the Wheel and Pop/Core
+  tree views, shown by `GenreTreeView` in place of the linear `GenreTreeSkeleton` while those view
+  modes are loading. Background pie sectors between the root chips are tinted with
+  `getGenreTreeColor`, mirroring the real wheel's per-root coloring.
+
 ## [4.4.3] - 2026-08-27
 
 ### Fixed
