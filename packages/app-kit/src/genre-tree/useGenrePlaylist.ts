@@ -42,7 +42,8 @@ export const useListFullGenrePlaylists = (scope: Scope, getBackendBaseUrl: () =>
   const queryClient = useQueryClient();
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
   const { session, sessionRestored } = useSession();
-  const queryKey = scope === "reference" ? genrePlaylistQueryKeys.reference.full : genrePlaylistQueryKeys.me.full;
+  const queryKey =
+    scope === "reference" ? genrePlaylistQueryKeys.reference.full(getBackendBaseUrl()) : genrePlaylistQueryKeys.me.full;
 
   const query = useQueryWithParse({
     queryKey,
@@ -112,6 +113,5 @@ export const useInvalidateAllGenrePlaylistQueries = () => {
     queryClient.invalidateQueries({ queryKey: genrePlaylistQueryKeys.me.all });
     queryClient.invalidateQueries({ queryKey: genrePlaylistQueryKeys.me.full });
     queryClient.invalidateQueries({ queryKey: genrePlaylistQueryKeys.reference.all });
-    queryClient.invalidateQueries({ queryKey: genrePlaylistQueryKeys.reference.full });
   };
 };
