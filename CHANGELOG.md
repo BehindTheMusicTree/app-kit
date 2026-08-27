@@ -5,6 +5,21 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **genre-tree**: `GenreTreeView` supports a new `"pop-core"` view mode, delegating to a new
+  `GenrePlaylistTreeWheelRadialPopCore` wrapper (`playlist-tree/TreeWheelRadialPopCore.tsx`) around
+  `@behindthemusictree/genre-tree-view`'s `GenreTreeWheelRadialPopCore`. The internal view-mode
+  toggle (used when `viewMode` isn't externally controlled) gains a "Pop/Core" button, disabled
+  with an explanatory `title` when the genre tree has no root named exactly "Mainstream Pop".
+- **genre-tree**: exported a new pure helper, `hasMainstreamPopRoot(nodes: GenreTreeNode[]): boolean`
+  (from `lib/genre-playlist-helpers.ts`, re-exported via the package root), so downstream consumers
+  owning their own pop-core toggle UI can apply the same check.
+- **genre-tree**: `CriteriaMinimumSchema` now parses an optional `side: "core" | "pop" | null`
+  field (matching the backend's `criteria.side`), and `TreeWheel`/`TreePerRoot`/the new
+  `TreeWheelRadialPopCore` wrapper all map it onto their `GenreTreeNode`s' `side` field. Previously
+  `side` was silently stripped during response parsing.
+
 ## [4.3.0] - 2026-08-27
 
 ### Added
