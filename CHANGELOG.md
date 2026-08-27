@@ -5,6 +5,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.4.1] - 2026-08-27
+
+### Fixed
+
+- **genre-tree**: `useListFullGenrePlaylists`'s `"reference"` scope query key now includes the
+  resolved backend base URL. Previously `genrePlaylistQueryKeys.reference.full` was a single
+  static key shared by every consumer using `scope: "reference"`, so two trees fetched from
+  different backends (e.g. grow's real reference tree and its read-only prototype/demo tree)
+  collided in the react-query cache — navigating between them within the 60s `staleTime` window
+  served stale data from whichever backend fetched first.
+
 ## [4.4.0] - 2026-08-27
 
 ### Added
