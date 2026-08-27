@@ -284,4 +284,27 @@ describe("GenrePlaylistTreeWheel", () => {
     expect(props.reparentingNodeId).toBe("gp1");
     expect(props.additionalActions).toBe(additionalActions);
   });
+
+  describe("readOnly", () => {
+    it("omits create/rename/reparent handlers but keeps delete when readOnly is true", () => {
+      renderWheel({ readOnly: true });
+
+      const props = genreTreeWheelPropsMock.mock.calls[0][0];
+      expect(props.onAddChild).toBeUndefined();
+      expect(props.onRenameRequest).toBeUndefined();
+      expect(props.onReparentRequest).toBeUndefined();
+      expect(props.onReparent).toBeUndefined();
+      expect(props.onDeleteRequest).toBeInstanceOf(Function);
+    });
+
+    it("keeps create/rename/reparent handlers when readOnly is omitted", () => {
+      renderWheel();
+
+      const props = genreTreeWheelPropsMock.mock.calls[0][0];
+      expect(props.onAddChild).toBeInstanceOf(Function);
+      expect(props.onRenameRequest).toBeInstanceOf(Function);
+      expect(props.onReparentRequest).toBeInstanceOf(Function);
+      expect(props.onReparent).toBeInstanceOf(Function);
+    });
+  });
 });
