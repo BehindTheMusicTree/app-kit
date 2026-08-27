@@ -15,13 +15,14 @@ import { CriteriaPlaylistDetailedLike } from "./models/TrackListOrigin";
 import { Scope } from "../transport/lib/scope";
 import { useListFullGenrePlaylists } from "./useGenrePlaylist";
 import { useLoadExampleTreeGenre } from "./useGenre";
-import { getGenrePlaylistsGroupedByRoot } from "./lib/genre-playlist-helpers";
+import { getGenrePlaylistsGroupedByRoot, hasMainstreamPopRoot } from "./lib/genre-playlist-helpers";
 
 import GenrePlaylistTreePerRoot from "./playlist-tree/TreePerRoot";
 import GenrePlaylistTreeWheel from "./playlist-tree/TreeWheel";
+import GenrePlaylistTreeWheelRadialPopCore from "./playlist-tree/TreeWheelRadialPopCore";
 import { GenreTreeSkeleton } from "./GenreTreeSkeleton";
 
-export type GenreTreeViewMode = "stacked" | "wheel";
+export type GenreTreeViewMode = "stacked" | "wheel" | "pop-core";
 
 export type GenreTreeViewProps<T extends TrackBase> = {
   scope: Scope;
@@ -68,6 +69,19 @@ export function GenreTreeView<T extends TrackBase>({
   const isLoading = isListingGenrePlaylists || isLoadingTree;
   const hasAtLeastOneGenre = Object.keys(groupedGenrePlaylistsByRoot).length > 0;
 
+  const canShowPopCore = useMemo(
+    () =>
+      hasMainstreamPopRoot(
+        (genrePlaylists?.results ?? []).map((genrePlaylist) => ({
+          id: genrePlaylist.uuid,
+          parentId: genrePlaylist.parent?.uuid ?? null,
+          name: genrePlaylist.name,
+          itemCount: genrePlaylist.tracksCount,
+        })),
+      ),
+    [genrePlaylists?.results],
+  );
+
   const loadButtonText = scope === "me" ? "Load the example tree genre" : "Load the reference tree genre";
 
   const actions = (
@@ -87,6 +101,15 @@ export function GenreTreeView<T extends TrackBase>({
             onClick={() => setInternalViewMode("wheel")}
           >
             Wheel
+          </Button>
+          <Button
+            variant={viewMode === "pop-core" ? "default" : "outline"}
+            size="sm"
+            disabled={!canShowPopCore}
+            title={canShowPopCore ? undefined : "This genre tree has no 'Mainstream Pop' root yet"}
+            onClick={() => setInternalViewMode("pop-core")}
+          >
+            Pop/Core
           </Button>
         </div>
       )}
@@ -114,6 +137,21 @@ export function GenreTreeView<T extends TrackBase>({
       ) : viewMode === "wheel" ? (
         <div className="tree-container flex-1 min-h-0 w-full relative">
           <GenrePlaylistTreeWheel
+            scope={scope}
+            genrePlaylists={(genrePlaylists?.results ?? []) as CriteriaPlaylistSimple[]}
+            reparentingGenreUuid={reparentingGenreUuid}
+            setReparentingGenreUuid={setReparentingGenreUuid}
+            handleGenreCreationAction={handleGenreCreationAction}
+            handleGenreRenameAction={handleGenreRenameAction}
+            getBackendBaseUrl={getBackendBaseUrl}
+            criteriaPlaylistDetailedSchema={criteriaPlaylistDetailedSchema}
+            additionalActions={additionalActions}
+            readOnly={readOnly}
+          />
+        </div>
+      ) : viewMode === "pop-core" ? (
+        <div className="tree-container flex-1 min-h-0 w-full relative">
+          <GenrePlaylistTreeWheelRadialPopCore
             scope={scope}
             genrePlaylists={(genrePlaylists?.results ?? []) as CriteriaPlaylistSimple[]}
             reparentingGenreUuid={reparentingGenreUuid}
