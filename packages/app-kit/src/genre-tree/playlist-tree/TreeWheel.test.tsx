@@ -8,12 +8,19 @@ const {
   useTrackListMock,
   updateGenreMutateMock,
   fetchGenrePlaylistDetailedMutateMock,
+  showPopupMock,
 } = vi.hoisted(() => ({
   genreTreeWheelPropsMock: vi.fn(),
   usePlayerMock: vi.fn(),
   useTrackListMock: vi.fn(),
   updateGenreMutateMock: vi.fn(),
   fetchGenrePlaylistDetailedMutateMock: vi.fn(),
+  showPopupMock: vi.fn(),
+}));
+
+vi.mock("../../popup", () => ({
+  usePopup: () => ({ showPopup: showPopupMock, hidePopup: vi.fn() }),
+  InternalErrorPopup: () => null,
 }));
 
 vi.mock("@behindthemusictree/genre-tree-view", () => ({
@@ -42,6 +49,7 @@ vi.mock("../../player/PlayerContext", () => ({
 import GenrePlaylistTreeWheel, { type GenrePlaylistTreeWheelProps } from "./TreeWheel";
 import type { TrackBase } from "../schemas/track/base";
 import type { CriteriaPlaylistDetailedLike } from "../models/TrackListOrigin";
+import { ErrorCode } from "../../transport/app-errors/app-error-codes";
 
 const getBackendBaseUrl = () => "https://backend.example.com";
 const schema = z.custom<CriteriaPlaylistDetailedLike<TrackBase>>();
@@ -190,6 +198,9 @@ describe("GenrePlaylistTreeWheel", () => {
       onError(new Error("boom"));
 
       expect(errorSpy).toHaveBeenCalledWith("Failed to fetch detailed genre playlist:", expect.any(Error));
+      expect(showPopupMock).toHaveBeenCalledWith(
+        expect.objectContaining({ props: expect.objectContaining({ errorCode: ErrorCode.CLIENT_UNKNOWN }) }),
+      );
       errorSpy.mockRestore();
     });
   });

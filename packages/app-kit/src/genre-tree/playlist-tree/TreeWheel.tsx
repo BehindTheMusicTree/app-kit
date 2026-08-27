@@ -12,6 +12,8 @@ import { useTrackList } from "../TrackListContext";
 import { useUpdateGenre } from "../useGenre";
 import { useFetchGenrePlaylistDetailed } from "../useGenrePlaylist";
 import { usePlayer } from "../../player/PlayerContext";
+import { InternalErrorPopup, usePopup } from "../../popup";
+import { ErrorCode } from "../../transport/app-errors/app-error-codes";
 
 import { TrackListOriginType } from "../models/TrackListOriginType";
 import { TrackBase } from "../schemas/track/base";
@@ -57,6 +59,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
     getBackendBaseUrl,
     criteriaPlaylistDetailedSchema,
   );
+  const { showPopup } = usePopup();
 
   const nodes: GenreTreeNode[] = useMemo(
     () =>
@@ -98,10 +101,20 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
         },
         onError: (error) => {
           console.error("Failed to fetch detailed genre playlist:", error);
+          showPopup(<InternalErrorPopup errorCode={ErrorCode.CLIENT_UNKNOWN} />);
         },
       });
     },
-    [genrePlaylists, trackList, isPlaying, setIsPlaying, playNewTrackListFromGenrePlaylist, fetchGenrePlaylistDetailed, scope],
+    [
+      genrePlaylists,
+      trackList,
+      isPlaying,
+      setIsPlaying,
+      playNewTrackListFromGenrePlaylist,
+      fetchGenrePlaylistDetailed,
+      scope,
+      showPopup,
+    ],
   );
 
   const handleAddChild = useCallback(
