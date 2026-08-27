@@ -87,7 +87,7 @@ describe("useGenrePlaylist", () => {
       renderHook(() => useListFullGenrePlaylists("reference", getBackendBaseUrl));
       const { queryKey, enabled, queryFn } = useQueryWithParseMock.mock.calls[0][0];
 
-      expect(queryKey).toEqual(["referenceGenrePlaylists", "full"]);
+      expect(queryKey).toEqual(["referenceGenrePlaylists", "https://backend.example.com", "full"]);
       expect(enabled).toBe(true);
 
       queryFn();
@@ -117,7 +117,9 @@ describe("useGenrePlaylist", () => {
 
       result.current.invalidateFullGenrePlaylists();
 
-      expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["referenceGenrePlaylists", "full"] });
+      expect(invalidateQueriesMock).toHaveBeenCalledWith({
+        queryKey: ["referenceGenrePlaylists", "https://backend.example.com", "full"],
+      });
     });
   });
 
@@ -177,7 +179,7 @@ describe("useGenrePlaylist", () => {
   });
 
   describe("useInvalidateAllGenrePlaylistQueries", () => {
-    it("returns a function that invalidates all four genre playlist query keys", () => {
+    it("returns a function that invalidates the me and reference genre playlist query keys", () => {
       const { result } = renderHook(() => useInvalidateAllGenrePlaylistQueries());
 
       result.current();
@@ -185,7 +187,6 @@ describe("useGenrePlaylist", () => {
       expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["meGenrePlaylists"] });
       expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["meGenrePlaylists", "full"] });
       expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["referenceGenrePlaylists"] });
-      expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["referenceGenrePlaylists", "full"] });
     });
   });
 });

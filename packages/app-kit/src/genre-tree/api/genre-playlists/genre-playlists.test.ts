@@ -31,9 +31,28 @@ describe("genrePlaylistQueryKeys", () => {
 
   it("builds 'reference' scope query keys", () => {
     expect(genrePlaylistQueryKeys.reference.all).toEqual(["referenceGenrePlaylists"]);
-    expect(genrePlaylistQueryKeys.reference.list(1)).toEqual(["referenceGenrePlaylists", "list", 1]);
-    expect(genrePlaylistQueryKeys.reference.full).toEqual(["referenceGenrePlaylists", "full"]);
-    expect(genrePlaylistQueryKeys.reference.detail(uuid)).toEqual(["referenceGenrePlaylists", uuid]);
+    expect(genrePlaylistQueryKeys.reference.list("/api/grow-proxy", 1)).toEqual([
+      "referenceGenrePlaylists",
+      "/api/grow-proxy",
+      "list",
+      1,
+    ]);
+    expect(genrePlaylistQueryKeys.reference.full("/api/grow-proxy")).toEqual([
+      "referenceGenrePlaylists",
+      "/api/grow-proxy",
+      "full",
+    ]);
+    expect(genrePlaylistQueryKeys.reference.detail("/api/grow-proxy", uuid)).toEqual([
+      "referenceGenrePlaylists",
+      "/api/grow-proxy",
+      uuid,
+    ]);
+  });
+
+  it("varies 'reference' scope query keys by backend base URL", () => {
+    expect(genrePlaylistQueryKeys.reference.full("/api/grow-proxy")).not.toEqual(
+      genrePlaylistQueryKeys.reference.full("/api/grow-prototype-proxy"),
+    );
   });
 });
 
