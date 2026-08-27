@@ -3,7 +3,7 @@
 import { useCallback, useMemo } from "react";
 import { z } from "zod";
 import {
-  GenreTreeWheel,
+  GenreTreeWheelRadialPopCore,
   type GenreTreeAction,
   type GenreTreeNode,
 } from "@behindthemusictree/genre-tree-view";
@@ -21,7 +21,7 @@ import { CriteriaPlaylistSimple } from "../schemas/criteria-playlist/simple";
 import { CriteriaMinimum } from "../schemas/criteria/minimum";
 import { Scope } from "../../transport/lib/scope";
 
-export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
+export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   scope: Scope;
   className?: string;
   genrePlaylists: CriteriaPlaylistSimple[];
@@ -36,7 +36,7 @@ export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
   readOnly?: boolean;
 };
 
-export default function GenrePlaylistTreeWheel<T extends TrackBase>({
+export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>({
   scope,
   className,
   genrePlaylists,
@@ -48,7 +48,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
   criteriaPlaylistDetailedSchema,
   additionalActions,
   readOnly = false,
-}: GenrePlaylistTreeWheelProps<T>) {
+}: GenrePlaylistTreeWheelRadialPopCoreProps<T>) {
   const { isPlaying, setIsPlaying } = usePlayer();
   const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList<T>();
   const { mutate: updateGenreMutate } = useUpdateGenre(scope, getBackendBaseUrl);
@@ -150,7 +150,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
   );
 
   return (
-    <GenreTreeWheel
+    <GenreTreeWheelRadialPopCore
       className={className}
       nodes={nodes}
       playingNodeId={playingNodeId}

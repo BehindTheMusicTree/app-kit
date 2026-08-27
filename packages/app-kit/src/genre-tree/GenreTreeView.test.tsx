@@ -8,12 +8,14 @@ const {
   loadTreeMutateMock,
   treePerRootPropsMock,
   treeWheelPropsMock,
+  treeWheelRadialPopCorePropsMock,
 } = vi.hoisted(() => ({
   useListFullGenrePlaylistsMock: vi.fn(),
   useLoadExampleTreeGenreMock: vi.fn(),
   loadTreeMutateMock: vi.fn(),
   treePerRootPropsMock: vi.fn(),
   treeWheelPropsMock: vi.fn(),
+  treeWheelRadialPopCorePropsMock: vi.fn(),
 }));
 
 vi.mock("./useGenrePlaylist", () => ({
@@ -35,6 +37,13 @@ vi.mock("./playlist-tree/TreeWheel", () => ({
   default: (props: unknown) => {
     treeWheelPropsMock(props);
     return <div data-testid="tree-wheel" />;
+  },
+}));
+
+vi.mock("./playlist-tree/TreeWheelRadialPopCore", () => ({
+  default: (props: unknown) => {
+    treeWheelRadialPopCorePropsMock(props);
+    return <div data-testid="tree-wheel-radial-pop-core" />;
   },
 }));
 
@@ -203,6 +212,64 @@ describe("GenreTreeView", () => {
 
     act(() => {
       treePerRootPropsMock.mock.calls[0][0].setReparentingGenreUuid("gp1");
+    });
+  });
+
+  describe("pop-core view", () => {
+    it("disables the Pop/Core toggle with an explanatory title when there is no 'Mainstream Pop' root", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: { results: [makePlaylist({ uuid: "gp1", name: "Rock", root: { uuid: "gp1" }, parent: null })] },
+        isPending: false,
+      });
+      renderView();
+
+      const popCoreButton = screen.getByRole("button", { name: "Pop/Core" });
+      expect(popCoreButton).toBeDisabled();
+      expect(popCoreButton).toHaveAttribute("title", "This genre tree has no 'Mainstream Pop' root yet");
+    });
+
+    it("enables the Pop/Core toggle when a 'Mainstream Pop' root exists", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: {
+          results: [makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" }, parent: null })],
+        },
+        isPending: false,
+      });
+      renderView();
+
+      expect(screen.getByRole("button", { name: "Pop/Core" })).toBeEnabled();
+    });
+
+    it("switches to the pop-core view and passes genre playlists through", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: {
+          results: [makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" }, parent: null })],
+        },
+        isPending: false,
+      });
+      renderView();
+
+      fireEvent.click(screen.getByRole("button", { name: "Pop/Core" }));
+
+      expect(screen.getByTestId("tree-wheel-radial-pop-core")).toBeInTheDocument();
+      expect(screen.queryByTestId("tree-per-root")).not.toBeInTheDocument();
+      expect(treeWheelRadialPopCorePropsMock.mock.calls[0][0].genrePlaylists).toEqual([
+        makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" }, parent: null }),
+      ]);
+    });
+
+    it("passes readOnly through to the pop-core tree component", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: {
+          results: [makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" }, parent: null })],
+        },
+        isPending: false,
+      });
+      renderView({ readOnly: true });
+
+      fireEvent.click(screen.getByRole("button", { name: "Pop/Core" }));
+
+      expect(treeWheelRadialPopCorePropsMock.mock.calls[0][0].readOnly).toBe(true);
     });
   });
 });
