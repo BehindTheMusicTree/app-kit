@@ -32,6 +32,9 @@ export type GenreTreeViewProps<T extends TrackBase> = {
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   /** Controlled view mode. When provided, the internal Stacked/Wheel toggle is not rendered — the consumer owns that UI. */
   viewMode?: GenreTreeViewMode;
+  /** When true, hides the "Add root" and load-tree buttons and suppresses per-node
+   * create/rename/reparent affordances, for a read-only consumer. Defaults to false. */
+  readOnly?: boolean;
 };
 
 export function GenreTreeView<T extends TrackBase>({
@@ -42,6 +45,7 @@ export function GenreTreeView<T extends TrackBase>({
   criteriaPlaylistDetailedSchema,
   additionalActions,
   viewMode: controlledViewMode,
+  readOnly = false,
 }: GenreTreeViewProps<T>) {
   const [reparentingGenreUuid, setReparentingGenreUuid] = useState<string | null>(null);
   const [internalViewMode, setInternalViewMode] = useState<GenreTreeViewMode>("stacked");
@@ -86,10 +90,10 @@ export function GenreTreeView<T extends TrackBase>({
           </Button>
         </div>
       )}
-      {!isLoading && (
+      {!isLoading && !readOnly && (
         <IconTextButton icon={Plus} text="Add root" onClick={() => handleGenreCreationAction(null)} />
       )}
-      {!isLoading && !hasAtLeastOneGenre && (
+      {!isLoading && !readOnly && !hasAtLeastOneGenre && (
         <IconTextButton
           icon={FaTree}
           text={loadButtonText}
@@ -119,6 +123,7 @@ export function GenreTreeView<T extends TrackBase>({
             getBackendBaseUrl={getBackendBaseUrl}
             criteriaPlaylistDetailedSchema={criteriaPlaylistDetailedSchema}
             additionalActions={additionalActions}
+            readOnly={readOnly}
           />
         </div>
       ) : (
@@ -141,6 +146,7 @@ export function GenreTreeView<T extends TrackBase>({
                     getBackendBaseUrl={getBackendBaseUrl}
                     criteriaPlaylistDetailedSchema={criteriaPlaylistDetailedSchema}
                     additionalActions={additionalActions}
+                    readOnly={readOnly}
                   />
                 </div>
               </div>

@@ -32,6 +32,8 @@ export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
   getBackendBaseUrl: () => string;
   criteriaPlaylistDetailedSchema: z.ZodType<CriteriaPlaylistDetailedLike<T>>;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
+  /** When true, suppresses per-node create/rename/reparent affordances. Defaults to false. */
+  readOnly?: boolean;
 };
 
 export default function GenrePlaylistTreeWheel<T extends TrackBase>({
@@ -45,6 +47,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
   getBackendBaseUrl,
   criteriaPlaylistDetailedSchema,
   additionalActions,
+  readOnly = false,
 }: GenrePlaylistTreeWheelProps<T>) {
   const { isPlaying, setIsPlaying } = usePlayer();
   const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList<T>();
@@ -153,11 +156,11 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
       playState={isPlaying ? "playing" : "paused"}
       reparentingNodeId={reparentingGenreUuid}
       onPlayPause={handlePlayPause}
-      onAddChild={handleAddChild}
-      onRenameRequest={handleRenameRequest}
+      onAddChild={readOnly ? undefined : handleAddChild}
+      onRenameRequest={readOnly ? undefined : handleRenameRequest}
       onDeleteRequest={handleDeleteRequest}
-      onReparentRequest={handleReparentRequest}
-      onReparent={handleReparent}
+      onReparentRequest={readOnly ? undefined : handleReparentRequest}
+      onReparent={readOnly ? undefined : handleReparent}
       additionalActions={additionalActions}
     />
   );
