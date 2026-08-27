@@ -82,26 +82,44 @@ describe("useGenrePlaylist", () => {
   });
 
   describe("useListFullGenrePlaylists", () => {
-    it("queries the reference full endpoint and is always enabled for the reference scope", () => {
+    it("queries the reference full endpoint and is always enabled for the reference scope", async () => {
       useSessionMock.mockReturnValue({ session: null, sessionRestored: false });
+      fetchMock.mockResolvedValue({
+        overallTotal: 1,
+        next: null,
+        previous: null,
+        results: [{ uuid: "gp1" }],
+        page: 1,
+        pageSize: 1000,
+        totalPages: 1,
+      });
       renderHook(() => useListFullGenrePlaylists("reference", getBackendBaseUrl));
       const { queryKey, enabled, queryFn } = useQueryWithParseMock.mock.calls[0][0];
 
       expect(queryKey).toEqual(["referenceGenrePlaylists", "https://backend.example.com", "full"]);
       expect(enabled).toBe(true);
 
-      queryFn();
+      await queryFn();
       expect(fetchMock).toHaveBeenCalledWith("genre-playlists/", true, false, {}, { page: 1, pageSize: 1000 });
     });
 
-    it("queries the me full endpoint and gates on a restored session with a token", () => {
+    it("queries the me full endpoint and gates on a restored session with a token", async () => {
+      fetchMock.mockResolvedValue({
+        overallTotal: 1,
+        next: null,
+        previous: null,
+        results: [{ uuid: "gp1" }],
+        page: 1,
+        pageSize: 1000,
+        totalPages: 1,
+      });
       renderHook(() => useListFullGenrePlaylists("me", getBackendBaseUrl));
       const { queryKey, enabled, queryFn } = useQueryWithParseMock.mock.calls[0][0];
 
       expect(queryKey).toEqual(["meGenrePlaylists", "full"]);
       expect(enabled).toBe(true);
 
-      queryFn();
+      await queryFn();
       expect(fetchMock).toHaveBeenCalledWith("me/genre-playlists/", true, true, {}, { page: 1, pageSize: 1000 });
     });
 
@@ -110,6 +128,48 @@ describe("useGenrePlaylist", () => {
       renderHook(() => useListFullGenrePlaylists("me", getBackendBaseUrl));
 
       expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
+    });
+
+    it("follows `next` and merges results when the backend clamps pageSize below overallTotal", async () => {
+      fetchMock
+        .mockResolvedValueOnce({
+          overallTotal: 250,
+          next: "https://backend.example.com/genre-playlists/?page=2",
+          previous: null,
+          results: Array.from({ length: 100 }, (_, i) => ({ uuid: `gp${i}` })),
+          page: 1,
+          pageSize: 100,
+          totalPages: 3,
+        })
+        .mockResolvedValueOnce({
+          overallTotal: 250,
+          next: "https://backend.example.com/genre-playlists/?page=3",
+          previous: "https://backend.example.com/genre-playlists/?page=1",
+          results: Array.from({ length: 100 }, (_, i) => ({ uuid: `gp${100 + i}` })),
+          page: 2,
+          pageSize: 100,
+          totalPages: 3,
+        })
+        .mockResolvedValueOnce({
+          overallTotal: 250,
+          next: null,
+          previous: "https://backend.example.com/genre-playlists/?page=2",
+          results: Array.from({ length: 50 }, (_, i) => ({ uuid: `gp${200 + i}` })),
+          page: 3,
+          pageSize: 100,
+          totalPages: 3,
+        });
+      renderHook(() => useListFullGenrePlaylists("reference", getBackendBaseUrl));
+      const { queryFn } = useQueryWithParseMock.mock.calls[0][0];
+
+      const result = await queryFn();
+
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+      expect(fetchMock).toHaveBeenNthCalledWith(1, "genre-playlists/", true, false, {}, { page: 1, pageSize: 1000 });
+      expect(fetchMock).toHaveBeenNthCalledWith(2, "genre-playlists/", true, false, {}, { page: 2, pageSize: 1000 });
+      expect(fetchMock).toHaveBeenNthCalledWith(3, "genre-playlists/", true, false, {}, { page: 3, pageSize: 1000 });
+      expect(result.results).toHaveLength(250);
+      expect(result.overallTotal).toBe(250);
     });
 
     it("invalidateFullGenrePlaylists invalidates the scoped full query key", () => {
