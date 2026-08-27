@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import GenrePlaylistTreePerRoot from "./TreePerRoot";
 import { TrackListOriginType } from "../models/TrackListOriginType";
+import { ErrorCode } from "../../transport/app-errors/app-error-codes";
 import type { CriteriaPlaylistSimple } from "../schemas/criteria-playlist/simple";
 import type { GenreTreeProps } from "@behindthemusictree/genre-tree-view";
 
@@ -14,6 +15,7 @@ const {
   fetchGenrePlaylistDetailed,
   handleGenreCreationAction,
   handleGenreRenameAction,
+  showPopup,
 } = vi.hoisted(() => ({
   setIsPlaying: vi.fn(),
   playNewTrackListFromGenrePlaylist: vi.fn(),
@@ -21,6 +23,12 @@ const {
   fetchGenrePlaylistDetailed: vi.fn(),
   handleGenreCreationAction: vi.fn(),
   handleGenreRenameAction: vi.fn(),
+  showPopup: vi.fn(),
+}));
+
+vi.mock("../../popup", () => ({
+  usePopup: () => ({ showPopup, hidePopup: vi.fn() }),
+  InternalErrorPopup: () => null,
 }));
 
 // Mutated per-test to drive `usePlayer`/`useTrackList`'s mocked return values.
@@ -132,6 +140,9 @@ describe("GenrePlaylistTreePerRoot", () => {
       const { onError } = fetchGenrePlaylistDetailed.mock.calls[0][1];
       onError(new Error("network error"));
       expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to fetch detailed genre playlist:", expect.any(Error));
+      expect(showPopup).toHaveBeenCalledWith(
+        expect.objectContaining({ props: expect.objectContaining({ errorCode: ErrorCode.CLIENT_UNKNOWN }) }),
+      );
 
       consoleErrorSpy.mockRestore();
     });

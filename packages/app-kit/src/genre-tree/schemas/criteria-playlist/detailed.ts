@@ -11,8 +11,8 @@ import { CriteriaPlaylistMinimumSchema } from "./minimum";
 export const CriteriaPlaylistDetailedBaseSchema = UuidResourceSchema.extend({
   name: z.string(),
   tracksCount: z.number(),
-  durationInSec: z.number(),
-  durationStrInHourMinSec: z.string(),
+  durationInSec: z.number().min(0).nullable().optional(),
+  durationStrInHourMinSec: z.string().nullable().optional(),
   tracksArchivedCount: z.number(),
   // Nullable: the "Genreless" root playlist has no criteria attached and is never updated.
   criteria: CriteriaMinimumSchema.nullable(),

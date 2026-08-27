@@ -5,6 +5,18 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.4.3] - 2026-08-27
+
+### Fixed
+
+- **genre-tree**: `TreePerRoot`/`TreeWheel` now surface a popup (`InternalErrorPopup`) when their
+  fetch's `onError` fires, instead of only `console.error`-ing — a `ZodError` from the backend
+  (e.g. a missing/null field) previously failed silently with no user-visible feedback.
+- **genre-tree**: `durationInSec`/`durationStrInHourMinSec` in the criteria-playlist detailed
+  schema are now `nullable().optional()` instead of required, matching the existing
+  `mb-recording.ts` pattern — the backend can omit or null these fields for tracks without
+  duration data without failing the whole playlist detail response's validation.
+
 ## [4.4.2] - 2026-08-27
 
 ### Fixed
