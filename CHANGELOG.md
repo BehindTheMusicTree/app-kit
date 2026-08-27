@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.4.3] - 2026-08-27
+
 ### Fixed
 
 - **genre-tree**: `TreePerRoot`/`TreeWheel` now surface a popup (`InternalErrorPopup`) when their
