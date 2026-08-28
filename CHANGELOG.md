@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **player**: `PlayerProvider` now prewarms the YouTube IFrame API script on mount instead of
+  waiting for the first youtube-track play click. Previously that first click paid for both the
+  `iframe_api` script fetch and the player iframe boot back-to-back, making it visibly slow to
+  start playback.
+
 ## [4.4.3] - 2026-08-27
 
 ### Fixed
