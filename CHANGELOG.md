@@ -31,6 +31,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   waiting for the first youtube-track play click. Previously that first click paid for both the
   `iframe_api` script fetch and the player iframe boot back-to-back, making it visibly slow to
   start playback.
+- **genre-tree**: `GenreTreeView` no longer flashes an unfitted, untransformed graph the instant
+  the Wheel/Pop-Core skeleton is swapped out for the real tree. A new `GenreTreeWheelHandoff`
+  wrapper keeps the skeleton on top until the underlying wheel component's pan/zoom "fit to frame"
+  effect has settled.
 
 ## [4.4.3] - 2026-08-27
 

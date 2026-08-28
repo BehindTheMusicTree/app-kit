@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { z } from "zod";
 
@@ -61,6 +61,26 @@ import type { CriteriaPlaylistDetailedLike } from "./models/TrackListOrigin";
 
 const getBackendBaseUrl = () => "https://backend.example.com";
 const schema = z.custom<CriteriaPlaylistDetailedLike<TrackBase>>();
+
+// requestAnimationFrame isn't driven by fake timers in jsdom — stub it onto a manually-flushable
+// queue so tests can step through GenreTreeWheelHandoff's two nested rAFs deterministically.
+function stubRaf() {
+  let queue: FrameRequestCallback[] = [];
+  let id = 0;
+  vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+    id += 1;
+    queue.push(cb);
+    return id;
+  });
+  vi.stubGlobal("cancelAnimationFrame", () => {});
+  return {
+    flush: () => {
+      const current = queue;
+      queue = [];
+      current.forEach((cb) => cb(0));
+    },
+  };
+}
 
 function makePlaylist(overrides: Record<string, unknown> = {}) {
   return {
@@ -274,6 +294,80 @@ describe("GenreTreeView", () => {
       fireEvent.click(screen.getByRole("button", { name: "Pop/Core" }));
 
       expect(treeWheelRadialPopCorePropsMock.mock.calls[0][0].readOnly).toBe(true);
+    });
+  });
+
+  describe("skeleton-to-graph handoff", () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("keeps a wheel skeleton visible with no gap across the loading-to-pop-core handoff", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({ data: undefined, isPending: true });
+      const props: GenreTreeViewProps<TrackBase> = {
+        scope: "me",
+        handleGenreCreationAction: vi.fn(),
+        handleGenreRenameAction: vi.fn(),
+        getBackendBaseUrl,
+        criteriaPlaylistDetailedSchema: schema,
+      };
+      const { rerender } = render(<GenreTreeView {...props} />);
+
+      expect(screen.getByTestId("genre-tree-wheel-skeleton")).toBeInTheDocument();
+
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: {
+          results: [makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" }, parent: null })],
+        },
+        isPending: false,
+      });
+      rerender(<GenreTreeView {...props} />);
+
+      // The real pop-core tree has mounted (so it can compute its own layout/fit), but the
+      // skeleton is still on top of it — nothing unmounts in between, so there's no frame where
+      // neither is shown, and the skeleton itself hasn't changed.
+      expect(screen.getByTestId("genre-tree-wheel-skeleton")).toBeInTheDocument();
+      expect(screen.getByTestId("tree-wheel-radial-pop-core")).toBeInTheDocument();
+    });
+
+    it("reveals the pop-core graph and drops the skeleton only once the graph has had time to settle", () => {
+      const raf = stubRaf();
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: {
+          results: [makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" }, parent: null })],
+        },
+        isPending: false,
+      });
+      renderView();
+
+      // Handoff still hiding the graph behind its own skeleton right after mount.
+      expect(screen.getByTestId("genre-tree-wheel-skeleton")).toBeInTheDocument();
+
+      act(() => {
+        raf.flush();
+        raf.flush();
+      });
+
+      expect(screen.queryByTestId("genre-tree-wheel-skeleton")).not.toBeInTheDocument();
+      expect(screen.getByTestId("tree-wheel-radial-pop-core")).toBeInTheDocument();
+    });
+
+    it("reveals the wheel graph and drops the skeleton only once the graph has had time to settle", () => {
+      const raf = stubRaf();
+      useListFullGenrePlaylistsMock.mockReturnValue({ data: { results: [makePlaylist()] }, isPending: false });
+      renderView();
+
+      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+
+      expect(screen.getByTestId("genre-tree-wheel-skeleton")).toBeInTheDocument();
+
+      act(() => {
+        raf.flush();
+        raf.flush();
+      });
+
+      expect(screen.queryByTestId("genre-tree-wheel-skeleton")).not.toBeInTheDocument();
+      expect(screen.getByTestId("tree-wheel")).toBeInTheDocument();
     });
   });
 });
