@@ -118,6 +118,15 @@ describe("usePlayer", () => {
   });
 });
 
+describe("PlayerProvider", () => {
+  it("prewarms the YouTube IFrame API on mount, before any track is loaded", () => {
+    renderHook(() => usePlayer(), { wrapper });
+
+    expect(loadYoutubeIframeApiMock).toHaveBeenCalledTimes(1);
+    expect(loadTrackMock).not.toHaveBeenCalled();
+  });
+});
+
 describe("PlayerProvider - loadTrackForPlayer (audio)", () => {
   it("loads and plays an audio track", async () => {
     loadTrackMock.mockResolvedValue(makeAudioTrack());

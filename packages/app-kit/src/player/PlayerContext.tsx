@@ -111,6 +111,15 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
     onTrackEndRef.current = onTrackEnd;
   }, [onTrackEnd]);
 
+  // Kick off the YouTube IFrame API script fetch as soon as the provider mounts, rather than on
+  // the first youtube-track play click — that first click otherwise pays for both the script
+  // fetch and the player iframe boot back-to-back, which is what makes it visibly slow.
+  useEffect(() => {
+    loadYoutubeIframeApi().catch(() => {
+      // Swallowed: loadYoutubeTrack retries the same call and surfaces the error there.
+    });
+  }, []);
+
   // YouTube's IFrame API has no continuous timeupdate-style event, so poll it into the same
   // currentTimeRef audio tracks update via their "timeupdate" listener. Also doubles as the
   // duration source, since a video's duration isn't reliably known right after loadVideoById.
