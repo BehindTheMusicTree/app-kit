@@ -20,7 +20,7 @@ import { Button, RingLoader, Skeleton } from "@behindthemusictree/ui";
 import GenreCreationPopup from "./GenreCreationPopup";
 import GenreRenamePopup from "./GenreRenamePopup";
 
-const getBackendBaseUrl = () => "https://hear-api-staging.themusictree.org/v2/";
+const getBackendBaseUrl = () => "/api/grow-prototype-proxy/";
 
 function useLoadTrack(): (trackId: string) => Promise<PlayerTrack> {
   const { fetch } = useFetchWrapper(getBackendBaseUrl);

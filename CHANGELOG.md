@@ -9,6 +9,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **genre-tree**: `GenreTreeView` now defaults to the Pop-Core Wheel view instead of Stacked,
   falling back to Stacked when the loaded tree has no "Mainstream Pop" root.
+- **playground**: now points at grow-api-staging's read-only prototype/demo genre tree instead of
+  the public reference tree, so the harness exercises a populated example tree by default. The
+  `X-API-Key` needed to authenticate against it is injected server-side by a new Vite dev-server
+  proxy from a gitignored `apps/playground/.env.local`, so the key never reaches the browser
+  bundle.
 
 ### Fixed
 
