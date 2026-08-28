@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { z } from "zod";
 import { FaTree } from "react-icons/fa";
 import { Plus } from "lucide-react";
@@ -50,9 +50,8 @@ export function GenreTreeView<T extends TrackBase>({
   readOnly = false,
 }: GenreTreeViewProps<T>) {
   const [reparentingGenreUuid, setReparentingGenreUuid] = useState<string | null>(null);
-  const [internalViewMode, setInternalViewMode] = useState<GenreTreeViewMode>("pop-core");
+  const [userSelectedViewMode, setUserSelectedViewMode] = useState<GenreTreeViewMode | null>(null);
   const isControlled = controlledViewMode !== undefined;
-  const viewMode = controlledViewMode ?? internalViewMode;
 
   const { data: genrePlaylists, isPending: isListingGenrePlaylists } = useListFullGenrePlaylists(
     scope,
@@ -83,11 +82,9 @@ export function GenreTreeView<T extends TrackBase>({
     [genrePlaylists?.results],
   );
 
-  useEffect(() => {
-    if (!isLoading && internalViewMode === "pop-core" && !canShowPopCore) {
-      setInternalViewMode("stacked");
-    }
-  }, [isLoading, canShowPopCore, internalViewMode]);
+  const internalViewMode: GenreTreeViewMode =
+    userSelectedViewMode ?? (isLoading || canShowPopCore ? "pop-core" : "stacked");
+  const viewMode = controlledViewMode ?? internalViewMode;
 
   const loadButtonText = scope === "me" ? "Load the example tree genre" : "Load the reference tree genre";
 
@@ -98,14 +95,14 @@ export function GenreTreeView<T extends TrackBase>({
           <Button
             variant={viewMode === "stacked" ? "default" : "outline"}
             size="sm"
-            onClick={() => setInternalViewMode("stacked")}
+            onClick={() => setUserSelectedViewMode("stacked")}
           >
             Stacked
           </Button>
           <Button
             variant={viewMode === "wheel" ? "default" : "outline"}
             size="sm"
-            onClick={() => setInternalViewMode("wheel")}
+            onClick={() => setUserSelectedViewMode("wheel")}
           >
             Wheel
           </Button>
@@ -114,7 +111,7 @@ export function GenreTreeView<T extends TrackBase>({
             size="sm"
             disabled={!canShowPopCore}
             title={canShowPopCore ? undefined : "This genre tree has no 'Mainstream Pop' root yet"}
-            onClick={() => setInternalViewMode("pop-core")}
+            onClick={() => setUserSelectedViewMode("pop-core")}
           >
             Pop/Core
           </Button>

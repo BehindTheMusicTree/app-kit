@@ -51,6 +51,10 @@ vi.mock("./GenreTreeSkeleton", () => ({
   GenreTreeSkeleton: () => <div data-testid="genre-tree-skeleton" />,
 }));
 
+vi.mock("./GenreTreeWheelSkeleton", () => ({
+  GenreTreeWheelSkeleton: () => <div data-testid="genre-tree-wheel-skeleton" />,
+}));
+
 import { GenreTreeView, type GenreTreeViewProps } from "./GenreTreeView";
 import type { TrackBase } from "./schemas/track/base";
 import type { CriteriaPlaylistDetailedLike } from "./models/TrackListOrigin";
@@ -90,19 +94,19 @@ describe("GenreTreeView", () => {
     useLoadExampleTreeGenreMock.mockReturnValue({ mutate: loadTreeMutateMock, isPending: false });
   });
 
-  it("shows the skeleton while the genre playlists are loading", () => {
+  it("shows the wheel skeleton while the genre playlists are loading", () => {
     useListFullGenrePlaylistsMock.mockReturnValue({ data: undefined, isPending: true });
     renderView();
 
-    expect(screen.getByTestId("genre-tree-skeleton")).toBeInTheDocument();
+    expect(screen.getByTestId("genre-tree-wheel-skeleton")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Stacked" })).not.toBeInTheDocument();
   });
 
-  it("shows the skeleton while the example tree is loading", () => {
+  it("shows the wheel skeleton while the example tree is loading", () => {
     useLoadExampleTreeGenreMock.mockReturnValue({ mutate: loadTreeMutateMock, isPending: true });
     renderView();
 
-    expect(screen.getByTestId("genre-tree-skeleton")).toBeInTheDocument();
+    expect(screen.getByTestId("genre-tree-wheel-skeleton")).toBeInTheDocument();
   });
 
   it("shows the load-example button and 'me' wording when there are no genres yet", () => {
