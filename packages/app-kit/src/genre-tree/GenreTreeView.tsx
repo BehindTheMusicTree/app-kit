@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { z } from "zod";
 import { FaTree } from "react-icons/fa";
 import { Plus } from "lucide-react";
@@ -50,7 +50,7 @@ export function GenreTreeView<T extends TrackBase>({
   readOnly = false,
 }: GenreTreeViewProps<T>) {
   const [reparentingGenreUuid, setReparentingGenreUuid] = useState<string | null>(null);
-  const [internalViewMode, setInternalViewMode] = useState<GenreTreeViewMode>("stacked");
+  const [internalViewMode, setInternalViewMode] = useState<GenreTreeViewMode>("pop-core");
   const isControlled = controlledViewMode !== undefined;
   const viewMode = controlledViewMode ?? internalViewMode;
 
@@ -82,6 +82,12 @@ export function GenreTreeView<T extends TrackBase>({
       ),
     [genrePlaylists?.results],
   );
+
+  useEffect(() => {
+    if (!isLoading && internalViewMode === "pop-core" && !canShowPopCore) {
+      setInternalViewMode("stacked");
+    }
+  }, [isLoading, canShowPopCore, internalViewMode]);
 
   const loadButtonText = scope === "me" ? "Load the example tree genre" : "Load the reference tree genre";
 
