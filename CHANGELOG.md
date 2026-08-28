@@ -5,6 +5,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **genre-tree**: `GenreTreeView` now defaults to the Pop-Core Wheel view instead of Stacked,
+  falling back to Stacked when the loaded tree has no "Mainstream Pop" root.
+
 ### Fixed
 
 - **player**: `PlayerProvider` now prewarms the YouTube IFrame API script on mount instead of
