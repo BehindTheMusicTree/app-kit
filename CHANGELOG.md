@@ -5,17 +5,38 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **genre-tree**: `GenreTreeWheelSkeleton` — a radial loading skeleton for the Wheel and Pop/Core
+  tree views, shown by `GenreTreeView` in place of the linear `GenreTreeSkeleton` while those view
+  modes are loading. Background pie sectors between the root chips are tinted with
+  `getGenreTreeColor`, mirroring the real wheel's per-root coloring.
+
 ### Changed
 
+- **ci**: validation workflow now runs automatically for pull requests targeting `main` and `develop`.
 - **genre-tree**: `GenreTreeView` now defaults to the Pop-Core Wheel view instead of Stacked,
   falling back to Stacked when the loaded tree has no "Mainstream Pop" root.
+- **playground**: now points at grow-api-staging's read-only prototype/demo genre tree instead of
+  the public reference tree, so the harness exercises a populated example tree by default. The
+  `X-API-Key` needed to authenticate against it is injected server-side by a new Vite dev-server
+  proxy from a gitignored `apps/playground/.env.local`, so the key never reaches the browser
+  bundle.
+  > > > > > > > .merge_file_FPvXvD
 
 ### Fixed
 
+- **playground**: points at `grow-api-staging` instead of `hear-api-staging` — the playground
+  exercises `GenreTreeView`'s `reference` scope, which is backed by grow-the-music-tree-api's
+  unauthenticated `genres`/`genre-playlists`/`library/youtube` routes, not hear's.
 - **player**: `PlayerProvider` now prewarms the YouTube IFrame API script on mount instead of
   waiting for the first youtube-track play click. Previously that first click paid for both the
   `iframe_api` script fetch and the player iframe boot back-to-back, making it visibly slow to
   start playback.
+- **genre-tree**: `GenreTreeView` no longer flashes an unfitted, untransformed graph the instant
+  the Wheel/Pop-Core skeleton is swapped out for the real tree. A new `GenreTreeWheelHandoff`
+  wrapper keeps the skeleton on top until the underlying wheel component's pan/zoom "fit to frame"
+  effect has settled.
 
 ## [4.4.3] - 2026-08-27
 
@@ -139,7 +160,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
     `api/library/uploaded/*` (`libraryEndpoints.me.uploaded`, `libraryQueryKeys.me.uploaded`).
   - `useListTracks` (formerly in `useUploadedTrack.ts`) moved into `TrackListContext.tsx` and is
     now generic: `useListTracks<T>(scope, getBackendBaseUrl, schema, listEndpoint, listQueryKey,
-    page?, pageSize?)`, with the endpoint/query-key selection injected by the caller instead of
+page?, pageSize?)`, with the endpoint/query-key selection injected by the caller instead of
     branching internally on `scope`.
 
 ### Changed
@@ -163,7 +184,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - `useFetchGenrePlaylist`/`useFetchGenrePlaylistDetailed` (in `useGenrePlaylist.ts`) each gain a
     required `criteriaPlaylistDetailedSchema` parameter; `GenreTreeView`,
     `GenrePlaylistTreePerRoot`, and `GenrePlaylistTreeWheel` are now generic over `T extends
-    TrackBase` and require a `criteriaPlaylistDetailedSchema` prop threaded down to it.
+TrackBase` and require a `criteriaPlaylistDetailedSchema` prop threaded down to it.
   - `api/library/index.ts` drops the `me`/`uploaded` branch; only `reference.youtube` remains.
 
   Consumers must now supply their own track schema (extending `TrackBaseSchema`), list
@@ -200,7 +221,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `GenrePlaylistTreeWheel`) drop the built-in upload wiring — `uploadTimeoutMs` is removed and
   `onUploadFiles` is no longer wired to `@behindthemusictree/genre-tree-view`'s tree components.
   In its place, `GenreTreeView` takes an `additionalActions?: (node: GenreTreeNode) =>
-  GenreTreeAction[]` prop forwarded unchanged to the underlying tree/wheel — consumers now supply
+GenreTreeAction[]` prop forwarded unchanged to the underlying tree/wheel — consumers now supply
   their own upload (or other) node actions. `GenreTreeAction` is re-exported from `genre-tree` for
   convenience. `useUploadTrack`/`useUpdateUploadedTrack`/`useDownloadTrack` are unchanged and
   remain public for consumers to call directly.
@@ -240,6 +261,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `.uploadedTracksCount`/`.uploadedTracksArchivedCount` → `.tracksCount`/`.tracksArchivedCount`, and
   `CriteriaDetailedSchema.uploadedTracks` → `.tracks` (same count fields). hear-the-music-tree
   doesn't consume the criteria/criteria-playlist schemas, so this only affects gtmt-front.
+
 - **genre-tree**: `libraryEndpoints.reference` now exposes `.youtube` (list/detail/delete only,
   mirroring `YoutubeTrackViewSet`) instead of `.uploaded` — gtmt-api's `reference/library/uploaded`
   route is gone. `libraryEndpoints.me.uploaded` (hear-the-music-tree's real uploaded-audio flow) is
@@ -377,7 +399,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `parseWithLog` now throws a clear `"received null response before schema validation"` error
   when handed a `null`/`undefined` response instead of running it through `schema.safeParse`,
   which previously produced a confusing `{ fieldErrors: {}, formErrors: ['Expected object,
-  received null'] }` zod-flatten log. `fetchWrapper` legitimately returns `null` when auth isn't
+received null'] }` zod-flatten log. `fetchWrapper` legitimately returns `null` when auth isn't
   ready yet or a connectivity/backend error is handled globally, and several consumers (e.g.
   `useFetchGenre`, `useFetchGenrePlaylistDetailed`, `useQueryWithParse`) fed that straight into a
   root `z.object` schema with no guard.
