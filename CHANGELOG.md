@@ -25,19 +25,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-- **playground**: points at `grow-api-staging` instead of `hear-api-staging` — the playground
-  exercises `GenreTreeView`'s `reference` scope, which is backed by grow-the-music-tree-api's
-  unauthenticated `genres`/`genre-playlists`/`library/youtube` routes, not hear's.
-- **player**: `PlayerProvider` now prewarms the YouTube IFrame API script on mount instead of
-  waiting for the first youtube-track play click. Previously that first click paid for both the
-  `iframe_api` script fetch and the player iframe boot back-to-back, making it visibly slow to
-  start playback.
-- **genre-tree**: `GenreTreeView` no longer flashes an unfitted, untransformed graph the instant
-  the Wheel/Pop-Core skeleton is swapped out for the real tree. A new `GenreTreeWheelHandoff`
-  wrapper keeps the skeleton on top until the underlying wheel component's pan/zoom "fit to frame"
-  effect has settled.
-- **genre-tree**: Fix genre tree view mode initialization so `Pop/Core` is only selected when a `Mainstream Pop` root is available.
-- **genre-tree**: Automatically fall back to `Wheel` when `Pop/Core` cannot be displayed.
+- **playground**: Point the playground at `grow-api-staging` instead of `hear-api-staging`.
+- **player**: Preload the YouTube IFrame API to reduce the delay before YouTube playback starts.
+- **genre-tree**: Prevent an unpositioned genre graph from briefly flashing when switching from the loading skeleton to the Wheel or Pop/Core view.
+- **genre-tree**: Default to `Pop/Core` only when a `Mainstream Pop` root is available.
+- **genre-tree**: Fall back to `Wheel` when `Pop/Core` is unavailable.
 
 ## [4.4.3] - 2026-08-27
 
