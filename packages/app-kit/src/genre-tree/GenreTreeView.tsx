@@ -99,7 +99,7 @@ export function GenreTreeView<T extends TrackBase>({
 
   useEffect(() => {
     if (!isLoading && internalViewMode === "pop-core" && !canShowPopCore) {
-      setInternalViewMode("stacked");
+      setInternalViewMode("wheel");
     }
   }, [isLoading, canShowPopCore, internalViewMode]);
 
