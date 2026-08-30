@@ -36,6 +36,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the Wheel/Pop-Core skeleton is swapped out for the real tree. A new `GenreTreeWheelHandoff`
   wrapper keeps the skeleton on top until the underlying wheel component's pan/zoom "fit to frame"
   effect has settled.
+- **genre-tree**: Fix genre tree view mode initialization so `Pop/Core` is only selected when a `Mainstream Pop` root is available.
+- **genre-tree**: Automatically fall back to `Wheel` when `Pop/Core` cannot be displayed.
 
 ## [4.4.3] - 2026-08-27
 
