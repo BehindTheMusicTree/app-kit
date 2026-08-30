@@ -22,7 +22,6 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `X-API-Key` needed to authenticate against it is injected server-side by a new Vite dev-server
   proxy from a gitignored `apps/playground/.env.local`, so the key never reaches the browser
   bundle.
-  > > > > > > > .merge_file_FPvXvD
 
 ### Fixed
 
