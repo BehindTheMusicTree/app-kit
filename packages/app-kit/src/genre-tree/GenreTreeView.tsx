@@ -119,20 +119,6 @@ export function GenreTreeView<T extends TrackBase>({
           aria-label="Tree view mode"
         >
           <Button
-            variant={viewMode === "stacked" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setUserSelectedViewMode("stacked")}
-          >
-            Stacked
-          </Button>
-          <Button
-            variant={viewMode === "wheel" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setUserSelectedViewMode("wheel")}
-          >
-            Wheel
-          </Button>
-          <Button
             variant={viewMode === "pop-core" ? "default" : "outline"}
             size="sm"
             disabled={!canShowPopCore}
@@ -144,6 +130,20 @@ export function GenreTreeView<T extends TrackBase>({
             onClick={() => setUserSelectedViewMode("pop-core")}
           >
             Pop/Core
+          </Button>
+          <Button
+            variant={viewMode === "wheel" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setUserSelectedViewMode("wheel")}
+          >
+            Wheel
+          </Button>
+          <Button
+            variant={viewMode === "stacked" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setUserSelectedViewMode("stacked")}
+          >
+            Stacked
           </Button>
         </div>
       )}
