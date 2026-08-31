@@ -285,6 +285,10 @@ describe("GenreTreeView", () => {
     act(() => {
       treePerRootPropsMock.mock.calls[0][0].setReparentingGenreUuid("gp1");
     });
+
+    expect(
+      treePerRootPropsMock.mock.calls.at(-1)?.[0].reparentingGenreUuid,
+    ).toBe("gp1");
   });
 
   describe("pop-core view", () => {
