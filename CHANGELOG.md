@@ -10,7 +10,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **genre-tree**: `GenreTreeWheelSkeleton` — a radial loading skeleton for the Wheel and Pop/Core
   tree views, shown by `GenreTreeView` in place of the linear `GenreTreeSkeleton` while those view
   modes are loading. Background pie sectors between the root chips are tinted with
-  `getGenreTreeColor`, mirroring the real wheel's per-root coloring.
+  `getGenreTreeColor`, mirroring the real wheel's per-root coloring. Nodes are laid out in true
+  polar coordinates (fixed radius per depth) across 9 root branches with hundreds of descendant
+  nodes, shrinking in size and varying their last-depth fan-out count with depth.
 
 ### Changed
 
