@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { z } from "zod";
 import { FaTree } from "react-icons/fa";
 import { Plus } from "lucide-react";
 import { IconTextButton, Button } from "@behindthemusictree/ui";
 
-import type { GenreTreeAction, GenreTreeNode } from "@behindthemusictree/genre-tree-view";
+import type {
+  GenreTreeAction,
+  GenreTreeNode,
+} from "@behindthemusictree/genre-tree-view";
 
 import { CriteriaPlaylistSimple } from "./schemas/criteria-playlist/simple";
 import { CriteriaMinimum } from "./schemas/criteria/minimum";
@@ -15,12 +18,17 @@ import { CriteriaPlaylistDetailedLike } from "./models/TrackListOrigin";
 import { Scope } from "../transport/lib/scope";
 import { useListFullGenrePlaylists } from "./useGenrePlaylist";
 import { useLoadExampleTreeGenre } from "./useGenre";
-import { getGenrePlaylistsGroupedByRoot, hasMainstreamPopRoot } from "./lib/genre-playlist-helpers";
+import {
+  getGenrePlaylistsGroupedByRoot,
+  hasMainstreamPopRoot,
+} from "./lib/genre-playlist-helpers";
 
 import GenrePlaylistTreePerRoot from "./playlist-tree/TreePerRoot";
 import GenrePlaylistTreeWheel from "./playlist-tree/TreeWheel";
 import GenrePlaylistTreeWheelRadialPopCore from "./playlist-tree/TreeWheelRadialPopCore";
 import { GenreTreeSkeleton } from "./GenreTreeSkeleton";
+import { GenreTreeWheelSkeleton } from "./GenreTreeWheelSkeleton";
+import { GenreTreeWheelHandoff } from "./GenreTreeWheelHandoff";
 
 export type GenreTreeViewMode = "stacked" | "wheel" | "pop-core";
 
@@ -48,26 +56,31 @@ export function GenreTreeView<T extends TrackBase>({
   viewMode: controlledViewMode,
   readOnly = false,
 }: GenreTreeViewProps<T>) {
-  const [reparentingGenreUuid, setReparentingGenreUuid] = useState<string | null>(null);
-  const [internalViewMode, setInternalViewMode] = useState<GenreTreeViewMode>("stacked");
+  const [reparentingGenreUuid, setReparentingGenreUuid] = useState<
+    string | null
+  >(null);
+  const [internalViewMode, setInternalViewMode] =
+    useState<GenreTreeViewMode>("pop-core");
   const isControlled = controlledViewMode !== undefined;
-  const viewMode = controlledViewMode ?? internalViewMode;
 
-  const { data: genrePlaylists, isPending: isListingGenrePlaylists } = useListFullGenrePlaylists(
-    scope,
-    getBackendBaseUrl,
-  );
+  const { data: genrePlaylists, isPending: isListingGenrePlaylists } =
+    useListFullGenrePlaylists(scope, getBackendBaseUrl);
   const loadTreeMutation = useLoadExampleTreeGenre(scope, getBackendBaseUrl);
   const isLoadingTree = loadTreeMutation.isPending;
 
   const groupedGenrePlaylistsByRoot = useMemo(
     () =>
-      genrePlaylists?.results ? getGenrePlaylistsGroupedByRoot(genrePlaylists.results as CriteriaPlaylistSimple[]) : {},
+      genrePlaylists?.results
+        ? getGenrePlaylistsGroupedByRoot(
+            genrePlaylists.results as CriteriaPlaylistSimple[],
+          )
+        : {},
     [genrePlaylists?.results],
   );
 
   const isLoading = isListingGenrePlaylists || isLoadingTree;
-  const hasAtLeastOneGenre = Object.keys(groupedGenrePlaylistsByRoot).length > 0;
+  const hasAtLeastOneGenre =
+    Object.keys(groupedGenrePlaylistsByRoot).length > 0;
 
   const canShowPopCore = useMemo(
     () =>
@@ -82,18 +95,39 @@ export function GenreTreeView<T extends TrackBase>({
     [genrePlaylists?.results],
   );
 
-  const loadButtonText = scope === "me" ? "Load the example tree genre" : "Load the reference tree genre";
+  useEffect(() => {
+    if (!isLoading && internalViewMode === "pop-core" && !canShowPopCore) {
+      setInternalViewMode("wheel");
+    }
+  }, [isLoading, canShowPopCore, internalViewMode]);
+
+  const viewMode = controlledViewMode ?? internalViewMode;
+
+  const loadButtonText =
+    scope === "me"
+      ? "Load the example tree genre"
+      : "Load the reference tree genre";
 
   const actions = (
     <>
       {!isLoading && !isControlled && (
-        <div className="flex items-center gap-1 mr-2" role="group" aria-label="Tree view mode">
+        <div
+          className="flex items-center gap-1 mr-2"
+          role="group"
+          aria-label="Tree view mode"
+        >
           <Button
-            variant={viewMode === "stacked" ? "default" : "outline"}
+            variant={viewMode === "pop-core" ? "default" : "outline"}
             size="sm"
-            onClick={() => setInternalViewMode("stacked")}
+            disabled={!canShowPopCore}
+            title={
+              canShowPopCore
+                ? undefined
+                : "This genre tree has no 'Mainstream Pop' root yet"
+            }
+            onClick={() => setInternalViewMode("pop-core")}
           >
-            Stacked
+            Pop/Core
           </Button>
           <Button
             variant={viewMode === "wheel" ? "default" : "outline"}
@@ -103,18 +137,20 @@ export function GenreTreeView<T extends TrackBase>({
             Wheel
           </Button>
           <Button
-            variant={viewMode === "pop-core" ? "default" : "outline"}
+            variant={viewMode === "stacked" ? "default" : "outline"}
             size="sm"
-            disabled={!canShowPopCore}
-            title={canShowPopCore ? undefined : "This genre tree has no 'Mainstream Pop' root yet"}
-            onClick={() => setInternalViewMode("pop-core")}
+            onClick={() => setInternalViewMode("stacked")}
           >
-            Pop/Core
+            Stacked
           </Button>
         </div>
       )}
       {!isLoading && !readOnly && (
-        <IconTextButton icon={Plus} text="Add root" onClick={() => handleGenreCreationAction(null)} />
+        <IconTextButton
+          icon={Plus}
+          text="Add root"
+          onClick={() => handleGenreCreationAction(null)}
+        />
       )}
       {!isLoading && !readOnly && !hasAtLeastOneGenre && (
         <IconTextButton
@@ -133,63 +169,79 @@ export function GenreTreeView<T extends TrackBase>({
         <div className="flex justify-start">{actions}</div>
       </div>
       {isLoading ? (
-        <GenreTreeSkeleton />
+        viewMode === "wheel" || viewMode === "pop-core" ? (
+          <GenreTreeWheelSkeleton />
+        ) : (
+          <GenreTreeSkeleton />
+        )
       ) : viewMode === "wheel" ? (
         <div className="tree-container flex-1 min-h-0 w-full relative">
-          <GenrePlaylistTreeWheel
-            scope={scope}
-            genrePlaylists={(genrePlaylists?.results ?? []) as CriteriaPlaylistSimple[]}
-            reparentingGenreUuid={reparentingGenreUuid}
-            setReparentingGenreUuid={setReparentingGenreUuid}
-            handleGenreCreationAction={handleGenreCreationAction}
-            handleGenreRenameAction={handleGenreRenameAction}
-            getBackendBaseUrl={getBackendBaseUrl}
-            criteriaPlaylistDetailedSchema={criteriaPlaylistDetailedSchema}
-            additionalActions={additionalActions}
-            readOnly={readOnly}
-          />
+          <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
+            <GenrePlaylistTreeWheel
+              scope={scope}
+              genrePlaylists={
+                (genrePlaylists?.results ?? []) as CriteriaPlaylistSimple[]
+              }
+              reparentingGenreUuid={reparentingGenreUuid}
+              setReparentingGenreUuid={setReparentingGenreUuid}
+              handleGenreCreationAction={handleGenreCreationAction}
+              handleGenreRenameAction={handleGenreRenameAction}
+              getBackendBaseUrl={getBackendBaseUrl}
+              criteriaPlaylistDetailedSchema={criteriaPlaylistDetailedSchema}
+              additionalActions={additionalActions}
+              readOnly={readOnly}
+            />
+          </GenreTreeWheelHandoff>
         </div>
       ) : viewMode === "pop-core" ? (
         <div className="tree-container flex-1 min-h-0 w-full relative">
-          <GenrePlaylistTreeWheelRadialPopCore
-            scope={scope}
-            genrePlaylists={(genrePlaylists?.results ?? []) as CriteriaPlaylistSimple[]}
-            reparentingGenreUuid={reparentingGenreUuid}
-            setReparentingGenreUuid={setReparentingGenreUuid}
-            handleGenreCreationAction={handleGenreCreationAction}
-            handleGenreRenameAction={handleGenreRenameAction}
-            getBackendBaseUrl={getBackendBaseUrl}
-            criteriaPlaylistDetailedSchema={criteriaPlaylistDetailedSchema}
-            additionalActions={additionalActions}
-            readOnly={readOnly}
-          />
+          <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
+            <GenrePlaylistTreeWheelRadialPopCore
+              scope={scope}
+              genrePlaylists={
+                (genrePlaylists?.results ?? []) as CriteriaPlaylistSimple[]
+              }
+              reparentingGenreUuid={reparentingGenreUuid}
+              setReparentingGenreUuid={setReparentingGenreUuid}
+              handleGenreCreationAction={handleGenreCreationAction}
+              handleGenreRenameAction={handleGenreRenameAction}
+              getBackendBaseUrl={getBackendBaseUrl}
+              criteriaPlaylistDetailedSchema={criteriaPlaylistDetailedSchema}
+              additionalActions={additionalActions}
+              readOnly={readOnly}
+            />
+          </GenreTreeWheelHandoff>
         </div>
       ) : (
         <div className="tree-container flex flex-col gap-4 text-gray-800 w-full overflow-x-auto overflow-y-auto relative">
-          {Object.entries(groupedGenrePlaylistsByRoot).map(([uuid, genrePlaylistTreePerRoot]) => {
-            return (
-              <div
-                key={uuid}
-                className="tree-per-root-container relative mt-2 mr-16 p-2 bg-gray-50 rounded-lg inline-block w-fit"
-              >
-                <div className="graph-container relative z-10">
-                  <GenrePlaylistTreePerRoot
-                    scope={scope}
-                    rootUuid={uuid}
-                    genrePlaylistTreePerRoot={genrePlaylistTreePerRoot}
-                    reparentingGenreUuid={reparentingGenreUuid}
-                    setReparentingGenreUuid={setReparentingGenreUuid}
-                    handleGenreCreationAction={handleGenreCreationAction}
-                    handleGenreRenameAction={handleGenreRenameAction}
-                    getBackendBaseUrl={getBackendBaseUrl}
-                    criteriaPlaylistDetailedSchema={criteriaPlaylistDetailedSchema}
-                    additionalActions={additionalActions}
-                    readOnly={readOnly}
-                  />
+          {Object.entries(groupedGenrePlaylistsByRoot).map(
+            ([uuid, genrePlaylistTreePerRoot]) => {
+              return (
+                <div
+                  key={uuid}
+                  className="tree-per-root-container relative mt-2 mr-16 p-2 bg-gray-50 rounded-lg inline-block w-fit"
+                >
+                  <div className="graph-container relative z-10">
+                    <GenrePlaylistTreePerRoot
+                      scope={scope}
+                      rootUuid={uuid}
+                      genrePlaylistTreePerRoot={genrePlaylistTreePerRoot}
+                      reparentingGenreUuid={reparentingGenreUuid}
+                      setReparentingGenreUuid={setReparentingGenreUuid}
+                      handleGenreCreationAction={handleGenreCreationAction}
+                      handleGenreRenameAction={handleGenreRenameAction}
+                      getBackendBaseUrl={getBackendBaseUrl}
+                      criteriaPlaylistDetailedSchema={
+                        criteriaPlaylistDetailedSchema
+                      }
+                      additionalActions={additionalActions}
+                      readOnly={readOnly}
+                    />
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            },
+          )}
         </div>
       )}
     </div>

@@ -49,6 +49,11 @@ re-exported from the root barrel `src/index.ts`.
 Adding a module: export it from the module's own barrel **and** `src/index.ts`, then add a
 matching entry to `tsup.config.ts` and the `exports` map in `packages/app-kit/package.json`.
 
+`genre-tree`'s Wheel and Pop/Core rendering (`GenreTreeWheelRadial`, `GenreTreeWheelRadialPopCore`)
+is built on `@behindthemusictree/genre-tree-view`, a separately published, presentational D3 tree
+component maintained in its own repo. Its version is pinned once in the `pnpm-workspace.yaml`
+catalog and consumed here as `catalog:` — bump it there (not per-package) to pick up releases.
+
 ## Cross-module coupling (why splitting is on)
 
 Several subpaths share stateful singletons across entry points even though each is built as an

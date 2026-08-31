@@ -20,7 +20,7 @@ import { Button, RingLoader, Skeleton } from "@behindthemusictree/ui";
 import GenreCreationPopup from "./GenreCreationPopup";
 import GenreRenamePopup from "./GenreRenamePopup";
 
-const getBackendBaseUrl = () => "https://hear-api-staging.themusictree.org/v2/";
+const getBackendBaseUrl = () => "/api/grow-prototype-proxy/";
 
 function useLoadTrack(): (trackId: string) => Promise<PlayerTrack> {
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
@@ -47,7 +47,9 @@ function useLoadTrack(): (trackId: string) => Promise<PlayerTrack> {
   );
 }
 
-const criteriaPlaylistDetailedSchema = makeCriteriaPlaylistDetailedSchema(YoutubeTrackDetailedSchema);
+const criteriaPlaylistDetailedSchema = makeCriteriaPlaylistDetailedSchema(
+  YoutubeTrackDetailedSchema,
+);
 
 function ReferenceGenreTree() {
   const { showPopup, hidePopup } = usePopup();
@@ -69,7 +71,12 @@ function ReferenceGenreTree() {
   const showGenreRenamePopup = useCallback(
     (genre: CriteriaMinimum) => {
       showPopup(
-        <GenreRenamePopup genre={genre} scope="reference" getBackendBaseUrl={getBackendBaseUrl} onClose={hidePopup} />,
+        <GenreRenamePopup
+          genre={genre}
+          scope="reference"
+          getBackendBaseUrl={getBackendBaseUrl}
+          onClose={hidePopup}
+        />,
       );
     },
     [hidePopup, showPopup],
@@ -94,7 +101,10 @@ function DemoPopupButton() {
       onClick={() =>
         showPopup(
           <BasePopup title="Demo popup" onClose={hidePopup} isDismissable>
-            <p>This confirms `popup` exports render correctly alongside `@behindthemusictree/ui`.</p>
+            <p>
+              This confirms `popup` exports render correctly alongside
+              `@behindthemusictree/ui`.
+            </p>
           </BasePopup>,
         )
       }
@@ -126,11 +136,19 @@ function AppContent() {
       >
         <h1>app-kit playground</h1>
         <p>
-          Minimal harness exercising `popup` exports, `@behindthemusictree/ui` components, and
-          `genre-tree`'s `GenreTreeView` against the reference scope on the staging backend.
+          Minimal harness exercising `popup` exports, `@behindthemusictree/ui`
+          components, and `genre-tree`'s `GenreTreeView` against the reference
+          scope on the staging backend.
         </p>
 
-        <div style={{ display: "flex", gap: 12, alignItems: "center", margin: "16px 0" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 12,
+            alignItems: "center",
+            margin: "16px 0",
+          }}
+        >
           <Button onClick={() => setLoading((v) => !v)}>Toggle loading</Button>
           <DemoPopupButton />
           {loading ? <RingLoader size={20} /> : null}
