@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.5.0] - 2026-08-31
+
 ### Added
 
 - **genre-tree**: `GenreTreeWheelSkeleton` — a radial loading skeleton for the Wheel and Pop/Core
