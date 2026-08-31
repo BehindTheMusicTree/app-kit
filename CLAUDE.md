@@ -30,6 +30,9 @@ to be" framing. History belongs in git log and `CHANGELOG.md`, not in reference 
 - `apps/playground/` — manual Vite harness for exercising exported components; not published
 - `scripts/release.sh` + `.github/workflows/publish.yml` — version bump → tag → publish pipeline
 - `CHANGELOG.md` — update `[Unreleased]` for every user-facing change
+- `pnpm-workspace.yaml` — catalog pin for `@behindthemusictree/genre-tree-view`, the separately
+  published D3 tree component that `genre-tree`'s Wheel/Pop-Core views wrap; bump it here to pick
+  up a new release of that package
 
 ## Conventions
 

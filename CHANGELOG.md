@@ -16,6 +16,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **genre-tree**: bump `@behindthemusictree/genre-tree-view` to 1.1.1 — proportional wedge sizing
+  for `GenreTreeWheelRadial`/`GenreTreeWheelRadialPopCore` root sectors, curved ring-following
+  links, corrected pop/core outer-circle nesting and canvas sizing, and an uncropped "fit to frame"
+  in Pop/Core.
 - **ci**: validation workflow now runs automatically for pull requests targeting `main` and `develop`.
 - **genre-tree**: `GenreTreeView` now defaults to the Pop-Core Wheel view instead of Stacked,
   falling back to Stacked when the loaded tree has no "Mainstream Pop" root.

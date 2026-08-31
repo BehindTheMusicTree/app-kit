@@ -27,7 +27,9 @@ Everything is also re-exported from the package root (`@behindthemusictree/app-k
 - `ui` — `Table`, `Skeleton`, `Input`, `Button`, `Pagination`, `RingLoader`, upload popup/buttons
 - `player` — generic `PlayerTrack`-based playback context (consumer supplies `loadTrack`)
 - `genre-tree` — scope-parameterized (`"me" | "reference"`) D3 genre tree view, its data hooks,
-  and the upload/playlist/track-list engine it depends on
+  and the upload/playlist/track-list engine it depends on. Wheel/Pop-Core rendering wraps
+  `@behindthemusictree/genre-tree-view`, a separately published package pinned via the
+  `pnpm-workspace.yaml` catalog.
 
 Several pieces are decoupled from any single app on purpose — `PlayerProvider` takes an injected
 `loadTrack` loader instead of a hardcoded data hook, and `AuthCallbackHandler` takes injected
