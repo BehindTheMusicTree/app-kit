@@ -17,53 +17,57 @@ const HUB_RADIUS = 46;
 const WHEEL_RADIUS = 170;
 const CANVAS_PADDING = 20;
 
-// Mirrors the real wheel's root-chip ring: up to 4 "cardinal" roots (top/right/bottom/left) are
-// developed with a small radiating subtree, the rest render as a single collapsed stub — see
-// getCardinalRingOffsets/computeRadialLayout in the genre-tree-view package. Angles use the same
-// CSS rotate() convention (0 = top, clockwise) and must stay ascending for the sector-boundary math
-// below.
-const CHIP_ANGLES: { angle: number; cardinal: boolean }[] = [
-  { angle: 0, cardinal: true },
-  { angle: 30, cardinal: false },
-  { angle: 60, cardinal: false },
-  { angle: 90, cardinal: true },
-  { angle: 135, cardinal: false },
-  { angle: 180, cardinal: true },
-  { angle: 225, cardinal: false },
-  { angle: 270, cardinal: true },
-  { angle: 315, cardinal: false },
-];
+// Mirrors the real wheel's root-chip ring: one chip per root, evenly spaced — see
+// getCardinalRingOffsets/computeRadialLayout in the genre-tree-view package for the real layout
+// this approximates. Every root gets the same deep 3-level radiating subtree (~30 nodes) so the
+// loading state reads as "a handful of genres, each with dozens of tracks/subgenres" rather than a
+// literal preview. Angles use the same CSS rotate() convention (0 = top, clockwise).
+const N_CHIPS = 9;
+const CHIP_ANGLES: { angle: number }[] = Array.from({ length: N_CHIPS }, (_, i) => ({
+  angle: (360 / N_CHIPS) * i,
+}));
 
 const CHIP_WIDTH = 68;
 const CHIP_HEIGHT = 22;
-const STUB_WIDTH = 40;
-const STUB_HEIGHT = 12;
-const STUB_DISTANCE = 34;
-const BRANCH_LEVEL1_DISTANCE = 66;
-const BRANCH_LEVEL2_DISTANCE = 118;
-const BRANCH_LEVEL1_SIZE = { width: 56, height: 18 };
-const BRANCH_LEVEL2_SIZE = { width: 46, height: 15 };
-const BRANCH_FAN_OFFSETS = [-46, 0, 46];
+
+// Polar layout: every node's position is (angle, radius) with radius fixed per depth, so all
+// nodes at the same depth sit on the same circle around the hub — fanning out to children only
+// ever changes angle, never radius.
+const BRANCH_LEVEL1_RADIUS = 245;
+const BRANCH_LEVEL2_RADIUS = 305;
+const BRANCH_LEVEL3_RADIUS = 365;
+const BRANCH_LEVEL1_SIZE = { width: 48, height: 16 };
+const BRANCH_LEVEL2_SIZE = { width: 32, height: 11 };
+const BRANCH_LEVEL3_SIZE = { width: 20, height: 7 };
+const BRANCH_LEVEL2_FAN_ANGLES = [-16, -9.6, -3.2, 3.2, 9.6, 16];
+// Last-depth fan-out count varies per branch (2-6 children) rather than being fixed, so the wheel
+// doesn't read as a uniform grid. The count is derived deterministically from each branch's
+// position (not Math.random()) so server and client renders stay identical.
+const BRANCH_LEVEL3_MIN_COUNT = 2;
+const BRANCH_LEVEL3_MAX_COUNT = 6;
+const BRANCH_LEVEL3_FAN_SPREAD = 6;
+
+function pseudoRandomCount(seed: number, min: number, max: number): number {
+  const x = Math.sin(seed * 12.9898) * 43758.5453;
+  const frac = x - Math.floor(x);
+  return min + Math.floor(frac * (max - min + 1));
+}
+
+function evenFanOffsets(count: number, spread: number): number[] {
+  if (count <= 1) return [0];
+  const step = spread / (count - 1);
+  return Array.from({ length: count }, (_, i) => -spread / 2 + i * step);
+}
 
 // All geometry below is computed around the origin (0,0); the SVG's viewBox is derived from the
 // content's own bounding box afterward (see CANVAS below) instead of assuming a fixed square, so
-// cardinal branches — which reach further out than filler stubs — are never clipped.
+// deep branches are never clipped regardless of how far their outermost level reaches.
 type Point = { x: number; y: number };
 type Rect = { x: number; y: number; width: number; height: number };
 
 function pointOnCircle(angleDeg: number, radius: number): Point {
   const rad = (angleDeg * Math.PI) / 180;
   return { x: radius * Math.sin(rad), y: -radius * Math.cos(rad) };
-}
-
-function radialUnit(angleDeg: number): Point {
-  const rad = (angleDeg * Math.PI) / 180;
-  return { x: Math.sin(rad), y: -Math.cos(rad) };
-}
-
-function tangentialUnit(angleDeg: number): Point {
-  const rad = (angleDeg * Math.PI) / 180;
-  return { x: Math.cos(rad), y: Math.sin(rad) };
 }
 
 function rectCentered(center: Point, width: number, height: number): Rect {
@@ -74,47 +78,39 @@ function rectCenter(rect: Rect): Point {
   return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
 }
 
-type Chip = { rect: Rect; cardinal: boolean; angle: number };
-type Branch = { chip: Chip; stub?: Rect; level1?: Rect; level2: Rect[] };
+type Chip = { rect: Rect; angle: number };
+type Branch = { chip: Chip; level1: Rect; level2: Rect[]; level3: Rect[][] };
 
-const CHIPS: Chip[] = CHIP_ANGLES.map(({ angle, cardinal }) => ({
+const CHIPS: Chip[] = CHIP_ANGLES.map(({ angle }) => ({
   rect: rectCentered(pointOnCircle(angle, WHEEL_RADIUS), CHIP_WIDTH, CHIP_HEIGHT),
-  cardinal,
   angle,
 }));
 
-const BRANCHES: Branch[] = CHIPS.map((chip) => {
-  const chipOuterEdge = pointOnCircle(chip.angle, WHEEL_RADIUS + chip.rect.height / 2);
-  const radial = radialUnit(chip.angle);
-
-  if (!chip.cardinal) {
-    const stubCenter = {
-      x: chipOuterEdge.x + radial.x * STUB_DISTANCE,
-      y: chipOuterEdge.y + radial.y * STUB_DISTANCE,
-    };
-    return { chip, stub: rectCentered(stubCenter, STUB_WIDTH, STUB_HEIGHT), level2: [] };
-  }
-
-  const level1Center = {
-    x: chipOuterEdge.x + radial.x * BRANCH_LEVEL1_DISTANCE,
-    y: chipOuterEdge.y + radial.y * BRANCH_LEVEL1_DISTANCE,
-  };
-  const level1 = rectCentered(level1Center, BRANCH_LEVEL1_SIZE.width, BRANCH_LEVEL1_SIZE.height);
-
-  const tangential = tangentialUnit(chip.angle);
-  const level2Base = {
-    x: chipOuterEdge.x + radial.x * BRANCH_LEVEL2_DISTANCE,
-    y: chipOuterEdge.y + radial.y * BRANCH_LEVEL2_DISTANCE,
-  };
-  const level2 = BRANCH_FAN_OFFSETS.map((offset) =>
-    rectCentered(
-      { x: level2Base.x + tangential.x * offset, y: level2Base.y + tangential.y * offset },
-      BRANCH_LEVEL2_SIZE.width,
-      BRANCH_LEVEL2_SIZE.height,
-    ),
+// Each child's angle is its parent's angle plus a fan offset; radius is fixed per depth, so
+// same-depth nodes always land on the same circle regardless of which root they hang from.
+const BRANCHES: Branch[] = CHIPS.map((chip, chipIndex) => {
+  const level1 = rectCentered(
+    pointOnCircle(chip.angle, BRANCH_LEVEL1_RADIUS),
+    BRANCH_LEVEL1_SIZE.width,
+    BRANCH_LEVEL1_SIZE.height,
   );
 
-  return { chip, level1, level2 };
+  const level2 = BRANCH_LEVEL2_FAN_ANGLES.map((offset) =>
+    rectCentered(pointOnCircle(chip.angle + offset, BRANCH_LEVEL2_RADIUS), BRANCH_LEVEL2_SIZE.width, BRANCH_LEVEL2_SIZE.height),
+  );
+
+  const level3 = BRANCH_LEVEL2_FAN_ANGLES.map((parentOffset, level2Index) => {
+    const count = pseudoRandomCount(chipIndex * 31 + level2Index * 7 + 1, BRANCH_LEVEL3_MIN_COUNT, BRANCH_LEVEL3_MAX_COUNT);
+    return evenFanOffsets(count, BRANCH_LEVEL3_FAN_SPREAD).map((childOffset) =>
+      rectCentered(
+        pointOnCircle(chip.angle + parentOffset + childOffset, BRANCH_LEVEL3_RADIUS),
+        BRANCH_LEVEL3_SIZE.width,
+        BRANCH_LEVEL3_SIZE.height,
+      ),
+    );
+  });
+
+  return { chip, level1, level2, level3 };
 });
 
 function connectorPath(from: Point, to: Point) {
@@ -126,25 +122,20 @@ function connectorPath(from: Point, to: Point) {
 const ALL_LINKS: { from: Point; to: Point }[] = [];
 for (const branch of BRANCHES) {
   const chipCenter = rectCenter(branch.chip.rect);
-  if (branch.stub) {
-    ALL_LINKS.push({ from: chipCenter, to: rectCenter(branch.stub) });
-  }
-  if (branch.level1) {
-    ALL_LINKS.push({ from: chipCenter, to: rectCenter(branch.level1) });
-    const level1Center = rectCenter(branch.level1);
-    for (const child of branch.level2) {
-      ALL_LINKS.push({ from: level1Center, to: rectCenter(child) });
+  const level1Center = rectCenter(branch.level1);
+  ALL_LINKS.push({ from: chipCenter, to: level1Center });
+  branch.level2.forEach((level2Rect, i) => {
+    const level2Center = rectCenter(level2Rect);
+    ALL_LINKS.push({ from: level1Center, to: level2Center });
+    for (const child of branch.level3[i]) {
+      ALL_LINKS.push({ from: level2Center, to: rectCenter(child) });
     }
-  }
+  });
 }
 
 const ALL_RECTS: Rect[] = [
   ...CHIPS.map((chip) => chip.rect),
-  ...BRANCHES.flatMap((branch) => [
-    ...(branch.stub ? [branch.stub] : []),
-    ...(branch.level1 ? [branch.level1] : []),
-    ...branch.level2,
-  ]),
+  ...BRANCHES.flatMap((branch) => [branch.level1, ...branch.level2, ...branch.level3.flat()]),
 ];
 
 // One color sector per chip, filling the background between the midpoints to its neighbors —
