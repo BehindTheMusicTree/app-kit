@@ -61,8 +61,6 @@ export function GenreTreeView<T extends TrackBase>({
   >(null);
   const [internalViewMode, setInternalViewMode] =
     useState<GenreTreeViewMode>("pop-core");
-  const [userSelectedViewMode, setUserSelectedViewMode] =
-    useState<GenreTreeViewMode | null>(null);
   const isControlled = controlledViewMode !== undefined;
 
   const { data: genrePlaylists, isPending: isListingGenrePlaylists } =
@@ -127,21 +125,21 @@ export function GenreTreeView<T extends TrackBase>({
                 ? undefined
                 : "This genre tree has no 'Mainstream Pop' root yet"
             }
-            onClick={() => setUserSelectedViewMode("pop-core")}
+            onClick={() => setInternalViewMode("pop-core")}
           >
             Pop/Core
           </Button>
           <Button
             variant={viewMode === "wheel" ? "default" : "outline"}
             size="sm"
-            onClick={() => setUserSelectedViewMode("wheel")}
+            onClick={() => setInternalViewMode("wheel")}
           >
             Wheel
           </Button>
           <Button
             variant={viewMode === "stacked" ? "default" : "outline"}
             size="sm"
-            onClick={() => setUserSelectedViewMode("stacked")}
+            onClick={() => setInternalViewMode("stacked")}
           >
             Stacked
           </Button>

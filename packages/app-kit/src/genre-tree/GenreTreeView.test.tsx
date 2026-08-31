@@ -190,7 +190,7 @@ describe("GenreTreeView", () => {
     expect(handleGenreCreationAction).toHaveBeenCalledWith(null);
   });
 
-  it("renders stacked view by default, grouping playlists by root", () => {
+  it("renders stacked view when selected, grouping playlists by root", () => {
     useListFullGenrePlaylistsMock.mockReturnValue({
       data: {
         results: [
@@ -201,6 +201,8 @@ describe("GenreTreeView", () => {
       isPending: false,
     });
     renderView();
+
+    fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
 
     expect(screen.getAllByTestId("tree-per-root")).toHaveLength(2);
     expect(screen.queryByTestId("tree-wheel")).not.toBeInTheDocument();
@@ -265,6 +267,7 @@ describe("GenreTreeView", () => {
     });
     renderView({ readOnly: true });
 
+    fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
     expect(treePerRootPropsMock.mock.calls[0][0].readOnly).toBe(true);
 
     fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
@@ -277,6 +280,8 @@ describe("GenreTreeView", () => {
       isPending: false,
     });
     renderView();
+
+    fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
 
     expect(
       treePerRootPropsMock.mock.calls[0][0].reparentingGenreUuid,
