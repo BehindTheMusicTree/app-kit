@@ -30,6 +30,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **genre-tree**: Prevent an unpositioned genre graph from briefly flashing when switching from the loading skeleton to the Wheel or Pop/Core view.
 - **genre-tree**: Default to `Pop/Core` only when a `Mainstream Pop` root is available.
 - **genre-tree**: Fall back to `Wheel` when `Pop/Core` is unavailable.
+- **genre-tree**: Fix the Pop/Core, Wheel, and Stacked view-mode buttons in `GenreTreeView` not switching the view — clicking them wrote to state that was never read.
 
 ## [4.4.3] - 2026-08-27
 
