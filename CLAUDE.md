@@ -53,10 +53,11 @@ to be" framing. History belongs in git log and `CHANGELOG.md`, not in reference 
   directly; it only receives merges from `release/*` and `hotfix/*`.
 - `develop` — GitHub default branch, integration branch for all in-progress work. Branch
   `feature/*`, `fix/*`, `chore/*` from here; PR back into here.
-- `release/*` — cut from `develop` by `pnpm release -- <bump>` (`scripts/release.sh`); merges
-  into both `main` (tagged) and `develop`.
-- `hotfix/*` — cut from `main` for urgent production fixes; merges into both `main` (tagged) and
-  `develop`.
+- `release/*` — cut from `develop` by `pnpm release -- <bump>` (`scripts/release.sh`), which also
+  pushes it and opens PRs into both `main` and `develop`. After the `main` PR merges, run
+  `pnpm tag-release` on `main` to tag and trigger the publish workflow.
+- `hotfix/*` — cut from `main` for urgent production fixes; PR'd into both `main` and `develop`,
+  tagged the same way via `pnpm tag-release` after the `main` PR merges.
 - Full detail: `CONTRIBUTING.md` § Branching (Gitflow).
 
 ## Forbidden
@@ -64,6 +65,10 @@ to be" framing. History belongs in git log and `CHANGELOG.md`, not in reference 
 - Importing anything from `grow-the-music-tree-frontend` or `hear-the-music-tree-frontend` —
   dependencies flow the other way
 - Notable changes without a `CHANGELOG.md` entry under `[Unreleased]`
-- Opening PRs against `main` — target `develop` (see Branching above)
+- Opening PRs against `main` from anything other than `release/*` or `hotfix/*` — target `develop`
+  (see Branching above)
+- Merging or pushing directly to `main` or `develop`, including from `release/*`/`hotfix/*` —
+  always go through a PR, even with branch-protection bypass rights
 - Publishing directly with `npm publish` — always go through `pnpm release -- <bump>`
-  (`scripts/release.sh`), which also updates the changelog and lockfile
+  (`scripts/release.sh`) followed by `pnpm tag-release`, which also updates the changelog and
+  lockfile
