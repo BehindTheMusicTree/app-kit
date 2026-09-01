@@ -5,6 +5,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **genre-tree**: bump `@behindthemusictree/genre-tree-view` to 1.1.2 — toolbar hover-label/button
+  colors and contrast now match node labels, and the pop subtree is glued to the core circle in
+  the Pop/Core radial layout.
+
 ## [4.5.1] - 2026-08-31
 
 ## [4.5.0] - 2026-08-31
