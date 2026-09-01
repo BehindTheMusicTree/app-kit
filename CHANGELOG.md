@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.5.2] - 2026-09-01
+
 ### Fixed
 
 - **genre-tree**: `GenreTreeView` no longer crashes when Pop/Core is the active view and the
