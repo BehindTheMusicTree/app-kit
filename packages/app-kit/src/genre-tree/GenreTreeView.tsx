@@ -101,7 +101,16 @@ export function GenreTreeView<T extends TrackBase>({
     }
   }, [isLoading, canShowPopCore, internalViewMode]);
 
-  const viewMode = controlledViewMode ?? internalViewMode;
+  // Mirrors the effect above, but applied synchronously in the render path: the effect alone
+  // can't stop a "pop-core" render from mounting GenrePlaylistTreeWheelRadialPopCore on data
+  // with no "Mainstream Pop" root, since effects only run after that render already committed —
+  // and that component throws on mount when the root is missing, so the fallback would fire too
+  // late to prevent the crash.
+  const selectedViewMode = controlledViewMode ?? internalViewMode;
+  const viewMode =
+    selectedViewMode === "pop-core" && !canShowPopCore
+      ? "wheel"
+      : selectedViewMode;
 
   const loadButtonText =
     scope === "me"
@@ -198,9 +207,12 @@ export function GenreTreeView<T extends TrackBase>({
           <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
             <GenrePlaylistTreeWheelRadialPopCore
               scope={scope}
-              genrePlaylists={
-                (genrePlaylists?.results ?? []) as CriteriaPlaylistSimple[]
-              }
+              // Non-null assertion, not `?? []`: reaching this branch requires canShowPopCore
+              // to be true, which the useMemo above only sets once genrePlaylists.results is a
+              // defined array containing a "Mainstream Pop" root, so it can't be nullish here —
+              // asserting it fails loudly instead of silently passing undefined if that
+              // invariant ever regresses.
+              genrePlaylists={genrePlaylists!.results as CriteriaPlaylistSimple[]}
               reparentingGenreUuid={reparentingGenreUuid}
               setReparentingGenreUuid={setReparentingGenreUuid}
               handleGenreCreationAction={handleGenreCreationAction}
