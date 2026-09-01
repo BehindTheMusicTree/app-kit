@@ -396,6 +396,71 @@ describe("GenreTreeView", () => {
         true,
       );
     });
+
+    it("keeps showing the wheel skeleton (not the stacked skeleton) when pop-core is selected and a tree load is pending", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: {
+          results: [
+            makePlaylist({
+              uuid: "gp1",
+              name: "Mainstream Pop",
+              root: { uuid: "gp1" },
+              parent: null,
+            }),
+          ],
+        },
+        isPending: false,
+      });
+      useLoadExampleTreeGenreMock.mockReturnValue({
+        mutate: loadTreeMutateMock,
+        isPending: true,
+      });
+      renderView();
+
+      expect(
+        screen.getByTestId("genre-tree-wheel-skeleton"),
+      ).toBeInTheDocument();
+    });
+
+    it("never mounts the pop-core tree — not even transiently — when data loads with no 'Mainstream Pop' root", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: undefined,
+        isPending: true,
+      });
+      const props: GenreTreeViewProps<TrackBase> = {
+        scope: "me",
+        handleGenreCreationAction: vi.fn(),
+        handleGenreRenameAction: vi.fn(),
+        getBackendBaseUrl,
+        criteriaPlaylistDetailedSchema: schema,
+      };
+      const { rerender } = render(<GenreTreeView {...props} />);
+
+      // Loading finishes on data with no "Mainstream Pop" root while still defaulted to
+      // "pop-core" — GenrePlaylistTreeWheelRadialPopCore throws on mount without that root, so
+      // it must never be rendered here, not even for the one commit before the corrective effect
+      // would otherwise run.
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: {
+          results: [
+            makePlaylist({
+              uuid: "gp1",
+              name: "Rock",
+              root: { uuid: "gp1" },
+              parent: null,
+            }),
+          ],
+        },
+        isPending: false,
+      });
+      rerender(<GenreTreeView {...props} />);
+
+      expect(treeWheelRadialPopCorePropsMock).not.toHaveBeenCalled();
+      expect(
+        screen.queryByTestId("tree-wheel-radial-pop-core"),
+      ).not.toBeInTheDocument();
+      expect(screen.getByTestId("tree-wheel")).toBeInTheDocument();
+    });
   });
 
   describe("skeleton-to-graph handoff", () => {

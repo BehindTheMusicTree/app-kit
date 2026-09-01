@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **genre-tree**: `GenreTreeView` no longer crashes when Pop/Core is the active view and the
+  loaded data has no "Mainstream Pop" root — the fallback to Wheel view is now applied
+  synchronously during render instead of only in a `useEffect`, which ran too late to prevent
+  `GenrePlaylistTreeWheelRadialPopCore` from mounting and throwing.
+
 ### Changed
 
 - **genre-tree**: bump `@behindthemusictree/genre-tree-view` to 1.1.2 — toolbar hover-label/button
