@@ -207,10 +207,12 @@ export function GenreTreeView<T extends TrackBase>({
           <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
             <GenrePlaylistTreeWheelRadialPopCore
               scope={scope}
-              // No `?? []` fallback: reaching this branch requires canShowPopCore to be true,
-              // which the useMemo above only sets once genrePlaylists.results is a defined
-              // array containing a "Mainstream Pop" root, so it can't be nullish here.
-              genrePlaylists={genrePlaylists?.results as CriteriaPlaylistSimple[]}
+              // Non-null assertion, not `?? []`: reaching this branch requires canShowPopCore
+              // to be true, which the useMemo above only sets once genrePlaylists.results is a
+              // defined array containing a "Mainstream Pop" root, so it can't be nullish here —
+              // asserting it fails loudly instead of silently passing undefined if that
+              // invariant ever regresses.
+              genrePlaylists={genrePlaylists!.results as CriteriaPlaylistSimple[]}
               reparentingGenreUuid={reparentingGenreUuid}
               setReparentingGenreUuid={setReparentingGenreUuid}
               handleGenreCreationAction={handleGenreCreationAction}
