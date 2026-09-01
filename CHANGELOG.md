@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **release**: `scripts/release.sh` now pushes the `release/*` branch and opens PRs into `main`
+  and `develop` instead of merging and pushing directly (which bypassed `main`'s
+  pull-request-required branch protection). A new `pnpm tag-release` (`scripts/tag-release.sh`)
+  tags and pushes `main` after the release PR merges, triggering the publish workflow.
+
 ## [4.5.2] - 2026-09-01
 
 ### Fixed
