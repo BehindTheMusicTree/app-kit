@@ -25,6 +25,24 @@ describe("GenreTreeWheelSkeleton", () => {
     expect(document.querySelectorAll("path").length).toBeGreaterThan(0);
   });
 
+  it("fills the container corners via a CSS conic-gradient layer independent of the content viewBox", () => {
+    render(<GenreTreeWheelSkeleton />);
+
+    // The color fill must cover the full box regardless of its aspect ratio, while the wheel
+    // content itself (rendered in the sibling <svg>) must never be cropped to achieve that — so
+    // the two are rendered as separate layers instead of sharing one viewBox/preserveAspectRatio.
+    const svg = document.querySelector("svg") as SVGSVGElement;
+    expect(svg).toHaveAttribute("preserveAspectRatio", "xMidYMid meet");
+    expect(document.querySelector('path[fill^="#"]')).toBeNull();
+
+    const gradientLayer = svg.parentElement?.querySelector(
+      ":scope > div",
+    ) as HTMLElement;
+    expect(gradientLayer).not.toBeNull();
+    expect(gradientLayer.style.background).toMatch(/^conic-gradient\(/);
+    expect(gradientLayer.style.opacity).toBe("0.16");
+  });
+
   it("renders unique gradient/mask ids across multiple mounted instances", () => {
     const { container: containerA } = render(<GenreTreeWheelSkeleton />);
     const { container: containerB } = render(<GenreTreeWheelSkeleton />);
