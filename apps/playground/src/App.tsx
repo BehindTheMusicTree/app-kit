@@ -134,7 +134,12 @@ function AppContent() {
           minHeight: 0,
         }}
       >
-        <h1>app-kit playground</h1>
+        <h1>
+          app-kit playground{" "}
+          <span style={{ fontSize: 14, fontWeight: 400, color: "#888" }}>
+            v{import.meta.env.VITE_APP_KIT_VERSION}
+          </span>
+        </h1>
         <p>
           Minimal harness exercising `popup` exports, `@behindthemusictree/ui`
           components, and `genre-tree`'s `GenreTreeView` against the reference
