@@ -85,4 +85,25 @@ describe("TrackListSidebar", () => {
 
     expect(hideTrackListSidebar).toHaveBeenCalled();
   });
+
+  it("defaults to fixed positioning", () => {
+    useTrackListMock.mockReturnValue({ trackList: makeTrackList() });
+
+    const { container } = render(<TrackListSidebar />);
+    const root = container.querySelector(".track-list-sidebar");
+
+    expect(root).toHaveClass("fixed", "right-0");
+    expect(root).toHaveStyle({ bottom: "79px" });
+  });
+
+  it("drops fixed positioning and fills the parent box when layout is inline", () => {
+    useTrackListMock.mockReturnValue({ trackList: makeTrackList() });
+
+    const { container } = render(<TrackListSidebar layout="inline" />);
+    const root = container.querySelector(".track-list-sidebar");
+
+    expect(root).not.toHaveClass("fixed");
+    expect(root).toHaveClass("relative", "w-full", "h-full");
+    expect(root).not.toHaveAttribute("style");
+  });
 });

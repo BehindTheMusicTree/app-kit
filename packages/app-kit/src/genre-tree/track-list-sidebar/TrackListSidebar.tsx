@@ -12,22 +12,27 @@ export interface TrackListSidebarProps<T extends TrackBase> {
   className?: string;
   renderDuration?: (track: T) => ReactNode;
   renderActions?: (track: T) => ReactNode;
+  layout?: "fixed" | "inline";
 }
 
 export default function TrackListSidebar<T extends TrackBase>({
-  className,
+  className = "",
   renderDuration,
   renderActions,
+  layout = "fixed",
 }: TrackListSidebarProps<T>) {
   const { trackList } = useTrackList<T>();
   const { hideTrackListSidebar } = useTrackListSidebarVisibility();
 
+  const positionClasses =
+    layout === "inline"
+      ? "relative w-full flex h-full flex-col"
+      : "fixed right-0 w-144";
+
   return trackList ? (
     <div
-      className={`track-list-sidebar fixed right-0 w-144 rounded-2xl bg-gray-950 pb-1 ${className}`}
-      style={{
-        bottom: "79px", // Match player height exactly
-      }}
+      className={`track-list-sidebar ${positionClasses} rounded-2xl bg-gray-950 pb-1 ${className}`}
+      style={layout === "fixed" ? { bottom: "79px" /* Match player height exactly */ } : undefined}
     >
       <div className="header flex h-16 px-4 py-2 text-gray-400">
         <div className="origin flex text-xl ">
@@ -49,8 +54,13 @@ export default function TrackListSidebar<T extends TrackBase>({
           &#10005;
         </div>
       </div>
-      {/* Use viewport height minus banner, player, header and padding */}
-      <ul className={"track-list overflow-auto max-h-[calc(100vh-63.5px-79px-56px-3.5px)] list-none p-0 m-0"}>
+      <ul
+        className={
+          layout === "inline"
+            ? "track-list flex-1 min-h-0 overflow-auto list-none p-0 m-0"
+            : "track-list overflow-auto max-h-[calc(100vh-63.5px-79px-56px-3.5px)] list-none p-0 m-0"
+        }
+      >
         {trackList.tracks.map((track, index) => (
           <li key={track.uuid}>
             <TrackItem track={track} position={index + 1} renderDuration={renderDuration} renderActions={renderActions} />

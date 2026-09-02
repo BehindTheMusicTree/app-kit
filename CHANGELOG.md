@@ -9,6 +9,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **playground**: header now displays the `@behindthemusictree/app-kit` version the playground
   is running against.
+- **genre-tree**: `TrackListSidebar` accepts an optional `layout?: "fixed" | "inline"` prop
+  (defaults to `"fixed"`, preserving current behavior). `"inline"` drops the component's
+  self-positioning (`fixed`/hardcoded `bottom` offset and viewport-height `max-h` calc) in favor
+  of filling its parent's box via `h-full`/`flex-1 min-h-0`, so a consumer can nest it in a real
+  DOM layout alongside another element (e.g. a player) instead of relying on two independently
+  fixed-positioned elements lining up.
 
 ## [4.5.3] - 2026-09-01
 
