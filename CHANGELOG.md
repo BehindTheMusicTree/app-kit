@@ -11,7 +11,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   instead of stopping at a circle inscribed in it, and the skeleton now sizes itself to match the
   wheel view's own box (`GenreTreeView`'s loading state now wraps it in the same
   `tree-container flex-1 min-h-0 w-full relative` box used once the real wheel/pop-core view has
-  loaded) rather than rendering at a fixed intrinsic pixel size.
+  loaded) rather than rendering at a fixed intrinsic pixel size. The color fill is now rendered as
+  a CSS `conic-gradient` layer independent of the wheel's own SVG viewBox, so the wheel content
+  itself is never cropped to make the color reach the box's corners (`preserveAspectRatio` back to
+  `xMidYMid meet`). Also reduced the skeleton's outer ring radius.
 
 ## [4.6.0] - 2026-09-02
 

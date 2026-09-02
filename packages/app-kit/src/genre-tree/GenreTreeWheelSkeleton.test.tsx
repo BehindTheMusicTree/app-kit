@@ -25,30 +25,22 @@ describe("GenreTreeWheelSkeleton", () => {
     expect(document.querySelectorAll("path").length).toBeGreaterThan(0);
   });
 
-  it("extends the color sectors to the canvas's own corners, not a circle inscribed in it", () => {
+  it("fills the container corners via a CSS conic-gradient layer independent of the content viewBox", () => {
     render(<GenreTreeWheelSkeleton />);
 
+    // The color fill must cover the full box regardless of its aspect ratio, while the wheel
+    // content itself (rendered in the sibling <svg>) must never be cropped to achieve that — so
+    // the two are rendered as separate layers instead of sharing one viewBox/preserveAspectRatio.
     const svg = document.querySelector("svg") as SVGSVGElement;
-    const [minX, minY, width, height] = (svg.getAttribute("viewBox") as string)
-      .split(" ")
-      .map(Number);
-    const cornerDistance = Math.max(
-      Math.hypot(minX, minY),
-      Math.hypot(minX + width, minY),
-      Math.hypot(minX, minY + height),
-      Math.hypot(minX + width, minY + height),
-    );
+    expect(svg).toHaveAttribute("preserveAspectRatio", "xMidYMid meet");
+    expect(document.querySelector('path[fill^="#"]')).toBeNull();
 
-    const sectorPath = document.querySelector('path[fill^="#"]') as SVGPathElement;
-    expect(sectorPath).not.toBeNull();
-    const radiusMatch = sectorPath.getAttribute("d")?.match(/A([\d.]+),([\d.]+)/);
-    expect(radiusMatch).not.toBeNull();
-    const sectorRadius = Number(radiusMatch![1]);
-
-    // A radius merely reaching the canvas's own bounding box (half-width/height) would still
-    // leave the rectangle's corners uncolored — it must reach the corners themselves.
-    expect(sectorRadius).toBeCloseTo(cornerDistance, 5);
-    expect(sectorRadius).toBeGreaterThan(Math.min(width, height) / 2);
+    const gradientLayer = svg.parentElement?.querySelector(
+      ":scope > div",
+    ) as HTMLElement;
+    expect(gradientLayer).not.toBeNull();
+    expect(gradientLayer.style.background).toMatch(/^conic-gradient\(/);
+    expect(gradientLayer.style.opacity).toBe("0.16");
   });
 
   it("renders unique gradient/mask ids across multiple mounted instances", () => {

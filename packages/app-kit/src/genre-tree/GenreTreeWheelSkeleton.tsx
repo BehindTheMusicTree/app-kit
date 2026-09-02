@@ -141,7 +141,7 @@ const ALL_RECTS: Rect[] = [
 // One color sector per chip, filling the background between the midpoints to its neighbors —
 // mirrors the real wheel's per-root color (getGenreTreeColor(rootId)), seeded by ring position
 // since the skeleton renders before any real genre id is known.
-type Sector = { path: string; color: string };
+type Sector = { startAngle: number; endAngle: number; color: string };
 
 const WHEEL_CONTENT_RADIUS = (() => {
   let maxAbs = HUB_RADIUS;
@@ -177,29 +177,31 @@ const CANVAS = (() => {
   };
 })();
 
-// Sized to the canvas's own corners (not WHEEL_CONTENT_RADIUS) so the sectors' color/gradient
-// fill the full view — otherwise they read as a circle inscribed in the rectangular canvas,
-// leaving its corners uncolored.
-const SECTOR_OUTER_RADIUS = Math.max(
-  Math.hypot(CANVAS.minX, CANVAS.minY),
-  Math.hypot(CANVAS.minX + CANVAS.width, CANVAS.minY),
-  Math.hypot(CANVAS.minX, CANVAS.minY + CANVAS.height),
-  Math.hypot(CANVAS.minX + CANVAS.width, CANVAS.minY + CANVAS.height),
-);
-
 const SECTORS: Sector[] = CHIP_ANGLES.map(({ angle }, i) => {
   const prevAngle = i === 0 ? CHIP_ANGLES[CHIP_ANGLES.length - 1].angle - 360 : CHIP_ANGLES[i - 1].angle;
   const nextAngle = i === CHIP_ANGLES.length - 1 ? CHIP_ANGLES[0].angle + 360 : CHIP_ANGLES[i + 1].angle;
-  const startAngle = (prevAngle + angle) / 2;
-  const endAngle = (angle + nextAngle) / 2;
-  const start = pointOnCircle(startAngle, SECTOR_OUTER_RADIUS);
-  const end = pointOnCircle(endAngle, SECTOR_OUTER_RADIUS);
-  const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0;
   return {
-    path: `M0,0 L${start.x},${start.y} A${SECTOR_OUTER_RADIUS},${SECTOR_OUTER_RADIUS} 0 ${largeArcFlag} 1 ${end.x},${end.y} Z`,
+    startAngle: (prevAngle + angle) / 2,
+    endAngle: (angle + nextAngle) / 2,
     color: getGenreTreeColor(`wheel-skeleton-sector-${i}`),
   };
 });
+
+// Rendered as a CSS conic-gradient on a layer separate from the content SVG (see the component
+// below) rather than as SVG wedge paths sharing the content's own viewBox: the content SVG uses
+// `preserveAspectRatio="xMidYMid meet"` so the wheel itself is never cropped, but "meet" letterboxes
+// a square viewBox inside a non-square container — a wedge drawn in that same coordinate space
+// would letterbox too, leaving the container's corners uncolored. A CSS gradient instead covers
+// `100% / 100%` of the container directly, independent of the content's aspect ratio.
+// CSS conic-gradient's 0deg (12 o'clock, clockwise) matches this file's own angle convention
+// (see pointOnCircle), so stops need only be shifted so the first one starts at 0deg.
+const SECTOR_GRADIENT_ROTATION = SECTORS[0].startAngle;
+const SECTOR_GRADIENT_CSS = `conic-gradient(from ${SECTOR_GRADIENT_ROTATION}deg, ${SECTORS.map(
+  (sector) =>
+    `${sector.color} ${sector.startAngle - SECTOR_GRADIENT_ROTATION}deg ${
+      sector.endAngle - SECTOR_GRADIENT_ROTATION
+    }deg`,
+).join(", ")})`;
 
 export function GenreTreeWheelSkeleton() {
   // Unique per mount so multiple skeletons on one page don't collide on <defs> ids.
@@ -210,12 +212,17 @@ export function GenreTreeWheelSkeleton() {
   const shimmerWedgeClass = `genre-tree-wheel-skeleton-shimmer-wedge-${uid}`;
 
   return (
-    <div className="w-full h-full overflow-hidden flex items-center justify-center">
+    <div className="relative w-full h-full overflow-hidden flex items-center justify-center">
+      <div
+        className="absolute inset-0"
+        style={{ background: SECTOR_GRADIENT_CSS, opacity: SECTOR_FILL_OPACITY }}
+        aria-hidden="true"
+      />
       <span className="sr-only">Loading genre tree…</span>
       <svg
         viewBox={`${CANVAS.minX} ${CANVAS.minY} ${CANVAS.width} ${CANVAS.height}`}
-        preserveAspectRatio="xMidYMid slice"
-        className="w-full h-full max-w-full max-h-full"
+        preserveAspectRatio="xMidYMid meet"
+        className="relative w-full h-full max-w-full max-h-full"
         aria-hidden="true"
       >
         <style>{`
@@ -266,10 +273,6 @@ export function GenreTreeWheelSkeleton() {
             ))}
           </mask>
         </defs>
-
-        {SECTORS.map((sector, i) => (
-          <path key={`sector-${i}`} d={sector.path} fill={sector.color} fillOpacity={SECTOR_FILL_OPACITY} />
-        ))}
 
         <circle
           cx={0}
