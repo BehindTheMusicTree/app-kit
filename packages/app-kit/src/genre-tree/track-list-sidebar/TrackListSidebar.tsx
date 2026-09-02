@@ -16,7 +16,7 @@ export interface TrackListSidebarProps<T extends TrackBase> {
 }
 
 export default function TrackListSidebar<T extends TrackBase>({
-  className,
+  className = "",
   renderDuration,
   renderActions,
   layout = "fixed",
