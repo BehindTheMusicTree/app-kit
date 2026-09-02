@@ -14,7 +14,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   loaded) rather than rendering at a fixed intrinsic pixel size. The color fill is now rendered as
   a CSS `conic-gradient` layer independent of the wheel's own SVG viewBox, so the wheel content
   itself is never cropped to make the color reach the box's corners (`preserveAspectRatio` back to
-  `xMidYMid meet`). Also reduced the skeleton's outer ring radius.
+  `xMidYMid meet`). Also reduced the skeleton's outer ring radius and its nodes' corner radius.
 
 ## [4.6.0] - 2026-09-02
 
