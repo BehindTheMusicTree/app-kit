@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **genre-tree**: exported `GenreTreeViewSkeleton({ viewMode })`, the same viewMode-to-skeleton
+  decision `GenreTreeView` uses internally for its loading state, so consumers lazy-loading
+  `GenreTreeView` via `next/dynamic` can pass it as their `loading` fallback and never show the
+  wrong skeleton shape before the chunk downloads and mounts.
+
 ### Fixed
 
 - **genre-tree**: `GenreTreeWheelSkeleton`'s color sectors now fill the full rectangular view
