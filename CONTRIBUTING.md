@@ -141,10 +141,18 @@ pnpm release -- patch   # or minor / major
 
 This creates a `release/X.Y.Z` branch off `develop`, bumps `packages/app-kit/package.json`'s
 version, moves the `CHANGELOG.md` `[Unreleased]` section under the new version heading, commits,
-merges the release branch into `main` (tagged `vX.Y.Z`) and back into `develop`, pushes both
-branches and the tag, then deletes the release branch. The pushed tag triggers
+pushes the branch, and opens two PRs: `release/X.Y.Z` → `main` and `release/X.Y.Z` → `develop`.
+
+Once the `main` PR is reviewed and merged, check out `main`, pull, and run:
+
+```bash
+pnpm tag-release
+```
+
+This tags the merge commit `vX.Y.Z` and pushes the tag, which triggers
 `.github/workflows/publish.yml` to build and publish `@behindthemusictree/app-kit` to GitHub
-Packages.
+Packages. Then merge the companion PR into `develop` (the release branch itself isn't deleted by
+either merge, so both PRs stay valid regardless of merge order).
 
 ### 9. Hotfixing _(For Maintainers)_
 
@@ -155,10 +163,12 @@ git checkout -b hotfix/<short-description> main
 # fix, commit, add a CHANGELOG.md entry
 ```
 
-Then merge the hotfix into `main` (tag it `vX.Y.Z` per [semver](https://semver.org/) —
-typically a patch bump) and into `develop`, push both plus the tag, and delete the hotfix branch.
-There is no script for this yet — do it with plain `git merge --no-ff` + `git tag`, mirroring
-what `scripts/release.sh` does for `release/*` branches.
+Push the hotfix branch and open two PRs, same pattern as [§8](#8-releasing-for-maintainers):
+`hotfix/<short-description>` → `main` and `hotfix/<short-description>` → `develop`. Once the
+`main` PR merges, check out `main`, pull, and run `pnpm tag-release` (tag `vX.Y.Z` per
+[semver](https://semver.org/) — typically a patch bump) to push the tag and trigger the publish
+workflow, then merge the companion `develop` PR. There is no script to cut the hotfix branch
+itself yet — create it with plain `git checkout -b`.
 
 ### 10. Vercel Playground Env Sync _(For Maintainers)_
 
