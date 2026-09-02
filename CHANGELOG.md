@@ -5,6 +5,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **genre-tree**: `GenreTreeWheelSkeleton`'s color sectors now fill the full rectangular view
+  instead of stopping at a circle inscribed in it, and the skeleton now sizes itself to match the
+  wheel view's own box (`GenreTreeView`'s loading state now wraps it in the same
+  `tree-container flex-1 min-h-0 w-full relative` box used once the real wheel/pop-core view has
+  loaded) rather than rendering at a fixed intrinsic pixel size.
+
 ## [4.6.0] - 2026-09-02
 
 ### Added

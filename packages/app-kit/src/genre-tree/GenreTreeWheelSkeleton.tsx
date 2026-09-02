@@ -143,7 +143,7 @@ const ALL_RECTS: Rect[] = [
 // since the skeleton renders before any real genre id is known.
 type Sector = { path: string; color: string };
 
-const SECTOR_OUTER_RADIUS = (() => {
+const WHEEL_CONTENT_RADIUS = (() => {
   let maxAbs = HUB_RADIUS;
   for (const rect of ALL_RECTS) {
     for (const [x, y] of [
@@ -157,6 +157,35 @@ const SECTOR_OUTER_RADIUS = (() => {
   }
   return maxAbs;
 })();
+
+const CANVAS = (() => {
+  let minX = -WHEEL_CONTENT_RADIUS;
+  let maxX = WHEEL_CONTENT_RADIUS;
+  let minY = -WHEEL_CONTENT_RADIUS;
+  let maxY = WHEEL_CONTENT_RADIUS;
+  for (const rect of ALL_RECTS) {
+    minX = Math.min(minX, rect.x);
+    maxX = Math.max(maxX, rect.x + rect.width);
+    minY = Math.min(minY, rect.y);
+    maxY = Math.max(maxY, rect.y + rect.height);
+  }
+  return {
+    minX: minX - CANVAS_PADDING,
+    minY: minY - CANVAS_PADDING,
+    width: maxX - minX + CANVAS_PADDING * 2,
+    height: maxY - minY + CANVAS_PADDING * 2,
+  };
+})();
+
+// Sized to the canvas's own corners (not WHEEL_CONTENT_RADIUS) so the sectors' color/gradient
+// fill the full view — otherwise they read as a circle inscribed in the rectangular canvas,
+// leaving its corners uncolored.
+const SECTOR_OUTER_RADIUS = Math.max(
+  Math.hypot(CANVAS.minX, CANVAS.minY),
+  Math.hypot(CANVAS.minX + CANVAS.width, CANVAS.minY),
+  Math.hypot(CANVAS.minX, CANVAS.minY + CANVAS.height),
+  Math.hypot(CANVAS.minX + CANVAS.width, CANVAS.minY + CANVAS.height),
+);
 
 const SECTORS: Sector[] = CHIP_ANGLES.map(({ angle }, i) => {
   const prevAngle = i === 0 ? CHIP_ANGLES[CHIP_ANGLES.length - 1].angle - 360 : CHIP_ANGLES[i - 1].angle;
@@ -172,25 +201,6 @@ const SECTORS: Sector[] = CHIP_ANGLES.map(({ angle }, i) => {
   };
 });
 
-const CANVAS = (() => {
-  let minX = -SECTOR_OUTER_RADIUS;
-  let maxX = SECTOR_OUTER_RADIUS;
-  let minY = -SECTOR_OUTER_RADIUS;
-  let maxY = SECTOR_OUTER_RADIUS;
-  for (const rect of ALL_RECTS) {
-    minX = Math.min(minX, rect.x);
-    maxX = Math.max(maxX, rect.x + rect.width);
-    minY = Math.min(minY, rect.y);
-    maxY = Math.max(maxY, rect.y + rect.height);
-  }
-  return {
-    minX: minX - CANVAS_PADDING,
-    minY: minY - CANVAS_PADDING,
-    width: maxX - minX + CANVAS_PADDING * 2,
-    height: maxY - minY + CANVAS_PADDING * 2,
-  };
-})();
-
 export function GenreTreeWheelSkeleton() {
   // Unique per mount so multiple skeletons on one page don't collide on <defs> ids.
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
@@ -200,13 +210,12 @@ export function GenreTreeWheelSkeleton() {
   const shimmerWedgeClass = `genre-tree-wheel-skeleton-shimmer-wedge-${uid}`;
 
   return (
-    <div className="mt-5 p-4 flex justify-center">
+    <div className="w-full h-full overflow-hidden flex items-center justify-center">
       <span className="sr-only">Loading genre tree…</span>
       <svg
         viewBox={`${CANVAS.minX} ${CANVAS.minY} ${CANVAS.width} ${CANVAS.height}`}
-        width={CANVAS.width}
-        height={CANVAS.height}
-        className="max-w-full h-auto"
+        preserveAspectRatio="xMidYMid slice"
+        className="w-full h-full max-w-full max-h-full"
         aria-hidden="true"
       >
         <style>{`

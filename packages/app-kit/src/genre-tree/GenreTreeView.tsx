@@ -179,7 +179,9 @@ export function GenreTreeView<T extends TrackBase>({
       </div>
       {isLoading ? (
         viewMode === "wheel" || viewMode === "pop-core" ? (
-          <GenreTreeWheelSkeleton />
+          <div className="tree-container flex-1 min-h-0 w-full relative">
+            <GenreTreeWheelSkeleton />
+          </div>
         ) : (
           <GenreTreeSkeleton />
         )
