@@ -62,7 +62,7 @@ git push -u origin "$RELEASE_BRANCH"
 
 gh pr create --base main --head "$RELEASE_BRANCH" \
   --title "Release v$NEW_VERSION" \
-  --body "Release v$NEW_VERSION ($OLD_VERSION -> $NEW_VERSION). After this merges, run \`pnpm run tag-release\` on \`main\` to tag and trigger the publish workflow, then merge the companion PR into \`develop\`."
+  --body "Release v$NEW_VERSION ($OLD_VERSION -> $NEW_VERSION). After this merges, run \`pnpm tag-release\` on \`main\` to tag and trigger the publish workflow, then merge the companion PR into \`develop\`."
 
 gh pr create --base develop --head "$RELEASE_BRANCH" \
   --title "Release v$NEW_VERSION (merge back into develop)" \
@@ -72,4 +72,4 @@ git checkout develop
 
 echo ""
 echo "Opened PRs for v$NEW_VERSION ($OLD_VERSION -> $NEW_VERSION) into main and develop."
-echo "Once the main PR merges, run: pnpm run tag-release"
+echo "Once the main PR merges, run: pnpm tag-release"
