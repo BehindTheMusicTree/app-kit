@@ -25,6 +25,32 @@ describe("GenreTreeWheelSkeleton", () => {
     expect(document.querySelectorAll("path").length).toBeGreaterThan(0);
   });
 
+  it("extends the color sectors to the canvas's own corners, not a circle inscribed in it", () => {
+    render(<GenreTreeWheelSkeleton />);
+
+    const svg = document.querySelector("svg") as SVGSVGElement;
+    const [minX, minY, width, height] = (svg.getAttribute("viewBox") as string)
+      .split(" ")
+      .map(Number);
+    const cornerDistance = Math.max(
+      Math.hypot(minX, minY),
+      Math.hypot(minX + width, minY),
+      Math.hypot(minX, minY + height),
+      Math.hypot(minX + width, minY + height),
+    );
+
+    const sectorPath = document.querySelector('path[fill^="#"]') as SVGPathElement;
+    expect(sectorPath).not.toBeNull();
+    const radiusMatch = sectorPath.getAttribute("d")?.match(/A([\d.]+),([\d.]+)/);
+    expect(radiusMatch).not.toBeNull();
+    const sectorRadius = Number(radiusMatch![1]);
+
+    // A radius merely reaching the canvas's own bounding box (half-width/height) would still
+    // leave the rectangle's corners uncolored — it must reach the corners themselves.
+    expect(sectorRadius).toBeCloseTo(cornerDistance, 5);
+    expect(sectorRadius).toBeGreaterThan(Math.min(width, height) / 2);
+  });
+
   it("renders unique gradient/mask ids across multiple mounted instances", () => {
     const { container: containerA } = render(<GenreTreeWheelSkeleton />);
     const { container: containerB } = render(<GenreTreeWheelSkeleton />);

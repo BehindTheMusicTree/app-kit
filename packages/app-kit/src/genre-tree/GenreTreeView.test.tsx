@@ -127,10 +127,21 @@ describe("GenreTreeView", () => {
     });
     renderView();
 
-    expect(screen.getByTestId("genre-tree-wheel-skeleton")).toBeInTheDocument();
+    const skeleton = screen.getByTestId("genre-tree-wheel-skeleton");
+    expect(skeleton).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Stacked" }),
     ).not.toBeInTheDocument();
+    // Loading state must occupy the same box as the loaded wheel/pop-core view
+    // (see GenrePlaylistTreeWheel's "tree-container" wrapper below), not a smaller,
+    // intrinsically-sized one — otherwise the skeleton doesn't match the real view's box.
+    expect(skeleton.parentElement).toHaveClass(
+      "tree-container",
+      "flex-1",
+      "min-h-0",
+      "w-full",
+      "relative",
+    );
   });
 
   it("shows the wheel skeleton while the example tree is loading", () => {
