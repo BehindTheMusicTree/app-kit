@@ -14,7 +14,7 @@ const SHIMMER_HIGHLIGHT_COLOR = "#FFFFFF";
 const SECTOR_FILL_OPACITY = 0.16;
 
 const HUB_RADIUS = 46;
-const WHEEL_RADIUS = 170;
+const WHEEL_RADIUS = 140;
 const CANVAS_PADDING = 20;
 
 // Mirrors the real wheel's root-chip ring: one chip per root, evenly spaced — see
