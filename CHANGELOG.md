@@ -5,6 +5,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **genre-tree**: `GenreTreeWheelSkeleton`'s node fill and border are now a darker grey (matching
+  the connector color), instead of nearly blending into the skeleton's light background.
+
 ## [4.7.0] - 2026-09-02
 
 ### Added
