@@ -26,8 +26,8 @@ import {
 import GenrePlaylistTreePerRoot from "./playlist-tree/TreePerRoot";
 import GenrePlaylistTreeWheel from "./playlist-tree/TreeWheel";
 import GenrePlaylistTreeWheelRadialPopCore from "./playlist-tree/TreeWheelRadialPopCore";
-import { GenreTreeSkeleton } from "./GenreTreeSkeleton";
 import { GenreTreeWheelSkeleton } from "./GenreTreeWheelSkeleton";
+import { GenreTreeViewSkeleton } from "./GenreTreeViewSkeleton";
 import { GenreTreeWheelHandoff } from "./GenreTreeWheelHandoff";
 
 export type GenreTreeViewMode = "stacked" | "wheel" | "pop-core";
@@ -178,11 +178,7 @@ export function GenreTreeView<T extends TrackBase>({
         <div className="flex justify-start">{actions}</div>
       </div>
       {isLoading ? (
-        viewMode === "wheel" || viewMode === "pop-core" ? (
-          <GenreTreeWheelSkeleton />
-        ) : (
-          <GenreTreeSkeleton />
-        )
+        <GenreTreeViewSkeleton viewMode={viewMode} />
       ) : viewMode === "wheel" ? (
         <div className="tree-container flex-1 min-h-0 w-full relative">
           <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
