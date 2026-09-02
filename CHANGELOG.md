@@ -5,6 +5,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **playground**: header now displays the `@behindthemusictree/app-kit` version the playground
+  is running against.
+
 ### Changed
 
 - **release**: `scripts/release.sh` now pushes the `release/*` branch and opens PRs into `main`
