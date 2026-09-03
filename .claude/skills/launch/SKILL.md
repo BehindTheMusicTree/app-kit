@@ -53,4 +53,5 @@ Since `packages/app-kit` rebuilds on save via `tsup --watch`, edits to the
 library show up in the playground without restarting `pnpm dev`.
 
 For a non-visual check instead, `pnpm build && pnpm lint` (tsup + `tsc
---noEmit`) is the primary type-safety gate — there is no test suite yet.
+--noEmit`) is the primary type-safety gate; run `pnpm test` for the Vitest
+suite under `packages/app-kit`.
