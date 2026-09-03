@@ -3,11 +3,12 @@
 import { useId } from "react";
 import { getGenreTreeColor } from "@behindthemusictree/genre-tree-view";
 
-// Mirrors GenreTreeSkeleton's visual tokens so the two skeletons read as the same design system —
-// see that file's comment on why these are approximated rather than imported.
-const CARD_FILL = "#F4F4F5";
-const CARD_BORDER_COLOR = "#E4E4E7";
+// Card fill/border match the connector color (rather than GenreTreeSkeleton's lighter tokens) so
+// wheel nodes stay visible against this skeleton's own light background — see that file's comment
+// on why these are approximated rather than imported.
 const CONNECTOR_COLOR = "#D4D4D8";
+const CARD_FILL = CONNECTOR_COLOR;
+const CARD_BORDER_COLOR = CONNECTOR_COLOR;
 const RING_COLOR = "#E4E4E7";
 const CORNER_RADIUS = 1;
 const SHIMMER_HIGHLIGHT_COLOR = "#FFFFFF";
