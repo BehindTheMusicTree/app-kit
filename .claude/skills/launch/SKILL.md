@@ -9,8 +9,8 @@ description: Use this skill when asked to run, start, dev-serve, or preview app-
 (`packages/app-kit`, `@behindthemusictree/app-kit`) consumed by
 `grow-the-music-tree-frontend` and `hear-the-music-tree-frontend`. There is no
 app to run in production — the "launch" target is `apps/playground`, a small
-Vite app for manually exercising exported components against mock data before
-opening a PR. It is not published.
+Vite app for manually exercising exported components, proxied through to the
+staging grow-api, before opening a PR. It is not published.
 
 ## 1. Install
 
