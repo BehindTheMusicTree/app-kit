@@ -5,6 +5,25 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.8.0] - 2026-09-03
+
+### Added
+
+- **Dev tooling**: Added a `launch` Claude Code skill (`.claude/skills/launch/`) documenting how
+  to start the local dev environment.
+
+### Changed
+
+- **genre-tree**: `GenreTreeSkeleton`, `GenreTreeWheelSkeleton`, and `GenreTreeViewSkeleton` are
+  now sourced from `@behindthemusictree/genre-tree-view` and re-exported from app-kit under the
+  same names and import paths, so any package (not just app-kit consumers) can reuse them. No
+  change for existing app-kit consumers.
+
+### Fixed
+
+- **genre-tree**: `GenreTreeWheelSkeleton`'s node fill and border are now a darker grey (matching
+  the connector color), instead of nearly blending into the skeleton's light background.
+
 ## [4.7.0] - 2026-09-02
 
 ### Added
