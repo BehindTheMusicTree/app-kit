@@ -47,12 +47,19 @@ vi.mock("./playlist-tree/TreeWheelRadialPopCore", () => ({
   },
 }));
 
-vi.mock("./GenreTreeSkeleton", () => ({
-  GenreTreeSkeleton: () => <div data-testid="genre-tree-skeleton" />,
-}));
-
-vi.mock("./GenreTreeWheelSkeleton", () => ({
+vi.mock("@behindthemusictree/genre-tree-view", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
   GenreTreeWheelSkeleton: () => <div data-testid="genre-tree-wheel-skeleton" />,
+  // Mirrors the real GenreTreeViewSkeleton's viewMode -> shape delegation, since mocking the
+  // barrel doesn't affect genre-tree-view's own internal GenreTreeViewSkeleton -> GenreTreeWheelSkeleton import.
+  GenreTreeViewSkeleton: ({ viewMode }: { viewMode: string }) =>
+    viewMode === "wheel" || viewMode === "pop-core" ? (
+      <div className="tree-container flex-1 min-h-0 w-full relative">
+        <div data-testid="genre-tree-wheel-skeleton" />
+      </div>
+    ) : (
+      <div data-testid="genre-tree-skeleton" />
+    ),
 }));
 
 import { GenreTreeView, type GenreTreeViewProps } from "./GenreTreeView";

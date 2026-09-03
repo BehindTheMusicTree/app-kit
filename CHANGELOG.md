@@ -5,6 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **genre-tree**: `GenreTreeSkeleton`, `GenreTreeWheelSkeleton`, and `GenreTreeViewSkeleton` are
+  now sourced from `@behindthemusictree/genre-tree-view` and re-exported from app-kit under the
+  same names and import paths, so any package (not just app-kit consumers) can reuse them. No
+  change for existing app-kit consumers.
+
 ### Fixed
 
 - **genre-tree**: `GenreTreeWheelSkeleton`'s node fill and border are now a darker grey (matching

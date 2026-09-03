@@ -6,9 +6,14 @@ import { FaTree } from "react-icons/fa";
 import { Plus } from "lucide-react";
 import { IconTextButton, Button } from "@behindthemusictree/ui";
 
+import {
+  GenreTreeWheelSkeleton,
+  GenreTreeViewSkeleton,
+} from "@behindthemusictree/genre-tree-view";
 import type {
   GenreTreeAction,
   GenreTreeNode,
+  GenreTreeViewMode,
 } from "@behindthemusictree/genre-tree-view";
 
 import { CriteriaPlaylistSimple } from "./schemas/criteria-playlist/simple";
@@ -26,11 +31,9 @@ import {
 import GenrePlaylistTreePerRoot from "./playlist-tree/TreePerRoot";
 import GenrePlaylistTreeWheel from "./playlist-tree/TreeWheel";
 import GenrePlaylistTreeWheelRadialPopCore from "./playlist-tree/TreeWheelRadialPopCore";
-import { GenreTreeWheelSkeleton } from "./GenreTreeWheelSkeleton";
-import { GenreTreeViewSkeleton } from "./GenreTreeViewSkeleton";
 import { GenreTreeWheelHandoff } from "./GenreTreeWheelHandoff";
 
-export type GenreTreeViewMode = "stacked" | "wheel" | "pop-core";
+export type { GenreTreeViewMode } from "@behindthemusictree/genre-tree-view";
 
 export type GenreTreeViewProps<T extends TrackBase> = {
   scope: Scope;

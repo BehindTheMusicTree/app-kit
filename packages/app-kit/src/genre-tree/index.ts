@@ -1,11 +1,16 @@
 // Tree view + data hooks
 export * from "./GenreTreeView";
-export * from "./GenreTreeSkeleton";
-export * from "./GenreTreeWheelSkeleton";
-export * from "./GenreTreeViewSkeleton";
 export { default as GenrePlaylistTreePerRoot } from "./playlist-tree/TreePerRoot";
 export type { GenrePlaylistTreePerRootProps } from "./playlist-tree/TreePerRoot";
-export type { GenreTreeAction } from "@behindthemusictree/genre-tree-view";
+export {
+  GenreTreeSkeleton,
+  GenreTreeWheelSkeleton,
+  GenreTreeViewSkeleton,
+} from "@behindthemusictree/genre-tree-view";
+export type {
+  GenreTreeAction,
+  GenreTreeViewSkeletonProps,
+} from "@behindthemusictree/genre-tree-view";
 export * from "./useGenre";
 export * from "./useGenrePlaylist";
 
