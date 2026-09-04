@@ -5,6 +5,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **genre-tree**: Bumped `@behindthemusictree/genre-tree-view` catalog pin to `1.3.0`.
+
 ### Added
 
 - **genre-tree**: `CriteriaSimple` now includes `summary` (nullable string), and
