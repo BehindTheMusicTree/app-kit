@@ -16,6 +16,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   backend's list and detail genre responses respectively. `CriteriaCreationValues` and
   `CriteriaUpdateValues` accept an optional `essentialTracks` array of track UUIDs for
   create/update requests.
+- **genre-tree**: `GenreTreeView` now shows a `GenreDetailPanel` to the right of the tree
+  when a node is clicked, using the `onNodeClick` event added in
+  `@behindthemusictree/genre-tree-view` `1.4.0`. The panel fetches and displays the
+  clicked genre's track count, children count, and essential tracks.
 
 ## [4.8.0] - 2026-09-03
 

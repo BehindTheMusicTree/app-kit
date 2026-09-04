@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { z } from "zod";
 import { FaTree } from "react-icons/fa";
 import { Plus } from "lucide-react";
@@ -18,11 +18,12 @@ import type {
 
 import { CriteriaPlaylistSimple } from "./schemas/criteria-playlist/simple";
 import { CriteriaMinimum } from "./schemas/criteria/minimum";
+import { CriteriaDetailed } from "./schemas/criteria/detailed";
 import { TrackBase } from "./schemas/track/base";
 import { CriteriaPlaylistDetailedLike } from "./models/TrackListOrigin";
 import { Scope } from "../transport/lib/scope";
 import { useListFullGenrePlaylists } from "./useGenrePlaylist";
-import { useLoadExampleTreeGenre } from "./useGenre";
+import { useLoadExampleTreeGenre, useFetchGenre } from "./useGenre";
 import {
   getGenrePlaylistsGroupedByRoot,
   hasMainstreamPopRoot,
@@ -32,6 +33,7 @@ import GenrePlaylistTreePerRoot from "./playlist-tree/TreePerRoot";
 import GenrePlaylistTreeWheel from "./playlist-tree/TreeWheel";
 import GenrePlaylistTreeWheelRadialPopCore from "./playlist-tree/TreeWheelRadialPopCore";
 import { GenreTreeWheelHandoff } from "./GenreTreeWheelHandoff";
+import GenreDetailPanel from "./GenreDetailPanel";
 
 export type { GenreTreeViewMode } from "@behindthemusictree/genre-tree-view";
 
@@ -66,10 +68,51 @@ export function GenreTreeView<T extends TrackBase>({
     useState<GenreTreeViewMode>("pop-core");
   const isControlled = controlledViewMode !== undefined;
 
+  const [selectedGenreUuid, setSelectedGenreUuid] = useState<string | null>(
+    null,
+  );
+  const [selectedGenreDetail, setSelectedGenreDetail] =
+    useState<CriteriaDetailed | null>(null);
+  const [isLoadingSelectedGenre, setIsLoadingSelectedGenre] = useState(false);
+  const fetchGenre = useFetchGenre(scope, getBackendBaseUrl);
+
   const { data: genrePlaylists, isPending: isListingGenrePlaylists } =
     useListFullGenrePlaylists(scope, getBackendBaseUrl);
   const loadTreeMutation = useLoadExampleTreeGenre(scope, getBackendBaseUrl);
   const isLoadingTree = loadTreeMutation.isPending;
+
+  const handleNodeClick = useCallback(
+    (node: GenreTreeNode) => {
+      const genrePlaylist = (
+        genrePlaylists?.results as CriteriaPlaylistSimple[] | undefined
+      )?.find((gp) => gp.uuid === node.id);
+      setSelectedGenreUuid(genrePlaylist?.criteria?.uuid ?? null);
+    },
+    [genrePlaylists?.results],
+  );
+
+  useEffect(() => {
+    if (!selectedGenreUuid) {
+      setSelectedGenreDetail(null);
+      return;
+    }
+    let cancelled = false;
+    setIsLoadingSelectedGenre(true);
+    fetchGenre(selectedGenreUuid)
+      .then((detail) => {
+        if (!cancelled) setSelectedGenreDetail(detail);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch genre details:", error);
+        if (!cancelled) setSelectedGenreDetail(null);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingSelectedGenre(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedGenreUuid, fetchGenre]);
 
   const groupedGenrePlaylistsByRoot = useMemo(
     () =>
@@ -180,81 +223,100 @@ export function GenreTreeView<T extends TrackBase>({
       <div className="actions-container flex justify-start">
         <div className="flex justify-start">{actions}</div>
       </div>
-      {isLoading ? (
-        <GenreTreeViewSkeleton viewMode={viewMode} />
-      ) : viewMode === "wheel" ? (
-        <div className="tree-container flex-1 min-h-0 w-full relative">
-          <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
-            <GenrePlaylistTreeWheel
-              scope={scope}
-              genrePlaylists={
-                (genrePlaylists?.results ?? []) as CriteriaPlaylistSimple[]
-              }
-              reparentingGenreUuid={reparentingGenreUuid}
-              setReparentingGenreUuid={setReparentingGenreUuid}
-              handleGenreCreationAction={handleGenreCreationAction}
-              handleGenreRenameAction={handleGenreRenameAction}
-              getBackendBaseUrl={getBackendBaseUrl}
-              criteriaPlaylistDetailedSchema={criteriaPlaylistDetailedSchema}
-              additionalActions={additionalActions}
-              readOnly={readOnly}
-            />
-          </GenreTreeWheelHandoff>
-        </div>
-      ) : viewMode === "pop-core" ? (
-        <div className="tree-container flex-1 min-h-0 w-full relative">
-          <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
-            <GenrePlaylistTreeWheelRadialPopCore
-              scope={scope}
-              // Non-null assertion, not `?? []`: reaching this branch requires canShowPopCore
-              // to be true, which the useMemo above only sets once genrePlaylists.results is a
-              // defined array containing a "Mainstream Pop" root, so it can't be nullish here —
-              // asserting it fails loudly instead of silently passing undefined if that
-              // invariant ever regresses.
-              genrePlaylists={genrePlaylists!.results as CriteriaPlaylistSimple[]}
-              reparentingGenreUuid={reparentingGenreUuid}
-              setReparentingGenreUuid={setReparentingGenreUuid}
-              handleGenreCreationAction={handleGenreCreationAction}
-              handleGenreRenameAction={handleGenreRenameAction}
-              getBackendBaseUrl={getBackendBaseUrl}
-              criteriaPlaylistDetailedSchema={criteriaPlaylistDetailedSchema}
-              additionalActions={additionalActions}
-              readOnly={readOnly}
-            />
-          </GenreTreeWheelHandoff>
-        </div>
-      ) : (
-        <div className="tree-container flex flex-col gap-4 text-gray-800 w-full overflow-x-auto overflow-y-auto relative">
-          {Object.entries(groupedGenrePlaylistsByRoot).map(
-            ([uuid, genrePlaylistTreePerRoot]) => {
-              return (
-                <div
-                  key={uuid}
-                  className="tree-per-root-container relative mt-2 mr-16 p-2 bg-gray-50 rounded-lg inline-block w-fit"
-                >
-                  <div className="graph-container relative z-10">
-                    <GenrePlaylistTreePerRoot
-                      scope={scope}
-                      rootUuid={uuid}
-                      genrePlaylistTreePerRoot={genrePlaylistTreePerRoot}
-                      reparentingGenreUuid={reparentingGenreUuid}
-                      setReparentingGenreUuid={setReparentingGenreUuid}
-                      handleGenreCreationAction={handleGenreCreationAction}
-                      handleGenreRenameAction={handleGenreRenameAction}
-                      getBackendBaseUrl={getBackendBaseUrl}
-                      criteriaPlaylistDetailedSchema={
-                        criteriaPlaylistDetailedSchema
-                      }
-                      additionalActions={additionalActions}
-                      readOnly={readOnly}
-                    />
-                  </div>
-                </div>
-              );
-            },
+      <div className="content-container flex-1 min-h-0 flex flex-row gap-4">
+        <div className="tree-view-container flex-1 min-w-0 flex flex-col h-full">
+          {isLoading ? (
+            <GenreTreeViewSkeleton viewMode={viewMode} />
+          ) : viewMode === "wheel" ? (
+            <div className="tree-container flex-1 min-h-0 w-full relative">
+              <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
+                <GenrePlaylistTreeWheel
+                  scope={scope}
+                  genrePlaylists={
+                    (genrePlaylists?.results ?? []) as CriteriaPlaylistSimple[]
+                  }
+                  reparentingGenreUuid={reparentingGenreUuid}
+                  setReparentingGenreUuid={setReparentingGenreUuid}
+                  handleGenreCreationAction={handleGenreCreationAction}
+                  handleGenreRenameAction={handleGenreRenameAction}
+                  getBackendBaseUrl={getBackendBaseUrl}
+                  criteriaPlaylistDetailedSchema={
+                    criteriaPlaylistDetailedSchema
+                  }
+                  additionalActions={additionalActions}
+                  onNodeClick={handleNodeClick}
+                  readOnly={readOnly}
+                />
+              </GenreTreeWheelHandoff>
+            </div>
+          ) : viewMode === "pop-core" ? (
+            <div className="tree-container flex-1 min-h-0 w-full relative">
+              <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
+                <GenrePlaylistTreeWheelRadialPopCore
+                  scope={scope}
+                  // Non-null assertion, not `?? []`: reaching this branch requires canShowPopCore
+                  // to be true, which the useMemo above only sets once genrePlaylists.results is a
+                  // defined array containing a "Mainstream Pop" root, so it can't be nullish here —
+                  // asserting it fails loudly instead of silently passing undefined if that
+                  // invariant ever regresses.
+                  genrePlaylists={genrePlaylists!.results as CriteriaPlaylistSimple[]}
+                  reparentingGenreUuid={reparentingGenreUuid}
+                  setReparentingGenreUuid={setReparentingGenreUuid}
+                  handleGenreCreationAction={handleGenreCreationAction}
+                  handleGenreRenameAction={handleGenreRenameAction}
+                  getBackendBaseUrl={getBackendBaseUrl}
+                  criteriaPlaylistDetailedSchema={
+                    criteriaPlaylistDetailedSchema
+                  }
+                  additionalActions={additionalActions}
+                  onNodeClick={handleNodeClick}
+                  readOnly={readOnly}
+                />
+              </GenreTreeWheelHandoff>
+            </div>
+          ) : (
+            <div className="tree-container flex flex-col gap-4 text-gray-800 w-full overflow-x-auto overflow-y-auto relative">
+              {Object.entries(groupedGenrePlaylistsByRoot).map(
+                ([uuid, genrePlaylistTreePerRoot]) => {
+                  return (
+                    <div
+                      key={uuid}
+                      className="tree-per-root-container relative mt-2 mr-16 p-2 bg-gray-50 rounded-lg inline-block w-fit"
+                    >
+                      <div className="graph-container relative z-10">
+                        <GenrePlaylistTreePerRoot
+                          scope={scope}
+                          rootUuid={uuid}
+                          genrePlaylistTreePerRoot={genrePlaylistTreePerRoot}
+                          reparentingGenreUuid={reparentingGenreUuid}
+                          setReparentingGenreUuid={setReparentingGenreUuid}
+                          handleGenreCreationAction={handleGenreCreationAction}
+                          handleGenreRenameAction={handleGenreRenameAction}
+                          getBackendBaseUrl={getBackendBaseUrl}
+                          criteriaPlaylistDetailedSchema={
+                            criteriaPlaylistDetailedSchema
+                          }
+                          additionalActions={additionalActions}
+                          onNodeClick={handleNodeClick}
+                          readOnly={readOnly}
+                        />
+                      </div>
+                    </div>
+                  );
+                },
+              )}
+            </div>
           )}
         </div>
-      )}
+        {selectedGenreUuid && (
+          <GenreDetailPanel
+            className="flex-shrink-0 w-96"
+            criteria={selectedGenreDetail}
+            isLoading={isLoadingSelectedGenre}
+            onClose={() => setSelectedGenreUuid(null)}
+          />
+        )}
+      </div>
     </div>
   );
 }
