@@ -5,6 +5,7 @@ import { z } from "zod";
 const {
   useListFullGenrePlaylistsMock,
   useLoadExampleTreeGenreMock,
+  fetchGenreMock,
   loadTreeMutateMock,
   treePerRootPropsMock,
   treeWheelPropsMock,
@@ -12,6 +13,7 @@ const {
 } = vi.hoisted(() => ({
   useListFullGenrePlaylistsMock: vi.fn(),
   useLoadExampleTreeGenreMock: vi.fn(),
+  fetchGenreMock: vi.fn(),
   loadTreeMutateMock: vi.fn(),
   treePerRootPropsMock: vi.fn(),
   treeWheelPropsMock: vi.fn(),
@@ -24,6 +26,7 @@ vi.mock("./useGenrePlaylist", () => ({
 
 vi.mock("./useGenre", () => ({
   useLoadExampleTreeGenre: () => useLoadExampleTreeGenreMock(),
+  useFetchGenre: () => fetchGenreMock,
 }));
 
 vi.mock("./playlist-tree/TreePerRoot", () => ({
@@ -125,6 +128,7 @@ describe("GenreTreeView", () => {
       mutate: loadTreeMutateMock,
       isPending: false,
     });
+    fetchGenreMock.mockReset();
   });
 
   it("shows the wheel skeleton while the genre playlists are loading", () => {
@@ -312,6 +316,91 @@ describe("GenreTreeView", () => {
     expect(
       treePerRootPropsMock.mock.calls.at(-1)?.[0].reparentingGenreUuid,
     ).toBe("gp1");
+  });
+
+  describe("rotation and toolbar toggles", () => {
+    it("default to off and are passed through to the wheel view", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: { results: [makePlaylist()] },
+        isPending: false,
+      });
+      renderView();
+
+      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+
+      expect(treeWheelPropsMock.mock.calls[0][0].allowWheelRotation).toBe(
+        false,
+      );
+      expect(treeWheelPropsMock.mock.calls[0][0].showToolbar).toBe(false);
+    });
+
+    it("toggle on and pass through to the wheel view", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: { results: [makePlaylist()] },
+        isPending: false,
+      });
+      renderView();
+
+      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+      fireEvent.click(screen.getByRole("button", { name: "Rotation" }));
+      fireEvent.click(screen.getByRole("button", { name: "Toolbar" }));
+
+      expect(
+        treeWheelPropsMock.mock.calls.at(-1)?.[0].allowWheelRotation,
+      ).toBe(true);
+      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].showToolbar).toBe(
+        true,
+      );
+    });
+
+    it("pass through to the pop-core view", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: {
+          results: [
+            makePlaylist({
+              uuid: "gp1",
+              name: "Mainstream Pop",
+              root: { uuid: "gp1" },
+              parent: null,
+            }),
+          ],
+        },
+        isPending: false,
+      });
+      renderView();
+
+      fireEvent.click(screen.getByRole("button", { name: "Pop/Core" }));
+      fireEvent.click(screen.getByRole("button", { name: "Rotation" }));
+      fireEvent.click(screen.getByRole("button", { name: "Toolbar" }));
+
+      expect(
+        treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0]
+          .allowWheelRotation,
+      ).toBe(true);
+      expect(
+        treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0].showToolbar,
+      ).toBe(true);
+    });
+
+    it("hides the Rotation toggle in stacked view and passes showToolbar through", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: { results: [makePlaylist()] },
+        isPending: false,
+      });
+      renderView();
+
+      fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
+
+      expect(
+        screen.queryByRole("button", { name: "Rotation" }),
+      ).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: "Toolbar" }));
+
+      expect(treePerRootPropsMock.mock.calls.at(-1)?.[0].showToolbar).toBe(
+        true,
+      );
+    });
   });
 
   describe("pop-core view", () => {
@@ -588,6 +677,101 @@ describe("GenreTreeView", () => {
         screen.queryByTestId("genre-tree-wheel-skeleton"),
       ).not.toBeInTheDocument();
       expect(screen.getByTestId("tree-wheel")).toBeInTheDocument();
+    });
+  });
+
+  describe("genre detail panel", () => {
+    it("fetches and shows genre details when a node is clicked", async () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: { results: [makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } })] },
+        isPending: false,
+      });
+      const detail = {
+        uuid: "c1",
+        name: "Jazz",
+        tracksCount: 5,
+        tracksArchivedCount: 0,
+        children: [],
+        essentialTracks: [],
+      };
+      fetchGenreMock.mockResolvedValue(detail);
+      renderView();
+
+      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+
+      await act(async () => {
+        treeWheelPropsMock.mock.calls.at(-1)?.[0].onNodeClick({ id: "gp1" });
+      });
+
+      expect(fetchGenreMock).toHaveBeenCalledWith("c1");
+      expect(screen.getByText("Jazz")).toBeInTheDocument();
+      expect(screen.getByText(/5/)).toBeInTheDocument();
+    });
+
+    it("does not show the panel when the clicked node has no associated criteria", async () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: { results: [makePlaylist({ uuid: "gp1", criteria: null })] },
+        isPending: false,
+      });
+      renderView();
+
+      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+
+      await act(async () => {
+        treeWheelPropsMock.mock.calls.at(-1)?.[0].onNodeClick({ id: "gp1" });
+      });
+
+      expect(fetchGenreMock).not.toHaveBeenCalled();
+      expect(screen.queryByLabelText("Close")).not.toBeInTheDocument();
+    });
+
+    it("closes the panel when the close button is clicked", async () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: { results: [makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } })] },
+        isPending: false,
+      });
+      fetchGenreMock.mockResolvedValue({
+        uuid: "c1",
+        name: "Jazz",
+        tracksCount: 0,
+        tracksArchivedCount: 0,
+        children: [],
+        essentialTracks: [],
+      });
+      renderView();
+
+      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+
+      await act(async () => {
+        treeWheelPropsMock.mock.calls.at(-1)?.[0].onNodeClick({ id: "gp1" });
+      });
+
+      fireEvent.click(screen.getByLabelText("Close"));
+
+      expect(screen.queryByLabelText("Close")).not.toBeInTheDocument();
+    });
+
+    it("clears the selected genre detail when fetching fails", async () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: { results: [makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } })] },
+        isPending: false,
+      });
+      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      fetchGenreMock.mockRejectedValue(new Error("boom"));
+      renderView();
+
+      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+
+      await act(async () => {
+        treeWheelPropsMock.mock.calls.at(-1)?.[0].onNodeClick({ id: "gp1" });
+      });
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Failed to fetch genre details:",
+        expect.any(Error),
+      );
+      expect(screen.getByText("No details available.")).toBeInTheDocument();
+      consoleErrorSpy.mockRestore();
     });
   });
 });

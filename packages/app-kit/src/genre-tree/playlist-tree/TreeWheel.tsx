@@ -34,8 +34,14 @@ export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
   getBackendBaseUrl: () => string;
   criteriaPlaylistDetailedSchema: z.ZodType<CriteriaPlaylistDetailedLike<T>>;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
+  onNodeClick?: (node: GenreTreeNode) => void;
   /** When true, suppresses per-node create/rename/reparent affordances. Defaults to false. */
   readOnly?: boolean;
+  /** When false, clicking a chip still selects its root, but the wheel doesn't spin to the
+   * anchor. Defaults to true. */
+  allowWheelRotation?: boolean;
+  /** When false, suppresses the hover toolbar on every node. Defaults to true. */
+  showToolbar?: boolean;
 };
 
 export default function GenrePlaylistTreeWheel<T extends TrackBase>({
@@ -49,7 +55,10 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
   getBackendBaseUrl,
   criteriaPlaylistDetailedSchema,
   additionalActions,
+  onNodeClick,
   readOnly = false,
+  allowWheelRotation,
+  showToolbar,
 }: GenrePlaylistTreeWheelProps<T>) {
   const { isPlaying, setIsPlaying } = usePlayer();
   const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList<T>();
@@ -176,6 +185,9 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
       onReparentRequest={readOnly ? undefined : handleReparentRequest}
       onReparent={readOnly ? undefined : handleReparent}
       additionalActions={additionalActions}
+      onNodeClick={onNodeClick}
+      allowWheelRotation={allowWheelRotation}
+      showToolbar={showToolbar}
     />
   );
 }

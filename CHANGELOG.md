@@ -7,7 +7,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- **genre-tree**: Bumped `@behindthemusictree/genre-tree-view` catalog pin to `1.3.0`.
+- **genre-tree**: Bumped `@behindthemusictree/genre-tree-view` catalog pin to `1.4.0`.
 
 ### Added
 
@@ -16,6 +16,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   backend's list and detail genre responses respectively. `CriteriaCreationValues` and
   `CriteriaUpdateValues` accept an optional `essentialTracks` array of track UUIDs for
   create/update requests.
+- **genre-tree**: `GenreTreeView` now shows a `GenreDetailPanel` to the right of the tree
+  when a node is clicked, using the `onNodeClick` event added in
+  `@behindthemusictree/genre-tree-view` `1.4.0`. The panel fetches and displays the
+  clicked genre's track count, children count, and essential tracks.
+- **genre-tree**: `GenreTreeView` now shows "Rotation" and "Toolbar" toggle buttons that
+  control the `allowWheelRotation` and `showToolbar` props added in
+  `@behindthemusictree/genre-tree-view` `1.4.0`. Both default to off. The rotation toggle
+  is only shown outside of stacked view, since it has no effect there.
 
 ## [4.8.0] - 2026-09-03
 
