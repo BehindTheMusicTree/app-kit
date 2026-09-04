@@ -39,6 +39,8 @@ export type GenrePlaylistTreePerRootProps<T extends TrackBase> = {
   onNodeClick?: (node: GenreTreeNode) => void;
   /** When true, suppresses per-node create/rename/reparent affordances. Defaults to false. */
   readOnly?: boolean;
+  /** When false, suppresses the hover toolbar on every node. Defaults to true. */
+  showToolbar?: boolean;
 };
 
 export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
@@ -55,6 +57,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
   additionalActions,
   onNodeClick,
   readOnly = false,
+  showToolbar,
 }: GenrePlaylistTreePerRootProps<T>) {
   const { isPlaying, setIsPlaying } = usePlayer();
   const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList<T>();
@@ -183,6 +186,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
       onReparent={readOnly ? undefined : handleReparent}
       additionalActions={additionalActions}
       onNodeClick={onNodeClick}
+      showToolbar={showToolbar}
     />
   );
 }

@@ -318,6 +318,91 @@ describe("GenreTreeView", () => {
     ).toBe("gp1");
   });
 
+  describe("rotation and toolbar toggles", () => {
+    it("default to off and are passed through to the wheel view", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: { results: [makePlaylist()] },
+        isPending: false,
+      });
+      renderView();
+
+      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+
+      expect(treeWheelPropsMock.mock.calls[0][0].allowWheelRotation).toBe(
+        false,
+      );
+      expect(treeWheelPropsMock.mock.calls[0][0].showToolbar).toBe(false);
+    });
+
+    it("toggle on and pass through to the wheel view", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: { results: [makePlaylist()] },
+        isPending: false,
+      });
+      renderView();
+
+      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+      fireEvent.click(screen.getByRole("button", { name: "Rotation" }));
+      fireEvent.click(screen.getByRole("button", { name: "Toolbar" }));
+
+      expect(
+        treeWheelPropsMock.mock.calls.at(-1)?.[0].allowWheelRotation,
+      ).toBe(true);
+      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].showToolbar).toBe(
+        true,
+      );
+    });
+
+    it("pass through to the pop-core view", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: {
+          results: [
+            makePlaylist({
+              uuid: "gp1",
+              name: "Mainstream Pop",
+              root: { uuid: "gp1" },
+              parent: null,
+            }),
+          ],
+        },
+        isPending: false,
+      });
+      renderView();
+
+      fireEvent.click(screen.getByRole("button", { name: "Pop/Core" }));
+      fireEvent.click(screen.getByRole("button", { name: "Rotation" }));
+      fireEvent.click(screen.getByRole("button", { name: "Toolbar" }));
+
+      expect(
+        treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0]
+          .allowWheelRotation,
+      ).toBe(true);
+      expect(
+        treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0].showToolbar,
+      ).toBe(true);
+    });
+
+    it("hides the Rotation toggle in stacked view and passes showToolbar through", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: { results: [makePlaylist()] },
+        isPending: false,
+      });
+      renderView();
+
+      fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
+
+      expect(
+        screen.queryByRole("button", { name: "Rotation" }),
+      ).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: "Toolbar" }));
+
+      expect(treePerRootPropsMock.mock.calls.at(-1)?.[0].showToolbar).toBe(
+        true,
+      );
+    });
+  });
+
   describe("pop-core view", () => {
     it("disables the Pop/Core toggle with an explanatory title when there is no 'Mainstream Pop' root", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({

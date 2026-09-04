@@ -20,6 +20,10 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   when a node is clicked, using the `onNodeClick` event added in
   `@behindthemusictree/genre-tree-view` `1.4.0`. The panel fetches and displays the
   clicked genre's track count, children count, and essential tracks.
+- **genre-tree**: `GenreTreeView` now shows "Rotation" and "Toolbar" toggle buttons that
+  control the `allowWheelRotation` and `showToolbar` props added in
+  `@behindthemusictree/genre-tree-view` `1.4.0`. Both default to off. The rotation toggle
+  is only shown outside of stacked view, since it has no effect there.
 
 ## [4.8.0] - 2026-09-03
 

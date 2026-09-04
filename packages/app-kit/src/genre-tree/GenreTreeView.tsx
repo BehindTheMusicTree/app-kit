@@ -67,6 +67,8 @@ export function GenreTreeView<T extends TrackBase>({
   const [internalViewMode, setInternalViewMode] =
     useState<GenreTreeViewMode>("pop-core");
   const isControlled = controlledViewMode !== undefined;
+  const [allowWheelRotation, setAllowWheelRotation] = useState(false);
+  const [showToolbar, setShowToolbar] = useState(false);
 
   const [selectedGenreUuid, setSelectedGenreUuid] = useState<string | null>(
     null,
@@ -200,6 +202,30 @@ export function GenreTreeView<T extends TrackBase>({
           </Button>
         </div>
       )}
+      {!isLoading && (
+        <div
+          className="flex items-center gap-1 mr-2"
+          role="group"
+          aria-label="Tree display options"
+        >
+          {viewMode !== "stacked" && (
+            <Button
+              variant={allowWheelRotation ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAllowWheelRotation((prev) => !prev)}
+            >
+              Rotation
+            </Button>
+          )}
+          <Button
+            variant={showToolbar ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowToolbar((prev) => !prev)}
+          >
+            Toolbar
+          </Button>
+        </div>
+      )}
       {!isLoading && !readOnly && (
         <IconTextButton
           icon={Plus}
@@ -246,6 +272,8 @@ export function GenreTreeView<T extends TrackBase>({
                   additionalActions={additionalActions}
                   onNodeClick={handleNodeClick}
                   readOnly={readOnly}
+                  allowWheelRotation={allowWheelRotation}
+                  showToolbar={showToolbar}
                 />
               </GenreTreeWheelHandoff>
             </div>
@@ -271,6 +299,8 @@ export function GenreTreeView<T extends TrackBase>({
                   additionalActions={additionalActions}
                   onNodeClick={handleNodeClick}
                   readOnly={readOnly}
+                  allowWheelRotation={allowWheelRotation}
+                  showToolbar={showToolbar}
                 />
               </GenreTreeWheelHandoff>
             </div>
@@ -299,6 +329,7 @@ export function GenreTreeView<T extends TrackBase>({
                           additionalActions={additionalActions}
                           onNodeClick={handleNodeClick}
                           readOnly={readOnly}
+                          showToolbar={showToolbar}
                         />
                       </div>
                     </div>
