@@ -71,6 +71,12 @@ describe("CriteriaCreationSchema", () => {
   it("parses a valid shape with essentialTracks", () => {
     expect(() => CriteriaCreationSchema.parse({ name: "Rock", essentialTracks: [uuid] })).not.toThrow();
   });
+
+  it("rejects an invalid essentialTracks entry", () => {
+    expect(() =>
+      CriteriaCreationSchema.parse({ name: "Rock", essentialTracks: ["not-a-uuid"] }),
+    ).toThrow();
+  });
 });
 
 describe("CriteriaUpdateSchema", () => {
@@ -80,5 +86,9 @@ describe("CriteriaUpdateSchema", () => {
 
   it("parses a valid shape with essentialTracks", () => {
     expect(() => CriteriaUpdateSchema.parse({ essentialTracks: [uuid] })).not.toThrow();
+  });
+
+  it("rejects an invalid essentialTracks entry", () => {
+    expect(() => CriteriaUpdateSchema.parse({ essentialTracks: ["not-a-uuid"] })).toThrow();
   });
 });
