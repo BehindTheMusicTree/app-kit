@@ -5,6 +5,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **genre-tree**: `CriteriaSimple` now includes `summary` (nullable string), and
+  `CriteriaDetailed` now includes `essentialTracks` (`TrackMinimum[]`), matching the
+  backend's list and detail genre responses respectively. `CriteriaCreationValues` and
+  `CriteriaUpdateValues` accept an optional `essentialTracks` array of track UUIDs for
+  create/update requests.
+
 ## [4.8.0] - 2026-09-03
 
 ### Added
