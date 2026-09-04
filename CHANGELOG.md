@@ -7,7 +7,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- **genre-tree**: Bumped `@behindthemusictree/genre-tree-view` catalog pin to `1.3.0`.
+- **genre-tree**: Bumped `@behindthemusictree/genre-tree-view` catalog pin to `1.4.0`.
 
 ### Added
 
