@@ -5,6 +5,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.9.1] - 2026-09-09
+
 ### Changed
 
 - **genre-tree**: Bumped `@behindthemusictree/genre-tree-view` catalog pin to `1.5.0`.
