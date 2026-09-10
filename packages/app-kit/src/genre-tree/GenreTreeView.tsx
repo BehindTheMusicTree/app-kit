@@ -108,22 +108,26 @@ export function GenreTreeView<T extends TrackBase>({
       }
 
       const { summary, essentialTracks, tracksArchivedCount } = selectedGenreDetail;
-      if (!summary && essentialTracks.length === 0 && tracksArchivedCount === 0) {
-        return null;
-      }
 
       return (
-        <div className="flex flex-col gap-3 text-sm text-gray-700">
-          {summary && <p>{summary}</p>}
+        <>
+          <div className="gtv-info-panel-children">
+            <span className="gtv-info-panel-children-title">Summary</span>
+            <p>{summary ?? "—"}</p>
+          </div>
           {tracksArchivedCount > 0 && (
-            <div>
-              <span className="font-semibold">Archived tracks: </span>
-              {tracksArchivedCount}
+            <div className="gtv-info-panel-children">
+              <span className="gtv-info-panel-children-title">
+                Archived tracks
+              </span>
+              <p>{tracksArchivedCount}</p>
             </div>
           )}
           {essentialTracks.length > 0 && (
-            <div>
-              <div className="font-semibold mb-1">Essential tracks</div>
+            <div className="gtv-info-panel-children">
+              <span className="gtv-info-panel-children-title">
+                Essential tracks
+              </span>
               <ul className="list-disc pl-5">
                 {essentialTracks.map((track) => (
                   <li key={track.uuid}>{track.title}</li>
@@ -131,7 +135,7 @@ export function GenreTreeView<T extends TrackBase>({
               </ul>
             </div>
           )}
-        </div>
+        </>
       );
     },
     [

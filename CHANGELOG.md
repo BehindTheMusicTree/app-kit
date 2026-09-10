@@ -15,7 +15,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   removed along with its export from `@behindthemusictree/app-kit`.
 - **genre-tree**: `CriteriaDetailed` now includes `summary` (nullable string), matching the
   backend's detail genre response, and `GenreTreeView`'s `renderExtraDetails` now displays it
-  above the essential tracks list when present.
+  as a labeled "Summary" field above the essential tracks list, showing "—" when there is no
+  value, consistent with the always-visible core fields.
 
 ### Fixed
 
