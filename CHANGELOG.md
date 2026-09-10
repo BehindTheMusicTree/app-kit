@@ -5,6 +5,26 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [4.10.0] - 2026-09-11
+
+### Changed
+
+- **genre-tree**: Bumped `@behindthemusictree/genre-tree-view` catalog pin to `1.6.0`.
+- **genre-tree**: `GenreTreeView` now surfaces the selected genre's essential tracks and
+  archived track count via the new `renderExtraDetails` render prop (added in
+  `@behindthemusictree/genre-tree-view` `1.6.0`), which renders inside the library's own
+  info panel. This replaces the standalone `GenreDetailPanel` component, which has been
+  removed along with its export from `@behindthemusictree/app-kit`.
+- **genre-tree**: `CriteriaDetailed` now includes `summary` (nullable string), matching the
+  backend's detail genre response, and `GenreTreeView`'s `renderExtraDetails` now displays it
+  as a labeled "Summary" field above the essential tracks list, showing "—" when there is no
+  value, consistent with the always-visible core fields.
+
+### Fixed
+
+- **genre-tree**: `GenreTreeView` now fetches the selected genre's detail via the `useFetchGenreDetail`
+  React Query hook instead of a manual `useEffect`/fetch, fixing inconsistent caching and error handling.
+
 ## [4.9.1] - 2026-09-09
 
 ### Changed

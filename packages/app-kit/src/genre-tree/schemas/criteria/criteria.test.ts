@@ -36,6 +36,7 @@ describe("CriteriaDetailedSchema", () => {
   const valid = {
     uuid,
     name: "Rock",
+    summary: "A genre summary",
     parent: null,
     ascendants: [],
     descendants: [],
@@ -60,6 +61,15 @@ describe("CriteriaDetailedSchema", () => {
 
   it("rejects an invalid essentialTracks entry", () => {
     expect(() => CriteriaDetailedSchema.parse({ ...valid, essentialTracks: [{ uuid: "not-a-uuid" }] })).toThrow();
+  });
+
+  it("accepts a null summary", () => {
+    expect(() => CriteriaDetailedSchema.parse({ ...valid, summary: null })).not.toThrow();
+  });
+
+  it("rejects a shape missing summary", () => {
+    const { summary: _summary, ...invalid } = valid;
+    expect(() => CriteriaDetailedSchema.parse(invalid)).toThrow();
   });
 });
 

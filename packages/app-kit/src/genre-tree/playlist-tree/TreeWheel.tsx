@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, type ReactNode } from "react";
 import { z } from "zod";
 import {
   GenreTreeWheel,
@@ -35,6 +35,7 @@ export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
   criteriaPlaylistDetailedSchema: z.ZodType<CriteriaPlaylistDetailedLike<T>>;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   onNodeClick?: (node: GenreTreeNode) => void;
+  renderExtraDetails?: (node: GenreTreeNode) => ReactNode;
   /** When true, suppresses per-node create/rename/reparent affordances. Defaults to false. */
   readOnly?: boolean;
   /** When false, clicking a chip still selects its root, but the wheel doesn't spin to the
@@ -56,6 +57,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
   criteriaPlaylistDetailedSchema,
   additionalActions,
   onNodeClick,
+  renderExtraDetails,
   readOnly = false,
   allowWheelRotation,
   showToolbar,
@@ -186,6 +188,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
       onReparent={readOnly ? undefined : handleReparent}
       additionalActions={additionalActions}
       onNodeClick={onNodeClick}
+      renderExtraDetails={renderExtraDetails}
       allowWheelRotation={allowWheelRotation}
       showToolbar={showToolbar}
     />

@@ -1,7 +1,5 @@
 // Tree view + data hooks
 export * from "./GenreTreeView";
-export { default as GenreDetailPanel } from "./GenreDetailPanel";
-export type { GenreDetailPanelProps } from "./GenreDetailPanel";
 export { default as GenrePlaylistTreePerRoot } from "./playlist-tree/TreePerRoot";
 export type { GenrePlaylistTreePerRootProps } from "./playlist-tree/TreePerRoot";
 export {

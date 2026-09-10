@@ -54,6 +54,7 @@ vi.mock("../transport/lib/parse-with-log", () => ({
 import {
   useListGenres,
   useFetchGenre,
+  useFetchGenreDetail,
   useLoadExampleTreeGenre,
   useCreateGenre,
   useUpdateGenre,
@@ -120,6 +121,36 @@ describe("useGenre", () => {
       await result.current("g1");
 
       expect(fetchMock).toHaveBeenCalledWith("me/genres/g1/", true, true);
+    });
+  });
+
+  describe("useFetchGenreDetail", () => {
+    it("queries the reference detail endpoint", () => {
+      renderHook(() => useFetchGenreDetail("g1", "reference", getBackendBaseUrl));
+      const { queryKey, enabled, queryFn } = useQueryWithParseMock.mock.calls[0][0];
+
+      expect(queryKey).toEqual(["referenceGenres", "detail", "g1"]);
+      expect(enabled).toBe(true);
+
+      queryFn();
+      expect(fetchMock).toHaveBeenCalledWith("genres/g1/", true, false);
+    });
+
+    it("queries the me detail endpoint", () => {
+      renderHook(() => useFetchGenreDetail("g1", "me", getBackendBaseUrl));
+      const { queryKey, enabled, queryFn } = useQueryWithParseMock.mock.calls[0][0];
+
+      expect(queryKey).toEqual(["genres", "detail", "g1"]);
+      expect(enabled).toBe(true);
+
+      queryFn();
+      expect(fetchMock).toHaveBeenCalledWith("me/genres/g1/", true, true);
+    });
+
+    it("disables the query when there is no selected id", () => {
+      renderHook(() => useFetchGenreDetail(null, "me", getBackendBaseUrl));
+
+      expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
     });
   });
 

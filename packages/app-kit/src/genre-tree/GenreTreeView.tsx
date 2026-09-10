@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, type ReactNode } from "react";
 import { z } from "zod";
 import { FaTree } from "react-icons/fa";
 import { Plus } from "lucide-react";
@@ -18,12 +18,11 @@ import type {
 
 import { CriteriaPlaylistSimple } from "./schemas/criteria-playlist/simple";
 import { CriteriaMinimum } from "./schemas/criteria/minimum";
-import { CriteriaDetailed } from "./schemas/criteria/detailed";
 import { TrackBase } from "./schemas/track/base";
 import { CriteriaPlaylistDetailedLike } from "./models/TrackListOrigin";
 import { Scope } from "../transport/lib/scope";
 import { useListFullGenrePlaylists } from "./useGenrePlaylist";
-import { useLoadExampleTreeGenre, useFetchGenre } from "./useGenre";
+import { useLoadExampleTreeGenre, useFetchGenreDetail } from "./useGenre";
 import {
   getGenrePlaylistsGroupedByRoot,
   hasMainstreamPopRoot,
@@ -33,7 +32,6 @@ import GenrePlaylistTreePerRoot from "./playlist-tree/TreePerRoot";
 import GenrePlaylistTreeWheel from "./playlist-tree/TreeWheel";
 import GenrePlaylistTreeWheelRadialPopCore from "./playlist-tree/TreeWheelRadialPopCore";
 import { GenreTreeWheelHandoff } from "./GenreTreeWheelHandoff";
-import GenreDetailPanel from "./GenreDetailPanel";
 
 export type { GenreTreeViewMode } from "@behindthemusictree/genre-tree-view";
 
@@ -73,10 +71,8 @@ export function GenreTreeView<T extends TrackBase>({
   const [selectedGenreUuid, setSelectedGenreUuid] = useState<string | null>(
     null,
   );
-  const [selectedGenreDetail, setSelectedGenreDetail] =
-    useState<CriteriaDetailed | null>(null);
-  const [isLoadingSelectedGenre, setIsLoadingSelectedGenre] = useState(false);
-  const fetchGenre = useFetchGenre(scope, getBackendBaseUrl);
+  const { data: selectedGenreDetail, isPending: isLoadingSelectedGenre } =
+    useFetchGenreDetail(selectedGenreUuid, scope, getBackendBaseUrl);
 
   const { data: genrePlaylists, isPending: isListingGenrePlaylists } =
     useListFullGenrePlaylists(scope, getBackendBaseUrl);
@@ -93,28 +89,62 @@ export function GenreTreeView<T extends TrackBase>({
     [genrePlaylists?.results],
   );
 
-  useEffect(() => {
-    if (!selectedGenreUuid) {
-      setSelectedGenreDetail(null);
-      return;
-    }
-    let cancelled = false;
-    setIsLoadingSelectedGenre(true);
-    fetchGenre(selectedGenreUuid)
-      .then((detail) => {
-        if (!cancelled) setSelectedGenreDetail(detail);
-      })
-      .catch((error) => {
-        console.error("Failed to fetch genre details:", error);
-        if (!cancelled) setSelectedGenreDetail(null);
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoadingSelectedGenre(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedGenreUuid, fetchGenre]);
+  // The info panel can also navigate via its own ancestor/child chips, which don't go through
+  // onNodeClick — so the node passed here isn't guaranteed to be the one selectedGenreDetail was
+  // fetched for. Render nothing rather than stale essential tracks when they've diverged.
+  const renderExtraDetails = useCallback(
+    (node: GenreTreeNode): ReactNode => {
+      const genrePlaylist = (
+        genrePlaylists?.results as CriteriaPlaylistSimple[] | undefined
+      )?.find((gp) => gp.uuid === node.id);
+      const nodeGenreUuid = genrePlaylist?.criteria?.uuid ?? null;
+      if (
+        nodeGenreUuid === null ||
+        nodeGenreUuid !== selectedGenreUuid ||
+        isLoadingSelectedGenre ||
+        !selectedGenreDetail
+      ) {
+        return null;
+      }
+
+      const { summary, essentialTracks, tracksArchivedCount } = selectedGenreDetail;
+
+      return (
+        <>
+          <div className="gtv-info-panel-children">
+            <span className="gtv-info-panel-children-title">Summary</span>
+            <p>{summary ?? "—"}</p>
+          </div>
+          {tracksArchivedCount > 0 && (
+            <div className="gtv-info-panel-children">
+              <span className="gtv-info-panel-children-title">
+                Archived tracks
+              </span>
+              <p>{tracksArchivedCount}</p>
+            </div>
+          )}
+          {essentialTracks.length > 0 && (
+            <div className="gtv-info-panel-children">
+              <span className="gtv-info-panel-children-title">
+                Essential tracks
+              </span>
+              <ul className="list-disc pl-5">
+                {essentialTracks.map((track) => (
+                  <li key={track.uuid}>{track.title}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
+      );
+    },
+    [
+      genrePlaylists?.results,
+      selectedGenreUuid,
+      selectedGenreDetail,
+      isLoadingSelectedGenre,
+    ],
+  );
 
   const groupedGenrePlaylistsByRoot = useMemo(
     () =>
@@ -271,6 +301,7 @@ export function GenreTreeView<T extends TrackBase>({
                   }
                   additionalActions={additionalActions}
                   onNodeClick={handleNodeClick}
+                  renderExtraDetails={renderExtraDetails}
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   showToolbar={showToolbar}
@@ -298,6 +329,7 @@ export function GenreTreeView<T extends TrackBase>({
                   }
                   additionalActions={additionalActions}
                   onNodeClick={handleNodeClick}
+                  renderExtraDetails={renderExtraDetails}
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   showToolbar={showToolbar}
@@ -328,6 +360,7 @@ export function GenreTreeView<T extends TrackBase>({
                           }
                           additionalActions={additionalActions}
                           onNodeClick={handleNodeClick}
+                          renderExtraDetails={renderExtraDetails}
                           readOnly={readOnly}
                           showToolbar={showToolbar}
                         />
@@ -339,14 +372,6 @@ export function GenreTreeView<T extends TrackBase>({
             </div>
           )}
         </div>
-        {selectedGenreUuid && (
-          <GenreDetailPanel
-            className="flex-shrink-0 w-96"
-            criteria={selectedGenreDetail}
-            isLoading={isLoadingSelectedGenre}
-            onClose={() => setSelectedGenreUuid(null)}
-          />
-        )}
       </div>
     </div>
   );
