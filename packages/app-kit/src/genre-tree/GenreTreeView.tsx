@@ -18,12 +18,11 @@ import type {
 
 import { CriteriaPlaylistSimple } from "./schemas/criteria-playlist/simple";
 import { CriteriaMinimum } from "./schemas/criteria/minimum";
-import { CriteriaDetailed } from "./schemas/criteria/detailed";
 import { TrackBase } from "./schemas/track/base";
 import { CriteriaPlaylistDetailedLike } from "./models/TrackListOrigin";
 import { Scope } from "../transport/lib/scope";
 import { useListFullGenrePlaylists } from "./useGenrePlaylist";
-import { useLoadExampleTreeGenre, useFetchGenre } from "./useGenre";
+import { useLoadExampleTreeGenre, useFetchGenreDetail } from "./useGenre";
 import {
   getGenrePlaylistsGroupedByRoot,
   hasMainstreamPopRoot,
@@ -73,10 +72,8 @@ export function GenreTreeView<T extends TrackBase>({
   const [selectedGenreUuid, setSelectedGenreUuid] = useState<string | null>(
     null,
   );
-  const [selectedGenreDetail, setSelectedGenreDetail] =
-    useState<CriteriaDetailed | null>(null);
-  const [isLoadingSelectedGenre, setIsLoadingSelectedGenre] = useState(false);
-  const fetchGenre = useFetchGenre(scope, getBackendBaseUrl);
+  const { data: selectedGenreDetail, isPending: isLoadingSelectedGenre } =
+    useFetchGenreDetail(selectedGenreUuid, scope, getBackendBaseUrl);
 
   const { data: genrePlaylists, isPending: isListingGenrePlaylists } =
     useListFullGenrePlaylists(scope, getBackendBaseUrl);
@@ -92,29 +89,6 @@ export function GenreTreeView<T extends TrackBase>({
     },
     [genrePlaylists?.results],
   );
-
-  useEffect(() => {
-    if (!selectedGenreUuid) {
-      setSelectedGenreDetail(null);
-      return;
-    }
-    let cancelled = false;
-    setIsLoadingSelectedGenre(true);
-    fetchGenre(selectedGenreUuid)
-      .then((detail) => {
-        if (!cancelled) setSelectedGenreDetail(detail);
-      })
-      .catch((error) => {
-        console.error("Failed to fetch genre details:", error);
-        if (!cancelled) setSelectedGenreDetail(null);
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoadingSelectedGenre(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedGenreUuid, fetchGenre]);
 
   const groupedGenrePlaylistsByRoot = useMemo(
     () =>
@@ -342,7 +316,7 @@ export function GenreTreeView<T extends TrackBase>({
         {selectedGenreUuid && (
           <GenreDetailPanel
             className="flex-shrink-0 w-96"
-            criteria={selectedGenreDetail}
+            criteria={selectedGenreDetail ?? null}
             isLoading={isLoadingSelectedGenre}
             onClose={() => setSelectedGenreUuid(null)}
           />
