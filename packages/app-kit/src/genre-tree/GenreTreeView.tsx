@@ -108,13 +108,13 @@ export function GenreTreeView<T extends TrackBase>({
       }
 
       const { summary, essentialTracks, tracksArchivedCount } = selectedGenreDetail;
-      if (!summary && essentialTracks.length === 0 && tracksArchivedCount === 0) {
-        return null;
-      }
 
       return (
         <div className="flex flex-col gap-3 text-sm text-gray-700">
-          {summary && <p>{summary}</p>}
+          <div>
+            <div className="font-semibold mb-1">Summary</div>
+            <p>{summary ?? "—"}</p>
+          </div>
           {tracksArchivedCount > 0 && (
             <div>
               <span className="font-semibold">Archived tracks: </span>

@@ -839,7 +839,7 @@ describe("GenreTreeView", () => {
       expect(output).toBeNull();
     });
 
-    it("returns null when there is no summary, no essential tracks, and nothing archived", () => {
+    it("renders a blank summary placeholder when there is no summary, no essential tracks, and nothing archived", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
         data: { results: [makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } })] },
         isPending: false,
@@ -867,8 +867,10 @@ describe("GenreTreeView", () => {
       const output = treeWheelPropsMock.mock.calls.at(-1)?.[0].renderExtraDetails({
         id: "gp1",
       });
+      render(<>{output}</>);
 
-      expect(output).toBeNull();
+      expect(screen.getByText("Summary")).toBeInTheDocument();
+      expect(screen.getByText("—")).toBeInTheDocument();
     });
   });
 });
