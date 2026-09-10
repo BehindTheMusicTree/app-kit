@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, type ReactNode } from "react";
 import { z } from "zod";
 import { FaTree } from "react-icons/fa";
 import { Plus } from "lucide-react";
@@ -32,7 +32,6 @@ import GenrePlaylistTreePerRoot from "./playlist-tree/TreePerRoot";
 import GenrePlaylistTreeWheel from "./playlist-tree/TreeWheel";
 import GenrePlaylistTreeWheelRadialPopCore from "./playlist-tree/TreeWheelRadialPopCore";
 import { GenreTreeWheelHandoff } from "./GenreTreeWheelHandoff";
-import GenreDetailPanel from "./GenreDetailPanel";
 
 export type { GenreTreeViewMode } from "@behindthemusictree/genre-tree-view";
 
@@ -88,6 +87,58 @@ export function GenreTreeView<T extends TrackBase>({
       setSelectedGenreUuid(genrePlaylist?.criteria?.uuid ?? null);
     },
     [genrePlaylists?.results],
+  );
+
+  // The info panel can also navigate via its own ancestor/child chips, which don't go through
+  // onNodeClick — so the node passed here isn't guaranteed to be the one selectedGenreDetail was
+  // fetched for. Render nothing rather than stale essential tracks when they've diverged.
+  const renderExtraDetails = useCallback(
+    (node: GenreTreeNode): ReactNode => {
+      const genrePlaylist = (
+        genrePlaylists?.results as CriteriaPlaylistSimple[] | undefined
+      )?.find((gp) => gp.uuid === node.id);
+      const nodeGenreUuid = genrePlaylist?.criteria?.uuid ?? null;
+      if (
+        nodeGenreUuid === null ||
+        nodeGenreUuid !== selectedGenreUuid ||
+        isLoadingSelectedGenre ||
+        !selectedGenreDetail
+      ) {
+        return null;
+      }
+
+      const { essentialTracks, tracksArchivedCount } = selectedGenreDetail;
+      if (essentialTracks.length === 0 && tracksArchivedCount === 0) {
+        return null;
+      }
+
+      return (
+        <div className="flex flex-col gap-3 text-sm text-gray-700">
+          {tracksArchivedCount > 0 && (
+            <div>
+              <span className="font-semibold">Archived tracks: </span>
+              {tracksArchivedCount}
+            </div>
+          )}
+          {essentialTracks.length > 0 && (
+            <div>
+              <div className="font-semibold mb-1">Essential tracks</div>
+              <ul className="list-disc pl-5">
+                {essentialTracks.map((track) => (
+                  <li key={track.uuid}>{track.title}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      );
+    },
+    [
+      genrePlaylists?.results,
+      selectedGenreUuid,
+      selectedGenreDetail,
+      isLoadingSelectedGenre,
+    ],
   );
 
   const groupedGenrePlaylistsByRoot = useMemo(
@@ -245,6 +296,7 @@ export function GenreTreeView<T extends TrackBase>({
                   }
                   additionalActions={additionalActions}
                   onNodeClick={handleNodeClick}
+                  renderExtraDetails={renderExtraDetails}
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   showToolbar={showToolbar}
@@ -272,6 +324,7 @@ export function GenreTreeView<T extends TrackBase>({
                   }
                   additionalActions={additionalActions}
                   onNodeClick={handleNodeClick}
+                  renderExtraDetails={renderExtraDetails}
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   showToolbar={showToolbar}
@@ -302,6 +355,7 @@ export function GenreTreeView<T extends TrackBase>({
                           }
                           additionalActions={additionalActions}
                           onNodeClick={handleNodeClick}
+                          renderExtraDetails={renderExtraDetails}
                           readOnly={readOnly}
                           showToolbar={showToolbar}
                         />
@@ -313,14 +367,6 @@ export function GenreTreeView<T extends TrackBase>({
             </div>
           )}
         </div>
-        {selectedGenreUuid && (
-          <GenreDetailPanel
-            className="flex-shrink-0 w-96"
-            criteria={selectedGenreDetail ?? null}
-            isLoading={isLoadingSelectedGenre}
-            onClose={() => setSelectedGenreUuid(null)}
-          />
-        )}
       </div>
     </div>
   );

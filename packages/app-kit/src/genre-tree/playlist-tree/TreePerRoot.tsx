@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, type ReactNode } from "react";
 import { z } from "zod";
 import {
   GenreTree,
@@ -37,6 +37,7 @@ export type GenrePlaylistTreePerRootProps<T extends TrackBase> = {
   criteriaPlaylistDetailedSchema: z.ZodType<CriteriaPlaylistDetailedLike<T>>;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   onNodeClick?: (node: GenreTreeNode) => void;
+  renderExtraDetails?: (node: GenreTreeNode) => ReactNode;
   /** When true, suppresses per-node create/rename/reparent affordances. Defaults to false. */
   readOnly?: boolean;
   /** When false, suppresses the hover toolbar on every node. Defaults to true. */
@@ -56,6 +57,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
   criteriaPlaylistDetailedSchema,
   additionalActions,
   onNodeClick,
+  renderExtraDetails,
   readOnly = false,
   showToolbar,
 }: GenrePlaylistTreePerRootProps<T>) {
@@ -186,6 +188,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
       onReparent={readOnly ? undefined : handleReparent}
       additionalActions={additionalActions}
       onNodeClick={onNodeClick}
+      renderExtraDetails={renderExtraDetails}
       showToolbar={showToolbar}
     />
   );

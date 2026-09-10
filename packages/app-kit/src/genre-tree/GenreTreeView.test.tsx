@@ -680,54 +680,39 @@ describe("GenreTreeView", () => {
     });
   });
 
-  describe("genre detail panel", () => {
-    it("fetches and shows genre details when a node is clicked", async () => {
+  describe("renderExtraDetails", () => {
+    function selectGenre() {
+      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+      act(() => {
+        treeWheelPropsMock.mock.calls.at(-1)?.[0].onNodeClick({ id: "gp1" });
+      });
+    }
+
+    it("fetches genre details for the clicked node's criteria uuid", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
         data: { results: [makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } })] },
         isPending: false,
       });
-      const detail = {
-        uuid: "c1",
-        name: "Jazz",
-        tracksCount: 5,
-        tracksArchivedCount: 0,
-        children: [],
-        essentialTracks: [],
-      };
-      useFetchGenreDetailMock.mockImplementation((id: string | null) =>
-        id === "c1" ? { data: detail, isPending: false } : { data: undefined, isPending: false },
-      );
       renderView();
 
-      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
-
-      await act(async () => {
-        treeWheelPropsMock.mock.calls.at(-1)?.[0].onNodeClick({ id: "gp1" });
-      });
+      selectGenre();
 
       expect(useFetchGenreDetailMock).toHaveBeenCalledWith("c1");
-      expect(screen.getByText("Jazz")).toBeInTheDocument();
-      expect(screen.getByText(/5/)).toBeInTheDocument();
     });
 
-    it("does not show the panel when the clicked node has no associated criteria", async () => {
+    it("fetches null when the clicked node has no associated criteria", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
         data: { results: [makePlaylist({ uuid: "gp1", criteria: null })] },
         isPending: false,
       });
       renderView();
 
-      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
-
-      await act(async () => {
-        treeWheelPropsMock.mock.calls.at(-1)?.[0].onNodeClick({ id: "gp1" });
-      });
+      selectGenre();
 
       expect(useFetchGenreDetailMock).toHaveBeenCalledWith(null);
-      expect(screen.queryByLabelText("Close")).not.toBeInTheDocument();
     });
 
-    it("closes the panel when the close button is clicked", async () => {
+    it("renders essential tracks and archived count for the selected node", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
         data: { results: [makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } })] },
         isPending: false,
@@ -738,7 +723,99 @@ describe("GenreTreeView", () => {
               data: {
                 uuid: "c1",
                 name: "Jazz",
-                tracksCount: 0,
+                tracksCount: 5,
+                tracksArchivedCount: 2,
+                children: [],
+                essentialTracks: [
+                  { uuid: "t1", title: "Track One", artists: null },
+                  { uuid: "t2", title: "Track Two", artists: null },
+                ],
+              },
+              isPending: false,
+            }
+          : { data: undefined, isPending: false },
+      );
+      renderView();
+
+      selectGenre();
+
+      const output = treeWheelPropsMock.mock.calls.at(-1)?.[0].renderExtraDetails({
+        id: "gp1",
+      });
+      render(<>{output}</>);
+
+      expect(screen.getByText("Track One")).toBeInTheDocument();
+      expect(screen.getByText("Track Two")).toBeInTheDocument();
+      expect(screen.getByText(/2/)).toBeInTheDocument();
+    });
+
+    it("returns null when the node doesn't match the selected genre (e.g. info-panel chip navigation)", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: {
+          results: [
+            makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } }),
+            makePlaylist({ uuid: "gp2", criteria: { uuid: "c2", name: "Blues" } }),
+          ],
+        },
+        isPending: false,
+      });
+      useFetchGenreDetailMock.mockImplementation((id: string | null) =>
+        id === "c1"
+          ? {
+              data: {
+                uuid: "c1",
+                name: "Jazz",
+                tracksCount: 5,
+                tracksArchivedCount: 0,
+                children: [],
+                essentialTracks: [{ uuid: "t1", title: "Track One", artists: null }],
+              },
+              isPending: false,
+            }
+          : { data: undefined, isPending: false },
+      );
+      renderView();
+
+      selectGenre();
+
+      const output = treeWheelPropsMock.mock.calls.at(-1)?.[0].renderExtraDetails({
+        id: "gp2",
+      });
+
+      expect(output).toBeNull();
+    });
+
+    it("returns null while the genre detail is still loading", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: { results: [makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } })] },
+        isPending: false,
+      });
+      useFetchGenreDetailMock.mockImplementation((id: string | null) =>
+        id === "c1" ? { data: undefined, isPending: true } : { data: undefined, isPending: false },
+      );
+      renderView();
+
+      selectGenre();
+
+      const output = treeWheelPropsMock.mock.calls.at(-1)?.[0].renderExtraDetails({
+        id: "gp1",
+      });
+
+      expect(output).toBeNull();
+    });
+
+    it("returns null when there are no essential tracks and nothing archived", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: { results: [makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } })] },
+        isPending: false,
+      });
+      useFetchGenreDetailMock.mockImplementation((id: string | null) =>
+        id === "c1"
+          ? {
+              data: {
+                uuid: "c1",
+                name: "Jazz",
+                tracksCount: 5,
                 tracksArchivedCount: 0,
                 children: [],
                 essentialTracks: [],
@@ -749,36 +826,13 @@ describe("GenreTreeView", () => {
       );
       renderView();
 
-      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+      selectGenre();
 
-      await act(async () => {
-        treeWheelPropsMock.mock.calls.at(-1)?.[0].onNodeClick({ id: "gp1" });
+      const output = treeWheelPropsMock.mock.calls.at(-1)?.[0].renderExtraDetails({
+        id: "gp1",
       });
 
-      fireEvent.click(screen.getByLabelText("Close"));
-
-      expect(screen.queryByLabelText("Close")).not.toBeInTheDocument();
-    });
-
-    it("clears the selected genre detail when fetching fails", async () => {
-      useListFullGenrePlaylistsMock.mockReturnValue({
-        data: { results: [makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } })] },
-        isPending: false,
-      });
-      useFetchGenreDetailMock.mockImplementation((id: string | null) =>
-        id === "c1"
-          ? { data: undefined, isPending: false, isError: true, error: new Error("boom") }
-          : { data: undefined, isPending: false },
-      );
-      renderView();
-
-      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
-
-      await act(async () => {
-        treeWheelPropsMock.mock.calls.at(-1)?.[0].onNodeClick({ id: "gp1" });
-      });
-
-      expect(screen.getByText("No details available.")).toBeInTheDocument();
+      expect(output).toBeNull();
     });
   });
 });
