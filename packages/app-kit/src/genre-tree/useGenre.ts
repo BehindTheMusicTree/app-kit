@@ -50,6 +50,20 @@ export function useFetchGenre(scope: Scope, getBackendBaseUrl: () => string) {
   );
 }
 
+export function useFetchGenreDetail(id: string | null, scope: Scope, getBackendBaseUrl: () => string) {
+  const { fetch } = useFetchWrapper(getBackendBaseUrl);
+  const queryKeys = scope === "reference" ? genreQueryKeys.reference : genreQueryKeys.me;
+  const endpoints = scope === "reference" ? genreEndpoints.reference : genreEndpoints.me;
+
+  return useQueryWithParse({
+    queryKey: queryKeys.detail(id ?? ""),
+    queryFn: () => fetch(endpoints.detail(id as string), true, scope === "me"),
+    schema: CriteriaDetailedSchema,
+    context: "useFetchGenreDetail",
+    enabled: id !== null,
+  });
+}
+
 export function useLoadExampleTreeGenre(scope: Scope, getBackendBaseUrl: () => string) {
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
   const queryClient = useQueryClient();

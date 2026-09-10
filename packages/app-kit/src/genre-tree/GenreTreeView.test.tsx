@@ -5,7 +5,7 @@ import { z } from "zod";
 const {
   useListFullGenrePlaylistsMock,
   useLoadExampleTreeGenreMock,
-  fetchGenreMock,
+  useFetchGenreDetailMock,
   loadTreeMutateMock,
   treePerRootPropsMock,
   treeWheelPropsMock,
@@ -13,7 +13,7 @@ const {
 } = vi.hoisted(() => ({
   useListFullGenrePlaylistsMock: vi.fn(),
   useLoadExampleTreeGenreMock: vi.fn(),
-  fetchGenreMock: vi.fn(),
+  useFetchGenreDetailMock: vi.fn(),
   loadTreeMutateMock: vi.fn(),
   treePerRootPropsMock: vi.fn(),
   treeWheelPropsMock: vi.fn(),
@@ -26,7 +26,7 @@ vi.mock("./useGenrePlaylist", () => ({
 
 vi.mock("./useGenre", () => ({
   useLoadExampleTreeGenre: () => useLoadExampleTreeGenreMock(),
-  useFetchGenre: () => fetchGenreMock,
+  useFetchGenreDetail: (id: string | null) => useFetchGenreDetailMock(id),
 }));
 
 vi.mock("./playlist-tree/TreePerRoot", () => ({
@@ -128,7 +128,7 @@ describe("GenreTreeView", () => {
       mutate: loadTreeMutateMock,
       isPending: false,
     });
-    fetchGenreMock.mockReset();
+    useFetchGenreDetailMock.mockReturnValue({ data: undefined, isPending: false });
   });
 
   it("shows the wheel skeleton while the genre playlists are loading", () => {
@@ -694,7 +694,9 @@ describe("GenreTreeView", () => {
         children: [],
         essentialTracks: [],
       };
-      fetchGenreMock.mockResolvedValue(detail);
+      useFetchGenreDetailMock.mockImplementation((id: string | null) =>
+        id === "c1" ? { data: detail, isPending: false } : { data: undefined, isPending: false },
+      );
       renderView();
 
       fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
@@ -703,7 +705,7 @@ describe("GenreTreeView", () => {
         treeWheelPropsMock.mock.calls.at(-1)?.[0].onNodeClick({ id: "gp1" });
       });
 
-      expect(fetchGenreMock).toHaveBeenCalledWith("c1");
+      expect(useFetchGenreDetailMock).toHaveBeenCalledWith("c1");
       expect(screen.getByText("Jazz")).toBeInTheDocument();
       expect(screen.getByText(/5/)).toBeInTheDocument();
     });
@@ -721,7 +723,7 @@ describe("GenreTreeView", () => {
         treeWheelPropsMock.mock.calls.at(-1)?.[0].onNodeClick({ id: "gp1" });
       });
 
-      expect(fetchGenreMock).not.toHaveBeenCalled();
+      expect(useFetchGenreDetailMock).toHaveBeenCalledWith(null);
       expect(screen.queryByLabelText("Close")).not.toBeInTheDocument();
     });
 
@@ -730,14 +732,21 @@ describe("GenreTreeView", () => {
         data: { results: [makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } })] },
         isPending: false,
       });
-      fetchGenreMock.mockResolvedValue({
-        uuid: "c1",
-        name: "Jazz",
-        tracksCount: 0,
-        tracksArchivedCount: 0,
-        children: [],
-        essentialTracks: [],
-      });
+      useFetchGenreDetailMock.mockImplementation((id: string | null) =>
+        id === "c1"
+          ? {
+              data: {
+                uuid: "c1",
+                name: "Jazz",
+                tracksCount: 0,
+                tracksArchivedCount: 0,
+                children: [],
+                essentialTracks: [],
+              },
+              isPending: false,
+            }
+          : { data: undefined, isPending: false },
+      );
       renderView();
 
       fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
@@ -756,8 +765,11 @@ describe("GenreTreeView", () => {
         data: { results: [makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } })] },
         isPending: false,
       });
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      fetchGenreMock.mockRejectedValue(new Error("boom"));
+      useFetchGenreDetailMock.mockImplementation((id: string | null) =>
+        id === "c1"
+          ? { data: undefined, isPending: false, isError: true, error: new Error("boom") }
+          : { data: undefined, isPending: false },
+      );
       renderView();
 
       fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
@@ -766,12 +778,7 @@ describe("GenreTreeView", () => {
         treeWheelPropsMock.mock.calls.at(-1)?.[0].onNodeClick({ id: "gp1" });
       });
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Failed to fetch genre details:",
-        expect.any(Error),
-      );
       expect(screen.getByText("No details available.")).toBeInTheDocument();
-      consoleErrorSpy.mockRestore();
     });
   });
 });
