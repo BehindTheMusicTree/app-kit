@@ -5,6 +5,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **genre-tree**: `GenreTreeView` now fetches the selected genre's detail via the `useFetchGenreDetail`
+  React Query hook instead of a manual `useEffect`/fetch, fixing inconsistent caching and error handling.
+
 ## [4.9.1] - 2026-09-09
 
 ### Changed
