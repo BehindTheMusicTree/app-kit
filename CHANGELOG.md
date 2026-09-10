@@ -5,6 +5,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **genre-tree**: Bumped `@behindthemusictree/genre-tree-view` catalog pin to `1.6.0`.
+- **genre-tree**: `GenreTreeView` now surfaces the selected genre's essential tracks and
+  archived track count via the new `renderExtraDetails` render prop (added in
+  `@behindthemusictree/genre-tree-view` `1.6.0`), which renders inside the library's own
+  info panel. This replaces the standalone `GenreDetailPanel` component, which has been
+  removed along with its export from `@behindthemusictree/app-kit`.
+
 ### Fixed
 
 - **genre-tree**: `GenreTreeView` now fetches the selected genre's detail via the `useFetchGenreDetail`
