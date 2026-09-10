@@ -9,6 +9,7 @@ import { CriteriaLineageRelWithoutDescendantSchema } from "./lineage-rel/without
 
 export const CriteriaDetailedSchema = UuidResourceSchema.extend({
   name: z.string(),
+  summary: z.string().nullable(),
   parent: CriteriaMinimumSchema.nullable(),
   ascendants: z.array(CriteriaLineageRelWithoutDescendantSchema),
   descendants: z.array(CriteriaLineageRelWithoutAscendantSchema),

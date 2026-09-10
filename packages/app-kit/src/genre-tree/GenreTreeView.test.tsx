@@ -723,6 +723,7 @@ describe("GenreTreeView", () => {
               data: {
                 uuid: "c1",
                 name: "Jazz",
+                summary: null,
                 tracksCount: 5,
                 tracksArchivedCount: 2,
                 children: [],
@@ -749,6 +750,39 @@ describe("GenreTreeView", () => {
       expect(screen.getByText(/2/)).toBeInTheDocument();
     });
 
+    it("renders the genre summary for the selected node", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: { results: [makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } })] },
+        isPending: false,
+      });
+      useFetchGenreDetailMock.mockImplementation((id: string | null) =>
+        id === "c1"
+          ? {
+              data: {
+                uuid: "c1",
+                name: "Jazz",
+                summary: "Improvised music with swung rhythms.",
+                tracksCount: 5,
+                tracksArchivedCount: 0,
+                children: [],
+                essentialTracks: [],
+              },
+              isPending: false,
+            }
+          : { data: undefined, isPending: false },
+      );
+      renderView();
+
+      selectGenre();
+
+      const output = treeWheelPropsMock.mock.calls.at(-1)?.[0].renderExtraDetails({
+        id: "gp1",
+      });
+      render(<>{output}</>);
+
+      expect(screen.getByText("Improvised music with swung rhythms.")).toBeInTheDocument();
+    });
+
     it("returns null when the node doesn't match the selected genre (e.g. info-panel chip navigation)", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
         data: {
@@ -765,6 +799,7 @@ describe("GenreTreeView", () => {
               data: {
                 uuid: "c1",
                 name: "Jazz",
+                summary: null,
                 tracksCount: 5,
                 tracksArchivedCount: 0,
                 children: [],
@@ -804,7 +839,7 @@ describe("GenreTreeView", () => {
       expect(output).toBeNull();
     });
 
-    it("returns null when there are no essential tracks and nothing archived", () => {
+    it("returns null when there is no summary, no essential tracks, and nothing archived", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
         data: { results: [makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } })] },
         isPending: false,
@@ -815,6 +850,7 @@ describe("GenreTreeView", () => {
               data: {
                 uuid: "c1",
                 name: "Jazz",
+                summary: null,
                 tracksCount: 5,
                 tracksArchivedCount: 0,
                 children: [],
