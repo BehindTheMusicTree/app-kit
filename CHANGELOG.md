@@ -13,6 +13,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `@behindthemusictree/genre-tree-view` `1.6.0`), which renders inside the library's own
   info panel. This replaces the standalone `GenreDetailPanel` component, which has been
   removed along with its export from `@behindthemusictree/app-kit`.
+- **genre-tree**: `CriteriaDetailed` now includes `summary` (nullable string), matching the
+  backend's detail genre response, and `GenreTreeView`'s `renderExtraDetails` now displays it
+  above the essential tracks list when present.
 
 ### Fixed
 
