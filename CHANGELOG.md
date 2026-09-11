@@ -5,6 +5,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **genre-tree**: `GenreTreeView`'s "Essential tracks" field in the info panel is now always
+  rendered, showing "—" when the selected genre has none, consistent with the "Summary" field.
+
 ## [4.10.0] - 2026-09-11
 
 ### Changed
