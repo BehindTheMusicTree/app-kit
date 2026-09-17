@@ -38,6 +38,8 @@ export type GenrePlaylistTreePerRootProps<T extends TrackBase> = {
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   onNodeClick?: (node: GenreTreeNode) => void;
   renderExtraDetails?: (node: GenreTreeNode) => ReactNode;
+  /** Overrides which node is shown highlighted, e.g. from a search selection. */
+  selectedNodeId?: string | null;
   /** When true, suppresses per-node create/rename/reparent affordances. Defaults to false. */
   readOnly?: boolean;
   /** When false, suppresses the hover toolbar on every node. Defaults to true. */
@@ -58,6 +60,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
   additionalActions,
   onNodeClick,
   renderExtraDetails,
+  selectedNodeId,
   readOnly = false,
   showToolbar,
 }: GenrePlaylistTreePerRootProps<T>) {
@@ -189,6 +192,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
       additionalActions={additionalActions}
       onNodeClick={onNodeClick}
       renderExtraDetails={renderExtraDetails}
+      selectedNodeId={selectedNodeId}
       showToolbar={showToolbar}
     />
   );
