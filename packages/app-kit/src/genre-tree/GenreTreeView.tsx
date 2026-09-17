@@ -32,6 +32,7 @@ import GenrePlaylistTreePerRoot from "./playlist-tree/TreePerRoot";
 import GenrePlaylistTreeWheel from "./playlist-tree/TreeWheel";
 import GenrePlaylistTreeWheelRadialPopCore from "./playlist-tree/TreeWheelRadialPopCore";
 import { GenreTreeWheelHandoff } from "./GenreTreeWheelHandoff";
+import GenreSearch from "./GenreSearch";
 
 export type { GenreTreeViewMode } from "@behindthemusictree/genre-tree-view";
 
@@ -71,6 +72,9 @@ export function GenreTreeView<T extends TrackBase>({
   const [selectedGenreUuid, setSelectedGenreUuid] = useState<string | null>(
     null,
   );
+  // The genre-playlist/node id (GenreTreeNode.id), distinct from selectedGenreUuid (the
+  // criteria id used to fetch detail) — passed to the tree renderers for visual highlighting.
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const { data: selectedGenreDetail, isPending: isLoadingSelectedGenre } =
     useFetchGenreDetail(selectedGenreUuid, scope, getBackendBaseUrl);
 
@@ -85,8 +89,17 @@ export function GenreTreeView<T extends TrackBase>({
         genrePlaylists?.results as CriteriaPlaylistSimple[] | undefined
       )?.find((gp) => gp.uuid === node.id);
       setSelectedGenreUuid(genrePlaylist?.criteria?.uuid ?? null);
+      setSelectedNodeId(node.id);
     },
     [genrePlaylists?.results],
+  );
+
+  const handleGenreSearchSelect = useCallback(
+    (genrePlaylist: CriteriaPlaylistSimple) => {
+      setSelectedGenreUuid(genrePlaylist.criteria?.uuid ?? null);
+      setSelectedNodeId(genrePlaylist.uuid);
+    },
+    [],
   );
 
   // The info panel can also navigate via its own ancestor/child chips, which don't go through
@@ -256,6 +269,12 @@ export function GenreTreeView<T extends TrackBase>({
           </Button>
         </div>
       )}
+      {!isLoading && (
+        <GenreSearch
+          genrePlaylists={(genrePlaylists?.results ?? []) as CriteriaPlaylistSimple[]}
+          onSelect={handleGenreSearchSelect}
+        />
+      )}
       {!isLoading && !readOnly && (
         <IconTextButton
           icon={Plus}
@@ -302,6 +321,7 @@ export function GenreTreeView<T extends TrackBase>({
                   additionalActions={additionalActions}
                   onNodeClick={handleNodeClick}
                   renderExtraDetails={renderExtraDetails}
+                  selectedNodeId={selectedNodeId}
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   showToolbar={showToolbar}
@@ -330,6 +350,7 @@ export function GenreTreeView<T extends TrackBase>({
                   additionalActions={additionalActions}
                   onNodeClick={handleNodeClick}
                   renderExtraDetails={renderExtraDetails}
+                  selectedNodeId={selectedNodeId}
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   showToolbar={showToolbar}
@@ -361,6 +382,7 @@ export function GenreTreeView<T extends TrackBase>({
                           additionalActions={additionalActions}
                           onNodeClick={handleNodeClick}
                           renderExtraDetails={renderExtraDetails}
+                          selectedNodeId={selectedNodeId}
                           readOnly={readOnly}
                           showToolbar={showToolbar}
                         />

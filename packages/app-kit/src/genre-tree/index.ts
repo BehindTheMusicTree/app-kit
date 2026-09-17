@@ -2,6 +2,8 @@
 export * from "./GenreTreeView";
 export { default as GenrePlaylistTreePerRoot } from "./playlist-tree/TreePerRoot";
 export type { GenrePlaylistTreePerRootProps } from "./playlist-tree/TreePerRoot";
+export { default as GenreSearch } from "./GenreSearch";
+export type { GenreSearchProps } from "./GenreSearch";
 export {
   GenreTreeSkeleton,
   GenreTreeWheelSkeleton,
@@ -66,3 +68,4 @@ export { libraryEndpoints, libraryQueryKeys } from "./api/library";
 export * from "./lib/rating";
 export * from "./lib/formatting";
 export * from "./lib/genre-playlist-helpers";
+export * from "./lib/genre-search";

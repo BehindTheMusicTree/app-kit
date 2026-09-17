@@ -5,6 +5,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **genre-tree**: `GenreTreeView` now has a search box to find a genre by name and select it,
+  highlighting the matching node in the tree.
+
+### Changed
+
+- Bumped `@behindthemusictree/genre-tree-view` catalog pin to 1.7.0.
+
 ## [4.10.1] - 2026-09-11
 
 ### Changed

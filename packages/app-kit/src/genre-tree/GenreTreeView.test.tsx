@@ -873,4 +873,61 @@ describe("GenreTreeView", () => {
       expect(screen.getByText("—")).toBeInTheDocument();
     });
   });
+
+  describe("genre search", () => {
+    it("selecting a search result updates the info panel the same way a node click does", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: { results: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } })] },
+        isPending: false,
+      });
+      useFetchGenreDetailMock.mockImplementation((id: string | null) =>
+        id === "c1"
+          ? {
+              data: {
+                uuid: "c1",
+                name: "Jazz",
+                summary: "Improvised music with swung rhythms.",
+                tracksCount: 5,
+                tracksArchivedCount: 0,
+                children: [],
+                essentialTracks: [],
+              },
+              isPending: false,
+            }
+          : { data: undefined, isPending: false },
+      );
+      renderView();
+
+      fireEvent.change(screen.getByRole("textbox", { name: "Search a genre" }), {
+        target: { value: "Jazz" },
+      });
+      fireEvent.click(screen.getByText("Jazz"));
+
+      expect(useFetchGenreDetailMock).toHaveBeenCalledWith("c1");
+
+      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+      const output = treeWheelPropsMock.mock.calls.at(-1)?.[0].renderExtraDetails({
+        id: "gp1",
+      });
+      render(<>{output}</>);
+
+      expect(screen.getByText("Improvised music with swung rhythms.")).toBeInTheDocument();
+    });
+
+    it("passes the selected node id through to the active tree renderer for highlighting", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: { results: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } })] },
+        isPending: false,
+      });
+      renderView();
+
+      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+      fireEvent.change(screen.getByRole("textbox", { name: "Search a genre" }), {
+        target: { value: "Jazz" },
+      });
+      fireEvent.click(screen.getByText("Jazz"));
+
+      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].selectedNodeId).toBe("gp1");
+    });
+  });
 });
