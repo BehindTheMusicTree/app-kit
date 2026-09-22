@@ -5,6 +5,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Integrated graphify knowledge-graph tooling: post-commit/post-checkout hooks keep
+  `graphify-out/graph.json` current, and Claude Code now consults it before grepping raw source.
+
 ## [4.11.0] - 2026-09-17
 
 ### Added
