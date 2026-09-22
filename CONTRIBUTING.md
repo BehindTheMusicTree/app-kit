@@ -129,7 +129,8 @@ the change being clearly described.
 2. Open a PR against `develop` describing what changed and why (never against `main` — see
    [§3](#3-branching-gitflow)).
 3. Add a bullet to `CHANGELOG.md` under `[Unreleased]` for any user-facing change (new export,
-   behavior change, breaking change).
+   behavior change, breaking change). Breaking changes (removed/renamed export, changed prop or
+   function signature, dropped default) go under a `### Breaking` heading, not `### Changed`.
 
 ### 8. Releasing _(For Maintainers)_
 

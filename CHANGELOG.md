@@ -3,6 +3,12 @@
 All notable changes to `@behindthemusictree/app-kit` are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+Any change that requires a consumer to update its own code (removed/renamed export,
+changed prop or function signature, dropped default) must be listed under a
+`### Breaking` heading in its release, in addition to `Added`/`Changed`/`Fixed`. This
+package has many direct consumers across the frontend, so breaking changes must be
+easy to spot when bumping.
+
 ## [Unreleased]
 
 ### Added
