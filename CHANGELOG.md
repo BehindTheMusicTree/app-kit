@@ -16,6 +16,11 @@ easy to spot when bumping.
 - Integrated graphify knowledge-graph tooling: post-commit/post-checkout hooks keep
   `graphify-out/graph.json` current, and Claude Code now consults it before grepping raw source.
 
+### Fixed
+
+- `readOnly` genre trees (`TreePerRoot`, `TreeWheel`, `TreeWheelRadialPopCore`) now also hide the
+  Delete action, so viewers no longer see it.
+
 ## [4.11.0] - 2026-09-17
 
 ### Added
