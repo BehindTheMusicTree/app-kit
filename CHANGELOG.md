@@ -23,6 +23,12 @@ easy to spot when bumping.
 - **genre-tree**: `GenreTreeView`'s "Essential tracks" field in the info panel is now always
   rendered, showing "—" when the selected genre has none, consistent with the "Summary" field.
 
+### Removed
+
+- **BREAKING**: **genre-tree**: removed `useLoadExampleTreeGenre`, `LoadExampleTreeResponseSchema`
+  and the "Load the example/reference tree genre" button in `GenreTreeView` — the backend
+  `genres/tree/load-example/` endpoint no longer exists.
+
 ## [4.11.0] - 2026-09-17
 
 ### Added

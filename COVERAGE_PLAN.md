@@ -183,6 +183,5 @@ raise the floor. Ordered by size:
 3. Don't chase the global 85% threshold number directly each time; it moves
    slowly. Track it only every few files to gauge overall progress.
 4. Commit test-only changes separately from any source changes. If writing a
-   test surfaces an actual bug (like the earlier `useLoadExampleTreeGenre`
-   output-schema bug that started this effort), stop and flag it — don't
+   test surfaces an actual bug, stop and flag it — don't
    silently fix and bundle it into a "tests" commit.

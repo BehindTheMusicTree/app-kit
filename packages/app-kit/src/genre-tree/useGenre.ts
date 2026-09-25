@@ -16,8 +16,6 @@ import { CriteriaCreationSchema } from "./schemas/criteria/creation";
 import { CriteriaUpdateSchema } from "./schemas/criteria/update";
 import { genreEndpoints, genreQueryKeys } from "./api/genres";
 
-const LoadExampleTreeResponseSchema = z.object({ message: z.string() });
-
 export function useListGenres(
   page = 1,
   pageSize: number | string = 50,
@@ -61,30 +59,6 @@ export function useFetchGenreDetail(id: string | null, scope: Scope, getBackendB
     schema: CriteriaDetailedSchema,
     context: "useFetchGenreDetail",
     enabled: id !== null,
-  });
-}
-
-export function useLoadExampleTreeGenre(scope: Scope, getBackendBaseUrl: () => string) {
-  const { fetch } = useFetchWrapper(getBackendBaseUrl);
-  const queryClient = useQueryClient();
-  const invalidateAllGenrePlaylistQueries = useInvalidateAllGenrePlaylistQueries();
-
-  return useValidatedMutation({
-    inputSchema: z.void(),
-    outputSchema: LoadExampleTreeResponseSchema,
-    mutationFn: async () => {
-      const endpoint =
-        scope === "reference" ? genreEndpoints.reference.loadExampleTree() : genreEndpoints.me.loadExampleTree();
-      const response = await fetch(endpoint, true, scope === "me", {
-        method: "POST",
-      });
-      return response;
-    },
-    onSuccess: () => {
-      const queryKey = scope === "reference" ? genreQueryKeys.reference.all : genreQueryKeys.me.all;
-      queryClient.invalidateQueries({ queryKey });
-      invalidateAllGenrePlaylistQueries();
-    },
   });
 }
 
