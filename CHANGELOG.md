@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [5.0.0] - 2026-09-25
+
 ### Added
 
 - Integrated graphify knowledge-graph tooling: post-commit/post-checkout hooks keep
@@ -25,8 +27,7 @@ easy to spot when bumping.
 
 ### Removed
 
-- **BREAKING**: **genre-tree**: removed `useLoadExampleTreeGenre`, `LoadExampleTreeResponseSchema`
-  and the "Load the example/reference tree genre" button in `GenreTreeView` — the backend
+- **BREAKING**: **genre-tree**: removed `useLoadExampleTreeGenre` and the "Load the example/reference tree genre" button in `GenreTreeView` — the backend
   `genres/tree/load-example/` endpoint no longer exists.
 
 ## [4.11.0] - 2026-09-17
