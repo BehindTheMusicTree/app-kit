@@ -296,7 +296,7 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
   });
 
   describe("readOnly", () => {
-    it("omits create/rename/reparent handlers but keeps delete when readOnly is true", () => {
+    it("omits create/rename/reparent/delete handlers when readOnly is true", () => {
       renderWheelRadialPopCore({ readOnly: true });
 
       const props = genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0];
@@ -304,10 +304,10 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
       expect(props.onRenameRequest).toBeUndefined();
       expect(props.onReparentRequest).toBeUndefined();
       expect(props.onReparent).toBeUndefined();
-      expect(props.onDeleteRequest).toBeInstanceOf(Function);
+      expect(props.onDeleteRequest).toBeUndefined();
     });
 
-    it("keeps create/rename/reparent handlers when readOnly is omitted", () => {
+    it("keeps create/rename/reparent/delete handlers when readOnly is omitted", () => {
       renderWheelRadialPopCore();
 
       const props = genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0];
@@ -315,6 +315,7 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
       expect(props.onRenameRequest).toBeInstanceOf(Function);
       expect(props.onReparentRequest).toBeInstanceOf(Function);
       expect(props.onReparent).toBeInstanceOf(Function);
+      expect(props.onDeleteRequest).toBeInstanceOf(Function);
     });
   });
 });

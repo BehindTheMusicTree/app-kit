@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useEffect, useCallback, type ReactNode } from "react";
 import { z } from "zod";
-import { FaTree } from "react-icons/fa";
 import { Plus } from "lucide-react";
 import { IconTextButton, Button } from "@behindthemusictree/ui";
 
@@ -22,7 +21,7 @@ import { TrackBase } from "./schemas/track/base";
 import { CriteriaPlaylistDetailedLike } from "./models/TrackListOrigin";
 import { Scope } from "../transport/lib/scope";
 import { useListFullGenrePlaylists } from "./useGenrePlaylist";
-import { useLoadExampleTreeGenre, useFetchGenreDetail } from "./useGenre";
+import { useFetchGenreDetail } from "./useGenre";
 import {
   getGenrePlaylistsGroupedByRoot,
   hasMainstreamPopRoot,
@@ -45,7 +44,7 @@ export type GenreTreeViewProps<T extends TrackBase> = {
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   /** Controlled view mode. When provided, the internal Stacked/Wheel toggle is not rendered — the consumer owns that UI. */
   viewMode?: GenreTreeViewMode;
-  /** When true, hides the "Add root" and load-tree buttons and suppresses per-node
+  /** When true, hides the "Add root" button and suppresses per-node
    * create/rename/reparent affordances, for a read-only consumer. Defaults to false. */
   readOnly?: boolean;
 };
@@ -80,8 +79,6 @@ export function GenreTreeView<T extends TrackBase>({
 
   const { data: genrePlaylists, isPending: isListingGenrePlaylists } =
     useListFullGenrePlaylists(scope, getBackendBaseUrl);
-  const loadTreeMutation = useLoadExampleTreeGenre(scope, getBackendBaseUrl);
-  const isLoadingTree = loadTreeMutation.isPending;
 
   const handleNodeClick = useCallback(
     (node: GenreTreeNode) => {
@@ -136,18 +133,20 @@ export function GenreTreeView<T extends TrackBase>({
               <p>{tracksArchivedCount}</p>
             </div>
           )}
-          {essentialTracks.length > 0 && (
-            <div className="gtv-info-panel-children">
-              <span className="gtv-info-panel-children-title">
-                Essential tracks
-              </span>
+          <div className="gtv-info-panel-children">
+            <span className="gtv-info-panel-children-title">
+              Essential tracks
+            </span>
+            {essentialTracks.length > 0 ? (
               <ul className="list-disc pl-5">
                 {essentialTracks.map((track) => (
                   <li key={track.uuid}>{track.title}</li>
                 ))}
               </ul>
-            </div>
-          )}
+            ) : (
+              <p>—</p>
+            )}
+          </div>
         </>
       );
     },
@@ -169,9 +168,7 @@ export function GenreTreeView<T extends TrackBase>({
     [genrePlaylists?.results],
   );
 
-  const isLoading = isListingGenrePlaylists || isLoadingTree;
-  const hasAtLeastOneGenre =
-    Object.keys(groupedGenrePlaylistsByRoot).length > 0;
+  const isLoading = isListingGenrePlaylists;
 
   const canShowPopCore = useMemo(
     () =>
@@ -202,11 +199,6 @@ export function GenreTreeView<T extends TrackBase>({
     selectedViewMode === "pop-core" && !canShowPopCore
       ? "wheel"
       : selectedViewMode;
-
-  const loadButtonText =
-    scope === "me"
-      ? "Load the example tree genre"
-      : "Load the reference tree genre";
 
   const actions = (
     <>
@@ -280,14 +272,6 @@ export function GenreTreeView<T extends TrackBase>({
           icon={Plus}
           text="Add root"
           onClick={() => handleGenreCreationAction(null)}
-        />
-      )}
-      {!isLoading && !readOnly && !hasAtLeastOneGenre && (
-        <IconTextButton
-          icon={FaTree}
-          text={loadButtonText}
-          className="ml-2"
-          onClick={() => loadTreeMutation.mutate()}
         />
       )}
     </>

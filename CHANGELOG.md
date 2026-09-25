@@ -3,7 +3,32 @@
 All notable changes to `@behindthemusictree/app-kit` are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+Any change that requires a consumer to update its own code (removed/renamed export,
+changed prop or function signature, dropped default) must be listed under a
+`### Breaking` heading in its release, in addition to `Added`/`Changed`/`Fixed`. This
+package has many direct consumers across the frontend, so breaking changes must be
+easy to spot when bumping.
+
 ## [Unreleased]
+
+## [5.0.0] - 2026-09-25
+
+### Added
+
+- Integrated graphify knowledge-graph tooling: post-commit/post-checkout hooks keep
+  `graphify-out/graph.json` current, and Claude Code now consults it before grepping raw source.
+
+### Fixed
+
+- `readOnly` genre trees (`TreePerRoot`, `TreeWheel`, `TreeWheelRadialPopCore`) now also hide the
+  Delete action, so viewers no longer see it.
+- **genre-tree**: `GenreTreeView`'s "Essential tracks" field in the info panel is now always
+  rendered, showing "—" when the selected genre has none, consistent with the "Summary" field.
+
+### Removed
+
+- **BREAKING**: **genre-tree**: removed `useLoadExampleTreeGenre` and the "Load the example/reference tree genre" button in `GenreTreeView` — the backend
+  `genres/tree/load-example/` endpoint no longer exists.
 
 ## [4.11.0] - 2026-09-17
 

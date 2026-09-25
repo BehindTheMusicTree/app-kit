@@ -4,17 +4,13 @@ import { z } from "zod";
 
 const {
   useListFullGenrePlaylistsMock,
-  useLoadExampleTreeGenreMock,
   useFetchGenreDetailMock,
-  loadTreeMutateMock,
   treePerRootPropsMock,
   treeWheelPropsMock,
   treeWheelRadialPopCorePropsMock,
 } = vi.hoisted(() => ({
   useListFullGenrePlaylistsMock: vi.fn(),
-  useLoadExampleTreeGenreMock: vi.fn(),
   useFetchGenreDetailMock: vi.fn(),
-  loadTreeMutateMock: vi.fn(),
   treePerRootPropsMock: vi.fn(),
   treeWheelPropsMock: vi.fn(),
   treeWheelRadialPopCorePropsMock: vi.fn(),
@@ -25,7 +21,6 @@ vi.mock("./useGenrePlaylist", () => ({
 }));
 
 vi.mock("./useGenre", () => ({
-  useLoadExampleTreeGenre: () => useLoadExampleTreeGenreMock(),
   useFetchGenreDetail: (id: string | null) => useFetchGenreDetailMock(id),
 }));
 
@@ -124,10 +119,6 @@ describe("GenreTreeView", () => {
       data: { results: [] },
       isPending: false,
     });
-    useLoadExampleTreeGenreMock.mockReturnValue({
-      mutate: loadTreeMutateMock,
-      isPending: false,
-    });
     useFetchGenreDetailMock.mockReturnValue({ data: undefined, isPending: false });
   });
 
@@ -153,54 +144,6 @@ describe("GenreTreeView", () => {
       "w-full",
       "relative",
     );
-  });
-
-  it("shows the wheel skeleton while the example tree is loading", () => {
-    useLoadExampleTreeGenreMock.mockReturnValue({
-      mutate: loadTreeMutateMock,
-      isPending: true,
-    });
-    renderView();
-
-    expect(screen.getByTestId("genre-tree-wheel-skeleton")).toBeInTheDocument();
-  });
-
-  it("shows the load-example button and 'me' wording when there are no genres yet", () => {
-    renderView({ scope: "me" });
-
-    expect(
-      screen.getByRole("button", { name: /Load the example tree genre/ }),
-    ).toBeInTheDocument();
-  });
-
-  it("shows the reference wording when scope is reference", () => {
-    renderView({ scope: "reference" });
-
-    expect(
-      screen.getByRole("button", { name: /Load the reference tree genre/ }),
-    ).toBeInTheDocument();
-  });
-
-  it("calls loadTreeMutation.mutate when the load button is clicked", () => {
-    renderView();
-
-    fireEvent.click(
-      screen.getByRole("button", { name: /Load the example tree genre/ }),
-    );
-
-    expect(loadTreeMutateMock).toHaveBeenCalled();
-  });
-
-  it("hides the load-example button once at least one genre exists", () => {
-    useListFullGenrePlaylistsMock.mockReturnValue({
-      data: { results: [makePlaylist()] },
-      isPending: false,
-    });
-    renderView();
-
-    expect(
-      screen.queryByRole("button", { name: /Load the example tree genre/ }),
-    ).not.toBeInTheDocument();
   });
 
   it("calls handleGenreCreationAction(null) when Add root is clicked", () => {
@@ -271,14 +214,11 @@ describe("GenreTreeView", () => {
     expect(screen.getByTestId("tree-per-root")).toBeInTheDocument();
   });
 
-  it("hides the Add root and load-tree buttons when readOnly", () => {
+  it("hides the Add root button when readOnly", () => {
     renderView({ readOnly: true });
 
     expect(
       screen.queryByRole("button", { name: /Add root/ }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: /Load the example tree genre/ }),
     ).not.toBeInTheDocument();
   });
 
@@ -502,31 +442,6 @@ describe("GenreTreeView", () => {
       expect(treeWheelRadialPopCorePropsMock.mock.calls[0][0].readOnly).toBe(
         true,
       );
-    });
-
-    it("keeps showing the wheel skeleton (not the stacked skeleton) when pop-core is selected and a tree load is pending", () => {
-      useListFullGenrePlaylistsMock.mockReturnValue({
-        data: {
-          results: [
-            makePlaylist({
-              uuid: "gp1",
-              name: "Mainstream Pop",
-              root: { uuid: "gp1" },
-              parent: null,
-            }),
-          ],
-        },
-        isPending: false,
-      });
-      useLoadExampleTreeGenreMock.mockReturnValue({
-        mutate: loadTreeMutateMock,
-        isPending: true,
-      });
-      renderView();
-
-      expect(
-        screen.getByTestId("genre-tree-wheel-skeleton"),
-      ).toBeInTheDocument();
     });
 
     it("never mounts the pop-core tree — not even transiently — when data loads with no 'Mainstream Pop' root", () => {
@@ -839,7 +754,7 @@ describe("GenreTreeView", () => {
       expect(output).toBeNull();
     });
 
-    it("renders a blank summary placeholder when there is no summary, no essential tracks, and nothing archived", () => {
+    it("renders blank summary and essential tracks placeholders when there is no summary, no essential tracks, and nothing archived", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
         data: { results: [makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } })] },
         isPending: false,
@@ -870,7 +785,8 @@ describe("GenreTreeView", () => {
       render(<>{output}</>);
 
       expect(screen.getByText("Summary")).toBeInTheDocument();
-      expect(screen.getByText("—")).toBeInTheDocument();
+      expect(screen.getByText("Essential tracks")).toBeInTheDocument();
+      expect(screen.getAllByText("—")).toHaveLength(2);
     });
   });
 

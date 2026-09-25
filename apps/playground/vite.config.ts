@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => {
         "/api/grow-prototype-proxy": {
           target: "https://grow-api-staging.themusictree.org",
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api\/grow-prototype-proxy/, "/v0"),
+          rewrite: (path) => path.replace(/^\/api\/grow-prototype-proxy/, "/v1"),
           configure: (proxy) => {
             proxy.on("proxyReq", (proxyReq) => {
               if (!prototypeApiKey) {

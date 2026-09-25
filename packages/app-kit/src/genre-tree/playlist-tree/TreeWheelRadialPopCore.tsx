@@ -173,7 +173,7 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
       onPlayPause={handlePlayPause}
       onAddChild={readOnly ? undefined : handleAddChild}
       onRenameRequest={readOnly ? undefined : handleRenameRequest}
-      onDeleteRequest={handleDeleteRequest}
+      onDeleteRequest={readOnly ? undefined : handleDeleteRequest}
       onReparentRequest={readOnly ? undefined : handleReparentRequest}
       onReparent={readOnly ? undefined : handleReparent}
       additionalActions={additionalActions}

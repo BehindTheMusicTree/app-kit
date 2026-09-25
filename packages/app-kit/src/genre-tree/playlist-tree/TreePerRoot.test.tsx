@@ -227,7 +227,7 @@ describe("GenrePlaylistTreePerRoot", () => {
   });
 
   describe("readOnly", () => {
-    it("omits create/rename/reparent handlers but keeps delete when readOnly is true", () => {
+    it("omits create/rename/reparent/delete handlers when readOnly is true", () => {
       render(
         <GenrePlaylistTreePerRoot
           scope="reference"
@@ -247,16 +247,17 @@ describe("GenrePlaylistTreePerRoot", () => {
       expect(capturedProps!.onRenameRequest).toBeUndefined();
       expect(capturedProps!.onReparentRequest).toBeUndefined();
       expect(capturedProps!.onReparent).toBeUndefined();
-      expect(capturedProps!.onDeleteRequest).toBeInstanceOf(Function);
+      expect(capturedProps!.onDeleteRequest).toBeUndefined();
     });
 
-    it("keeps create/rename/reparent handlers when readOnly is omitted", () => {
+    it("keeps create/rename/reparent/delete handlers when readOnly is omitted", () => {
       renderTree();
 
       expect(capturedProps!.onAddChild).toBeInstanceOf(Function);
       expect(capturedProps!.onRenameRequest).toBeInstanceOf(Function);
       expect(capturedProps!.onReparentRequest).toBeInstanceOf(Function);
       expect(capturedProps!.onReparent).toBeInstanceOf(Function);
+      expect(capturedProps!.onDeleteRequest).toBeInstanceOf(Function);
     });
   });
 
