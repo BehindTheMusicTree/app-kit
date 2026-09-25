@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [5.0.0] - 2026-09-25
+
 ### Added
 
 - Integrated graphify knowledge-graph tooling: post-commit/post-checkout hooks keep
