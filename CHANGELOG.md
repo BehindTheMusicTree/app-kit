@@ -11,6 +11,14 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [5.1.0] - 2026-09-25
+
+### Changed
+
+- **genre-tree**: bumped `@behindthemusictree/genre-tree-view` to 1.8.0 — root pop/core wedges in
+  the radial pop/core wheel now fill their root's full sector, and tree/wheel connector lines render
+  thinner.
+
 ## [5.0.0] - 2026-09-25
 
 ### Added
