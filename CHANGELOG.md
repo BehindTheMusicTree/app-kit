@@ -20,6 +20,8 @@ easy to spot when bumping.
 
 - `readOnly` genre trees (`TreePerRoot`, `TreeWheel`, `TreeWheelRadialPopCore`) now also hide the
   Delete action, so viewers no longer see it.
+- **genre-tree**: `GenreTreeView`'s "Essential tracks" field in the info panel is now always
+  rendered, showing "—" when the selected genre has none, consistent with the "Summary" field.
 
 ## [4.11.0] - 2026-09-17
 

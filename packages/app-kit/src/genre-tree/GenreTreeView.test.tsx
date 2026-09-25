@@ -839,7 +839,7 @@ describe("GenreTreeView", () => {
       expect(output).toBeNull();
     });
 
-    it("renders a blank summary placeholder when there is no summary, no essential tracks, and nothing archived", () => {
+    it("renders blank summary and essential tracks placeholders when there is no summary, no essential tracks, and nothing archived", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
         data: { results: [makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } })] },
         isPending: false,
@@ -870,7 +870,8 @@ describe("GenreTreeView", () => {
       render(<>{output}</>);
 
       expect(screen.getByText("Summary")).toBeInTheDocument();
-      expect(screen.getByText("—")).toBeInTheDocument();
+      expect(screen.getByText("Essential tracks")).toBeInTheDocument();
+      expect(screen.getAllByText("—")).toHaveLength(2);
     });
   });
 

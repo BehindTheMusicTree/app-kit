@@ -136,18 +136,20 @@ export function GenreTreeView<T extends TrackBase>({
               <p>{tracksArchivedCount}</p>
             </div>
           )}
-          {essentialTracks.length > 0 && (
-            <div className="gtv-info-panel-children">
-              <span className="gtv-info-panel-children-title">
-                Essential tracks
-              </span>
+          <div className="gtv-info-panel-children">
+            <span className="gtv-info-panel-children-title">
+              Essential tracks
+            </span>
+            {essentialTracks.length > 0 ? (
               <ul className="list-disc pl-5">
                 {essentialTracks.map((track) => (
                   <li key={track.uuid}>{track.title}</li>
                 ))}
               </ul>
-            </div>
-          )}
+            ) : (
+              <p>—</p>
+            )}
+          </div>
         </>
       );
     },
