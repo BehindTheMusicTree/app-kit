@@ -34,6 +34,8 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   onNodeClick?: (node: GenreTreeNode) => void;
   renderExtraDetails?: (node: GenreTreeNode) => ReactNode;
+  /** Overrides which node is shown highlighted, e.g. from a search selection. */
+  selectedNodeId?: string | null;
   /** When true, suppresses per-node create/rename/reparent affordances. Defaults to false. */
   readOnly?: boolean;
   /** When false, clicking a chip still selects its root, but the ring doesn't spin to the
@@ -56,6 +58,7 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
   additionalActions,
   onNodeClick,
   renderExtraDetails,
+  selectedNodeId,
   readOnly = false,
   allowWheelRotation,
   showToolbar,
@@ -170,12 +173,13 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
       onPlayPause={handlePlayPause}
       onAddChild={readOnly ? undefined : handleAddChild}
       onRenameRequest={readOnly ? undefined : handleRenameRequest}
-      onDeleteRequest={handleDeleteRequest}
+      onDeleteRequest={readOnly ? undefined : handleDeleteRequest}
       onReparentRequest={readOnly ? undefined : handleReparentRequest}
       onReparent={readOnly ? undefined : handleReparent}
       additionalActions={additionalActions}
       onNodeClick={onNodeClick}
       renderExtraDetails={renderExtraDetails}
+      selectedNodeId={selectedNodeId}
       allowWheelRotation={allowWheelRotation}
       showToolbar={showToolbar}
     />
