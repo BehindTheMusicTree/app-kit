@@ -55,7 +55,6 @@ import {
   useListGenres,
   useFetchGenre,
   useFetchGenreDetail,
-  useLoadExampleTreeGenre,
   useCreateGenre,
   useUpdateGenre,
   useDeleteGenre,
@@ -151,46 +150,6 @@ describe("useGenre", () => {
       renderHook(() => useFetchGenreDetail(null, "me", getBackendBaseUrl));
 
       expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
-    });
-  });
-
-  describe("useLoadExampleTreeGenre", () => {
-    it("posts to the reference load-example endpoint", async () => {
-      renderHook(() => useLoadExampleTreeGenre("reference", getBackendBaseUrl));
-      const { mutationFn } = useValidatedMutationMock.mock.calls[0][0];
-
-      await mutationFn();
-
-      expect(fetchMock).toHaveBeenCalledWith("genres/tree/load-example/", true, false, { method: "POST" });
-    });
-
-    it("posts to the me load-example endpoint", async () => {
-      renderHook(() => useLoadExampleTreeGenre("me", getBackendBaseUrl));
-      const { mutationFn } = useValidatedMutationMock.mock.calls[0][0];
-
-      await mutationFn();
-
-      expect(fetchMock).toHaveBeenCalledWith("me/genres/tree/load-example/", true, true, { method: "POST" });
-    });
-
-    it("onSuccess invalidates the scoped genre query and genre playlist queries", () => {
-      renderHook(() => useLoadExampleTreeGenre("me", getBackendBaseUrl));
-      const { onSuccess } = useValidatedMutationMock.mock.calls[0][0];
-
-      onSuccess();
-
-      expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["genres"] });
-      expect(invalidateAllGenrePlaylistQueriesMock).toHaveBeenCalled();
-    });
-
-    it("onSuccess invalidates the reference genre query and genre playlist queries", () => {
-      renderHook(() => useLoadExampleTreeGenre("reference", getBackendBaseUrl));
-      const { onSuccess } = useValidatedMutationMock.mock.calls[0][0];
-
-      onSuccess();
-
-      expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["referenceGenres"] });
-      expect(invalidateAllGenrePlaylistQueriesMock).toHaveBeenCalled();
     });
   });
 
