@@ -39,6 +39,7 @@ export function useValidatedMutation<TData, TError = Error, TVariables = unknown
   const validatedMutation = useMutation<TData, TError, TVariables, TContext>({
     ...options,
     mutationFn: async (data) => {
+      setFormErrors([]);
       const parsedInput = inputSchema.safeParse(data);
       if (!parsedInput.success) {
         const fieldErrors = parsedInput.error.errors.map((error) => ({

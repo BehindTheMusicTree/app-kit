@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- **transport**: `useValidatedMutation` clears `formErrors` at the start of each mutation, so errors from a failed attempt no longer stay on screen after a retry succeeds.
+
 ## [5.1.0] - 2026-09-25
 
 ### Changed
