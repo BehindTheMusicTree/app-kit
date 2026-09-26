@@ -44,6 +44,10 @@ export const fetchWrapper = async <T>(
       throw appError;
     }
 
+    if (result.status === 204) {
+      return null;
+    }
+
     if (expectBinary) {
       return (await result.arrayBuffer()) as T;
     } else {
