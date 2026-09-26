@@ -32,6 +32,14 @@ describe("fetchWrapper", () => {
     );
   });
 
+  it("returns null without reading the body for a 204 No Content response", async () => {
+    const json = vi.fn();
+    vi.mocked(fetch).mockResolvedValue({ ok: true, status: 204, json } as unknown as Response);
+
+    expect(await fetchWrapper("things/", false)).toBeNull();
+    expect(json).not.toHaveBeenCalled();
+  });
+
   it("returns an array buffer when expectBinary is true", async () => {
     const buffer = new ArrayBuffer(4);
     vi.mocked(fetch).mockResolvedValue({ ok: true, arrayBuffer: async () => buffer } as unknown as Response);

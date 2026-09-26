@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- **transport**: `fetchWrapper` returns `null` for a `204 No Content` response instead of failing to parse an empty body as JSON.
+
 ## [5.1.1] - 2026-09-26
 
 ### Fixed
