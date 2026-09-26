@@ -41,6 +41,22 @@ describe("useValidatedMutation", () => {
     expect(result.current.formErrors).toEqual([{ field: "name", message: expect.any(String) }]);
   });
 
+  it("clears previous form errors when the mutation is retried", async () => {
+    const mutationFn = vi.fn().mockResolvedValue({ id: "abc" });
+    const { result, rerender } = renderHook(() => useValidatedMutation({ inputSchema, outputSchema, mutationFn }));
+    const capturedMutationFn = useMutationMock.mock.calls[0][0].mutationFn;
+
+    await act(async () => {
+      await expect(capturedMutationFn({})).rejects.toThrow("Invalid input data");
+    });
+    await act(async () => {
+      await capturedMutationFn({ name: "Alice" });
+    });
+    rerender();
+
+    expect(result.current.formErrors).toEqual([]);
+  });
+
   it("returns the parsed output when input and output are both valid", async () => {
     const mutationFn = vi.fn().mockResolvedValue({ id: "abc" });
     const { result, rerender } = renderHook(() => useValidatedMutation({ inputSchema, outputSchema, mutationFn }));
