@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 
 import { useFetchWrapper } from "../transport/useFetchWrapper";
@@ -11,6 +11,7 @@ import { useQueryWithParse } from "../transport/lib/use-query-with-parse";
 import { useValidatedMutation } from "../transport/lib/use-validated-mutation";
 import { Scope } from "../transport/lib/scope";
 import { CriteriaDetailedSchema, CriteriaDetailed } from "./schemas/criteria/detailed";
+import { CriteriaOverviewSchema, CriteriaOverview } from "./schemas/criteria/overview";
 import { CriteriaSimpleSchema } from "./schemas/criteria/simple";
 import { CriteriaCreationSchema } from "./schemas/criteria/creation";
 import { CriteriaUpdateSchema } from "./schemas/criteria/update";
@@ -66,6 +67,51 @@ export function useFetchGenreDetail<D extends CriteriaDetailed = CriteriaDetaile
     context: "useFetchGenreDetail",
     enabled: id !== null,
   });
+}
+
+const GENRE_OVERVIEW_STALE_TIME_MS = 60_000;
+
+function useGenreOverviewQueryOptions<O extends CriteriaOverview>(
+  scope: Scope,
+  getBackendBaseUrl: () => string,
+  schema: z.ZodType<O, z.ZodTypeDef, unknown>,
+) {
+  const { fetch } = useFetchWrapper(getBackendBaseUrl);
+
+  return useCallback(
+    (id: string) => {
+      const queryKeys = scope === "reference" ? genreQueryKeys.reference : genreQueryKeys.me;
+      const endpoints = scope === "reference" ? genreEndpoints.reference : genreEndpoints.me;
+      return {
+        queryKey: queryKeys.overview(id),
+        queryFn: async () =>
+          parseWithLog(schema, await fetch(endpoints.overview(id), true, scope === "me"), "useFetchGenreOverview"),
+        staleTime: GENRE_OVERVIEW_STALE_TIME_MS,
+      };
+    },
+    [fetch, scope, schema],
+  );
+}
+
+export function useFetchGenreOverview<O extends CriteriaOverview = CriteriaOverview>(
+  id: string | null,
+  scope: Scope,
+  getBackendBaseUrl: () => string,
+  // The default only applies when O is left at its CriteriaOverview default.
+  schema: z.ZodType<O, z.ZodTypeDef, unknown> = CriteriaOverviewSchema as unknown as z.ZodType<O, z.ZodTypeDef, unknown>,
+) {
+  const queryOptions = useGenreOverviewQueryOptions(scope, getBackendBaseUrl, schema);
+  return useQuery({ ...queryOptions(id ?? ""), enabled: id !== null });
+}
+
+export function usePrefetchGenreOverview<O extends CriteriaOverview = CriteriaOverview>(
+  scope: Scope,
+  getBackendBaseUrl: () => string,
+  schema: z.ZodType<O, z.ZodTypeDef, unknown> = CriteriaOverviewSchema as unknown as z.ZodType<O, z.ZodTypeDef, unknown>,
+) {
+  const queryClient = useQueryClient();
+  const queryOptions = useGenreOverviewQueryOptions(scope, getBackendBaseUrl, schema);
+  return useCallback((id: string) => queryClient.prefetchQuery(queryOptions(id)), [queryClient, queryOptions]);
 }
 
 export function useCreateGenre(scope: Scope, getBackendBaseUrl: () => string) {

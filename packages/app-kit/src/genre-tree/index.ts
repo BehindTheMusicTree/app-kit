@@ -48,6 +48,7 @@ export * from "./schemas/mb-recording";
 export * from "./schemas/criteria/minimum";
 export * from "./schemas/criteria/simple";
 export * from "./schemas/criteria/detailed";
+export * from "./schemas/criteria/overview";
 export * from "./schemas/criteria/creation";
 export * from "./schemas/criteria/update";
 export * from "./schemas/criteria/lineage-rel/without-ascendant";
