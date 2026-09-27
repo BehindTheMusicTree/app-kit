@@ -28,6 +28,8 @@ to be" framing. History belongs in git log and `CHANGELOG.md`, not in reference 
 - `packages/app-kit/tsup.config.ts` — entry map; keep in sync with `src/*/index.ts` and the
   `exports` field in `packages/app-kit/package.json`
 - `apps/playground/` — manual Vite harness for exercising exported components; not published.
+  It aliases `@behindthemusictree/app-kit` to `packages/app-kit/src` in `vite.config.ts`, so
+  the running app never serves a stale `dist/` (type-checking still reads `dist/*.d.ts`).
   Its backend proxy (`/api/grow-prototype-proxy`, `vite.config.ts`) only exists in Vite's dev
   server — the Vercel-hosted PR preview build has no equivalent, so preview builds 404 on that
   path and render with no real genre-tree data
@@ -52,7 +54,8 @@ to be" framing. History belongs in git log and `CHANGELOG.md`, not in reference 
 - `main` — released code only, every commit tagged `vX.Y.Z`. Never branch from or PR into it
   directly; it only receives merges from `release/*` and `hotfix/*`.
 - `develop` — GitHub default branch, integration branch for all in-progress work. Branch
-  `feature/*`, `fix/*`, `chore/*` from here; PR back into here.
+  `feature/*` from here for all non-release, non-hotfix work (features, fixes, chores); PR back
+  into here. No other prefixes (`fix/*`, `chore/*`, …).
 - `release/*` — cut from `develop` by `pnpm release -- <bump>` (`scripts/release.sh`), which also
   pushes it and opens PRs into both `main` and `develop`. After the `main` PR merges, run
   `pnpm tag-release` on `main` to tag and trigger the publish workflow.
