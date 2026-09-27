@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [6.0.0] - 2026-09-27
+
 ### Changed
 
 - **genre-tree** (breaking): the archived-track concept moved out of the shared kit. `TrackBaseSchema` drops `archived`; `CriteriaDetailedSchema` and the criteria-playlist detailed schema drop `tracksArchivedCount`; `GenreTreeView` no longer renders "Archived tracks".
