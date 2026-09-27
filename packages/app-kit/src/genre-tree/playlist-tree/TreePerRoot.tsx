@@ -37,6 +37,7 @@ export type GenrePlaylistTreePerRootProps<T extends TrackBase> = {
   criteriaPlaylistDetailedSchema: z.ZodType<CriteriaPlaylistDetailedLike<T>>;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   onNodeClick?: (node: GenreTreeNode) => void;
+  onNodeHover?: (node: GenreTreeNode) => void;
   renderExtraDetails?: (node: GenreTreeNode) => ReactNode;
   /** Overrides which node is shown highlighted, e.g. from a search selection. */
   selectedNodeId?: string | null;
@@ -59,6 +60,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
   criteriaPlaylistDetailedSchema,
   additionalActions,
   onNodeClick,
+  onNodeHover,
   renderExtraDetails,
   selectedNodeId,
   readOnly = false,
@@ -191,6 +193,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
       onReparent={readOnly ? undefined : handleReparent}
       additionalActions={additionalActions}
       onNodeClick={onNodeClick}
+      onNodeHover={onNodeHover}
       renderExtraDetails={renderExtraDetails}
       selectedNodeId={selectedNodeId}
       showToolbar={showToolbar}

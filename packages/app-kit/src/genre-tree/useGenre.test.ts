@@ -9,6 +9,8 @@ const {
   invalidateAllGenrePlaylistQueriesMock,
   invalidateQueriesMock,
   parseWithLogMock,
+  useQueryMock,
+  prefetchQueryMock,
 } = vi.hoisted(() => ({
   fetchMock: vi.fn(),
   useSessionMock: vi.fn(),
@@ -17,13 +19,16 @@ const {
   invalidateAllGenrePlaylistQueriesMock: vi.fn(),
   invalidateQueriesMock: vi.fn(),
   parseWithLogMock: vi.fn(),
+  useQueryMock: vi.fn(),
+  prefetchQueryMock: vi.fn(),
 }));
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
-    useQueryClient: () => ({ invalidateQueries: invalidateQueriesMock }),
+    useQuery: (options: unknown) => useQueryMock(options),
+    useQueryClient: () => ({ invalidateQueries: invalidateQueriesMock, prefetchQuery: prefetchQueryMock }),
   };
 });
 
@@ -55,6 +60,8 @@ import {
   useListGenres,
   useFetchGenre,
   useFetchGenreDetail,
+  useFetchGenreOverview,
+  usePrefetchGenreOverview,
   useCreateGenre,
   useUpdateGenre,
   useDeleteGenre,
@@ -150,6 +157,51 @@ describe("useGenre", () => {
       renderHook(() => useFetchGenreDetail(null, "me", getBackendBaseUrl));
 
       expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
+    });
+  });
+
+  describe("useFetchGenreOverview", () => {
+    it("queries the reference overview endpoint with a stale time and validates the response", async () => {
+      fetchMock.mockResolvedValue({ uuid: "g1" });
+      renderHook(() => useFetchGenreOverview("g1", "reference", getBackendBaseUrl));
+      const { queryKey, enabled, staleTime, queryFn } = useQueryMock.mock.calls[0][0];
+
+      expect(queryKey).toEqual(["referenceGenres", "overview", "g1"]);
+      expect(enabled).toBe(true);
+      expect(staleTime).toBeGreaterThan(0);
+
+      await queryFn();
+      expect(fetchMock).toHaveBeenCalledWith("genres/g1/overview/", true, false);
+      expect(parseWithLogMock).toHaveBeenCalledWith(expect.anything(), { uuid: "g1" }, "useFetchGenreOverview");
+    });
+
+    it("queries the me overview endpoint", async () => {
+      renderHook(() => useFetchGenreOverview("g1", "me", getBackendBaseUrl));
+      const { queryKey, queryFn } = useQueryMock.mock.calls[0][0];
+
+      expect(queryKey).toEqual(["genres", "overview", "g1"]);
+      await queryFn();
+      expect(fetchMock).toHaveBeenCalledWith("me/genres/g1/overview/", true, true);
+    });
+
+    it("disables the query when there is no id", () => {
+      renderHook(() => useFetchGenreOverview(null, "me", getBackendBaseUrl));
+
+      expect(useQueryMock.mock.calls[0][0].enabled).toBe(false);
+    });
+  });
+
+  describe("usePrefetchGenreOverview", () => {
+    it("prefetches with the same key and stale time as useFetchGenreOverview", () => {
+      renderHook(() => useFetchGenreOverview("g1", "me", getBackendBaseUrl));
+      const { result } = renderHook(() => usePrefetchGenreOverview("me", getBackendBaseUrl));
+
+      result.current("g1");
+
+      const fetched = useQueryMock.mock.calls[0][0];
+      expect(prefetchQueryMock).toHaveBeenCalledWith(
+        expect.objectContaining({ queryKey: fetched.queryKey, staleTime: fetched.staleTime }),
+      );
     });
   });
 
