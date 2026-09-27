@@ -15,7 +15,6 @@ const validCriteriaPlaylistBase = {
   tracksCount: 3,
   durationInSec: 180,
   durationStrInHourMinSec: "00:03:00",
-  tracksArchivedCount: 0,
   criteria: { uuid, name: "Rock" },
   parent: null,
   root: { uuid, name: "Root" },

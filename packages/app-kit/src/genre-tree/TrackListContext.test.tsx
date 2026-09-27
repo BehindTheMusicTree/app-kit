@@ -52,7 +52,6 @@ function makeTrack(uuid: string, title: string, overrides: Partial<TrackBase> = 
     language: null,
     playlists: [],
     playCount: 0,
-    archived: false,
     createdOn: "2024-01-01T00:00:00.000Z",
     updatedOn: null,
     ...overrides,

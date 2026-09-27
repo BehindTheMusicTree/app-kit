@@ -627,7 +627,7 @@ describe("GenreTreeView", () => {
       expect(useFetchGenreDetailMock).toHaveBeenCalledWith(null);
     });
 
-    it("renders essential tracks and archived count for the selected node", () => {
+    it("renders essential tracks and consumer detail extras for the selected node", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
         data: { results: [makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } })] },
         isPending: false,
@@ -640,7 +640,6 @@ describe("GenreTreeView", () => {
                 name: "Jazz",
                 summary: null,
                 tracksCount: 5,
-                tracksArchivedCount: 2,
                 children: [],
                 essentialTracks: [
                   { uuid: "t1", title: "Track One", artists: null },
@@ -651,7 +650,9 @@ describe("GenreTreeView", () => {
             }
           : { data: undefined, isPending: false },
       );
-      renderView();
+      renderView({
+        renderGenreDetailExtras: (detail) => <p>Extra for {detail.name}</p>,
+      });
 
       selectGenre();
 
@@ -662,7 +663,7 @@ describe("GenreTreeView", () => {
 
       expect(screen.getByText("Track One")).toBeInTheDocument();
       expect(screen.getByText("Track Two")).toBeInTheDocument();
-      expect(screen.getByText(/2/)).toBeInTheDocument();
+      expect(screen.getByText("Extra for Jazz")).toBeInTheDocument();
     });
 
     it("renders the genre summary for the selected node", () => {
@@ -678,7 +679,6 @@ describe("GenreTreeView", () => {
                 name: "Jazz",
                 summary: "Improvised music with swung rhythms.",
                 tracksCount: 5,
-                tracksArchivedCount: 0,
                 children: [],
                 essentialTracks: [],
               },
@@ -716,7 +716,6 @@ describe("GenreTreeView", () => {
                 name: "Jazz",
                 summary: null,
                 tracksCount: 5,
-                tracksArchivedCount: 0,
                 children: [],
                 essentialTracks: [{ uuid: "t1", title: "Track One", artists: null }],
               },
@@ -754,7 +753,7 @@ describe("GenreTreeView", () => {
       expect(output).toBeNull();
     });
 
-    it("renders blank summary and essential tracks placeholders when there is no summary, no essential tracks, and nothing archived", () => {
+    it("renders blank summary and essential tracks placeholders when there is no summary, and no essential tracks", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
         data: { results: [makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } })] },
         isPending: false,
@@ -767,7 +766,6 @@ describe("GenreTreeView", () => {
                 name: "Jazz",
                 summary: null,
                 tracksCount: 5,
-                tracksArchivedCount: 0,
                 children: [],
                 essentialTracks: [],
               },
@@ -804,7 +802,6 @@ describe("GenreTreeView", () => {
                 name: "Jazz",
                 summary: "Improvised music with swung rhythms.",
                 tracksCount: 5,
-                tracksArchivedCount: 0,
                 children: [],
                 essentialTracks: [],
               },

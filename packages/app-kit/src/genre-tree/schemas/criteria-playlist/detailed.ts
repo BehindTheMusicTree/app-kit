@@ -13,7 +13,6 @@ export const CriteriaPlaylistDetailedBaseSchema = UuidResourceSchema.extend({
   tracksCount: z.number(),
   durationInSec: z.number().min(0).nullable().optional(),
   durationStrInHourMinSec: z.string().nullable().optional(),
-  tracksArchivedCount: z.number(),
   // Nullable: the "Genreless" root playlist has no criteria attached and is never updated.
   criteria: CriteriaMinimumSchema.nullable(),
   parent: CriteriaPlaylistMinimumSchema.nullable(),
