@@ -54,7 +54,8 @@ to be" framing. History belongs in git log and `CHANGELOG.md`, not in reference 
 - `main` — released code only, every commit tagged `vX.Y.Z`. Never branch from or PR into it
   directly; it only receives merges from `release/*` and `hotfix/*`.
 - `develop` — GitHub default branch, integration branch for all in-progress work. Branch
-  `feature/*`, `fix/*`, `chore/*` from here; PR back into here.
+  `feature/*` from here for all non-release, non-hotfix work (features, fixes, chores); PR back
+  into here. No other prefixes (`fix/*`, `chore/*`, …).
 - `release/*` — cut from `develop` by `pnpm release -- <bump>` (`scripts/release.sh`), which also
   pushes it and opens PRs into both `main` and `develop`. After the `main` PR merges, run
   `pnpm tag-release` on `main` to tag and trigger the publish workflow.

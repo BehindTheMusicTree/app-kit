@@ -68,10 +68,10 @@ This repo follows strict [Gitflow](https://nvie.com/posts/a-successful-git-branc
   (`vX.Y.Z`). Nothing merges here except `release/*` and `hotfix/*` branches. This is also the
   GitHub default branch's *sibling of record* for releases, but PRs target `develop` by default.
 - **`develop`** — integration branch, always reflects the latest delivered development changes.
-  All `feature/*`, `fix/*`, and `chore/*` branches are cut from `develop` and merged back into
+  All `feature/*` branches are cut from `develop` and merged back into
   `develop`. This is the GitHub default branch — PRs target it unless noted otherwise.
-- **`feature/<short-description>`**, **`fix/<short-description>`**, **`chore/<short-description>`**
-  — branch from `develop`, merge back into `develop` via PR.
+- **`feature/<short-description>`** — any non-release, non-hotfix work (features, fixes,
+  chores); branch from `develop`, merge back into `develop` via PR.
 - **`release/<version>`** — branched from `develop` when it's ready to ship (created
   automatically by `pnpm release`, see [§8](#8-releasing-for-maintainers)). Only version bump and
   changelog commits belong here. Merged into both `main` (tagged) and `develop`, then deleted.
@@ -86,7 +86,7 @@ release/*      ●───●───●───●   \           /
               /             \   \         /
 develop    ──●───●───●───●───●───●───●───●──
               \     /         \
-feature/*      ●───●           ●  (fix/*, chore/*)
+feature/*      ●───●           ●
 ```
 
 ### 4. Developing
