@@ -46,7 +46,6 @@ describe("CriteriaDetailedSchema", () => {
     tracks: [],
     essentialTracks: [track],
     tracksCount: 3,
-    tracksArchivedCount: 0,
     updatedOn: null,
   };
 

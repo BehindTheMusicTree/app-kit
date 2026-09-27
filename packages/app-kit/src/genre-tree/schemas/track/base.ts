@@ -18,7 +18,6 @@ export const TrackBaseSchema = UuidResourceSchema.extend({
   language: z.string().nullable().optional(),
   playlists: z.array(CriteriaPlaylistMinimumSchema),
   playCount: z.number().min(0),
-  archived: z.boolean(),
   createdOn: z.string().datetime(),
   updatedOn: z.string().datetime().nullable().optional(),
 });

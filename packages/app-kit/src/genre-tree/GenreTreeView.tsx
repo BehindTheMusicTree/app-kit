@@ -18,6 +18,7 @@ import type {
 import { CriteriaPlaylistSimple } from "./schemas/criteria-playlist/simple";
 import { CriteriaMinimum } from "./schemas/criteria/minimum";
 import { TrackBase } from "./schemas/track/base";
+import { CriteriaDetailed } from "./schemas/criteria/detailed";
 import { CriteriaPlaylistDetailedLike } from "./models/TrackListOrigin";
 import { Scope } from "../transport/lib/scope";
 import { useListFullGenrePlaylists } from "./useGenrePlaylist";
@@ -35,7 +36,10 @@ import GenreSearch from "./GenreSearch";
 
 export type { GenreTreeViewMode } from "@behindthemusictree/genre-tree-view";
 
-export type GenreTreeViewProps<T extends TrackBase> = {
+export type GenreTreeViewProps<
+  T extends TrackBase,
+  D extends CriteriaDetailed = CriteriaDetailed,
+> = {
   scope: Scope;
   handleGenreCreationAction: (parent: CriteriaMinimum | null) => void;
   handleGenreRenameAction: (genre: CriteriaMinimum) => void;
@@ -47,9 +51,16 @@ export type GenreTreeViewProps<T extends TrackBase> = {
   /** When true, hides the "Add root" button and suppresses per-node
    * create/rename/reparent affordances, for a read-only consumer. Defaults to false. */
   readOnly?: boolean;
+  /** Parses the selected genre's detail; pass an extended schema to keep consumer-specific fields. */
+  criteriaDetailedSchema?: z.ZodType<D, z.ZodTypeDef, unknown>;
+  /** Consumer-specific rows rendered in the info panel after Summary. */
+  renderGenreDetailExtras?: (detail: D) => ReactNode;
 };
 
-export function GenreTreeView<T extends TrackBase>({
+export function GenreTreeView<
+  T extends TrackBase,
+  D extends CriteriaDetailed = CriteriaDetailed,
+>({
   scope,
   handleGenreCreationAction,
   handleGenreRenameAction,
@@ -58,7 +69,9 @@ export function GenreTreeView<T extends TrackBase>({
   additionalActions,
   viewMode: controlledViewMode,
   readOnly = false,
-}: GenreTreeViewProps<T>) {
+  criteriaDetailedSchema,
+  renderGenreDetailExtras,
+}: GenreTreeViewProps<T, D>) {
   const [reparentingGenreUuid, setReparentingGenreUuid] = useState<
     string | null
   >(null);
@@ -75,7 +88,12 @@ export function GenreTreeView<T extends TrackBase>({
   // criteria id used to fetch detail) — passed to the tree renderers for visual highlighting.
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const { data: selectedGenreDetail, isPending: isLoadingSelectedGenre } =
-    useFetchGenreDetail(selectedGenreUuid, scope, getBackendBaseUrl);
+    useFetchGenreDetail<D>(
+      selectedGenreUuid,
+      scope,
+      getBackendBaseUrl,
+      criteriaDetailedSchema,
+    );
 
   const { data: genrePlaylists, isPending: isListingGenrePlaylists } =
     useListFullGenrePlaylists(scope, getBackendBaseUrl);
@@ -117,7 +135,7 @@ export function GenreTreeView<T extends TrackBase>({
         return null;
       }
 
-      const { summary, essentialTracks, tracksArchivedCount } = selectedGenreDetail;
+      const { summary, essentialTracks } = selectedGenreDetail;
 
       return (
         <>
@@ -125,14 +143,7 @@ export function GenreTreeView<T extends TrackBase>({
             <span className="gtv-info-panel-children-title">Summary</span>
             <p>{summary ?? "—"}</p>
           </div>
-          {tracksArchivedCount > 0 && (
-            <div className="gtv-info-panel-children">
-              <span className="gtv-info-panel-children-title">
-                Archived tracks
-              </span>
-              <p>{tracksArchivedCount}</p>
-            </div>
-          )}
+          {renderGenreDetailExtras?.(selectedGenreDetail)}
           <div className="gtv-info-panel-children">
             <span className="gtv-info-panel-children-title">
               Essential tracks
@@ -155,6 +166,7 @@ export function GenreTreeView<T extends TrackBase>({
       selectedGenreUuid,
       selectedGenreDetail,
       isLoadingSelectedGenre,
+      renderGenreDetailExtras,
     ],
   );
 

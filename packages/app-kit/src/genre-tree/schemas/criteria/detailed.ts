@@ -19,7 +19,6 @@ export const CriteriaDetailedSchema = UuidResourceSchema.extend({
   tracks: z.array(TrackMinimumSchema),
   essentialTracks: z.array(TrackMinimumSchema),
   tracksCount: z.number(),
-  tracksArchivedCount: z.number(),
   updatedOn: z.string().datetime().nullable(),
 });
 
