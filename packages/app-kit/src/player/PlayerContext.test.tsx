@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, render, act, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from "vitest";
+import { renderHook, render, act, waitFor, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 
 const { loadYoutubeIframeApiMock } = vi.hoisted(() => ({ loadYoutubeIframeApiMock: vi.fn() }));
@@ -71,7 +71,7 @@ function wrapper({ children }: { children: ReactNode }) {
   return <PlayerProvider loadTrack={loadTrackMock}>{children}</PlayerProvider>;
 }
 
-let loadTrackMock: ReturnType<typeof vi.fn>;
+let loadTrackMock: Mock<(trackId: string) => Promise<PlayerTrack>>;
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -81,7 +81,7 @@ beforeEach(() => {
 
   vi.stubGlobal("Audio", FakeAudio);
 
-  ytPlayerCtor = vi.fn().mockImplementation((_container: HTMLElement, config: FakeYTPlayer["config"]) => {
+  ytPlayerCtor = vi.fn().mockImplementation(function (_container: HTMLElement, config: FakeYTPlayer["config"]) {
     const player: FakeYTPlayer = {
       config,
       loadVideoById: vi.fn(),
@@ -124,6 +124,17 @@ describe("PlayerProvider", () => {
 
     expect(loadYoutubeIframeApiMock).toHaveBeenCalledTimes(1);
     expect(loadTrackMock).not.toHaveBeenCalled();
+  });
+
+  it("swallows a prewarm failure of the YouTube IFrame API", async () => {
+    loadYoutubeIframeApiMock.mockRejectedValueOnce(new Error("blocked"));
+
+    const { result } = renderHook(() => usePlayer(), { wrapper });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(result.current.playState).toBe(PlayStates.STOPPED);
   });
 });
 
@@ -344,6 +355,14 @@ describe("PlayerProvider - loadTrackForPlayer (youtube)", () => {
     await waitFor(() => {
       expect(ytPlayers[0].playVideo).toHaveBeenCalled();
     });
+
+    await waitFor(() => expect(ytPlayers[0].getCurrentTime).toHaveBeenCalled());
+    expect(ytPlayers[0].getDuration).toHaveBeenCalled();
+
+    act(() => {
+      ytPlayers[0].config.events.onStateChange({ data: 1 });
+    });
+    expect(screen.getByTestId("playState").textContent).toBe(PlayStates.PLAYING);
   });
 
   it("reuses an existing player via loadVideoById on subsequent loads", async () => {
@@ -508,6 +527,8 @@ describe("PlayerProvider - handlePlayPauseAction", () => {
 
     act(() => {
       result.current.setPlayState(PlayStates.LOADING);
+    });
+    act(() => {
       result.current.handlePlayPauseAction();
     });
 
@@ -588,6 +609,7 @@ describe("PlayerProvider - handleNextTrack / handlePreviousTrack", () => {
 
     act(() => {
       result.current.handleNextTrack(trackList, makeAudioTrack("missing"), onTrackChange);
+      result.current.handlePreviousTrack(trackList, makeAudioTrack("missing"), onTrackChange);
     });
 
     expect(onTrackChange).not.toHaveBeenCalled();

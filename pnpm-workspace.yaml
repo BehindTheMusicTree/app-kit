@@ -15,3 +15,6 @@ minimumReleaseAge: 0
 
 onlyBuiltDependencies:
   - esbuild
+
+overrides:
+  sharp: ^0.35.4

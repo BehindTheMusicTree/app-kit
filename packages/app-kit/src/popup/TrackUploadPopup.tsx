@@ -82,18 +82,6 @@ function TrackUploadContent({
   }, [files, genre]);
 
   const startNextUpload = useCallback(() => {
-    if (currentUploadIndex >= uploadItems.length) {
-      setAllComplete(true);
-      const successfulUploads = uploadItems
-        .filter((item) => item.status === "success" && item.uploadedTrack)
-        .map((item) => item.uploadedTrack);
-
-      if (onComplete && successfulUploads.length > 0) {
-        onComplete(successfulUploads);
-      }
-      return;
-    }
-
     const currentItem = uploadItems[currentUploadIndex];
     if (currentItem.status !== "pending") {
       setCurrentUploadIndex((prev) => prev + 1);
@@ -152,7 +140,7 @@ function TrackUploadContent({
         setIsUploading(false);
         setCurrentUploadIndex((prev) => prev + 1);
       });
-  }, [uploadItems, currentUploadIndex, onProcessFile, onComplete, uploadTimeoutMs]);
+  }, [uploadItems, currentUploadIndex, onProcessFile, uploadTimeoutMs]);
 
   useEffect(() => {
     return () => {

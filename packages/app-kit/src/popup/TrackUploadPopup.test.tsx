@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
 import TrackUploadPopup from "./TrackUploadPopup";
+
+type Settle = { resolve: (value: unknown) => void; reject: (reason: Error) => void };
 
 function makeFile(name: string, content = "x") {
   return new File([content], name, { type: "audio/mpeg" });
@@ -123,6 +125,75 @@ describe("TrackUploadPopup", () => {
 
     await waitFor(() => expect(screen.getByText(/0 successful, 1 failed/)).toBeInTheDocument());
     expect(onComplete).toHaveBeenCalledWith([]);
+  });
+
+  it("advances the in-flight item's progress bar while leaving the others untouched", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+    const onProcessFile = vi.fn(() => new Promise(() => {}));
+
+    render(
+      <TrackUploadPopup
+        files={[makeFile("a.mp3"), makeFile("b.mp3")]}
+        onProcessFile={onProcessFile}
+        uploadTimeoutMs={100000}
+      />,
+    );
+    await waitFor(() => expect(screen.getByText("Uploading...")).toBeInTheDocument());
+
+    await act(async () => {
+      vi.advanceTimersByTime(800);
+    });
+
+    expect((document.querySelector(".transition-all") as HTMLElement).style.width).toBe("4%");
+    expect(screen.getByText("Pending")).toBeInTheDocument();
+    vi.useRealTimers();
+    vi.mocked(Math.random).mockRestore();
+  });
+
+  it.each([
+    ["resolves", (settle: Settle) => settle.resolve({ id: "late" })],
+    ["rejects", (settle: Settle) => settle.reject(new Error("late"))],
+  ])("tolerates an upload that %s after the popup unmounted", async (_label, finish) => {
+    let settle!: Settle;
+    const onProcessFile = vi.fn(() => new Promise((resolve, reject) => (settle = { resolve, reject })));
+
+    const { unmount } = render(
+      <TrackUploadPopup files={[makeFile("a.mp3")]} onProcessFile={onProcessFile} uploadTimeoutMs={100000} />,
+    );
+    await waitFor(() => expect(onProcessFile).toHaveBeenCalled());
+
+    unmount();
+    finish(settle);
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(onProcessFile).toHaveBeenCalledTimes(1);
+  });
+
+  it("skips an item that is no longer pending when files change mid-upload", async () => {
+    let settle!: Settle;
+    const onProcessFile = vi
+      .fn()
+      .mockResolvedValueOnce({ id: "a" })
+      .mockImplementationOnce(() => new Promise((resolve, reject) => (settle = { resolve, reject })))
+      .mockResolvedValue({ id: "next" });
+    const first = [makeFile("a.mp3"), makeFile("b.mp3"), makeFile("c.mp3")];
+    const second = [makeFile("d.mp3"), makeFile("e.mp3"), makeFile("f.mp3")];
+
+    const { rerender } = render(
+      <TrackUploadPopup files={first} onProcessFile={onProcessFile} uploadTimeoutMs={100000} />,
+    );
+    await waitFor(() => expect(onProcessFile).toHaveBeenCalledTimes(2));
+
+    rerender(<TrackUploadPopup files={second} onProcessFile={onProcessFile} uploadTimeoutMs={100000} />);
+    await act(async () => {
+      settle.resolve({ id: "b" });
+    });
+
+    await waitFor(() => expect(onProcessFile).toHaveBeenCalledTimes(3));
+    expect(onProcessFile).toHaveBeenLastCalledWith(second[2], null);
   });
 
   it("does not reset upload state when re-rendered with the same files", async () => {

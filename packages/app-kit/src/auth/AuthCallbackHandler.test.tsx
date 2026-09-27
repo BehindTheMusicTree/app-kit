@@ -181,6 +181,9 @@ describe("AuthCallbackHandler", () => {
           expect.any(Function),
         ),
       );
+
+      onSpotifyAuthError.mock.calls[0][1]();
+      expect(routerReplaceMock).toHaveBeenCalledWith("/");
     });
 
     it("exchanges the code and redirects on success", async () => {
@@ -190,6 +193,14 @@ describe("AuthCallbackHandler", () => {
 
       await waitFor(() => expect(routerReplaceMock).toHaveBeenCalledWith("/library"));
       expect(authToBackendFromSpotifyCode).toHaveBeenCalledWith("xyz");
+    });
+
+    it("falls back to / when the exchange returns no redirect url", async () => {
+      setUrl("/auth/spotify/callback", "?code=xyz");
+      const authToBackendFromSpotifyCode = vi.fn().mockResolvedValue(null);
+      render(<AuthCallbackHandler {...makeProps({ authToBackendFromSpotifyCode })} />);
+
+      await waitFor(() => expect(routerReplaceMock).toHaveBeenCalledWith("/"));
     });
 
     it("requires reauth and clears the stored redirect on invalid/expired code", async () => {
@@ -265,6 +276,9 @@ describe("AuthCallbackHandler", () => {
       await waitFor(() =>
         expect(onSpotifyAuthError).toHaveBeenCalledWith("An unexpected error occurred.", expect.any(Function)),
       );
+
+      onSpotifyAuthError.mock.calls[0][1]();
+      expect(routerReplaceMock).toHaveBeenCalledWith("/");
     });
 
     it("uses a custom spotifyCallbackPathname", async () => {
