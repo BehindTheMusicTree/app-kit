@@ -195,8 +195,12 @@ export function GenreTreeView<
     [genrePlaylists?.results],
   );
 
+  // "outline" is GenreTreeOutline, which shares pop-core's "Mainstream Pop" requirement.
+  const needsPopCore = (mode: GenreTreeViewMode) =>
+    mode === "pop-core" || mode === "outline";
+
   useEffect(() => {
-    if (!isLoading && internalViewMode === "pop-core" && !canShowPopCore) {
+    if (!isLoading && needsPopCore(internalViewMode) && !canShowPopCore) {
       setInternalViewMode("wheel");
     }
   }, [isLoading, canShowPopCore, internalViewMode]);
@@ -208,7 +212,7 @@ export function GenreTreeView<
   // late to prevent the crash.
   const selectedViewMode = controlledViewMode ?? internalViewMode;
   const viewMode =
-    selectedViewMode === "pop-core" && !canShowPopCore
+    needsPopCore(selectedViewMode) && !canShowPopCore
       ? "wheel"
       : selectedViewMode;
 
@@ -247,6 +251,19 @@ export function GenreTreeView<
           >
             Stacked
           </Button>
+          <Button
+            variant={viewMode === "outline" ? "default" : "outline"}
+            size="sm"
+            disabled={!canShowPopCore}
+            title={
+              canShowPopCore
+                ? undefined
+                : "This genre tree has no 'Mainstream Pop' root yet"
+            }
+            onClick={() => setInternalViewMode("outline")}
+          >
+            Outline
+          </Button>
         </div>
       )}
       {!isLoading && (
@@ -255,7 +272,7 @@ export function GenreTreeView<
           role="group"
           aria-label="Tree display options"
         >
-          {viewMode !== "stacked" && (
+          {viewMode !== "stacked" && viewMode !== "outline" && (
             <Button
               variant={allowWheelRotation ? "default" : "outline"}
               size="sm"
@@ -352,6 +369,27 @@ export function GenreTreeView<
                   showToolbar={showToolbar}
                 />
               </GenreTreeWheelHandoff>
+            </div>
+          ) : viewMode === "outline" ? (
+            <div className="tree-container flex-1 min-h-0 w-full overflow-y-auto relative">
+              <GenrePlaylistTreeWheelRadialPopCore
+                outline
+                scope={scope}
+                // Non-null assertion: same canShowPopCore invariant as the pop-core branch above.
+                genrePlaylists={genrePlaylists!.results as CriteriaPlaylistSimple[]}
+                reparentingGenreUuid={reparentingGenreUuid}
+                setReparentingGenreUuid={setReparentingGenreUuid}
+                handleGenreCreationAction={handleGenreCreationAction}
+                handleGenreRenameAction={handleGenreRenameAction}
+                getBackendBaseUrl={getBackendBaseUrl}
+                criteriaPlaylistDetailedSchema={criteriaPlaylistDetailedSchema}
+                additionalActions={additionalActions}
+                onNodeClick={handleNodeClick}
+                renderExtraDetails={renderExtraDetails}
+                selectedNodeId={selectedNodeId}
+                readOnly={readOnly}
+                showToolbar={showToolbar}
+              />
             </div>
           ) : (
             <div className="tree-container flex flex-col gap-4 text-gray-800 w-full overflow-x-auto overflow-y-auto relative">

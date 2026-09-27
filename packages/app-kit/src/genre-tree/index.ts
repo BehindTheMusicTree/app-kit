@@ -8,6 +8,7 @@ export {
   GenreTreeSkeleton,
   GenreTreeWheelSkeleton,
   GenreTreeViewSkeleton,
+  GenreTreeOutlineSkeleton,
 } from "@behindthemusictree/genre-tree-view";
 export type {
   GenreTreeAction,

@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- **genre-tree**: `GenreTreeView` supports `viewMode="outline"` (genre-tree-view 1.8.0 `GenreTreeOutline`, nested-list text view) with an "Outline" toggle; like Pop/Core it needs a "Mainstream Pop" root and falls back to Wheel otherwise. `GenreTreeOutlineSkeleton` is re-exported.
+
 ## [6.0.0] - 2026-09-27
 
 ### Changed
