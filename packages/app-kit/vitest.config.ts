@@ -8,7 +8,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
-      all: true,
+      include: ["src/**"],
       exclude: [...coverageConfigDefaults.exclude, "scripts/**"],
       thresholds: {
         lines: 99,

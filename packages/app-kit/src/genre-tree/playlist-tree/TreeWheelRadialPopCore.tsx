@@ -3,6 +3,7 @@
 import { useCallback, useMemo, type ReactNode } from "react";
 import { z } from "zod";
 import {
+  GenreTreeOutline,
   GenreTreeWheelRadialPopCore,
   type GenreTreeAction,
   type GenreTreeNode,
@@ -33,6 +34,7 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   criteriaPlaylistDetailedSchema: z.ZodType<CriteriaPlaylistDetailedLike<T>>;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   onNodeClick?: (node: GenreTreeNode) => void;
+  onNodeHover?: (node: GenreTreeNode) => void;
   renderExtraDetails?: (node: GenreTreeNode) => ReactNode;
   /** Overrides which node is shown highlighted, e.g. from a search selection. */
   selectedNodeId?: string | null;
@@ -43,6 +45,9 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   allowWheelRotation?: boolean;
   /** When false, suppresses the hover toolbar on every node. Defaults to true. */
   showToolbar?: boolean;
+  /** When true, renders the same forest as GenreTreeOutline's nested-list text view instead of
+   * the radial wheel. Defaults to false. */
+  outline?: boolean;
 };
 
 export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>({
@@ -57,11 +62,13 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
   criteriaPlaylistDetailedSchema,
   additionalActions,
   onNodeClick,
+  onNodeHover,
   renderExtraDetails,
   selectedNodeId,
   readOnly = false,
   allowWheelRotation,
   showToolbar,
+  outline = false,
 }: GenrePlaylistTreeWheelRadialPopCoreProps<T>) {
   const { isPlaying, setIsPlaying } = usePlayer();
   const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList<T>();
@@ -163,25 +170,29 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     [updateGenreMutate, setReparentingGenreUuid],
   );
 
-  return (
-    <GenreTreeWheelRadialPopCore
-      className={className}
-      nodes={nodes}
-      playingNodeId={playingNodeId}
-      playState={isPlaying ? "playing" : "paused"}
-      reparentingNodeId={reparentingGenreUuid}
-      onPlayPause={handlePlayPause}
-      onAddChild={readOnly ? undefined : handleAddChild}
-      onRenameRequest={readOnly ? undefined : handleRenameRequest}
-      onDeleteRequest={readOnly ? undefined : handleDeleteRequest}
-      onReparentRequest={readOnly ? undefined : handleReparentRequest}
-      onReparent={readOnly ? undefined : handleReparent}
-      additionalActions={additionalActions}
-      onNodeClick={onNodeClick}
-      renderExtraDetails={renderExtraDetails}
-      selectedNodeId={selectedNodeId}
-      allowWheelRotation={allowWheelRotation}
-      showToolbar={showToolbar}
-    />
+  const treeProps = {
+    className,
+    nodes,
+    playingNodeId,
+    playState: isPlaying ? ("playing" as const) : ("paused" as const),
+    reparentingNodeId: reparentingGenreUuid,
+    onPlayPause: handlePlayPause,
+    onAddChild: readOnly ? undefined : handleAddChild,
+    onRenameRequest: readOnly ? undefined : handleRenameRequest,
+    onDeleteRequest: readOnly ? undefined : handleDeleteRequest,
+    onReparentRequest: readOnly ? undefined : handleReparentRequest,
+    onReparent: readOnly ? undefined : handleReparent,
+    additionalActions,
+    onNodeClick,
+    onNodeHover,
+    renderExtraDetails,
+    selectedNodeId,
+    showToolbar,
+  };
+
+  return outline ? (
+    <GenreTreeOutline {...treeProps} />
+  ) : (
+    <GenreTreeWheelRadialPopCore {...treeProps} allowWheelRotation={allowWheelRotation} />
   );
 }

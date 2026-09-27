@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback, type ReactNode } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef, type ReactNode } from "react";
 import { z } from "zod";
 import { Plus } from "lucide-react";
 import { IconTextButton, Button } from "@behindthemusictree/ui";
@@ -18,11 +18,12 @@ import type {
 import { CriteriaPlaylistSimple } from "./schemas/criteria-playlist/simple";
 import { CriteriaMinimum } from "./schemas/criteria/minimum";
 import { TrackBase } from "./schemas/track/base";
-import { CriteriaDetailed } from "./schemas/criteria/detailed";
+import { CriteriaOverview } from "./schemas/criteria/overview";
 import { CriteriaPlaylistDetailedLike } from "./models/TrackListOrigin";
 import { Scope } from "../transport/lib/scope";
 import { useListFullGenrePlaylists } from "./useGenrePlaylist";
-import { useFetchGenreDetail } from "./useGenre";
+import { usePrefetchGenreOverview } from "./useGenre";
+import { GenreDetailExtras } from "./GenreDetailExtras";
 import {
   getGenrePlaylistsGroupedByRoot,
   hasMainstreamPopRoot,
@@ -36,9 +37,11 @@ import GenreSearch from "./GenreSearch";
 
 export type { GenreTreeViewMode } from "@behindthemusictree/genre-tree-view";
 
+const HOVER_PREFETCH_DELAY_MS = 100;
+
 export type GenreTreeViewProps<
   T extends TrackBase,
-  D extends CriteriaDetailed = CriteriaDetailed,
+  O extends CriteriaOverview = CriteriaOverview,
 > = {
   scope: Scope;
   handleGenreCreationAction: (parent: CriteriaMinimum | null) => void;
@@ -51,15 +54,15 @@ export type GenreTreeViewProps<
   /** When true, hides the "Add root" button and suppresses per-node
    * create/rename/reparent affordances, for a read-only consumer. Defaults to false. */
   readOnly?: boolean;
-  /** Parses the selected genre's detail; pass an extended schema to keep consumer-specific fields. */
-  criteriaDetailedSchema?: z.ZodType<D, z.ZodTypeDef, unknown>;
+  /** Parses the selected genre's overview; pass an extended schema to keep consumer-specific fields. */
+  criteriaOverviewSchema?: z.ZodType<O, z.ZodTypeDef, unknown>;
   /** Consumer-specific rows rendered in the info panel after Summary. */
-  renderGenreDetailExtras?: (detail: D) => ReactNode;
+  renderGenreDetailExtras?: (overview: O) => ReactNode;
 };
 
 export function GenreTreeView<
   T extends TrackBase,
-  D extends CriteriaDetailed = CriteriaDetailed,
+  O extends CriteriaOverview = CriteriaOverview,
 >({
   scope,
   handleGenreCreationAction,
@@ -69,9 +72,9 @@ export function GenreTreeView<
   additionalActions,
   viewMode: controlledViewMode,
   readOnly = false,
-  criteriaDetailedSchema,
+  criteriaOverviewSchema,
   renderGenreDetailExtras,
-}: GenreTreeViewProps<T, D>) {
+}: GenreTreeViewProps<T, O>) {
   const [reparentingGenreUuid, setReparentingGenreUuid] = useState<
     string | null
   >(null);
@@ -81,93 +84,72 @@ export function GenreTreeView<
   const [allowWheelRotation, setAllowWheelRotation] = useState(false);
   const [showToolbar, setShowToolbar] = useState(false);
 
-  const [selectedGenreUuid, setSelectedGenreUuid] = useState<string | null>(
-    null,
-  );
-  // The genre-playlist/node id (GenreTreeNode.id), distinct from selectedGenreUuid (the
-  // criteria id used to fetch detail) — passed to the tree renderers for visual highlighting.
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const { data: selectedGenreDetail, isPending: isLoadingSelectedGenre } =
-    useFetchGenreDetail<D>(
-      selectedGenreUuid,
-      scope,
-      getBackendBaseUrl,
-      criteriaDetailedSchema,
-    );
 
   const { data: genrePlaylists, isPending: isListingGenrePlaylists } =
     useListFullGenrePlaylists(scope, getBackendBaseUrl);
 
-  const handleNodeClick = useCallback(
-    (node: GenreTreeNode) => {
-      const genrePlaylist = (
-        genrePlaylists?.results as CriteriaPlaylistSimple[] | undefined
-      )?.find((gp) => gp.uuid === node.id);
-      setSelectedGenreUuid(genrePlaylist?.criteria?.uuid ?? null);
-      setSelectedNodeId(node.id);
-    },
+  const genreUuidByNodeId = useMemo(
+    () =>
+      new Map(
+        ((genrePlaylists?.results ?? []) as CriteriaPlaylistSimple[]).map(
+          (gp) => [gp.uuid, gp.criteria?.uuid ?? null],
+        ),
+      ),
     [genrePlaylists?.results],
   );
 
+  const handleNodeClick = useCallback((node: GenreTreeNode) => {
+    setSelectedNodeId(node.id);
+  }, []);
+
   const handleGenreSearchSelect = useCallback(
     (genrePlaylist: CriteriaPlaylistSimple) => {
-      setSelectedGenreUuid(genrePlaylist.criteria?.uuid ?? null);
       setSelectedNodeId(genrePlaylist.uuid);
     },
     [],
   );
 
-  // The info panel can also navigate via its own ancestor/child chips, which don't go through
-  // onNodeClick — so the node passed here isn't guaranteed to be the one selectedGenreDetail was
-  // fetched for. Render nothing rather than stale essential tracks when they've diverged.
+  // Stable across selections: the overview fetch lives in GenreDetailExtras, so its loading
+  // states re-render only the info panel, never the tree.
   const renderExtraDetails = useCallback(
     (node: GenreTreeNode): ReactNode => {
-      const genrePlaylist = (
-        genrePlaylists?.results as CriteriaPlaylistSimple[] | undefined
-      )?.find((gp) => gp.uuid === node.id);
-      const nodeGenreUuid = genrePlaylist?.criteria?.uuid ?? null;
-      if (
-        nodeGenreUuid === null ||
-        nodeGenreUuid !== selectedGenreUuid ||
-        isLoadingSelectedGenre ||
-        !selectedGenreDetail
-      ) {
-        return null;
-      }
-
-      const { summary, essentialTracks } = selectedGenreDetail;
-
+      const genreUuid = genreUuidByNodeId.get(node.id);
+      if (!genreUuid) return null;
       return (
-        <>
-          <div className="gtv-info-panel-children">
-            <span className="gtv-info-panel-children-title">Summary</span>
-            <p>{summary ?? "—"}</p>
-          </div>
-          {renderGenreDetailExtras?.(selectedGenreDetail)}
-          <div className="gtv-info-panel-children">
-            <span className="gtv-info-panel-children-title">
-              Essential tracks
-            </span>
-            {essentialTracks.length > 0 ? (
-              <ul className="list-disc pl-5">
-                {essentialTracks.map((track) => (
-                  <li key={track.uuid}>{track.title}</li>
-                ))}
-              </ul>
-            ) : (
-              <p>—</p>
-            )}
-          </div>
-        </>
+        <GenreDetailExtras<O>
+          key={genreUuid}
+          genreUuid={genreUuid}
+          scope={scope}
+          getBackendBaseUrl={getBackendBaseUrl}
+          criteriaOverviewSchema={criteriaOverviewSchema}
+          renderGenreDetailExtras={renderGenreDetailExtras}
+        />
       );
     },
-    [
-      genrePlaylists?.results,
-      selectedGenreUuid,
-      selectedGenreDetail,
-      isLoadingSelectedGenre,
-      renderGenreDetailExtras,
-    ],
+    [genreUuidByNodeId, scope, getBackendBaseUrl, criteriaOverviewSchema, renderGenreDetailExtras],
+  );
+
+  const prefetchGenreOverview = usePrefetchGenreOverview<O>(
+    scope,
+    getBackendBaseUrl,
+    criteriaOverviewSchema,
+  );
+  const hoverPrefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (hoverPrefetchTimerRef.current) clearTimeout(hoverPrefetchTimerRef.current);
+  }, []);
+  // Prefetch only after the pointer rests briefly, so sweeping across rows doesn't fire a request per row.
+  const handleNodeHover = useCallback(
+    (node: GenreTreeNode) => {
+      if (hoverPrefetchTimerRef.current) clearTimeout(hoverPrefetchTimerRef.current);
+      const genreUuid = genreUuidByNodeId.get(node.id);
+      if (!genreUuid) return;
+      hoverPrefetchTimerRef.current = setTimeout(() => {
+        void prefetchGenreOverview(genreUuid);
+      }, HOVER_PREFETCH_DELAY_MS);
+    },
+    [genreUuidByNodeId, prefetchGenreOverview],
   );
 
   const groupedGenrePlaylistsByRoot = useMemo(
@@ -195,8 +177,12 @@ export function GenreTreeView<
     [genrePlaylists?.results],
   );
 
+  // "outline" is GenreTreeOutline, which shares pop-core's "Mainstream Pop" requirement.
+  const needsPopCore = (mode: GenreTreeViewMode) =>
+    mode === "pop-core" || mode === "outline";
+
   useEffect(() => {
-    if (!isLoading && internalViewMode === "pop-core" && !canShowPopCore) {
+    if (!isLoading && needsPopCore(internalViewMode) && !canShowPopCore) {
       setInternalViewMode("wheel");
     }
   }, [isLoading, canShowPopCore, internalViewMode]);
@@ -208,7 +194,7 @@ export function GenreTreeView<
   // late to prevent the crash.
   const selectedViewMode = controlledViewMode ?? internalViewMode;
   const viewMode =
-    selectedViewMode === "pop-core" && !canShowPopCore
+    needsPopCore(selectedViewMode) && !canShowPopCore
       ? "wheel"
       : selectedViewMode;
 
@@ -247,6 +233,19 @@ export function GenreTreeView<
           >
             Stacked
           </Button>
+          <Button
+            variant={viewMode === "outline" ? "default" : "outline"}
+            size="sm"
+            disabled={!canShowPopCore}
+            title={
+              canShowPopCore
+                ? undefined
+                : "This genre tree has no 'Mainstream Pop' root yet"
+            }
+            onClick={() => setInternalViewMode("outline")}
+          >
+            Outline
+          </Button>
         </div>
       )}
       {!isLoading && (
@@ -255,7 +254,7 @@ export function GenreTreeView<
           role="group"
           aria-label="Tree display options"
         >
-          {viewMode !== "stacked" && (
+          {viewMode !== "stacked" && viewMode !== "outline" && (
             <Button
               variant={allowWheelRotation ? "default" : "outline"}
               size="sm"
@@ -316,6 +315,7 @@ export function GenreTreeView<
                   }
                   additionalActions={additionalActions}
                   onNodeClick={handleNodeClick}
+                  onNodeHover={handleNodeHover}
                   renderExtraDetails={renderExtraDetails}
                   selectedNodeId={selectedNodeId}
                   readOnly={readOnly}
@@ -345,6 +345,7 @@ export function GenreTreeView<
                   }
                   additionalActions={additionalActions}
                   onNodeClick={handleNodeClick}
+                  onNodeHover={handleNodeHover}
                   renderExtraDetails={renderExtraDetails}
                   selectedNodeId={selectedNodeId}
                   readOnly={readOnly}
@@ -352,6 +353,28 @@ export function GenreTreeView<
                   showToolbar={showToolbar}
                 />
               </GenreTreeWheelHandoff>
+            </div>
+          ) : viewMode === "outline" ? (
+            <div className="tree-container flex-1 min-h-0 w-full overflow-y-auto relative">
+              <GenrePlaylistTreeWheelRadialPopCore
+                outline
+                scope={scope}
+                // Non-null assertion: same canShowPopCore invariant as the pop-core branch above.
+                genrePlaylists={genrePlaylists!.results as CriteriaPlaylistSimple[]}
+                reparentingGenreUuid={reparentingGenreUuid}
+                setReparentingGenreUuid={setReparentingGenreUuid}
+                handleGenreCreationAction={handleGenreCreationAction}
+                handleGenreRenameAction={handleGenreRenameAction}
+                getBackendBaseUrl={getBackendBaseUrl}
+                criteriaPlaylistDetailedSchema={criteriaPlaylistDetailedSchema}
+                additionalActions={additionalActions}
+                onNodeClick={handleNodeClick}
+                onNodeHover={handleNodeHover}
+                renderExtraDetails={renderExtraDetails}
+                selectedNodeId={selectedNodeId}
+                readOnly={readOnly}
+                showToolbar={showToolbar}
+              />
             </div>
           ) : (
             <div className="tree-container flex flex-col gap-4 text-gray-800 w-full overflow-x-auto overflow-y-auto relative">
@@ -377,6 +400,7 @@ export function GenreTreeView<
                           }
                           additionalActions={additionalActions}
                           onNodeClick={handleNodeClick}
+                          onNodeHover={handleNodeHover}
                           renderExtraDetails={renderExtraDetails}
                           selectedNodeId={selectedNodeId}
                           readOnly={readOnly}

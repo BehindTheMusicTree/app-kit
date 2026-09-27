@@ -54,6 +54,8 @@ function TrackUploadContent({
   const lastReportedRef = useRef<{ successful: number; total: number; isUploading: boolean } | null>(null);
   const lastFilesKeyRef = useRef<string | null>(null);
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const runRef = useRef(0);
+  const completedRunRef = useRef<number | null>(null);
 
   useEffect(() => {
     const successfulCount = uploadItems.filter((item) => item.status === "success").length;
@@ -68,6 +70,11 @@ function TrackUploadContent({
     const filesKey = `${files.length}-${files.map((f) => `${f.name}:${f.size}`).join("|")}-${genre ?? ""}`;
     if (lastFilesKeyRef.current === filesKey) return;
     lastFilesKeyRef.current = filesKey;
+    runRef.current += 1;
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
 
     const items: TrackUploadItem[] = files.map((file, index) => ({
       id: `upload-${index}-${file.name}`,
@@ -78,28 +85,12 @@ function TrackUploadContent({
     }));
     setUploadItems(items);
     setCurrentUploadIndex(0);
+    setIsUploading(false);
     setAllComplete(false);
   }, [files, genre]);
 
   const startNextUpload = useCallback(() => {
-    if (currentUploadIndex >= uploadItems.length) {
-      setAllComplete(true);
-      const successfulUploads = uploadItems
-        .filter((item) => item.status === "success" && item.uploadedTrack)
-        .map((item) => item.uploadedTrack);
-
-      if (onComplete && successfulUploads.length > 0) {
-        onComplete(successfulUploads);
-      }
-      return;
-    }
-
     const currentItem = uploadItems[currentUploadIndex];
-    if (currentItem.status !== "pending") {
-      setCurrentUploadIndex((prev) => prev + 1);
-      return;
-    }
-
     setIsUploading(true);
 
     // Update status to uploading
@@ -119,6 +110,7 @@ function TrackUploadContent({
     }, 800);
 
     const uploadingIndex = currentUploadIndex;
+    const run = runRef.current;
 
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(
@@ -129,6 +121,7 @@ function TrackUploadContent({
 
     Promise.race([onProcessFile(currentItem.file, currentItem.genre), timeoutPromise])
       .then((data) => {
+        if (run !== runRef.current) return;
         if (progressIntervalRef.current) {
           clearInterval(progressIntervalRef.current);
           progressIntervalRef.current = null;
@@ -142,6 +135,7 @@ function TrackUploadContent({
         setCurrentUploadIndex((prev) => prev + 1);
       })
       .catch((error) => {
+        if (run !== runRef.current) return;
         if (progressIntervalRef.current) {
           clearInterval(progressIntervalRef.current);
           progressIntervalRef.current = null;
@@ -152,7 +146,7 @@ function TrackUploadContent({
         setIsUploading(false);
         setCurrentUploadIndex((prev) => prev + 1);
       });
-  }, [uploadItems, currentUploadIndex, onProcessFile, onComplete, uploadTimeoutMs]);
+  }, [uploadItems, currentUploadIndex, onProcessFile, uploadTimeoutMs]);
 
   useEffect(() => {
     return () => {
@@ -174,6 +168,9 @@ function TrackUploadContent({
   // Check if all uploads are complete
   useEffect(() => {
     if (uploadItems.length > 0 && currentUploadIndex >= uploadItems.length && !isUploading) {
+      // React may re-run queued updaters, handing back an equal-but-new uploadItems after completion
+      if (completedRunRef.current === runRef.current) return;
+      completedRunRef.current = runRef.current;
       setAllComplete(true);
       const successfulTracks = uploadItems
         .filter((item) => item.status === "success" && item.uploadedTrack)
