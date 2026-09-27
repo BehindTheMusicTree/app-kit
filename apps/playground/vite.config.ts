@@ -14,6 +14,14 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    resolve: {
+      alias: [
+        {
+          find: /^@behindthemusictree\/app-kit$/,
+          replacement: path.resolve(dirname, "../../packages/app-kit/src/index.ts"),
+        },
+      ],
+    },
     define: {
       "import.meta.env.VITE_VERCEL_ENV": JSON.stringify(process.env.VERCEL_ENV ?? ""),
       "import.meta.env.VITE_APP_KIT_VERSION": JSON.stringify(appKitVersion),

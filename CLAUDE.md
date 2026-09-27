@@ -28,6 +28,8 @@ to be" framing. History belongs in git log and `CHANGELOG.md`, not in reference 
 - `packages/app-kit/tsup.config.ts` — entry map; keep in sync with `src/*/index.ts` and the
   `exports` field in `packages/app-kit/package.json`
 - `apps/playground/` — manual Vite harness for exercising exported components; not published.
+  It aliases `@behindthemusictree/app-kit` to `packages/app-kit/src` in `vite.config.ts`, so
+  the running app never serves a stale `dist/` (type-checking still reads `dist/*.d.ts`).
   Its backend proxy (`/api/grow-prototype-proxy`, `vite.config.ts`) only exists in Vite's dev
   server — the Vercel-hosted PR preview build has no equivalent, so preview builds 404 on that
   path and render with no real genre-tree data
