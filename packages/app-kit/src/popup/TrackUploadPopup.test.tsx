@@ -172,28 +172,37 @@ describe("TrackUploadPopup", () => {
     expect(onProcessFile).toHaveBeenCalledTimes(1);
   });
 
-  it("skips an item that is no longer pending when files change mid-upload", async () => {
+  it.each([
+    ["resolves", (settle: Settle) => settle.resolve({ id: "stale" })],
+    ["rejects", (settle: Settle) => settle.reject(new Error("stale"))],
+  ])("restarts on a new file list and ignores an old upload that %s later", async (_label, finish) => {
     let settle!: Settle;
     const onProcessFile = vi
       .fn()
       .mockResolvedValueOnce({ id: "a" })
       .mockImplementationOnce(() => new Promise((resolve, reject) => (settle = { resolve, reject })))
       .mockResolvedValue({ id: "next" });
+    const onComplete = vi.fn();
     const first = [makeFile("a.mp3"), makeFile("b.mp3"), makeFile("c.mp3")];
     const second = [makeFile("d.mp3"), makeFile("e.mp3"), makeFile("f.mp3")];
 
     const { rerender } = render(
-      <TrackUploadPopup files={first} onProcessFile={onProcessFile} uploadTimeoutMs={100000} />,
+      <TrackUploadPopup files={first} onProcessFile={onProcessFile} onComplete={onComplete} uploadTimeoutMs={100000} />,
     );
     await waitFor(() => expect(onProcessFile).toHaveBeenCalledTimes(2));
 
-    rerender(<TrackUploadPopup files={second} onProcessFile={onProcessFile} uploadTimeoutMs={100000} />);
+    rerender(
+      <TrackUploadPopup files={second} onProcessFile={onProcessFile} onComplete={onComplete} uploadTimeoutMs={100000} />,
+    );
+    await waitFor(() => expect(screen.getByText(/3 successful, 0 failed/)).toBeInTheDocument());
     await act(async () => {
-      settle.resolve({ id: "b" });
+      finish(settle);
     });
 
-    await waitFor(() => expect(onProcessFile).toHaveBeenCalledTimes(3));
-    expect(onProcessFile).toHaveBeenLastCalledWith(second[2], null);
+    expect(onProcessFile.mock.calls.slice(2).map(([file]) => file)).toEqual(second);
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(onComplete).toHaveBeenCalledWith([{ id: "next" }, { id: "next" }, { id: "next" }]);
+    expect(screen.getByText(/3 successful, 0 failed/)).toBeInTheDocument();
   });
 
   it("does not reset upload state when re-rendered with the same files", async () => {

@@ -15,6 +15,10 @@ easy to spot when bumping.
 
 - **genre-tree**: `GenreTreeView` supports `viewMode="outline"` (genre-tree-view 1.8.0 `GenreTreeOutline`, nested-list text view) with an "Outline" toggle; like Pop/Core it needs a "Mainstream Pop" root and falls back to Wheel otherwise. `GenreTreeOutlineSkeleton` is re-exported.
 
+### Fixed
+
+- **popup**: `TrackUploadPopup` restarts cleanly when `files` change mid-upload — the in-flight upload from the previous list no longer marks an item of the new list, skips the first new file, or stops the new progress bar; `onComplete` fires once per file list.
+
 ### Security
 
 - Dev dependencies only (no runtime/consumer impact): `next` 15.5.26, `vitest` + `@vitest/coverage-v8` 4.1, `vite` 7 (app-kit + playground), `sharp` ≥0.35.4 via workspace override — clears the open Dependabot alerts.
