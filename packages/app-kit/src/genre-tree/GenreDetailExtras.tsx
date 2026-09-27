@@ -50,18 +50,20 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
         <p>{summary ?? "—"}</p>
       </div>
       {renderGenreDetailExtras?.(overview)}
-      <div className="gtv-info-panel-children">
-        <span className="gtv-info-panel-children-title">Essential tracks</span>
-        {essentialTracks.length > 0 ? (
-          <ul className="list-disc pl-5">
-            {essentialTracks.map((track) => (
-              <li key={track.uuid}>{track.title}</li>
-            ))}
-          </ul>
-        ) : (
-          <p>—</p>
-        )}
-      </div>
+      {essentialTracks && (
+        <div className="gtv-info-panel-children">
+          <span className="gtv-info-panel-children-title">Essential tracks</span>
+          {essentialTracks.length > 0 ? (
+            <ul className="list-disc pl-5">
+              {essentialTracks.map((track) => (
+                <li key={track.uuid}>{track.title}</li>
+              ))}
+            </ul>
+          ) : (
+            <p>—</p>
+          )}
+        </div>
+      )}
     </>
   );
 }

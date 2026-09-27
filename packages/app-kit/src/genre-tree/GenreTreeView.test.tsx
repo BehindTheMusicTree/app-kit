@@ -650,7 +650,7 @@ describe("GenreTreeView", () => {
     function mockOverview(overviews: Record<string, Record<string, unknown>>) {
       useFetchGenreOverviewMock.mockImplementation((id: string | null) =>
         id !== null && overviews[id]
-          ? { data: { uuid: id, name: "", summary: null, essentialTracks: [], ...overviews[id] }, isPending: false }
+          ? { data: { uuid: id, name: "", summary: null, ...overviews[id] }, isPending: false }
           : { data: undefined, isPending: false },
       );
     }
@@ -706,6 +706,17 @@ describe("GenreTreeView", () => {
       expect(screen.getByText("Extra for Jazz")).toBeInTheDocument();
     });
 
+    it("omits the essential tracks section when the scope's overview has none (e.g. hear)", () => {
+      mockOverview({ c1: { summary: "Loud guitars" } });
+      renderView();
+      selectGenre();
+
+      renderExtraDetailsFor("gp1");
+
+      expect(screen.getByText("Loud guitars")).toBeInTheDocument();
+      expect(screen.queryByText("Essential tracks")).not.toBeInTheDocument();
+    });
+
     it("renders the genre summary", () => {
       mockOverview({ c1: { summary: "Improvised music with swung rhythms." } });
       renderView();
@@ -747,7 +758,7 @@ describe("GenreTreeView", () => {
     });
 
     it("renders blank summary and essential tracks placeholders when there is no summary, and no essential tracks", () => {
-      mockOverview({ c1: {} });
+      mockOverview({ c1: { essentialTracks: [] } });
       renderView();
       selectGenre();
 

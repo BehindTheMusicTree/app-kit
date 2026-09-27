@@ -13,11 +13,15 @@ easy to spot when bumping.
 
 ### Breaking
 
-- **genre-tree**: `GenreTreeView`'s `criteriaDetailedSchema` prop is replaced by `criteriaOverviewSchema` (extends `CriteriaOverviewSchema`), and `renderGenreDetailExtras` now receives the genre overview (`uuid`, `name`, `summary`, `essentialTracks` plus consumer fields) instead of `CriteriaDetailed`. The detail panel now reads `GET {me/}genres/{uuid}/overview/`, so the backend must serve that endpoint.
+- **genre-tree**: `GenreTreeView`'s `criteriaDetailedSchema` prop is replaced by `criteriaOverviewSchema` (extends `CriteriaOverviewSchema`), and `renderGenreDetailExtras` now receives the genre overview (`uuid`, `name`, `summary`, optional `essentialTracks` (reference scope only; the section is hidden when absent) plus consumer fields) instead of `CriteriaDetailed`. The detail panel now reads `GET {me/}genres/{uuid}/overview/`, so the backend must serve that endpoint.
 
 ### Added
 
-- **genre-tree**: `useFetchGenreOverview`, `usePrefetchGenreOverview`, `CriteriaOverviewSchema`, and `genreEndpoints.*.overview` / `genreQueryKeys.*.overview`. The tree wrappers pass `onNodeHover` through (needs genre-tree-view 1.9.0).
+- **genre-tree**: `useFetchGenreOverview`, `usePrefetchGenreOverview`, `CriteriaOverviewSchema`, and `genreEndpoints.*.overview` / `genreQueryKeys.*.overview`. The tree wrappers pass `onNodeHover` through.
+
+### Changed
+
+- **genre-tree**: `@behindthemusictree/genre-tree-view` 1.9.0: Outline selection re-renders only the two affected rows plus the panel, and collapsed branches render lazily.
 
 - **genre-tree**: `GenreTreeView` supports `viewMode="outline"` (genre-tree-view 1.8.0 `GenreTreeOutline`, nested-list text view) with an "Outline" toggle; like Pop/Core it needs a "Mainstream Pop" root and falls back to Wheel otherwise. `GenreTreeOutlineSkeleton` is re-exported.
 
