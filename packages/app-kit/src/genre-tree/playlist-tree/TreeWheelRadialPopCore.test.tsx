@@ -4,12 +4,14 @@ import { z } from "zod";
 
 const {
   genreTreeWheelRadialPopCorePropsMock,
+  genreTreeOutlinePropsMock,
   usePlayerMock,
   useTrackListMock,
   updateGenreMutateMock,
   fetchGenrePlaylistDetailedMutateMock,
 } = vi.hoisted(() => ({
   genreTreeWheelRadialPopCorePropsMock: vi.fn(),
+  genreTreeOutlinePropsMock: vi.fn(),
   usePlayerMock: vi.fn(),
   useTrackListMock: vi.fn(),
   updateGenreMutateMock: vi.fn(),
@@ -19,6 +21,10 @@ const {
 vi.mock("@behindthemusictree/genre-tree-view", () => ({
   GenreTreeWheelRadialPopCore: (props: unknown) => {
     genreTreeWheelRadialPopCorePropsMock(props);
+    return null;
+  },
+  GenreTreeOutline: (props: unknown) => {
+    genreTreeOutlinePropsMock(props);
     return null;
   },
 }));
@@ -85,6 +91,26 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
     vi.clearAllMocks();
     usePlayerMock.mockReturnValue({ isPlaying: false, setIsPlaying: vi.fn() });
     useTrackListMock.mockReturnValue({ trackList: null, playNewTrackListFromGenrePlaylist: vi.fn() });
+  });
+
+  describe("outline", () => {
+    it("renders GenreTreeWheelRadialPopCore, not GenreTreeOutline, by default", () => {
+      renderWheelRadialPopCore();
+
+      expect(genreTreeWheelRadialPopCorePropsMock).toHaveBeenCalled();
+      expect(genreTreeOutlinePropsMock).not.toHaveBeenCalled();
+    });
+
+    it("renders GenreTreeOutline instead of GenreTreeWheelRadialPopCore when outline is true", () => {
+      renderWheelRadialPopCore({ outline: true, allowWheelRotation: false });
+
+      expect(genreTreeOutlinePropsMock).toHaveBeenCalled();
+      expect(genreTreeWheelRadialPopCorePropsMock).not.toHaveBeenCalled();
+      // GenreTreeOutline has no allowWheelRotation prop — it must not leak through.
+      expect(genreTreeOutlinePropsMock.mock.calls[0][0]).not.toHaveProperty(
+        "allowWheelRotation",
+      );
+    });
   });
 
   it("maps genre playlists to tree nodes including side", () => {
