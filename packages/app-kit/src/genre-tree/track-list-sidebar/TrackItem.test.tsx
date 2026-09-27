@@ -29,7 +29,6 @@ function makeTrack(overrides: Record<string, unknown> = {}) {
     createdOn: "2024-01-01T00:00:00.000Z",
     playlists: [],
     playCount: 0,
-    archived: false,
     ...overrides,
   };
 }

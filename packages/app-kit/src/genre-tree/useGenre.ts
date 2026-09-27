@@ -48,7 +48,13 @@ export function useFetchGenre(scope: Scope, getBackendBaseUrl: () => string) {
   );
 }
 
-export function useFetchGenreDetail(id: string | null, scope: Scope, getBackendBaseUrl: () => string) {
+export function useFetchGenreDetail<D extends CriteriaDetailed = CriteriaDetailed>(
+  id: string | null,
+  scope: Scope,
+  getBackendBaseUrl: () => string,
+  // The default only applies when D is left at its CriteriaDetailed default.
+  schema: z.ZodType<D, z.ZodTypeDef, unknown> = CriteriaDetailedSchema as unknown as z.ZodType<D, z.ZodTypeDef, unknown>,
+) {
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
   const queryKeys = scope === "reference" ? genreQueryKeys.reference : genreQueryKeys.me;
   const endpoints = scope === "reference" ? genreEndpoints.reference : genreEndpoints.me;
@@ -56,7 +62,7 @@ export function useFetchGenreDetail(id: string | null, scope: Scope, getBackendB
   return useQueryWithParse({
     queryKey: queryKeys.detail(id ?? ""),
     queryFn: () => fetch(endpoints.detail(id as string), true, scope === "me"),
-    schema: CriteriaDetailedSchema,
+    schema,
     context: "useFetchGenreDetail",
     enabled: id !== null,
   });
