@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [7.0.0] - 2026-09-27
+
 ### Breaking
 
 - **genre-tree**: `GenreTreeView`'s `criteriaDetailedSchema` prop is replaced by `criteriaOverviewSchema` (extends `CriteriaOverviewSchema`), and `renderGenreDetailExtras` now receives the genre overview (`uuid`, `name`, `summary`, optional `essentialTracks` (reference scope only; the section is hidden when absent) plus consumer fields) instead of `CriteriaDetailed`. The detail panel now reads `GET {me/}genres/{uuid}/overview/`, so the backend must serve that endpoint.
