@@ -343,6 +343,41 @@ describe("GenreTreeView", () => {
     });
   });
 
+  describe("outline view", () => {
+    it("switches to the outline view and hides the Rotation toggle", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: {
+          results: [
+            makePlaylist({
+              uuid: "gp1",
+              name: "Mainstream Pop",
+              root: { uuid: "gp1" },
+              parent: null,
+            }),
+          ],
+        },
+        isPending: false,
+      });
+      renderView();
+
+      fireEvent.click(screen.getByRole("button", { name: "Outline" }));
+
+      expect(treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0].outline).toBe(true);
+      expect(screen.queryByRole("button", { name: "Rotation" })).not.toBeInTheDocument();
+    });
+
+    it("falls back to the wheel view for a controlled outline mode with no 'Mainstream Pop' root", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: { results: [makePlaylist({ root: { uuid: "gp1" } })] },
+        isPending: false,
+      });
+      renderView({ viewMode: "outline" });
+
+      expect(treeWheelRadialPopCorePropsMock).not.toHaveBeenCalled();
+      expect(treeWheelPropsMock).toHaveBeenCalled();
+    });
+  });
+
   describe("pop-core view", () => {
     it("disables the Pop/Core toggle with an explanatory title when there is no 'Mainstream Pop' root", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
