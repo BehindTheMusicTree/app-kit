@@ -15,6 +15,10 @@ easy to spot when bumping.
 
 - **genre-tree**: `GenreTreeView` supports `viewMode="outline"` (genre-tree-view 1.8.0 `GenreTreeOutline`, nested-list text view) with an "Outline" toggle; like Pop/Core it needs a "Mainstream Pop" root and falls back to Wheel otherwise. `GenreTreeOutlineSkeleton` is re-exported.
 
+### Security
+
+- Dev dependencies only (no runtime/consumer impact): `next` 15.5.26, `vitest` + `@vitest/coverage-v8` 4.1, `vite` 7 (app-kit + playground), `sharp` ≥0.35.4 via workspace override — clears the open Dependabot alerts.
+
 ## [6.0.0] - 2026-09-27
 
 ### Changed
