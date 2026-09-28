@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useMemo, type ReactNode } from "react";
-import { z } from "zod";
 import {
   GenreTreeOutline,
   GenreTreeWheelRadialPopCore,
@@ -11,12 +10,10 @@ import {
 
 import { useTrackList } from "../TrackListContext";
 import { useUpdateGenre } from "../useGenre";
-import { useFetchGenrePlaylistDetailed } from "../useGenrePlaylist";
 import { usePlayer } from "../../player/PlayerContext";
 
 import { TrackListOriginType } from "../models/TrackListOriginType";
 import { TrackBase } from "../schemas/track/base";
-import { CriteriaPlaylistDetailedLike } from "../models/TrackListOrigin";
 
 import { CriteriaPlaylistSimple } from "../schemas/criteria-playlist/simple";
 import { CriteriaMinimum } from "../schemas/criteria/minimum";
@@ -31,7 +28,6 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   handleGenreCreationAction: (parent: CriteriaMinimum | null) => void;
   handleGenreRenameAction: (genre: CriteriaMinimum) => void;
   getBackendBaseUrl: () => string;
-  criteriaPlaylistDetailedSchema: z.ZodType<CriteriaPlaylistDetailedLike<T>>;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   onNodeClick?: (node: GenreTreeNode) => void;
   onNodeHover?: (node: GenreTreeNode) => void;
@@ -59,7 +55,6 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
   handleGenreCreationAction,
   handleGenreRenameAction,
   getBackendBaseUrl,
-  criteriaPlaylistDetailedSchema,
   additionalActions,
   onNodeClick,
   onNodeHover,
@@ -73,11 +68,6 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
   const { isPlaying, setIsPlaying } = usePlayer();
   const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList<T>();
   const { mutate: updateGenreMutate } = useUpdateGenre(scope, getBackendBaseUrl);
-  const { mutate: fetchGenrePlaylistDetailed } = useFetchGenrePlaylistDetailed(
-    scope,
-    getBackendBaseUrl,
-    criteriaPlaylistDetailedSchema,
-  );
 
   const nodes: GenreTreeNode[] = useMemo(
     () =>
@@ -113,16 +103,11 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
         return;
       }
 
-      fetchGenrePlaylistDetailed(genrePlaylist.uuid, {
-        onSuccess: (detailedPlaylist) => {
-          playNewTrackListFromGenrePlaylist(detailedPlaylist, scope);
-        },
-        onError: (error) => {
-          console.error("Failed to fetch detailed genre playlist:", error);
-        },
+      playNewTrackListFromGenrePlaylist(genrePlaylist, scope).catch((error) => {
+        console.error("Failed to load genre playlist tracks:", error);
       });
     },
-    [genrePlaylists, trackList, isPlaying, setIsPlaying, playNewTrackListFromGenrePlaylist, fetchGenrePlaylistDetailed, scope],
+    [genrePlaylists, trackList, isPlaying, setIsPlaying, playNewTrackListFromGenrePlaylist, scope],
   );
 
   const handleAddChild = useCallback(

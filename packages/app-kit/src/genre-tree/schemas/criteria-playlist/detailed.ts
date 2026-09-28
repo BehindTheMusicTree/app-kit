@@ -1,14 +1,11 @@
 import { z } from "zod";
 
 import { UuidResourceSchema } from "../uuid-resource";
-import { makeTrackPlaylistRelSchema } from "../track-playlist-rel/without-playlist";
 import { CriteriaMinimumSchema } from "../criteria/minimum";
 import { CriteriaPlaylistMinimumSchema } from "./minimum";
 
-// Fields shared by every criteria playlist shape, regardless of track kind. `trackPlaylistRelations`
-// is deliberately excluded here — it's added by `makeCriteriaPlaylistDetailedSchema` below, since
-// its track shape varies per consumer.
-export const CriteriaPlaylistDetailedBaseSchema = UuidResourceSchema.extend({
+// Metadata only — tracks are paged separately via `genrePlaylistEndpoints.*.tracks(uuid)`.
+export const CriteriaPlaylistDetailedSchema = UuidResourceSchema.extend({
   name: z.string(),
   tracksCount: z.number(),
   durationInSec: z.number().min(0).nullable().optional(),
@@ -21,11 +18,4 @@ export const CriteriaPlaylistDetailedBaseSchema = UuidResourceSchema.extend({
   updatedOn: z.string().nullable(),
 });
 
-export const makeCriteriaPlaylistDetailedSchema = <T extends z.ZodTypeAny>(trackSchema: T) =>
-  CriteriaPlaylistDetailedBaseSchema.extend({
-    trackPlaylistRelations: z.array(makeTrackPlaylistRelSchema(trackSchema)),
-  });
-
-export type CriteriaPlaylistDetailed<T extends z.ZodTypeAny> = z.infer<
-  ReturnType<typeof makeCriteriaPlaylistDetailedSchema<T>>
->;
+export type CriteriaPlaylistDetailed = z.infer<typeof CriteriaPlaylistDetailedSchema>;

@@ -3,7 +3,6 @@ import { z } from "zod";
 import { ArtistMinimumSchema } from "../artist-minimum";
 import { AlbumMinimumSchema } from "../album-minimum";
 import { CriteriaMinimumSchema } from "../criteria/minimum";
-import { CriteriaPlaylistMinimumSchema } from "../criteria-playlist/minimum";
 import { UuidResourceSchema } from "../uuid-resource";
 
 // Fields shared by every track kind (uploaded, youtube). Playback-specific fields
@@ -16,7 +15,6 @@ export const TrackBaseSchema = UuidResourceSchema.extend({
   genre: CriteriaMinimumSchema,
   rating: z.number().min(0).max(10).nullable().optional(),
   language: z.string().nullable().optional(),
-  playlists: z.array(CriteriaPlaylistMinimumSchema),
   playCount: z.number().min(0),
   createdOn: z.string().datetime(),
   updatedOn: z.string().datetime().nullable().optional(),

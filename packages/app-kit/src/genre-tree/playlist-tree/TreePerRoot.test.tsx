@@ -1,6 +1,5 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { z } from "zod";
 
 import GenrePlaylistTreePerRoot from "./TreePerRoot";
 import { TrackListOriginType } from "../models/TrackListOriginType";
@@ -12,7 +11,6 @@ const {
   setIsPlaying,
   playNewTrackListFromGenrePlaylist,
   updateGenreMutate,
-  fetchGenrePlaylistDetailed,
   handleGenreCreationAction,
   handleGenreRenameAction,
   showPopup,
@@ -20,7 +18,6 @@ const {
   setIsPlaying: vi.fn(),
   playNewTrackListFromGenrePlaylist: vi.fn(),
   updateGenreMutate: vi.fn(),
-  fetchGenrePlaylistDetailed: vi.fn(),
   handleGenreCreationAction: vi.fn(),
   handleGenreRenameAction: vi.fn(),
   showPopup: vi.fn(),
@@ -41,10 +38,6 @@ vi.mock("../TrackListContext", () => ({
 
 vi.mock("../useGenre", () => ({
   useUpdateGenre: () => ({ mutate: updateGenreMutate }),
-}));
-
-vi.mock("../useGenrePlaylist", () => ({
-  useFetchGenrePlaylistDetailed: () => ({ mutate: fetchGenrePlaylistDetailed }),
 }));
 
 vi.mock("../../player/PlayerContext", () => ({
@@ -90,7 +83,6 @@ function renderTree(nodes: CriteriaPlaylistSimple[] = [genrePlaylist]) {
       handleGenreCreationAction={handleGenreCreationAction}
       handleGenreRenameAction={handleGenreRenameAction}
       getBackendBaseUrl={() => "https://api.example.com"}
-      criteriaPlaylistDetailedSchema={z.any()}
     />,
   );
 }
@@ -112,34 +104,29 @@ describe("GenrePlaylistTreePerRoot", () => {
       capturedProps!.onPlayPause!(playlistUuid);
 
       expect(setIsPlaying).toHaveBeenCalledWith(false);
-      expect(fetchGenrePlaylistDetailed).not.toHaveBeenCalled();
+      expect(playNewTrackListFromGenrePlaylist).not.toHaveBeenCalled();
     });
 
-    it("fetches and plays the genre playlist when it isn't already playing", () => {
+    it("plays the genre playlist when it isn't already playing", () => {
+      playNewTrackListFromGenrePlaylist.mockResolvedValue(undefined);
       renderTree();
 
       capturedProps!.onPlayPause!(playlistUuid);
 
-      expect(fetchGenrePlaylistDetailed).toHaveBeenCalledWith(
-        playlistUuid,
-        expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) }),
-      );
-
-      const detailedPlaylist = { uuid: playlistUuid };
-      const { onSuccess } = fetchGenrePlaylistDetailed.mock.calls[0][1];
-      onSuccess(detailedPlaylist);
-      expect(playNewTrackListFromGenrePlaylist).toHaveBeenCalledWith(detailedPlaylist, "reference");
+      expect(playNewTrackListFromGenrePlaylist).toHaveBeenCalledWith(genrePlaylist, "reference");
     });
 
-    it("logs an error when fetching the detailed genre playlist fails", () => {
+    it("logs an error and shows a popup when loading the tracks fails", async () => {
       const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const error = new Error("network error");
+      playNewTrackListFromGenrePlaylist.mockRejectedValueOnce(error);
       renderTree();
 
       capturedProps!.onPlayPause!(playlistUuid);
 
-      const { onError } = fetchGenrePlaylistDetailed.mock.calls[0][1];
-      onError(new Error("network error"));
-      expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to fetch detailed genre playlist:", expect.any(Error));
+      await vi.waitFor(() =>
+        expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to load genre playlist tracks:", error),
+      );
       expect(showPopup).toHaveBeenCalledWith(
         expect.objectContaining({ props: expect.objectContaining({ errorCode: ErrorCode.CLIENT_UNKNOWN }) }),
       );
@@ -152,7 +139,7 @@ describe("GenrePlaylistTreePerRoot", () => {
 
       capturedProps!.onPlayPause!(playlistUuid);
 
-      expect(fetchGenrePlaylistDetailed).not.toHaveBeenCalled();
+      expect(playNewTrackListFromGenrePlaylist).not.toHaveBeenCalled();
     });
 
     it("does nothing when the node has no matching genre-playlist", () => {
@@ -160,7 +147,7 @@ describe("GenrePlaylistTreePerRoot", () => {
 
       capturedProps!.onPlayPause!("unknown-node-id");
 
-      expect(fetchGenrePlaylistDetailed).not.toHaveBeenCalled();
+      expect(playNewTrackListFromGenrePlaylist).not.toHaveBeenCalled();
       expect(setIsPlaying).not.toHaveBeenCalled();
     });
   });
@@ -238,7 +225,6 @@ describe("GenrePlaylistTreePerRoot", () => {
           handleGenreCreationAction={handleGenreCreationAction}
           handleGenreRenameAction={handleGenreRenameAction}
           getBackendBaseUrl={() => "https://api.example.com"}
-          criteriaPlaylistDetailedSchema={z.any()}
           readOnly
         />,
       );
@@ -274,7 +260,6 @@ describe("GenrePlaylistTreePerRoot", () => {
           handleGenreCreationAction={handleGenreCreationAction}
           handleGenreRenameAction={handleGenreRenameAction}
           getBackendBaseUrl={() => "https://api.example.com"}
-          criteriaPlaylistDetailedSchema={z.any()}
         />,
       );
 
@@ -296,7 +281,6 @@ describe("GenrePlaylistTreePerRoot", () => {
           handleGenreCreationAction={handleGenreCreationAction}
           handleGenreRenameAction={handleGenreRenameAction}
           getBackendBaseUrl={() => "https://api.example.com"}
-          criteriaPlaylistDetailedSchema={z.any()}
         />,
       );
 

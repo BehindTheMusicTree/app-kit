@@ -64,11 +64,8 @@ vi.mock("@behindthemusictree/genre-tree-view", async (importOriginal) => ({
 }));
 
 import { GenreTreeView, type GenreTreeViewProps } from "./GenreTreeView";
-import type { TrackBase } from "./schemas/track/base";
-import type { CriteriaPlaylistDetailedLike } from "./models/TrackListOrigin";
 
 const getBackendBaseUrl = () => "https://backend.example.com";
-const schema = z.custom<CriteriaPlaylistDetailedLike<TrackBase>>();
 
 // requestAnimationFrame isn't driven by fake timers in jsdom — stub it onto a manually-flushable
 // queue so tests can step through GenreTreeWheelHandoff's two nested rAFs deterministically.
@@ -102,13 +99,12 @@ function makePlaylist(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function renderView(overrides: Partial<GenreTreeViewProps<TrackBase>> = {}) {
-  const props: GenreTreeViewProps<TrackBase> = {
+function renderView(overrides: Partial<GenreTreeViewProps> = {}) {
+  const props: GenreTreeViewProps = {
     scope: "me",
     handleGenreCreationAction: vi.fn(),
     handleGenreRenameAction: vi.fn(),
     getBackendBaseUrl,
-    criteriaPlaylistDetailedSchema: schema,
     ...overrides,
   };
   render(<GenreTreeView {...props} />);
@@ -487,12 +483,11 @@ describe("GenreTreeView", () => {
         data: undefined,
         isPending: true,
       });
-      const props: GenreTreeViewProps<TrackBase> = {
+      const props: GenreTreeViewProps = {
         scope: "me",
         handleGenreCreationAction: vi.fn(),
         handleGenreRenameAction: vi.fn(),
         getBackendBaseUrl,
-        criteriaPlaylistDetailedSchema: schema,
       };
       const { rerender } = render(<GenreTreeView {...props} />);
 
@@ -533,12 +528,11 @@ describe("GenreTreeView", () => {
         data: undefined,
         isPending: true,
       });
-      const props: GenreTreeViewProps<TrackBase> = {
+      const props: GenreTreeViewProps = {
         scope: "me",
         handleGenreCreationAction: vi.fn(),
         handleGenreRenameAction: vi.fn(),
         getBackendBaseUrl,
-        criteriaPlaylistDetailedSchema: schema,
       };
       const { rerender } = render(<GenreTreeView {...props} />);
 

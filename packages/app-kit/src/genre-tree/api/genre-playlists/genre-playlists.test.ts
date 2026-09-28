@@ -10,6 +10,7 @@ describe("genrePlaylistEndpoints", () => {
   it("builds 'me' scope URLs with the 'me/' prefix", () => {
     expect(genrePlaylistEndpoints.me.list()).toBe("me/genre-playlists/");
     expect(genrePlaylistEndpoints.me.detail(uuid)).toBe(`me/genre-playlists/${uuid}/`);
+    expect(genrePlaylistEndpoints.me.tracks(uuid)).toBe(`me/genre-playlists/${uuid}/tracks/`);
     expect(genrePlaylistEndpoints.me.create()).toBe("me/genre-playlists/");
     expect(genrePlaylistEndpoints.me.update(uuid)).toBe(`me/genre-playlists/${uuid}/`);
     expect(genrePlaylistEndpoints.me.delete(uuid)).toBe(`me/genre-playlists/${uuid}/`);
@@ -18,6 +19,7 @@ describe("genrePlaylistEndpoints", () => {
   it("builds 'reference' scope URLs with no prefix", () => {
     expect(genrePlaylistEndpoints.reference.list()).toBe("genre-playlists/");
     expect(genrePlaylistEndpoints.reference.detail(uuid)).toBe(`genre-playlists/${uuid}/`);
+    expect(genrePlaylistEndpoints.reference.tracks(uuid)).toBe(`genre-playlists/${uuid}/tracks/`);
   });
 });
 

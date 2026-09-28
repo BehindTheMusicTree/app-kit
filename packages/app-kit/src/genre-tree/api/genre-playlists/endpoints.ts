@@ -7,6 +7,7 @@
 const makeGenrePlaylistEndpoints = (prefix: string) => ({
   list: () => `${prefix}genre-playlists/`,
   detail: (uuid: string) => `${prefix}genre-playlists/${uuid}/`,
+  tracks: (uuid: string) => `${prefix}genre-playlists/${uuid}/tracks/`,
   create: () => `${prefix}genre-playlists/`,
   update: (uuid: string) => `${prefix}genre-playlists/${uuid}/`,
   delete: (uuid: string) => `${prefix}genre-playlists/${uuid}/`,

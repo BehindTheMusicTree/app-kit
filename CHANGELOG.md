@@ -11,6 +11,22 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [8.0.0] - 2026-09-29
+
+### Breaking
+
+- **genre-tree**: playing a genre playlist now pages its tracks from `GET {me/}genre-playlists/{uuid}/tracks/` (100 per page) instead of fetching the playlist detail, so the backend must serve that endpoint. `playNewTrackListFromGenrePlaylist(genrePlaylist, scope)` takes the tree's list item and returns a Promise.
+- **genre-tree**: `GenreTreeView` drops the `criteriaPlaylistDetailedSchema` prop and its track generic; tracks are parsed with `TrackListProvider`'s `schema`.
+- **genre-tree**: `CriteriaPlaylistDetailedSchema` is metadata-only (no `trackPlaylistRelations`). `makeCriteriaPlaylistDetailedSchema`, `CriteriaPlaylistDetailedLike` and `useFetchGenrePlaylistDetailed` are removed.
+- **genre-tree**: `TrackBaseSchema` no longer has `playlists`.
+- **genre-tree**: `TrackListSidebar` uses `IntersectionObserver` when the list has more pages; consumer tests rendering it under jsdom must stub it.
+
+### Added
+
+- **genre-tree**: `TrackList` carries `total` and `nextPage`; `useTrackList().loadMore()` appends the next page, and the provider loads it automatically when the selected track is within 10 of the end.
+- **genre-tree**: `TrackListSidebar` shows the playlist's total track count and loads more tracks when scrolled to the bottom.
+- **genre-tree**: `genrePlaylistEndpoints.tracks(uuid)` and `makeTrackPlaylistRelPageSchema(trackSchema)`.
+
 ## [7.0.2] - 2026-09-28
 
 ### Fixed

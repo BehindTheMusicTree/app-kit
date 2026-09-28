@@ -1,9 +1,8 @@
 "use client";
 
 import { z } from "zod";
-import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useFetchWrapper } from "../transport/useFetchWrapper";
-import { parseWithLog } from "../transport/lib/parse-with-log";
 import { useQueryWithParse } from "../transport/lib/use-query-with-parse";
 import { useSession } from "../auth/SessionContext";
 
@@ -115,27 +114,6 @@ export const useFetchGenrePlaylist = <S extends z.ZodTypeAny>(
     schema: criteriaPlaylistDetailedSchema,
     context: "useFetchGenrePlaylist",
     enabled: !!uuid && sessionRestored && !!session?.accessToken,
-  });
-};
-
-export const useFetchGenrePlaylistDetailed = <S extends z.ZodTypeAny>(
-  scope: Scope,
-  getBackendBaseUrl: () => string,
-  criteriaPlaylistDetailedSchema: S,
-) => {
-  const { fetch } = useFetchWrapper(getBackendBaseUrl);
-
-  return useMutation<z.infer<S>, Error, string>({
-    mutationFn: async (uuid: string) => {
-      const endpoint =
-        scope === "reference" ? genrePlaylistEndpoints.reference.detail(uuid) : genrePlaylistEndpoints.me.detail(uuid);
-      const response = await fetch(endpoint, true, scope === "me");
-      return parseWithLog(
-        criteriaPlaylistDetailedSchema,
-        response,
-        "useFetchGenrePlaylistDetailed",
-      ) as z.infer<S>;
-    },
   });
 };
 
