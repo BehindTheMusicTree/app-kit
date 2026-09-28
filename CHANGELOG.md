@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [8.0.0] - 2026-09-29
+
 ### Breaking
 
 - **genre-tree**: playing a genre playlist now pages its tracks from `GET {me/}genre-playlists/{uuid}/tracks/` (100 per page) instead of fetching the playlist detail, so the backend must serve that endpoint. `playNewTrackListFromGenrePlaylist(genrePlaylist, scope)` takes the tree's list item and returns a Promise.
