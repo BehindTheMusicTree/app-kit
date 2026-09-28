@@ -289,8 +289,8 @@ export function GenreTreeView<
   );
 
   return (
-    <div className="mt-4 flex flex-col h-full">
-      <div className="actions-container flex justify-start">
+    <div className="relative flex flex-col h-full">
+      <div className="actions-container absolute left-3 top-3 z-30 flex justify-start">
         <div className="flex justify-start">{actions}</div>
       </div>
       <div className="content-container flex-1 min-h-0 flex flex-row gap-4">
