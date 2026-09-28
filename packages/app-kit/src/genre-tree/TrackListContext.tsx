@@ -161,6 +161,7 @@ export function TrackListProvider<T extends TrackBase>({
 
   const playNewTrackListFromTrackUuid = useCallback(
     (track: T, scope: Scope) => {
+      latestPlayRequestRef.current++;
       const origin = new TrackListOriginFromTrack(track, scope);
       const newTrackList = new TrackListFromTrack([track], origin);
 
@@ -175,8 +176,15 @@ export function TrackListProvider<T extends TrackBase>({
   const playNewTrackListFromGenrePlaylist = useCallback(
     async (genrePlaylist: CriteriaPlaylistMinimum, scope: Scope) => {
       const request = ++latestPlayRequestRef.current;
-      const { tracks, total, nextPage } = await fetchTracksPage(genrePlaylist.uuid, scope, 1);
+      let page: Awaited<ReturnType<typeof fetchTracksPage>>;
+      try {
+        page = await fetchTracksPage(genrePlaylist.uuid, scope, 1);
+      } catch (error) {
+        if (request !== latestPlayRequestRef.current) return;
+        throw error;
+      }
       if (request !== latestPlayRequestRef.current) return;
+      const { tracks, total, nextPage } = page;
 
       if (tracks.length === 0) {
         console.warn("No tracks found in genre playlist");
@@ -197,12 +205,15 @@ export function TrackListProvider<T extends TrackBase>({
     const origin = trackList.origin as TrackListOriginFromCriteriaPlaylist;
     if (loadingOriginRef.current === origin) return;
 
+    const requestedPage = trackList.nextPage;
     loadingOriginRef.current = origin;
     try {
-      const page = await fetchTracksPage(origin.uuid, origin.scope, trackList.nextPage);
+      const page = await fetchTracksPage(origin.uuid, origin.scope, requestedPage);
       setTrackList((prev) => {
-        if (prev?.origin !== origin) return prev;
-        // Positions can shift between page fetches if the playlist changes; never list a track twice.
+        // A stale loadMore closure can refetch a page that was already appended.
+        if (prev?.origin !== origin || prev.nextPage !== requestedPage) return prev;
+        // ponytail: page-number paging skips a track when an earlier one is removed server-side
+        // between fetches; switch to cursor paging if that matters. Insertions only duplicate, filtered here.
         const loaded = new Set(prev.tracks.map((track) => track.uuid));
         const newTracks = page.tracks.filter((track) => !loaded.has(track.uuid));
         return new TrackListFromCriteriaPlaylist([...prev.tracks, ...newTracks], origin, page.total, page.nextPage);

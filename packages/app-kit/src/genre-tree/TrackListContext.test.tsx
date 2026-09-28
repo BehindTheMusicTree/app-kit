@@ -204,6 +204,46 @@ describe("TrackListContext", () => {
       expect(loadTrackForPlayerMock).toHaveBeenCalledTimes(1);
     });
 
+    it("drops a response that arrives after a single track started playing", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      const slow = deferred<unknown>();
+      fetchMock.mockReturnValueOnce(slow.promise);
+      let genrePlay!: Promise<void>;
+      act(() => {
+        genrePlay = result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me");
+      });
+
+      const single = makeTrack("x", "X");
+      act(() => {
+        result.current.playNewTrackListFromTrackUuid(single, "me");
+      });
+      await act(async () => {
+        slow.resolve(makePage(makeTracks(1)));
+        await genrePlay;
+      });
+
+      expect(result.current.trackList?.tracks).toEqual([single]);
+      expect(loadTrackForPlayerMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("swallows the failure of a request superseded by a newer play", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      const slow = deferred<unknown>();
+      fetchMock.mockReturnValueOnce(slow.promise);
+      let first!: Promise<void>;
+      act(() => {
+        first = result.current.playNewTrackListFromGenrePlaylist({ uuid: "old", name: "Old" }, "me");
+      });
+
+      await playGenre(result, makePage(makeTracks(1, "new")));
+      await act(async () => {
+        slow.reject(new Error("offline"));
+        await expect(first).resolves.toBeUndefined();
+      });
+
+      expect(result.current.selectedTrack?.uuid).toBe("new0");
+    });
+
     it("rejects when the page fails schema validation", async () => {
       const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
       const { result } = renderHook(() => useTrackList(), { wrapper });
@@ -282,6 +322,24 @@ describe("TrackListContext", () => {
 
       expect(fetchMock).toHaveBeenCalledTimes(2);
       expect(result.current.trackList?.tracks).toHaveLength(21);
+    });
+
+    it("ignores a page refetched by a stale loadMore after it was already appended", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      await playGenre(result, makePage(makeTracks(20), { next: true }));
+      const staleLoadMore = result.current.loadMore;
+      fetchMock.mockResolvedValueOnce(makePage(makeTracks(1, "u"), { page: 2, next: true }));
+      await act(async () => {
+        await result.current.loadMore();
+      });
+
+      fetchMock.mockResolvedValueOnce(makePage(makeTracks(1, "v"), { page: 2 }));
+      await act(async () => {
+        await staleLoadMore();
+      });
+
+      expect(result.current.trackList?.tracks).toHaveLength(21);
+      expect(result.current.trackList?.nextPage).toBe(3);
     });
 
     it("discards a page that lands after a different list started playing", async () => {

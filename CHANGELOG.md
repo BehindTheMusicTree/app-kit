@@ -17,6 +17,7 @@ easy to spot when bumping.
 - **genre-tree**: `GenreTreeView` drops the `criteriaPlaylistDetailedSchema` prop and its track generic; tracks are parsed with `TrackListProvider`'s `schema`.
 - **genre-tree**: `CriteriaPlaylistDetailedSchema` is metadata-only (no `trackPlaylistRelations`). `makeCriteriaPlaylistDetailedSchema`, `CriteriaPlaylistDetailedLike` and `useFetchGenrePlaylistDetailed` are removed.
 - **genre-tree**: `TrackBaseSchema` no longer has `playlists`.
+- **genre-tree**: `TrackListSidebar` uses `IntersectionObserver` when the list has more pages; consumer tests rendering it under jsdom must stub it.
 
 ### Added
 
