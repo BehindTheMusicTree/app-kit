@@ -17,9 +17,7 @@ import type {
 
 import { CriteriaPlaylistSimple } from "./schemas/criteria-playlist/simple";
 import { CriteriaMinimum } from "./schemas/criteria/minimum";
-import { TrackBase } from "./schemas/track/base";
 import { CriteriaOverview } from "./schemas/criteria/overview";
-import { CriteriaPlaylistDetailedLike } from "./models/TrackListOrigin";
 import { Scope } from "../transport/lib/scope";
 import { useListFullGenrePlaylists } from "./useGenrePlaylist";
 import { usePrefetchGenreOverview } from "./useGenre";
@@ -39,15 +37,11 @@ export type { GenreTreeViewMode } from "@behindthemusictree/genre-tree-view";
 
 const HOVER_PREFETCH_DELAY_MS = 100;
 
-export type GenreTreeViewProps<
-  T extends TrackBase,
-  O extends CriteriaOverview = CriteriaOverview,
-> = {
+export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = {
   scope: Scope;
   handleGenreCreationAction: (parent: CriteriaMinimum | null) => void;
   handleGenreRenameAction: (genre: CriteriaMinimum) => void;
   getBackendBaseUrl: () => string;
-  criteriaPlaylistDetailedSchema: z.ZodType<CriteriaPlaylistDetailedLike<T>>;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   /** Controlled view mode. When provided, the internal Stacked/Wheel toggle is not rendered — the consumer owns that UI. */
   viewMode?: GenreTreeViewMode;
@@ -60,21 +54,17 @@ export type GenreTreeViewProps<
   renderGenreDetailExtras?: (overview: O) => ReactNode;
 };
 
-export function GenreTreeView<
-  T extends TrackBase,
-  O extends CriteriaOverview = CriteriaOverview,
->({
+export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   scope,
   handleGenreCreationAction,
   handleGenreRenameAction,
   getBackendBaseUrl,
-  criteriaPlaylistDetailedSchema,
   additionalActions,
   viewMode: controlledViewMode,
   readOnly = false,
   criteriaOverviewSchema,
   renderGenreDetailExtras,
-}: GenreTreeViewProps<T, O>) {
+}: GenreTreeViewProps<O>) {
   const [reparentingGenreUuid, setReparentingGenreUuid] = useState<
     string | null
   >(null);
@@ -310,9 +300,6 @@ export function GenreTreeView<
                   handleGenreCreationAction={handleGenreCreationAction}
                   handleGenreRenameAction={handleGenreRenameAction}
                   getBackendBaseUrl={getBackendBaseUrl}
-                  criteriaPlaylistDetailedSchema={
-                    criteriaPlaylistDetailedSchema
-                  }
                   additionalActions={additionalActions}
                   onNodeClick={handleNodeClick}
                   onNodeHover={handleNodeHover}
@@ -340,9 +327,6 @@ export function GenreTreeView<
                   handleGenreCreationAction={handleGenreCreationAction}
                   handleGenreRenameAction={handleGenreRenameAction}
                   getBackendBaseUrl={getBackendBaseUrl}
-                  criteriaPlaylistDetailedSchema={
-                    criteriaPlaylistDetailedSchema
-                  }
                   additionalActions={additionalActions}
                   onNodeClick={handleNodeClick}
                   onNodeHover={handleNodeHover}
@@ -366,7 +350,6 @@ export function GenreTreeView<
                 handleGenreCreationAction={handleGenreCreationAction}
                 handleGenreRenameAction={handleGenreRenameAction}
                 getBackendBaseUrl={getBackendBaseUrl}
-                criteriaPlaylistDetailedSchema={criteriaPlaylistDetailedSchema}
                 additionalActions={additionalActions}
                 onNodeClick={handleNodeClick}
                 onNodeHover={handleNodeHover}
@@ -395,9 +378,6 @@ export function GenreTreeView<
                           handleGenreCreationAction={handleGenreCreationAction}
                           handleGenreRenameAction={handleGenreRenameAction}
                           getBackendBaseUrl={getBackendBaseUrl}
-                          criteriaPlaylistDetailedSchema={
-                            criteriaPlaylistDetailedSchema
-                          }
                           additionalActions={additionalActions}
                           onNodeClick={handleNodeClick}
                           onNodeHover={handleNodeHover}

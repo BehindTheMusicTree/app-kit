@@ -6,18 +6,9 @@
  * workspace — are kept.
  */
 import { TrackBase } from "../schemas/track/base";
+import { CriteriaPlaylistMinimum } from "../schemas/criteria-playlist/minimum";
 import { Scope } from "../../transport/lib/scope";
 import { TrackListOriginType } from "./TrackListOriginType";
-
-// Structural shape of a parsed criteria-playlist-detailed response, generic over its track type —
-// see `../schemas/criteria-playlist/detailed.ts`'s `makeCriteriaPlaylistDetailedSchema`. Kept
-// minimal (only the fields this model touches) so this module doesn't need to import any one
-// consumer's concrete track schema.
-export interface CriteriaPlaylistDetailedLike<T extends TrackBase> {
-  uuid: string;
-  name: string;
-  trackPlaylistRelations: { track: T; position: number }[];
-}
 
 export default class TrackListOrigin {
   constructor(
@@ -39,8 +30,8 @@ export class TrackListOriginFromTrack<T extends TrackBase = TrackBase> extends T
   }
 }
 
-export class TrackListOriginFromCriteriaPlaylist<T extends TrackBase = TrackBase> extends TrackListOrigin {
-  constructor(public criteriaPlaylist: CriteriaPlaylistDetailedLike<T>, scope: Scope) {
+export class TrackListOriginFromCriteriaPlaylist extends TrackListOrigin {
+  constructor(public criteriaPlaylist: CriteriaPlaylistMinimum, scope: Scope) {
     super(TrackListOriginType.GENRE_PLAYLIST, criteriaPlaylist.name, criteriaPlaylist.uuid, scope);
   }
 }

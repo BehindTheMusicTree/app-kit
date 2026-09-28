@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render } from "@testing-library/react";
-import { z } from "zod";
 
 const {
   genreTreeWheelRadialPopCorePropsMock,
@@ -8,14 +7,14 @@ const {
   usePlayerMock,
   useTrackListMock,
   updateGenreMutateMock,
-  fetchGenrePlaylistDetailedMutateMock,
+  playGenreMock,
 } = vi.hoisted(() => ({
   genreTreeWheelRadialPopCorePropsMock: vi.fn(),
   genreTreeOutlinePropsMock: vi.fn(),
   usePlayerMock: vi.fn(),
   useTrackListMock: vi.fn(),
   updateGenreMutateMock: vi.fn(),
-  fetchGenrePlaylistDetailedMutateMock: vi.fn(),
+  playGenreMock: vi.fn(),
 }));
 
 vi.mock("@behindthemusictree/genre-tree-view", () => ({
@@ -37,10 +36,6 @@ vi.mock("../useGenre", () => ({
   useUpdateGenre: () => ({ mutate: updateGenreMutateMock }),
 }));
 
-vi.mock("../useGenrePlaylist", () => ({
-  useFetchGenrePlaylistDetailed: () => ({ mutate: fetchGenrePlaylistDetailedMutateMock }),
-}));
-
 vi.mock("../../player/PlayerContext", () => ({
   usePlayer: () => usePlayerMock(),
 }));
@@ -49,10 +44,8 @@ import GenrePlaylistTreeWheelRadialPopCore, {
   type GenrePlaylistTreeWheelRadialPopCoreProps,
 } from "./TreeWheelRadialPopCore";
 import type { TrackBase } from "../schemas/track/base";
-import type { CriteriaPlaylistDetailedLike } from "../models/TrackListOrigin";
 
 const getBackendBaseUrl = () => "https://backend.example.com";
-const schema = z.custom<CriteriaPlaylistDetailedLike<TrackBase>>();
 
 function makeGenrePlaylist(overrides: Record<string, unknown> = {}) {
   return {
@@ -79,7 +72,6 @@ function renderWheelRadialPopCore(overrides: Partial<GenrePlaylistTreeWheelRadia
     handleGenreCreationAction: vi.fn(),
     handleGenreRenameAction: vi.fn(),
     getBackendBaseUrl,
-    criteriaPlaylistDetailedSchema: schema,
     ...overrides,
   };
   render(<GenrePlaylistTreeWheelRadialPopCore {...props} />);
@@ -90,7 +82,8 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     usePlayerMock.mockReturnValue({ isPlaying: false, setIsPlaying: vi.fn() });
-    useTrackListMock.mockReturnValue({ trackList: null, playNewTrackListFromGenrePlaylist: vi.fn() });
+    useTrackListMock.mockReturnValue({ trackList: null, playNewTrackListFromGenrePlaylist: playGenreMock });
+    playGenreMock.mockResolvedValue(undefined);
   });
 
   describe("outline", () => {
@@ -172,7 +165,7 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
       genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0].onPlayPause("missing");
 
       expect(setIsPlaying).not.toHaveBeenCalled();
-      expect(fetchGenrePlaylistDetailedMutateMock).not.toHaveBeenCalled();
+      expect(playGenreMock).not.toHaveBeenCalled();
     });
 
     it("toggles isPlaying when the playlist is already the current track list", () => {
@@ -187,7 +180,7 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
       genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0].onPlayPause("gp1");
 
       expect(setIsPlaying).toHaveBeenCalledWith(true);
-      expect(fetchGenrePlaylistDetailedMutateMock).not.toHaveBeenCalled();
+      expect(playGenreMock).not.toHaveBeenCalled();
     });
 
     it("does nothing when the playlist has no tracks", () => {
@@ -195,37 +188,26 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
 
       genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0].onPlayPause("gp1");
 
-      expect(fetchGenrePlaylistDetailedMutateMock).not.toHaveBeenCalled();
+      expect(playGenreMock).not.toHaveBeenCalled();
     });
 
-    it("fetches the detailed playlist and plays it on success", () => {
-      const playNewTrackListFromGenrePlaylist = vi.fn();
-      useTrackListMock.mockReturnValue({ trackList: null, playNewTrackListFromGenrePlaylist });
+    it("plays the node's genre playlist", () => {
       renderWheelRadialPopCore();
 
       genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0].onPlayPause("gp1");
 
-      expect(fetchGenrePlaylistDetailedMutateMock).toHaveBeenCalledWith(
-        "gp1",
-        expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) }),
-      );
-
-      const { onSuccess } = fetchGenrePlaylistDetailedMutateMock.mock.calls[0][1];
-      const detailedPlaylist = { uuid: "gp1", name: "Jazz", trackPlaylistRelations: [] };
-      onSuccess(detailedPlaylist);
-
-      expect(playNewTrackListFromGenrePlaylist).toHaveBeenCalledWith(detailedPlaylist, "me");
+      expect(playGenreMock).toHaveBeenCalledWith(expect.objectContaining({ uuid: "gp1" }), "me");
     });
 
-    it("logs an error via onError", () => {
+    it("logs an error when loading the tracks fails", async () => {
       const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const error = new Error("boom");
+      playGenreMock.mockRejectedValueOnce(error);
       renderWheelRadialPopCore();
 
       genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0].onPlayPause("gp1");
-      const { onError } = fetchGenrePlaylistDetailedMutateMock.mock.calls[0][1];
-      onError(new Error("boom"));
 
-      expect(errorSpy).toHaveBeenCalledWith("Failed to fetch detailed genre playlist:", expect.any(Error));
+      await vi.waitFor(() => expect(errorSpy).toHaveBeenCalledWith("Failed to load genre playlist tracks:", error));
       errorSpy.mockRestore();
     });
   });

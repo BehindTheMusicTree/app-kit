@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 
 const { useTrackListMock, useTrackListSidebarVisibilityMock } = vi.hoisted(() => ({
@@ -24,6 +24,8 @@ function makeTrackList(overrides: Record<string, unknown> = {}) {
       { uuid: "t1", title: "Song One" },
       { uuid: "t2", title: "Song Two" },
     ],
+    total: 2,
+    nextPage: null,
     ...overrides,
   };
 }
@@ -68,6 +70,7 @@ describe("TrackListSidebar", () => {
       trackList: makeTrackList({
         origin: { label: "Single Track", type: TrackListOriginType.TRACK },
         tracks: [{ uuid: "t1", title: "Only Song" }],
+        total: 1,
       }),
     });
 
@@ -75,6 +78,78 @@ describe("TrackListSidebar", () => {
 
     expect(screen.getByText(/track playlist/)).toBeInTheDocument();
     expect(screen.getByText(/1 track /)).toBeInTheDocument();
+  });
+
+  it("shows the playlist total rather than the loaded count", () => {
+    useTrackListMock.mockReturnValue({ trackList: makeTrackList({ total: 250 }) });
+
+    render(<TrackListSidebar />);
+
+    expect(screen.getByText(/250 tracks/)).toBeInTheDocument();
+  });
+
+  describe("load-more sentinel", () => {
+    let observerCallback: IntersectionObserverCallback;
+    const observe = vi.fn();
+    const disconnect = vi.fn();
+
+    beforeEach(() => {
+      vi.stubGlobal(
+        "IntersectionObserver",
+        vi.fn(function (this: unknown, callback: IntersectionObserverCallback) {
+          observerCallback = callback;
+          return { observe, disconnect };
+        }),
+      );
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    const intersect = (isIntersecting: boolean) =>
+      observerCallback([{ isIntersecting } as IntersectionObserverEntry], {} as IntersectionObserver);
+
+    it("does not observe when there is no next page", () => {
+      useTrackListMock.mockReturnValue({ trackList: makeTrackList(), loadMore: vi.fn() });
+
+      render(<TrackListSidebar />);
+
+      expect(observe).not.toHaveBeenCalled();
+    });
+
+    it("calls loadMore when the sentinel scrolls into view, and disconnects on unmount", () => {
+      const loadMore = vi.fn().mockResolvedValue(undefined);
+      useTrackListMock.mockReturnValue({ trackList: makeTrackList({ nextPage: 2 }), loadMore });
+
+      const { unmount } = render(<TrackListSidebar />);
+      expect(observe).toHaveBeenCalledTimes(1);
+
+      intersect(false);
+      expect(loadMore).not.toHaveBeenCalled();
+      intersect(true);
+      expect(loadMore).toHaveBeenCalledTimes(1);
+
+      unmount();
+      expect(disconnect).toHaveBeenCalled();
+    });
+
+    it("logs when loadMore rejects", async () => {
+      const error = new Error("boom");
+      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      useTrackListMock.mockReturnValue({
+        trackList: makeTrackList({ nextPage: 2 }),
+        loadMore: vi.fn().mockRejectedValue(error),
+      });
+
+      render(<TrackListSidebar />);
+      intersect(true);
+
+      await vi.waitFor(() =>
+        expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to load more genre playlist tracks:", error),
+      );
+      consoleErrorSpy.mockRestore();
+    });
   });
 
   it("calls hideTrackListSidebar when the close control is clicked", () => {

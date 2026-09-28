@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useRef } from "react";
 
 import TrackItem from "./TrackItem";
 import { useTrackList } from "../TrackListContext";
@@ -21,7 +21,21 @@ export default function TrackListSidebar<T extends TrackBase>({
   renderActions,
   layout = "fixed",
 }: TrackListSidebarProps<T>) {
-  const { trackList } = useTrackList<T>();
+  const { trackList, loadMore } = useTrackList<T>();
+  const loadMoreSentinelRef = useRef<HTMLLIElement>(null);
+  const hasMore = !!trackList && trackList.nextPage !== null;
+
+  useEffect(() => {
+    const sentinel = loadMoreSentinelRef.current;
+    if (!hasMore || !sentinel) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        loadMore().catch((error) => console.error("Failed to load more genre playlist tracks:", error));
+      }
+    });
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loadMore]);
   const { hideTrackListSidebar } = useTrackListSidebarVisibility();
 
   const positionClasses =
@@ -45,7 +59,7 @@ export default function TrackListSidebar<T extends TrackBase>({
           {trackList && trackList.origin.type === TrackListOriginType.GENRE_PLAYLIST
             ? "• Genre playlist • "
             : "• track playlist • "}
-          {trackList.tracks.length + " track" + (trackList.tracks.length > 1 ? "s •" : " •")}
+          {trackList.total + " track" + (trackList.total > 1 ? "s •" : " •")}
         </div>
         <div
           className="flex-grow flex flex-col items-end justify-center h-full cursor-pointer"
@@ -66,6 +80,7 @@ export default function TrackListSidebar<T extends TrackBase>({
             <TrackItem track={track} position={index + 1} renderDuration={renderDuration} renderActions={renderActions} />
           </li>
         ))}
+        {hasMore && <li ref={loadMoreSentinelRef} aria-hidden="true" className="h-px" />}
       </ul>
     </div>
   ) : null;
