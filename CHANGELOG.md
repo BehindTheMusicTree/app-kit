@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- **genre-tree**: the outline view's list starts below the floating actions row instead of under it.
+
 ## [7.0.1] - 2026-09-28
 
 ### Fixed
