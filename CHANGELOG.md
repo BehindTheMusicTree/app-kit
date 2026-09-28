@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- **genre-tree**: `GenreTreeView`'s actions row (search, Rotation/Toolbar, Add root) now floats over the tree instead of reserving a band above it, so the tree fills its container's full height.
+
 ## [7.0.0] - 2026-09-27
 
 ### Breaking
