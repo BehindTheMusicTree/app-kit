@@ -355,7 +355,7 @@ export function GenreTreeView<
               </GenreTreeWheelHandoff>
             </div>
           ) : viewMode === "outline" ? (
-            <div className="tree-container flex-1 min-h-0 w-full overflow-y-auto relative">
+            <div className="tree-container flex-1 min-h-0 w-full overflow-y-auto relative pt-16">
               <GenrePlaylistTreeWheelRadialPopCore
                 outline
                 scope={scope}
