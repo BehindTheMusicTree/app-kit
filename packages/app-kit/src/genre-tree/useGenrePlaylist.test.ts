@@ -1,14 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
 
-const { fetchMock, useSessionMock, useQueryWithParseMock, useMutationMock, invalidateQueriesMock, parseWithLogMock } =
+const { fetchMock, useSessionMock, useQueryWithParseMock, invalidateQueriesMock } =
   vi.hoisted(() => ({
     fetchMock: vi.fn(),
     useSessionMock: vi.fn(),
     useQueryWithParseMock: vi.fn(),
-    useMutationMock: vi.fn(),
     invalidateQueriesMock: vi.fn(),
-    parseWithLogMock: vi.fn(),
   }));
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
@@ -16,7 +14,6 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
   return {
     ...actual,
     useQueryClient: () => ({ invalidateQueries: invalidateQueriesMock }),
-    useMutation: (options: unknown) => useMutationMock(options),
   };
 });
 
@@ -32,15 +29,10 @@ vi.mock("../transport/lib/use-query-with-parse", () => ({
   useQueryWithParse: (options: unknown) => useQueryWithParseMock(options),
 }));
 
-vi.mock("../transport/lib/parse-with-log", () => ({
-  parseWithLog: (...args: unknown[]) => parseWithLogMock(...args),
-}));
-
 import {
   useListGenrePlaylists,
   useListFullGenrePlaylists,
   useFetchGenrePlaylist,
-  useFetchGenrePlaylistDetailed,
   useInvalidateAllGenrePlaylistQueries,
 } from "./useGenrePlaylist";
 import { CriteriaPlaylistSimpleSchema } from "./schemas/criteria-playlist/simple";
@@ -206,35 +198,6 @@ describe("useGenrePlaylist", () => {
       renderHook(() => useFetchGenrePlaylist("gp1", getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
 
       expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
-    });
-  });
-
-  describe("useFetchGenrePlaylistDetailed", () => {
-    it("mutationFn fetches the reference detail endpoint and parses the response", async () => {
-      fetchMock.mockResolvedValue({ uuid: "gp1" });
-      parseWithLogMock.mockReturnValue({ uuid: "gp1" });
-      renderHook(() => useFetchGenrePlaylistDetailed("reference", getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
-      const { mutationFn } = useMutationMock.mock.calls[0][0];
-
-      const result = await mutationFn("gp1");
-
-      expect(fetchMock).toHaveBeenCalledWith("genre-playlists/gp1/", true, false);
-      expect(parseWithLogMock).toHaveBeenCalledWith(
-        CriteriaPlaylistSimpleSchema,
-        { uuid: "gp1" },
-        "useFetchGenrePlaylistDetailed",
-      );
-      expect(result).toEqual({ uuid: "gp1" });
-    });
-
-    it("mutationFn fetches the me detail endpoint", async () => {
-      fetchMock.mockResolvedValue({ uuid: "gp1" });
-      renderHook(() => useFetchGenrePlaylistDetailed("me", getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
-      const { mutationFn } = useMutationMock.mock.calls[0][0];
-
-      await mutationFn("gp1");
-
-      expect(fetchMock).toHaveBeenCalledWith("me/genre-playlists/gp1/", true, true);
     });
   });
 

@@ -36,7 +36,6 @@ export {
   TrackListOriginFromTrack,
   TrackListOriginFromCriteriaPlaylist,
 } from "./models/TrackListOrigin";
-export type { CriteriaPlaylistDetailedLike } from "./models/TrackListOrigin";
 export * from "./models/TrackListOriginType";
 
 // Schemas / domain types

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { PaginatedResponseSchema } from "../../../transport/lib/paginated-response";
+
 export const makeTrackPlaylistRelSchema = <T extends z.ZodTypeAny>(trackSchema: T) =>
   z.object({
     track: trackSchema,
@@ -7,3 +9,6 @@ export const makeTrackPlaylistRelSchema = <T extends z.ZodTypeAny>(trackSchema: 
   });
 
 export type TrackPlaylistRel<T extends z.ZodTypeAny> = z.infer<ReturnType<typeof makeTrackPlaylistRelSchema<T>>>;
+
+export const makeTrackPlaylistRelPageSchema = <T extends z.ZodTypeAny>(trackSchema: T) =>
+  PaginatedResponseSchema(makeTrackPlaylistRelSchema(trackSchema));
