@@ -92,7 +92,7 @@ describe("useGenrePlaylist", () => {
       expect(enabled).toBe(true);
 
       await queryFn();
-      expect(fetchMock).toHaveBeenCalledWith("genre-playlists/", true, false, {}, { page: 1, pageSize: 1000, allowsMultiplePrimaryParents: false });
+      expect(fetchMock).toHaveBeenCalledWith("genre-playlists/", true, false, {}, { page: 1, pageSize: 1000, treeName: "canonical" });
     });
 
     it("queries the me full endpoint and gates on a restored session with a token", async () => {
@@ -112,7 +112,7 @@ describe("useGenrePlaylist", () => {
       expect(enabled).toBe(true);
 
       await queryFn();
-      expect(fetchMock).toHaveBeenCalledWith("me/genre-playlists/", true, true, {}, { page: 1, pageSize: 1000, allowsMultiplePrimaryParents: false });
+      expect(fetchMock).toHaveBeenCalledWith("me/genre-playlists/", true, true, {}, { page: 1, pageSize: 1000, treeName: "canonical" });
     });
 
     it("disables the me query until the session is restored", () => {
@@ -157,9 +157,9 @@ describe("useGenrePlaylist", () => {
       const result = await queryFn();
 
       expect(fetchMock).toHaveBeenCalledTimes(3);
-      expect(fetchMock).toHaveBeenNthCalledWith(1, "genre-playlists/", true, false, {}, { page: 1, pageSize: 1000, allowsMultiplePrimaryParents: false });
-      expect(fetchMock).toHaveBeenNthCalledWith(2, "genre-playlists/", true, false, {}, { page: 2, pageSize: 1000, allowsMultiplePrimaryParents: false });
-      expect(fetchMock).toHaveBeenNthCalledWith(3, "genre-playlists/", true, false, {}, { page: 3, pageSize: 1000, allowsMultiplePrimaryParents: false });
+      expect(fetchMock).toHaveBeenNthCalledWith(1, "genre-playlists/", true, false, {}, { page: 1, pageSize: 1000, treeName: "canonical" });
+      expect(fetchMock).toHaveBeenNthCalledWith(2, "genre-playlists/", true, false, {}, { page: 2, pageSize: 1000, treeName: "canonical" });
+      expect(fetchMock).toHaveBeenNthCalledWith(3, "genre-playlists/", true, false, {}, { page: 3, pageSize: 1000, treeName: "canonical" });
       expect(result.results).toHaveLength(250);
       expect(result.overallTotal).toBe(250);
     });
