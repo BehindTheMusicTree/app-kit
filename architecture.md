@@ -79,7 +79,7 @@ the one known gap (a CJS consumer mixing subpath imports of the same shared cont
 - Build: `tsup` — one entry per module (`src/<module>/index.ts`) plus the root barrel, emitting
   ESM + CJS + `.d.ts` per entry into `dist/`.
 - Registry: GitHub Packages (`https://npm.pkg.github.com`, scope `@behindthemusictree`).
-- Release pipeline: `scripts/release.sh` (invoked as `pnpm release -- <bump>`) → git tag →
+- Release pipeline: `scripts/release.sh` (invoked as `pnpm release <bump>`) → git tag →
   `.github/workflows/publish.yml` builds and publishes on tag push. Never `npm publish` directly.
 - Branching model: strict Gitflow — see `CONTRIBUTING.md` § Branching (Gitflow) and the
   "Branching" section of `CLAUDE.md`.

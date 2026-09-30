@@ -42,7 +42,7 @@ Any user-facing change (new export, behavior change, bug fix) needs a
 ## Publishing (blocking)
 
 Flag any direct use of `npm publish`. Releases must go through
-`pnpm release -- <bump>` (`scripts/release.sh`).
+`pnpm release <bump>` (`scripts/release.sh`).
 
 ## General
 

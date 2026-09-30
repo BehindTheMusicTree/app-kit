@@ -137,7 +137,7 @@ the change being clearly described.
 From a clean, up-to-date `develop`:
 
 ```bash
-pnpm release -- patch   # or minor / major
+pnpm release patch   # or minor / major
 ```
 
 This creates a `release/X.Y.Z` branch off `develop`, bumps `packages/app-kit/package.json`'s
