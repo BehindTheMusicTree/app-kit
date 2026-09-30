@@ -56,7 +56,7 @@ to be" framing. History belongs in git log and `CHANGELOG.md`, not in reference 
 - `develop` — GitHub default branch, integration branch for all in-progress work. Branch
   `feature/*` from here for all non-release, non-hotfix work (features, fixes, chores); PR back
   into here. No other prefixes (`fix/*`, `chore/*`, …).
-- `release/*` — cut from `develop` by `pnpm release -- <bump>` (`scripts/release.sh`), which also
+- `release/*` — cut from `develop` by `pnpm release <bump>` (`scripts/release.sh`), which also
   pushes it and opens PRs into both `main` and `develop`. After the `main` PR merges, run
   `pnpm tag-release` on `main` to tag and trigger the publish workflow.
 - `hotfix/*` — cut from `main` for urgent production fixes; PR'd into both `main` and `develop`,
@@ -72,7 +72,7 @@ to be" framing. History belongs in git log and `CHANGELOG.md`, not in reference 
   (see Branching above)
 - Merging or pushing directly to `main` or `develop`, including from `release/*`/`hotfix/*` —
   always go through a PR, even with branch-protection bypass rights
-- Publishing directly with `npm publish` — always go through `pnpm release -- <bump>`
+- Publishing directly with `npm publish` — always go through `pnpm release <bump>`
   (`scripts/release.sh`) followed by `pnpm tag-release`, which also updates the changelog and
   lockfile
 
