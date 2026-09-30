@@ -11,6 +11,11 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- `AlbumMinimumSchema.album_artists` renamed to `albumArtists`: the grow and hear APIs send camelCase, so the field was always dropped.
+- `CriteriaUpdateSchema.parent` and `updateGenreParent` accept `null`, so a genre can be made a root again (the grow API's PUT allows it).
+
 ## [8.0.0] - 2026-09-29
 
 ### Breaking
