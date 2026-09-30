@@ -340,6 +340,20 @@ describe("GenreTreeView", () => {
         true,
       );
     });
+
+    it("renders stacked trees in modifier wheel-zoom mode so the list can scroll", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: { results: [makePlaylist()] },
+        isPending: false,
+      });
+      renderView();
+
+      fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
+
+      expect(treePerRootPropsMock.mock.calls.at(-1)?.[0].wheelZoom).toBe(
+        "modifier",
+      );
+    });
   });
 
   describe("outline view", () => {

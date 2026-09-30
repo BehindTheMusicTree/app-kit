@@ -11,11 +11,17 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [8.1.2] - 2026-09-30
+
+### Fixed
+
+- **genre-tree**: stacked view scrolls again — wheel and one-finger touch over a tree now scroll the list instead of zooming the tree (Ctrl/Cmd+wheel still zooms), and the first card no longer sits under the actions row (genre search, "Add root"). `GenrePlaylistTreePerRoot` gains an optional `wheelZoom` prop. Bumps `@behindthemusictree/genre-tree-view` to 1.10.0.
+
 ## [8.1.1] - 2026-09-30
 
 ### Fixed
 
-- **genre-tree**: zoom controls (zoom in / zoom out / fit) now float in the bottom-right corner of the stacked, wheel and pop-core views, so the actions row (genre search, "Add root") no longer covers them. Bumps `@behindthemusictree/genre-tree-view` to 1.9.1; `dist/genre-tree/styles.css` ships its updated stylesheet.
+- **genre-tree**: zoom controls (zoom in / zoom out / fit) now float in the bottom-right corner of the stacked, wheel and pop-core views, so the actions row (genre search, "Add root") no longer covers them. Bumps `@behindthemusictree/genre-tree-view` to 1.9.1 (JS only; its stylesheet is unchanged).
 - **genre-tree**: stacked view gives each root's tree a fixed-height card. The tree has no in-flow content left to size it, so the old fit-to-content card collapsed to nothing.
 
 ## [8.1.0] - 2026-09-30
