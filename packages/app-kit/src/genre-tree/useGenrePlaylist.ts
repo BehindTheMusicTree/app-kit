@@ -83,7 +83,7 @@ export const useListFullGenrePlaylists = (scope: Scope, getBackendBaseUrl: () =>
           true,
           scope === "me",
           {},
-          { page, pageSize: FULL_LIST_PAGE_SIZE },
+          { page, pageSize: FULL_LIST_PAGE_SIZE, allowsMultiplePrimaryParents: false },
         ),
       ),
     schema: PaginatedResponseSchema(CriteriaPlaylistSimpleSchema),
