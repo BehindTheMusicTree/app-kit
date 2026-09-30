@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- **genre-tree**: `useListFullGenrePlaylists` sends `treeName=canonical` instead of `allowsMultiplePrimaryParents=false`, matching the grow and hear APIs' renamed `genre-playlists/` filter (grow-api 10.0.0, hear-api 7.0.0). The old param no longer exists on either API.
+
 ## [8.0.2] - 2026-09-30
 
 ### Fixed
