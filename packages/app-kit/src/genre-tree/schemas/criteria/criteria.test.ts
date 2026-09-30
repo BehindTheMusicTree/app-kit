@@ -100,4 +100,8 @@ describe("CriteriaUpdateSchema", () => {
   it("rejects an invalid essentialTracks entry", () => {
     expect(() => CriteriaUpdateSchema.parse({ essentialTracks: ["not-a-uuid"] })).toThrow();
   });
+
+  it("parses a null parent (make root)", () => {
+    expect(() => CriteriaUpdateSchema.parse({ parent: null })).not.toThrow();
+  });
 });
