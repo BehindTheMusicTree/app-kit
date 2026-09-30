@@ -360,7 +360,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
               />
             </div>
           ) : (
-            <div className="tree-container flex flex-col gap-4 text-gray-800 w-full overflow-x-auto overflow-y-auto relative">
+            <div className="tree-container relative flex flex-col gap-4 w-full pt-14 overflow-x-auto overflow-y-auto text-gray-800">
               {Object.entries(groupedGenrePlaylistsByRoot).map(
                 ([uuid, genrePlaylistTreePerRoot]) => {
                   return (
@@ -385,6 +385,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                           selectedNodeId={selectedNodeId}
                           readOnly={readOnly}
                           showToolbar={showToolbar}
+                          wheelZoom="modifier"
                         />
                       </div>
                     </div>
