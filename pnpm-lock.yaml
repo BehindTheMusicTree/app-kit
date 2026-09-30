@@ -10,8 +10,8 @@ catalogs:
       specifier: 12.0.0
       version: 12.0.0
     '@behindthemusictree/genre-tree-view':
-      specifier: 1.9.0
-      version: 1.9.0
+      specifier: 1.9.1
+      version: 1.9.1
     '@behindthemusictree/ui':
       specifier: ^0.1.0
       version: 0.1.0
@@ -34,7 +34,7 @@ importers:
         version: link:../../packages/app-kit
       '@behindthemusictree/genre-tree-view':
         specifier: 'catalog:'
-        version: 1.9.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 1.9.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@behindthemusictree/ui':
         specifier: 'catalog:'
         version: 0.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -80,7 +80,7 @@ importers:
         version: 12.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@behindthemusictree/genre-tree-view':
         specifier: 'catalog:'
-        version: 1.9.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 1.9.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@behindthemusictree/ui':
         specifier: 'catalog:'
         version: 0.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -269,8 +269,8 @@ packages:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
 
-  '@behindthemusictree/genre-tree-view@1.9.0':
-    resolution: {integrity: sha512-MpAzxL82xa+pxnuauQSLayMM2vd11VCz1V8X19/hhSgai4jCOIoLo6aoOmfl602aNhklIe9nxGFcyEYdGVS53A==, tarball: https://npm.pkg.github.com/download/@behindthemusictree/genre-tree-view/1.9.0/11a50a09e4462ec6474f5015c2b0fcb9cca5928e}
+  '@behindthemusictree/genre-tree-view@1.9.1':
+    resolution: {integrity: sha512-RaJBNXJo47J1DkUROiuYmBEoDnH7DTLkTKD4WzyEj83+SihagutIVYfIJ56XNp8TScFZd1D/OcXcb3gsl4QrfA==, tarball: https://npm.pkg.github.com/download/@behindthemusictree/genre-tree-view/1.9.1/2a642a9e0aa9c7cc1d3f86e4d3244ab5dc754482}
     peerDependencies:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
@@ -2237,7 +2237,7 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  '@behindthemusictree/genre-tree-view@1.9.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@behindthemusictree/genre-tree-view@1.9.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       d3: 7.9.0
       react: 18.3.1

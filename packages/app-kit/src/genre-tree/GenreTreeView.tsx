@@ -366,9 +366,9 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   return (
                     <div
                       key={uuid}
-                      className="tree-per-root-container relative mt-2 mr-16 p-2 bg-gray-50 rounded-lg inline-block w-fit"
+                      className="tree-per-root-container relative shrink-0 h-[28rem] mt-2 mr-16 p-2 bg-gray-50 rounded-lg"
                     >
-                      <div className="graph-container relative z-10">
+                      <div className="graph-container relative z-10 h-full">
                         <GenrePlaylistTreePerRoot
                           scope={scope}
                           rootUuid={uuid}
