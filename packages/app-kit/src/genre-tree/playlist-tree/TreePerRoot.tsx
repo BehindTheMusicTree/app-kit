@@ -6,6 +6,7 @@ import {
   getGenreTreeColor,
   type GenreTreeAction,
   type GenreTreeNode,
+  type WheelZoomMode,
 } from "@behindthemusictree/genre-tree-view";
 
 import { useTrackList } from "../TrackListContext";
@@ -41,6 +42,7 @@ export type GenrePlaylistTreePerRootProps<T extends TrackBase> = {
   readOnly?: boolean;
   /** When false, suppresses the hover toolbar on every node. Defaults to true. */
   showToolbar?: boolean;
+  wheelZoom?: WheelZoomMode;
 };
 
 export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
@@ -60,6 +62,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
   selectedNodeId,
   readOnly = false,
   showToolbar,
+  wheelZoom,
 }: GenrePlaylistTreePerRootProps<T>) {
   const { isPlaying, setIsPlaying } = usePlayer();
   const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList<T>();
@@ -181,6 +184,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
       renderExtraDetails={renderExtraDetails}
       selectedNodeId={selectedNodeId}
       showToolbar={showToolbar}
+      wheelZoom={wheelZoom}
     />
   );
 }

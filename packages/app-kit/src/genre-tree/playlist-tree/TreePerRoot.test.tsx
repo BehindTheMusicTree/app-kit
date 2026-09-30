@@ -95,6 +95,24 @@ describe("GenrePlaylistTreePerRoot", () => {
     vi.clearAllMocks();
   });
 
+  it("passes wheelZoom through to GenreTree", () => {
+    render(
+      <GenrePlaylistTreePerRoot
+        scope="reference"
+        rootUuid={playlistUuid}
+        genrePlaylistTreePerRoot={[genrePlaylist]}
+        reparentingGenreUuid={null}
+        setReparentingGenreUuid={vi.fn()}
+        handleGenreCreationAction={handleGenreCreationAction}
+        handleGenreRenameAction={handleGenreRenameAction}
+        getBackendBaseUrl={() => "https://api.example.com"}
+        wheelZoom="modifier"
+      />,
+    );
+
+    expect(capturedProps!.wheelZoom).toBe("modifier");
+  });
+
   describe("handlePlayPause", () => {
     it("toggles play state when the node is already the playing track list's origin", () => {
       trackList = { origin: { type: TrackListOriginType.GENRE_PLAYLIST, uuid: playlistUuid } };
