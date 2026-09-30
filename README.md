@@ -56,7 +56,7 @@ branch for PRs. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full model.
 _(For maintainers, run from a clean, up-to-date `develop`)_
 
 ```bash
-pnpm release -- patch   # or minor / major
+pnpm release patch   # or minor / major
 ```
 
 Cuts a `release/X.Y.Z` branch off `develop`, bumps the package version, moves `CHANGELOG.md`'s
