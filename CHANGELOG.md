@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [8.1.1] - 2026-09-30
+
 ### Fixed
 
 - **genre-tree**: zoom controls (zoom in / zoom out / fit) now float in the bottom-right corner of the stacked, wheel and pop-core views, so the actions row (genre search, "Add root") no longer covers them. Bumps `@behindthemusictree/genre-tree-view` to 1.9.1; `dist/genre-tree/styles.css` ships its updated stylesheet.
