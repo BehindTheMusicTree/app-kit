@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [8.0.2] - 2026-09-30
+
 ### Fixed
 
 - **genre-tree**: `useListFullGenrePlaylists` now sends `allowsMultiplePrimaryParents=false`, so the wheel shows only the canonical tree. Before, it also showed the regional tree's parentless genres as extra roots.
