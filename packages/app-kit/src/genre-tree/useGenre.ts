@@ -170,7 +170,7 @@ export function useUpdateGenre(scope: Scope, getBackendBaseUrl: () => string) {
     mutate({ uuid, data: { name } });
   };
 
-  const updateGenreParent = async (uuid: string, parentUuid: string) => {
+  const updateGenreParent = async (uuid: string, parentUuid: string | null) => {
     return new Promise<void>((resolve) => {
       mutate({ uuid, data: { parent: parentUuid } });
       resolve();
