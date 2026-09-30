@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [8.0.1] - 2026-09-30
+
 ### Fixed
 
 - `AlbumMinimumSchema.album_artists` renamed to `albumArtists`: the grow and hear APIs send camelCase, so the field was always dropped.
