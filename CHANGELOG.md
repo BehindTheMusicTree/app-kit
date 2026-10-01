@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- **genre-tree**: genre info panel tracks show a play/pause button on hover, left of the title (always visible on the current track). The row text itself no longer starts playback.
+
 ## [8.3.1] - 2026-10-01
 
 ### Fixed
