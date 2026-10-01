@@ -50,4 +50,39 @@ describe("GenreSearch", () => {
     expect(screen.getByRole("textbox")).toHaveValue("");
     expect(screen.queryByText("Ambient")).not.toBeInTheDocument();
   });
+
+  it("fills the input with the selected genre's name without showing results", () => {
+    const { rerender } = render(
+      <GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} selectedName={null} onClear={vi.fn()} />,
+    );
+
+    rerender(
+      <GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} selectedName="Ambient" onClear={vi.fn()} />,
+    );
+
+    expect(screen.getByLabelText("Search a genre")).toHaveValue("Ambient");
+    expect(screen.queryByRole("list")).not.toBeInTheDocument();
+  });
+
+  it("shows results when typing over the selected name", () => {
+    render(
+      <GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} selectedName="Ambient" onClear={vi.fn()} />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Search a genre"), { target: { value: "hou" } });
+
+    expect(screen.getByRole("button", { name: "Deep House" })).toBeInTheDocument();
+  });
+
+  it("empties the input and calls onClear when ✕ is clicked", () => {
+    const onClear = vi.fn();
+    render(
+      <GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} selectedName="Ambient" onClear={onClear} />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
+
+    expect(onClear).toHaveBeenCalledTimes(1);
+    expect(screen.getByLabelText("Search a genre")).toHaveValue("");
+  });
 });

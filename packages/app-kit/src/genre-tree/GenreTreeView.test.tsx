@@ -645,7 +645,7 @@ describe("GenreTreeView", () => {
     function selectGenre(id = "gp1") {
       fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
       act(() => {
-        treeWheelPropsMock.mock.calls.at(-1)?.[0].onNodeClick({ id });
+        treeWheelPropsMock.mock.calls.at(-1)?.[0].onSelectedNodeChange({ id });
       });
     }
 
@@ -785,10 +785,10 @@ describe("GenreTreeView", () => {
       const before = treeWheelPropsMock.mock.calls.at(-1)?.[0].renderExtraDetails;
 
       act(() => {
-        treeWheelPropsMock.mock.calls.at(-1)?.[0].onNodeClick({ id: "gp1" });
+        treeWheelPropsMock.mock.calls.at(-1)?.[0].onSelectedNodeChange({ id: "gp1" });
       });
       act(() => {
-        treeWheelPropsMock.mock.calls.at(-1)?.[0].onNodeClick({ id: "gp2" });
+        treeWheelPropsMock.mock.calls.at(-1)?.[0].onSelectedNodeChange({ id: "gp2" });
       });
 
       expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].renderExtraDetails).toBe(before);
@@ -926,6 +926,43 @@ describe("GenreTreeView", () => {
       });
       fireEvent.click(screen.getByText("Jazz"));
 
+      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].selectedNodeId).toBe("gp1");
+    });
+
+    it("fills the search bar with the selected genre's name and clears everything on ✕", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: { results: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } })] },
+        isPending: false,
+      });
+      renderView();
+      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+      const input = screen.getByRole("textbox", { name: "Search a genre" });
+
+      fireEvent.change(input, { target: { value: "Ja" } });
+      fireEvent.click(screen.getByRole("button", { name: "Jazz" }));
+
+      expect(input).toHaveValue("Jazz");
+      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].hideInfoPanelClose).toBe(true);
+
+      fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
+
+      expect(input).toHaveValue("");
+      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].selectedNodeId).toBeNull();
+    });
+
+    it("shows the name of a genre selected from the tree in the search bar", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: { results: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } })] },
+        isPending: false,
+      });
+      renderView();
+      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+
+      act(() => {
+        treeWheelPropsMock.mock.calls.at(-1)?.[0].onSelectedNodeChange({ id: "gp1" });
+      });
+
+      expect(screen.getByRole("textbox", { name: "Search a genre" })).toHaveValue("Jazz");
       expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].selectedNodeId).toBe("gp1");
     });
   });
