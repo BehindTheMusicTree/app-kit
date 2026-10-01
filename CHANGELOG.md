@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- **genre-tree**: Bumps `@behindthemusictree/genre-tree-view` to 1.12.0 — Wheel/Pop-Core tree branches now scale their width by the target node's `itemCount`.
+
 ## [8.2.1] - 2026-10-01
 
 ### Fixed
