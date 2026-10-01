@@ -172,6 +172,27 @@ describe("GenreTreeView", () => {
     expect(screen.queryByTestId("tree-wheel")).not.toBeInTheDocument();
   });
 
+  it("passes selectedNodeId only to the stacked tree whose root holds the selection", () => {
+    useListFullGenrePlaylistsMock.mockReturnValue({
+      data: {
+        results: [
+          makePlaylist({ uuid: "gp1", root: { uuid: "root1" } }),
+          makePlaylist({ uuid: "gp2", name: "Rock", root: { uuid: "root2" } }),
+        ],
+      },
+      isPending: false,
+    });
+    renderView();
+    fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
+
+    act(() => {
+      treePerRootPropsMock.mock.calls[0][0].onSelectedNodeChange({ id: "gp2" });
+    });
+
+    const lastTwo = treePerRootPropsMock.mock.calls.slice(-2).map(([p]) => p.selectedNodeId);
+    expect(lastTwo).toEqual([null, "gp2"]);
+  });
+
   it("switches to wheel view and passes genre playlists through", () => {
     useListFullGenrePlaylistsMock.mockReturnValue({
       data: { results: [makePlaylist()] },
