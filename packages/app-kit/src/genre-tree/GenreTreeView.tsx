@@ -79,11 +79,11 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const { data: genrePlaylists, isPending: isListingGenrePlaylists } =
     useListFullGenrePlaylists(scope, getBackendBaseUrl);
 
-  const genreUuidByNodeId = useMemo(
+  const genrePlaylistByNodeId = useMemo(
     () =>
       new Map(
         ((genrePlaylists?.results ?? []) as CriteriaPlaylistSimple[]).map(
-          (gp) => [gp.uuid, gp.criteria?.uuid ?? null],
+          (gp) => [gp.uuid, gp],
         ),
       ),
     [genrePlaylists?.results],
@@ -119,12 +119,14 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   // states re-render only the info panel, never the tree.
   const renderExtraDetails = useCallback(
     (node: GenreTreeNode): ReactNode => {
-      const genreUuid = genreUuidByNodeId.get(node.id);
-      if (!genreUuid) return null;
+      const genrePlaylist = genrePlaylistByNodeId.get(node.id);
+      const genreUuid = genrePlaylist?.criteria?.uuid;
+      if (!genrePlaylist || !genreUuid) return null;
       return (
         <GenreDetailExtras<O>
           key={genreUuid}
           genreUuid={genreUuid}
+          genrePlaylist={genrePlaylist}
           scope={scope}
           getBackendBaseUrl={getBackendBaseUrl}
           criteriaOverviewSchema={criteriaOverviewSchema}
@@ -132,7 +134,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
         />
       );
     },
-    [genreUuidByNodeId, scope, getBackendBaseUrl, criteriaOverviewSchema, renderGenreDetailExtras],
+    [genrePlaylistByNodeId, scope, getBackendBaseUrl, criteriaOverviewSchema, renderGenreDetailExtras],
   );
 
   const prefetchGenreOverview = usePrefetchGenreOverview<O>(
@@ -148,13 +150,13 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const handleNodeHover = useCallback(
     (node: GenreTreeNode) => {
       if (hoverPrefetchTimerRef.current) clearTimeout(hoverPrefetchTimerRef.current);
-      const genreUuid = genreUuidByNodeId.get(node.id);
+      const genreUuid = genrePlaylistByNodeId.get(node.id)?.criteria?.uuid;
       if (!genreUuid) return;
       hoverPrefetchTimerRef.current = setTimeout(() => {
         void prefetchGenreOverview(genreUuid);
       }, HOVER_PREFETCH_DELAY_MS);
     },
-    [genreUuidByNodeId, prefetchGenreOverview],
+    [genrePlaylistByNodeId, prefetchGenreOverview],
   );
 
   const groupedGenrePlaylistsByRoot = useMemo(
