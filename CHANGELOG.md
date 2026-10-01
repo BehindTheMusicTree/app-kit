@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- **genre-tree**: Google Maps-style genre search — `GenreTreeView`'s search bar now sits first in the actions row at the info panel's width, shows the selected genre's name (whether picked from search or the tree), and its ✕ ("Clear search") clears the text, closes the info panel and deselects the node; the panel's own close button is hidden and the panel starts just below the bar. Typing over a selected name keeps the panel open and shows results above it. `GenreSearch` gains optional `selectedName` and `onClear` props. Tree renderers (`GenrePlaylistTreeWheel`, `GenrePlaylistTreeWheelRadialPopCore`, `GenrePlaylistTreePerRoot`) gain optional `onSelectedNodeChange` and `hideInfoPanelClose` props. Shared by both consumers of `GenreTreeView`. Bumps `@behindthemusictree/genre-tree-view` to 1.11.0.
+
 ## [8.1.3] - 2026-10-01
 
 ### Fixed
