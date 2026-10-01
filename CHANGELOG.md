@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [8.3.1] - 2026-10-01
+
 ### Fixed
 
 - **genre-tree**: the genre info panel's track rows reset a host's global `button` styles (background, radius, border, padding, font size and weight), so they render as plain text rows instead of dark rounded blocks.
