@@ -2,8 +2,12 @@
 
 import { useEffect, useRef } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { FaPlay, FaPause } from "react-icons/fa";
+import { RingLoader } from "@behindthemusictree/ui";
 
 import { useSession } from "../auth/SessionContext";
+import { usePlayer } from "../player/PlayerContext";
+import { PlayStates } from "../player/PlayStates";
 import { Scope } from "../transport/lib/scope";
 import { genrePlaylistQueryKeys } from "./api/genre-playlists";
 import { CriteriaPlaylistMinimum } from "./schemas/criteria-playlist/minimum";
@@ -23,6 +27,7 @@ export function GenrePlaylistTracks<T extends TrackBase>({
 }: GenrePlaylistTracksProps) {
   const { fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist } = useTrackList<T>();
   const { session, sessionRestored } = useSession();
+  const { playerTrackObject, playState, handlePlayPauseAction } = usePlayer();
   const { uuid } = genrePlaylist;
 
   const { data, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery({
@@ -72,18 +77,32 @@ export function GenrePlaylistTracks<T extends TrackBase>({
         <p>—</p>
       ) : (
         <ul className="max-h-64 overflow-y-auto" aria-label={`${genrePlaylist.name} tracks`}>
-          {tracks.map((track, index) => (
-            <li key={track.uuid}>
-              <button
-                type="button"
-                className="w-full truncate px-0 py-0.5 font-normal text-left [font-size:inherit] bg-transparent rounded-none border-0 hover:underline"
-                onClick={() => play(index)}
-              >
-                {track.title}
-                {track.artists?.length ? ` — ${track.artists.map((artist) => artist.name).join(", ")}` : ""}
-              </button>
-            </li>
-          ))}
+          {tracks.map((track, index) => {
+            const label = track.artists?.length
+              ? `${track.title} — ${track.artists.map((artist) => artist.name).join(", ")}`
+              : track.title;
+            const isCurrent = playerTrackObject?.track.id === track.uuid;
+            const isPlaying = isCurrent && playState === PlayStates.PLAYING;
+            return (
+              <li key={track.uuid} className="group flex items-center gap-1 py-0.5">
+                <button
+                  type="button"
+                  aria-label={`${isPlaying ? "Pause" : "Play"} ${label}`}
+                  className={`flex w-4 shrink-0 items-center justify-center p-0 [font-size:inherit] bg-transparent rounded-none border-0 cursor-pointer group-hover:opacity-100 focus-visible:opacity-100 ${isCurrent && playState !== PlayStates.STOPPED ? "opacity-100" : "opacity-0"}`}
+                  onClick={() => (isCurrent ? handlePlayPauseAction() : play(index))}
+                >
+                  {isCurrent && playState === PlayStates.LOADING ? (
+                    <RingLoader size={10} />
+                  ) : isPlaying ? (
+                    <FaPause size={10} />
+                  ) : (
+                    <FaPlay size={10} />
+                  )}
+                </button>
+                <span className="min-w-0 truncate">{label}</span>
+              </li>
+            );
+          })}
           {hasNextPage && <li ref={sentinelRef} aria-hidden="true" className="h-4" />}
         </ul>
       )}

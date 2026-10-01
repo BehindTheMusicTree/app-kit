@@ -6,6 +6,8 @@ import {
   GenreTreeView,
   CriteriaMinimum,
   PlayerProvider,
+  PlayerVideoSurface,
+  usePlayer,
   PlayerTrack,
   TrackListProvider,
   TrackListSidebarVisibilityProvider,
@@ -113,6 +115,28 @@ function PopupHost() {
   return <>{activePopup}</>;
 }
 
+// Mirrors grow's Player panel: the YouTube player needs a mounted PlayerVideoSurface.
+function PlayerPanel() {
+  const { playerTrackObject } = usePlayer();
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: 12,
+        right: 12,
+        width: 280,
+        zIndex: 40,
+        borderRadius: 8,
+        overflow: "hidden",
+        background: "#09090b",
+        display: playerTrackObject ? "block" : "none",
+      }}
+    >
+      <PlayerVideoSurface className="aspect-video w-full" />
+    </div>
+  );
+}
+
 function AppContent() {
   const [loading, setLoading] = useState(false);
 
@@ -161,6 +185,7 @@ function AppContent() {
           </div>
         )}
       </div>
+      <PlayerPanel />
       <PopupHost />
     </>
   );
