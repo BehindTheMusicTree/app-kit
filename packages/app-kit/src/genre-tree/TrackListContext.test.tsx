@@ -170,6 +170,31 @@ describe("TrackListContext", () => {
       expect(result.current.trackList?.nextPage).toBeNull();
     });
 
+    it("plays seeded tracks from startIndex without fetching, then loadMore continues from seed.nextPage", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      const tracks = makeTracks(20);
+
+      await act(async () => {
+        await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", {
+          tracks,
+          total: 250,
+          nextPage: 3,
+          startIndex: 5,
+        });
+      });
+
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(result.current.trackList?.tracks).toEqual(tracks);
+      expect(result.current.selectedTrack).toEqual(tracks[5]);
+      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t5");
+
+      fetchMock.mockResolvedValueOnce(makePage(makeTracks(1, "u"), { page: 3, total: 250 }));
+      await act(async () => {
+        await result.current.loadMore();
+      });
+      expect(fetchMock).toHaveBeenCalledWith("me/genre-playlists/p1/tracks/", true, true, {}, { page: 3, pageSize: 100 });
+    });
+
     it("warns and does nothing when the playlist has no tracks", async () => {
       const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
       const { result } = renderHook(() => useTrackList(), { wrapper });
