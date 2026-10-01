@@ -54,7 +54,7 @@ export default function GenreSearch({
         <button
           type="button"
           aria-label="Clear search"
-          className="absolute right-2 top-1/2 p-1 text-gray-500 rounded-full -translate-y-1/2 hover:bg-gray-100 hover:text-gray-800"
+          className="absolute right-2 top-1/2 p-1 text-gray-500 bg-transparent rounded-full -translate-y-1/2 hover:bg-gray-100 hover:text-gray-800"
           onClick={() => {
             setQuery("");
             onClear?.();
@@ -69,7 +69,7 @@ export default function GenreSearch({
             <li key={genrePlaylist.uuid}>
               <button
                 type="button"
-                className="w-full px-3 py-1.5 text-left hover:bg-gray-100"
+                className="w-full px-3 py-1.5 text-left bg-transparent rounded-none hover:bg-gray-100"
                 onClick={() => {
                   // A new pick refills the input via the selectedName change; re-picking the shown genre does not change it.
                   setQuery(genrePlaylist.name === selectedName ? selectedName : "");
