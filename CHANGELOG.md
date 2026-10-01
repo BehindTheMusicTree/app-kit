@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- **genre-tree**: stacked view gestures — a horizontal trackpad swipe over a tree now pans it instead of triggering macOS back-navigation, a one-finger vertical scroll no longer nudges the tree, and a two-finger pinch zooms the tree instead of being hijacked by page scroll. Bumps `@behindthemusictree/genre-tree-view` to 1.10.1.
+
 ## [8.1.2] - 2026-09-30
 
 ### Fixed
