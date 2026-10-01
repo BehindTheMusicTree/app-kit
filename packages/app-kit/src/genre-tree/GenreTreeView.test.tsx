@@ -27,6 +27,12 @@ vi.mock("./useGenre", () => ({
   usePrefetchGenreOverview: () => prefetchGenreOverviewMock,
 }));
 
+vi.mock("./GenrePlaylistTracks", () => ({
+  GenrePlaylistTracks: ({ genrePlaylist }: { genrePlaylist: { name: string } }) => (
+    <div data-testid="genre-playlist-tracks">{genrePlaylist.name}</div>
+  ),
+}));
+
 vi.mock("./playlist-tree/TreePerRoot", () => ({
   default: (props: unknown) => {
     treePerRootPropsMock(props);

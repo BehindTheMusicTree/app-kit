@@ -6,9 +6,12 @@ import { z } from "zod";
 import { CriteriaOverview } from "./schemas/criteria/overview";
 import { Scope } from "../transport/lib/scope";
 import { useFetchGenreOverview } from "./useGenre";
+import { CriteriaPlaylistMinimum } from "./schemas/criteria-playlist/minimum";
+import { GenrePlaylistTracks } from "./GenrePlaylistTracks";
 
 export type GenreDetailExtrasProps<O extends CriteriaOverview> = {
   genreUuid: string;
+  genrePlaylist: CriteriaPlaylistMinimum;
   scope: Scope;
   getBackendBaseUrl: () => string;
   criteriaOverviewSchema?: z.ZodType<O, z.ZodTypeDef, unknown>;
@@ -19,6 +22,7 @@ export type GenreDetailExtrasProps<O extends CriteriaOverview> = {
 // not the tree that renders it.
 export function GenreDetailExtras<O extends CriteriaOverview>({
   genreUuid,
+  genrePlaylist,
   scope,
   getBackendBaseUrl,
   criteriaOverviewSchema,
@@ -64,6 +68,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
           )}
         </div>
       )}
+      <GenrePlaylistTracks genrePlaylist={genrePlaylist} scope={scope} getBackendBaseUrl={getBackendBaseUrl} />
     </>
   );
 }

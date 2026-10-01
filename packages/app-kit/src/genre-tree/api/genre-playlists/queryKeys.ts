@@ -4,6 +4,7 @@ export const genrePlaylistQueryKeys = {
     list: (page: number) => ["meGenrePlaylists", "list", page] as const,
     full: ["meGenrePlaylists", "full"] as const,
     detail: (uuid: string) => ["meGenrePlaylists", uuid] as const,
+    tracks: (uuid: string) => ["meGenrePlaylists", uuid, "tracks"] as const,
   },
   // "reference" scope is shared by any number of distinct backends (grow's own reference tree,
   // grow's read-only prototype/demo tree, etc.) that all use the same `scope: "reference"` value
@@ -14,5 +15,6 @@ export const genrePlaylistQueryKeys = {
     list: (baseUrl: string, page: number) => ["referenceGenrePlaylists", baseUrl, "list", page] as const,
     full: (baseUrl: string) => ["referenceGenrePlaylists", baseUrl, "full"] as const,
     detail: (baseUrl: string, uuid: string) => ["referenceGenrePlaylists", baseUrl, uuid] as const,
+    tracks: (baseUrl: string, uuid: string) => ["referenceGenrePlaylists", baseUrl, uuid, "tracks"] as const,
   },
 };

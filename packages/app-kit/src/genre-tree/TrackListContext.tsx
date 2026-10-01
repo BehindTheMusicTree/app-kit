@@ -55,14 +55,27 @@ export function useListTracks<T>(
   });
 }
 
+export type GenrePlaylistTracksPage<T> = { tracks: T[]; total: number; nextPage: number | null };
+
+export type GenrePlaylistTracksSeed<T> = GenrePlaylistTracksPage<T> & { startIndex: number };
+
 interface TrackListContextType<T extends TrackBase> {
   trackList: TrackList<T> | null;
   selectedTrack: T | null;
   setSelectedTrack: (track: T | null) => void;
   toTrackAtPosition: (position: number) => void;
   playNewTrackListFromTrackUuid: (track: T, scope: Scope) => void;
-  /** Fetches the playlist's first tracks page and plays its first track. Rejects on fetch/parse failure. */
-  playNewTrackListFromGenrePlaylist: (genrePlaylist: CriteriaPlaylistMinimum, scope: Scope) => Promise<void>;
+  /**
+   * Fetches the playlist's first tracks page and plays its first track. Rejects on fetch/parse failure.
+   * With `seed`, plays `seed.tracks[seed.startIndex]` from already-loaded pages instead of fetching.
+   */
+  playNewTrackListFromGenrePlaylist: (
+    genrePlaylist: CriteriaPlaylistMinimum,
+    scope: Scope,
+    seed?: GenrePlaylistTracksSeed<T>,
+  ) => Promise<void>;
+  /** One page of a genre playlist's tracks, parsed with the provider's track schema. */
+  fetchGenrePlaylistTracksPage: (uuid: string, scope: Scope, page: number) => Promise<GenrePlaylistTracksPage<T>>;
   /** Appends the next tracks page of the current genre-playlist list; no-op when fully loaded or already loading. */
   loadMore: () => Promise<void>;
 }
@@ -98,7 +111,7 @@ export function TrackListProvider<T extends TrackBase>({
   const loadingOriginRef = useRef<TrackListOriginFromCriteriaPlaylist | null>(null);
 
   const fetchTracksPage = useCallback(
-    async (uuid: string, scope: Scope, page: number) => {
+    async (uuid: string, scope: Scope, page: number): Promise<GenrePlaylistTracksPage<T>> => {
       const endpoint = genrePlaylistEndpoints[scope].tracks(uuid);
       const response = await fetch(endpoint, true, scope === "me", {}, { page, pageSize: GENRE_PLAYLIST_PAGE_SIZE });
       const parsed = parseWithLog(pageSchema, response, "fetchGenrePlaylistTracksPage");
@@ -174,28 +187,33 @@ export function TrackListProvider<T extends TrackBase>({
   );
 
   const playNewTrackListFromGenrePlaylist = useCallback(
-    async (genrePlaylist: CriteriaPlaylistMinimum, scope: Scope) => {
+    async (genrePlaylist: CriteriaPlaylistMinimum, scope: Scope, seed?: GenrePlaylistTracksSeed<T>) => {
       const request = ++latestPlayRequestRef.current;
-      let page: Awaited<ReturnType<typeof fetchTracksPage>>;
-      try {
-        page = await fetchTracksPage(genrePlaylist.uuid, scope, 1);
-      } catch (error) {
+      let page: GenrePlaylistTracksPage<T>;
+      if (seed) {
+        page = seed;
+      } else {
+        try {
+          page = await fetchTracksPage(genrePlaylist.uuid, scope, 1);
+        } catch (error) {
+          if (request !== latestPlayRequestRef.current) return;
+          throw error;
+        }
         if (request !== latestPlayRequestRef.current) return;
-        throw error;
       }
-      if (request !== latestPlayRequestRef.current) return;
       const { tracks, total, nextPage } = page;
+      const startTrack = tracks[seed?.startIndex ?? 0];
 
-      if (tracks.length === 0) {
+      if (!startTrack) {
         console.warn("No tracks found in genre playlist");
         return;
       }
 
       const origin = new TrackListOriginFromCriteriaPlaylist(genrePlaylist, scope);
       setTrackList(new TrackListFromCriteriaPlaylist(tracks, origin, total, nextPage));
-      setSelectedTrack(tracks[0]);
+      setSelectedTrack(startTrack);
       showTrackListSidebar();
-      loadTrackForPlayer(tracks[0].uuid);
+      loadTrackForPlayer(startTrack.uuid);
     },
     [fetchTracksPage, showTrackListSidebar, loadTrackForPlayer],
   );
@@ -239,6 +257,7 @@ export function TrackListProvider<T extends TrackBase>({
       toTrackAtPosition,
       playNewTrackListFromTrackUuid,
       playNewTrackListFromGenrePlaylist,
+      fetchGenrePlaylistTracksPage: fetchTracksPage,
       loadMore,
     }),
     [
@@ -247,6 +266,7 @@ export function TrackListProvider<T extends TrackBase>({
       toTrackAtPosition,
       playNewTrackListFromTrackUuid,
       playNewTrackListFromGenrePlaylist,
+      fetchTracksPage,
       loadMore,
     ],
   );
