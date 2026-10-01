@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- **genre-tree**: the genre info panel lists the genre playlist's tracks (`Tracks (total)`) with infinite scroll; clicking one plays the genre playlist from that track. `useTrackList()` gains `fetchGenrePlaylistTracksPage`, and `playNewTrackListFromGenrePlaylist` takes an optional `seed` (already-loaded tracks + `startIndex`) to start mid-playlist without refetching. `GenreTreeView` must render inside a `TrackListProvider` (both consumers already do).
+
 ## [8.2.1] - 2026-10-01
 
 ### Fixed
