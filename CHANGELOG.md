@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- **genre-tree**: `TrackListSidebar` (fixed layout) anchors to the top-right, just below the app header, and grows with its content up to the player instead of sitting above the player.
+
 ## [8.3.1] - 2026-10-01
 
 ### Fixed
