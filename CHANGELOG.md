@@ -15,10 +15,6 @@ easy to spot when bumping.
 
 - **genre-tree**: genre info panel tracks show a play/pause button on hover, left of the title (always visible on the current track). The row text itself no longer starts playback.
 
-### Fixed
-
-- **player**: YouTube tracks play even when no `PlayerVideoSurface` is rendered — `PlayerProvider` mounts the player into a floating bottom-right fallback surface instead of failing with "PlayerVideoSurface must be rendered".
-
 ## [8.3.1] - 2026-10-01
 
 ### Fixed
