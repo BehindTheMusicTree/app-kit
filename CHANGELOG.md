@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- **genre-tree**: `GenreSearch` result rows and the ✕ ("Clear search") button are now explicitly transparent, so a host's global `button` styles (e.g. a dark `background-color`) no longer render them as dark, unreadable blocks.
+
 ## [8.2.0] - 2026-10-01
 
 ### Added
