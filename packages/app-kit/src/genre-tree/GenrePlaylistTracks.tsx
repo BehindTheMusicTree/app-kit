@@ -76,7 +76,7 @@ export function GenrePlaylistTracks<T extends TrackBase>({
             <li key={track.uuid}>
               <button
                 type="button"
-                className="w-full truncate py-0.5 text-left hover:underline"
+                className="w-full truncate px-0 py-0.5 font-normal text-left [font-size:inherit] bg-transparent rounded-none border-0 hover:underline"
                 onClick={() => play(index)}
               >
                 {track.title}
