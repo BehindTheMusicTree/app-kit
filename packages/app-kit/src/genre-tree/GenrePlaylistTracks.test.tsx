@@ -2,14 +2,16 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-const { useTrackListMock } = vi.hoisted(() => ({ useTrackListMock: vi.fn() }));
+const { useTrackListMock, usePlayerMock } = vi.hoisted(() => ({ useTrackListMock: vi.fn(), usePlayerMock: vi.fn() }));
 
 vi.mock("./TrackListContext", () => ({ useTrackList: useTrackListMock }));
+vi.mock("../player/PlayerContext", () => ({ usePlayer: usePlayerMock }));
 vi.mock("../auth/SessionContext", () => ({
   useSession: () => ({ session: { accessToken: "token" }, sessionRestored: true }),
 }));
 
 import { GenrePlaylistTracks } from "./GenrePlaylistTracks";
+import { PlayStates } from "../player/PlayStates";
 
 const genrePlaylist = { uuid: "p1", name: "Jazz" };
 const makeTracks = (count: number, prefix: string) =>
@@ -19,10 +21,12 @@ describe("GenrePlaylistTracks", () => {
   let observerCallback: IntersectionObserverCallback;
   const fetchGenrePlaylistTracksPage = vi.fn();
   const playNewTrackListFromGenrePlaylist = vi.fn().mockResolvedValue(undefined);
+  const handlePlayPauseAction = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
     useTrackListMock.mockReturnValue({ fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist });
+    usePlayerMock.mockReturnValue({ playerTrackObject: null, playState: PlayStates.STOPPED, handlePlayPauseAction });
     vi.stubGlobal(
       "IntersectionObserver",
       vi.fn(function (this: unknown, callback: IntersectionObserverCallback) {
@@ -52,14 +56,14 @@ describe("GenrePlaylistTracks", () => {
 
     renderTracks();
 
-    expect(await screen.findByRole("button", { name: "Song a1" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Play Song a1" })).toBeInTheDocument();
     expect(screen.getByText("Tracks (250)")).toBeInTheDocument();
     expect(fetchGenrePlaylistTracksPage).toHaveBeenCalledWith("p1", "reference", 1);
 
     await act(async () => {
       observerCallback([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver);
     });
-    fireEvent.click(await screen.findByRole("button", { name: "Song b0" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Play Song b0" }));
 
     expect(fetchGenrePlaylistTracksPage).toHaveBeenLastCalledWith("p1", "reference", 2);
     expect(playNewTrackListFromGenrePlaylist).toHaveBeenCalledWith(genrePlaylist, "reference", {
@@ -81,13 +85,38 @@ describe("GenrePlaylistTracks", () => {
     });
 
     renderTracks();
-    const button = await screen.findByRole("button", { name: "Song — A, B" });
+    const button = await screen.findByRole("button", { name: "Play Song — A, B" });
     await act(async () => {
       fireEvent.click(button);
     });
 
     expect(errorSpy).toHaveBeenCalledWith("Failed to play genre playlist:", failure);
     errorSpy.mockRestore();
+  });
+
+  it("does not play when the row text is clicked", async () => {
+    fetchGenrePlaylistTracksPage.mockResolvedValueOnce({ tracks: makeTracks(1, "a"), total: 1, nextPage: null });
+
+    renderTracks();
+    fireEvent.click(await screen.findByText("Song a0"));
+
+    expect(playNewTrackListFromGenrePlaylist).not.toHaveBeenCalled();
+  });
+
+  it("toggles play/pause on the current track instead of restarting the list", async () => {
+    usePlayerMock.mockReturnValue({
+      playerTrackObject: { track: { id: "a0" } },
+      playState: PlayStates.PLAYING,
+      handlePlayPauseAction,
+    });
+    fetchGenrePlaylistTracksPage.mockResolvedValueOnce({ tracks: makeTracks(2, "a"), total: 2, nextPage: null });
+
+    renderTracks();
+    fireEvent.click(await screen.findByRole("button", { name: "Pause Song a0" }));
+
+    expect(handlePlayPauseAction).toHaveBeenCalledTimes(1);
+    expect(playNewTrackListFromGenrePlaylist).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Play Song a1" })).toBeInTheDocument();
   });
 
   it("shows a dash when the me playlist has no tracks", async () => {

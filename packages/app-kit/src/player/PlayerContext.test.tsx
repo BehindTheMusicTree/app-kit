@@ -304,20 +304,29 @@ describe("PlayerProvider - loadTrackForPlayer (audio)", () => {
 });
 
 describe("PlayerProvider - loadTrackForPlayer (youtube)", () => {
-  it("throws if PlayerVideoSurface has not mounted a container", async () => {
+  it("mounts into a floating fallback surface when no PlayerVideoSurface is rendered, removed on unmount", async () => {
     loadTrackMock.mockResolvedValue(makeYoutubeTrack());
-    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const { result } = renderHook(() => usePlayer(), { wrapper });
+    const { result, unmount } = renderHook(() => usePlayer(), { wrapper });
 
     await act(async () => {
       result.current.loadTrackForPlayer("yt-1");
       await Promise.resolve();
       await Promise.resolve();
-      await Promise.resolve();
     });
 
-    expect(result.current.playerTrackObject?.loadError).toContain("PlayerVideoSurface");
-    consoleErrorSpy.mockRestore();
+    const mount = ytPlayerCtor.mock.calls[0][0] as HTMLElement;
+    const surface = mount.parentElement as HTMLElement;
+    expect(surface.parentElement).toBe(document.body);
+    expect(surface.style.position).toBe("fixed");
+
+    act(() => {
+      ytPlayers[0].config.events.onReady();
+    });
+    expect(result.current.playState).toBe(PlayStates.PLAYING);
+    expect(result.current.playerTrackObject?.loadError).toBeUndefined();
+
+    unmount();
+    expect(document.body.contains(surface)).toBe(false);
   });
 
   it("creates a YouTube player and plays once ready", async () => {

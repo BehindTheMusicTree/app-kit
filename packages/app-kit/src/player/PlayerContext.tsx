@@ -17,7 +17,8 @@
  *
  * `PlayerTrack` is a discriminated union on `kind`: `"audio"` tracks play through a real
  * `HTMLAudioElement`, `"youtube"` tracks play through a YouTube IFrame player mounted into the
- * `PlayerVideoSurface` component. Both are driven through the same `MediaController` interface so
+ * `PlayerVideoSurface` component when one is rendered, or into a floating bottom-right fallback
+ * surface the provider appends to `document.body` otherwise. Both are driven through the same `MediaController` interface so
  * play/pause/seek/volume code never needs to branch on track kind.
  */
 
@@ -82,7 +83,7 @@ interface PlayerContextType {
   ) => void;
   onTrackEnd: (() => void) | null;
   setOnTrackEnd: (callback: (() => void) | null) => void;
-  /** Container the YouTube IFrame player mounts into. Render `<PlayerVideoSurface />` to attach it. */
+  /** Container the YouTube IFrame player mounts into. Render `<PlayerVideoSurface />` to place it; otherwise a floating fallback is used. */
   videoContainerRef: React.RefObject<HTMLDivElement>;
 }
 
@@ -92,6 +93,26 @@ interface PlayerProviderProps {
   children: ReactNode;
   /** Resolves a track id to a playable `PlayerTrack`. */
   loadTrack: (trackId: string) => Promise<PlayerTrack>;
+}
+
+// The IFrame API replaces the mount node with its iframe, so the sized wrapper is what persists.
+// Inline styles because consumers' Tailwind doesn't scan this package.
+function createFallbackVideoMount(surfaceRef: React.MutableRefObject<HTMLDivElement | null>): HTMLDivElement {
+  const surface = document.createElement("div");
+  Object.assign(surface.style, {
+    position: "fixed",
+    right: "16px",
+    bottom: "16px",
+    width: "320px",
+    height: "180px",
+    zIndex: "50",
+    background: "black",
+  });
+  const mount = document.createElement("div");
+  surface.appendChild(mount);
+  document.body.appendChild(surface);
+  surfaceRef.current = surface;
+  return mount;
 }
 
 export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
@@ -105,6 +126,7 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const youtubePlayerRef = useRef<YT.Player | null>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
+  const fallbackVideoSurfaceRef = useRef<HTMLDivElement | null>(null);
   const currentTimeRef = useRef(0);
   const onTrackEndRef = useRef(onTrackEnd);
   useEffect(() => {
@@ -119,6 +141,8 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
       // Swallowed: loadYoutubeTrack retries the same call and surfaces the error there.
     });
   }, []);
+
+  useEffect(() => () => fallbackVideoSurfaceRef.current?.remove(), []);
 
   // YouTube's IFrame API has no continuous timeupdate-style event, so poll it into the same
   // currentTimeRef audio tracks update via their "timeupdate" listener. Also doubles as the
@@ -189,10 +213,7 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
         return;
       }
 
-      const container = videoContainerRef.current;
-      if (!container) {
-        throw new Error("PlayerVideoSurface must be rendered before a YouTube track can be loaded");
-      }
+      const container = videoContainerRef.current ?? createFallbackVideoMount(fallbackVideoSurfaceRef);
 
       const YT = await loadYoutubeIframeApi();
 
