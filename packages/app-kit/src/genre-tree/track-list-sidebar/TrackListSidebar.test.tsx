@@ -168,7 +168,7 @@ describe("TrackListSidebar", () => {
     const root = container.querySelector(".track-list-sidebar");
 
     expect(root).toHaveClass("fixed", "right-0");
-    expect(root).toHaveStyle({ bottom: "79px" });
+    expect(root).toHaveStyle({ top: "63.5px" });
   });
 
   it("drops fixed positioning and fills the parent box when layout is inline", () => {
