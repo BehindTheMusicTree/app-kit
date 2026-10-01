@@ -11,11 +11,21 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [8.3.1] - 2026-10-01
+
+### Fixed
+
+- **genre-tree**: the genre info panel's track rows reset a host's global `button` styles (background, radius, border, padding, font size and weight), so they render as plain text rows instead of dark rounded blocks.
+
 ## [8.3.0] - 2026-10-01
 
 ### Added
 
 - **genre-tree**: the genre info panel lists the genre playlist's tracks (`Tracks (total)`) with infinite scroll; clicking one plays the genre playlist from that track. `useTrackList()` gains `fetchGenrePlaylistTracksPage`, and `playNewTrackListFromGenrePlaylist` takes an optional `seed` (already-loaded tracks + `startIndex`) to start mid-playlist without refetching. `GenreTreeView` must render inside a `TrackListProvider` (both consumers already do).
+
+### Changed
+
+- **genre-tree**: Bumps `@behindthemusictree/genre-tree-view` to 1.12.0 — Wheel, Pop-Core, and stacked (per-root) tree branches now scale their width by the target node's `itemCount`.
 
 ## [8.2.1] - 2026-10-01
 
