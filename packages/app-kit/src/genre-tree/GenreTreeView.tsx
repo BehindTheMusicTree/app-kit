@@ -89,8 +89,23 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     [genrePlaylists?.results],
   );
 
-  const handleNodeClick = useCallback((node: GenreTreeNode) => {
-    setSelectedNodeId(node.id);
+  const selectedGenrePlaylist = useMemo(
+    () =>
+      ((genrePlaylists?.results ?? []) as CriteriaPlaylistSimple[]).find(
+        (gp) => gp.uuid === selectedNodeId,
+      ),
+    [genrePlaylists?.results, selectedNodeId],
+  );
+
+  const handleSelectedNodeChange = useCallback(
+    (node: GenreTreeNode | null) => {
+      setSelectedNodeId(node?.id ?? null);
+    },
+    [],
+  );
+
+  const handleGenreSearchClear = useCallback(() => {
+    setSelectedNodeId(null);
   }, []);
 
   const handleGenreSearchSelect = useCallback(
@@ -190,9 +205,17 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
 
   const actions = (
     <>
+      {!isLoading && (
+        <GenreSearch
+          genrePlaylists={(genrePlaylists?.results ?? []) as CriteriaPlaylistSimple[]}
+          onSelect={handleGenreSearchSelect}
+          selectedName={selectedGenrePlaylist?.name ?? null}
+          onClear={handleGenreSearchClear}
+        />
+      )}
       {!isLoading && !isControlled && (
         <div
-          className="flex items-center gap-1 mr-2"
+          className="flex items-center gap-1"
           role="group"
           aria-label="Tree view mode"
         >
@@ -240,7 +263,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       )}
       {!isLoading && (
         <div
-          className="flex items-center gap-1 mr-2"
+          className="flex items-center gap-1"
           role="group"
           aria-label="Tree display options"
         >
@@ -262,12 +285,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           </Button>
         </div>
       )}
-      {!isLoading && (
-        <GenreSearch
-          genrePlaylists={(genrePlaylists?.results ?? []) as CriteriaPlaylistSimple[]}
-          onSelect={handleGenreSearchSelect}
-        />
-      )}
       {!isLoading && !readOnly && (
         <IconTextButton
           icon={Plus}
@@ -280,15 +297,16 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
 
   return (
     <div className="relative flex flex-col h-full">
-      <div className="actions-container absolute left-3 top-3 z-30 flex justify-start">
-        <div className="flex justify-start">{actions}</div>
+      <div className="actions-container absolute left-3 top-3 z-30 flex items-center gap-2">
+        {actions}
       </div>
       <div className="content-container flex-1 min-h-0 flex flex-row gap-4">
         <div className="tree-view-container flex-1 min-w-0 flex flex-col h-full">
           {isLoading ? (
             <GenreTreeViewSkeleton viewMode={viewMode} />
           ) : viewMode === "wheel" ? (
-            <div className="tree-container flex-1 min-h-0 w-full relative">
+            // Search bar is h-10 at top-3: 12px + 40px + 8px gap puts the info panel just below it.
+            <div className="tree-container relative flex-1 w-full min-h-0 [--gtv-info-panel-top:60px]">
               <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
                 <GenrePlaylistTreeWheel
                   scope={scope}
@@ -301,7 +319,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   handleGenreRenameAction={handleGenreRenameAction}
                   getBackendBaseUrl={getBackendBaseUrl}
                   additionalActions={additionalActions}
-                  onNodeClick={handleNodeClick}
+                  onSelectedNodeChange={handleSelectedNodeChange}
+                  hideInfoPanelClose
                   onNodeHover={handleNodeHover}
                   renderExtraDetails={renderExtraDetails}
                   selectedNodeId={selectedNodeId}
@@ -312,7 +331,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
               </GenreTreeWheelHandoff>
             </div>
           ) : viewMode === "pop-core" ? (
-            <div className="tree-container flex-1 min-h-0 w-full relative">
+            // Search bar is h-10 at top-3: 12px + 40px + 8px gap puts the info panel just below it.
+            <div className="tree-container relative flex-1 w-full min-h-0 [--gtv-info-panel-top:60px]">
               <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
                 <GenrePlaylistTreeWheelRadialPopCore
                   scope={scope}
@@ -328,7 +348,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   handleGenreRenameAction={handleGenreRenameAction}
                   getBackendBaseUrl={getBackendBaseUrl}
                   additionalActions={additionalActions}
-                  onNodeClick={handleNodeClick}
+                  onSelectedNodeChange={handleSelectedNodeChange}
+                  hideInfoPanelClose
                   onNodeHover={handleNodeHover}
                   renderExtraDetails={renderExtraDetails}
                   selectedNodeId={selectedNodeId}
@@ -351,7 +372,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                 handleGenreRenameAction={handleGenreRenameAction}
                 getBackendBaseUrl={getBackendBaseUrl}
                 additionalActions={additionalActions}
-                onNodeClick={handleNodeClick}
+                onSelectedNodeChange={handleSelectedNodeChange}
+                hideInfoPanelClose
                 onNodeHover={handleNodeHover}
                 renderExtraDetails={renderExtraDetails}
                 selectedNodeId={selectedNodeId}
@@ -379,10 +401,14 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                           handleGenreRenameAction={handleGenreRenameAction}
                           getBackendBaseUrl={getBackendBaseUrl}
                           additionalActions={additionalActions}
-                          onNodeClick={handleNodeClick}
+                          onSelectedNodeChange={handleSelectedNodeChange}
+                          hideInfoPanelClose
                           onNodeHover={handleNodeHover}
                           renderExtraDetails={renderExtraDetails}
-                          selectedNodeId={selectedNodeId}
+                          // Each root has its own panel; null closes the one not holding the selection.
+                          selectedNodeId={
+                            uuid === selectedGenrePlaylist?.root.uuid ? selectedNodeId : null
+                          }
                           readOnly={readOnly}
                           showToolbar={showToolbar}
                           wheelZoom="modifier"
