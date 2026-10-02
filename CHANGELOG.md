@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- **genre-tree**: bump `@behindthemusictree/genre-tree-view` to 1.13.0 — in outline view the node info panel opens on the left, with the list shifted right so it stays visible.
+
 ## [8.4.3] - 2026-10-02
 
 ### Fixed
