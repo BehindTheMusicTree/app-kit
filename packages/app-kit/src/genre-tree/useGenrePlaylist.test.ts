@@ -82,7 +82,7 @@ describe("useGenrePlaylist", () => {
         previous: null,
         results: [{ uuid: "gp1" }],
         page: 1,
-        pageSize: 1000,
+        pageSize: 100,
         totalPages: 1,
       });
       renderHook(() => useListFullGenrePlaylists("reference", getBackendBaseUrl));
@@ -92,7 +92,7 @@ describe("useGenrePlaylist", () => {
       expect(enabled).toBe(true);
 
       await queryFn();
-      expect(fetchMock).toHaveBeenCalledWith("genre-playlists/", true, false, {}, { page: 1, pageSize: 1000, treeName: "canonical" });
+      expect(fetchMock).toHaveBeenCalledWith("genre-playlists/", true, false, {}, { page: 1, pageSize: 100, treeName: "canonical" });
     });
 
     it("queries the me full endpoint and gates on a restored session with a token", async () => {
@@ -102,7 +102,7 @@ describe("useGenrePlaylist", () => {
         previous: null,
         results: [{ uuid: "gp1" }],
         page: 1,
-        pageSize: 1000,
+        pageSize: 100,
         totalPages: 1,
       });
       renderHook(() => useListFullGenrePlaylists("me", getBackendBaseUrl));
@@ -112,7 +112,7 @@ describe("useGenrePlaylist", () => {
       expect(enabled).toBe(true);
 
       await queryFn();
-      expect(fetchMock).toHaveBeenCalledWith("me/genre-playlists/", true, true, {}, { page: 1, pageSize: 1000, treeName: "canonical" });
+      expect(fetchMock).toHaveBeenCalledWith("me/genre-playlists/", true, true, {}, { page: 1, pageSize: 100, treeName: "canonical" });
     });
 
     it("disables the me query until the session is restored", () => {
@@ -122,7 +122,26 @@ describe("useGenrePlaylist", () => {
       expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
     });
 
-    it("follows `next` and merges results when the backend clamps pageSize below overallTotal", async () => {
+    it("makes a single request when the first page is the only page", async () => {
+      fetchMock.mockResolvedValueOnce({
+        overallTotal: 1,
+        next: null,
+        previous: null,
+        results: [{ uuid: "gp1" }],
+        page: 1,
+        pageSize: 100,
+        totalPages: 1,
+      });
+      renderHook(() => useListFullGenrePlaylists("reference", getBackendBaseUrl));
+      const { queryFn } = useQueryWithParseMock.mock.calls[0][0];
+
+      const result = await queryFn();
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(result.results).toEqual([{ uuid: "gp1" }]);
+    });
+
+    it("fetches every page reported by totalPages and merges results in page order", async () => {
       fetchMock
         .mockResolvedValueOnce({
           overallTotal: 250,
@@ -157,10 +176,12 @@ describe("useGenrePlaylist", () => {
       const result = await queryFn();
 
       expect(fetchMock).toHaveBeenCalledTimes(3);
-      expect(fetchMock).toHaveBeenNthCalledWith(1, "genre-playlists/", true, false, {}, { page: 1, pageSize: 1000, treeName: "canonical" });
-      expect(fetchMock).toHaveBeenNthCalledWith(2, "genre-playlists/", true, false, {}, { page: 2, pageSize: 1000, treeName: "canonical" });
-      expect(fetchMock).toHaveBeenNthCalledWith(3, "genre-playlists/", true, false, {}, { page: 3, pageSize: 1000, treeName: "canonical" });
-      expect(result.results).toHaveLength(250);
+      expect(fetchMock).toHaveBeenNthCalledWith(1, "genre-playlists/", true, false, {}, { page: 1, pageSize: 100, treeName: "canonical" });
+      expect(fetchMock).toHaveBeenNthCalledWith(2, "genre-playlists/", true, false, {}, { page: 2, pageSize: 100, treeName: "canonical" });
+      expect(fetchMock).toHaveBeenNthCalledWith(3, "genre-playlists/", true, false, {}, { page: 3, pageSize: 100, treeName: "canonical" });
+      expect(result.results.map((gp: { uuid: string }) => gp.uuid)).toEqual(
+        Array.from({ length: 250 }, (_, i) => `gp${i}`),
+      );
       expect(result.overallTotal).toBe(250);
     });
 

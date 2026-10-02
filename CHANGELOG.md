@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- **genre-tree**: `useListFullGenrePlaylists` requests `pageSize=100` (grow-api's max) and fetches pages 2..`totalPages` in parallel instead of one after another, so the full canonical list loads in two round-trips instead of one per page.
+
 ## [8.4.0] - 2026-10-02
 
 ### Added
