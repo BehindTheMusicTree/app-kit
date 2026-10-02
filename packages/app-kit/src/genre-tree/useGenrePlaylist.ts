@@ -12,7 +12,8 @@ import { PaginatedResponseSchema } from "../transport/lib/paginated-response";
 import { genrePlaylistEndpoints, genrePlaylistQueryKeys } from "./api/genre-playlists";
 import { Scope } from "../transport/lib/scope";
 
-const FULL_LIST_PAGE_SIZE = 1000;
+// grow-api clamps pageSize to PAGINATION_PAGE_SIZE_MAX (100); asking for more only hides the real page count.
+const FULL_LIST_PAGE_SIZE = 100;
 
 type RawPaginatedResponse = {
   overallTotal: number;
@@ -26,22 +27,19 @@ type RawPaginatedResponse = {
 
 /**
  * Backends may clamp `pageSize` below what's requested (e.g. a server-side max page size), so a
- * single request can silently return fewer results than `overallTotal`. Follows `next` until every
- * result has been collected, so callers that need "the whole list" actually get it regardless of
- * the effective page size the backend applies.
+ * single request can silently return fewer results than `overallTotal`. Reads `totalPages` from the
+ * first page, then fetches the rest in parallel so load time doesn't scale with the page count.
  */
+// ponytail: unbounded Promise.all; browsers cap per-host connections, add a limiter if pages reach the hundreds.
 const fetchAllPages = async (fetchPage: (page: number) => Promise<unknown>): Promise<RawPaginatedResponse> => {
-  let page = 1;
-  let response = (await fetchPage(page)) as RawPaginatedResponse;
-  const results = [...response.results];
+  const first = (await fetchPage(1)) as RawPaginatedResponse;
+  const rest = (await Promise.all(
+    Array.from({ length: Math.max(first.totalPages - 1, 0) }, (_, i) => fetchPage(i + 2)),
+  )) as RawPaginatedResponse[];
+  const results = [first, ...rest].flatMap((response) => response.results);
+  const last = rest[rest.length - 1] ?? first;
 
-  while (results.length < response.overallTotal && response.next) {
-    page += 1;
-    response = (await fetchPage(page)) as RawPaginatedResponse;
-    results.push(...response.results);
-  }
-
-  return { ...response, results, page: 1, pageSize: results.length, totalPages: 1 };
+  return { ...last, results, page: 1, pageSize: results.length, totalPages: 1 };
 };
 
 export const useListGenrePlaylists = (page = 1, pageSize: number | string = 50, getBackendBaseUrl: () => string) => {
