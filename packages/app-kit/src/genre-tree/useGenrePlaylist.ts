@@ -32,10 +32,16 @@ type RawPaginatedResponse = {
  */
 // ponytail: unbounded Promise.all; browsers cap per-host connections, add a limiter if pages reach the hundreds.
 const fetchAllPages = async (fetchPage: (page: number) => Promise<unknown>): Promise<RawPaginatedResponse> => {
-  const first = (await fetchPage(1)) as RawPaginatedResponse;
-  const rest = (await Promise.all(
-    Array.from({ length: Math.max(first.totalPages - 1, 0) }, (_, i) => fetchPage(i + 2)),
-  )) as RawPaginatedResponse[];
+  // fetch-wrapper resolves null (instead of throwing) when a handleError callback swallowed the failure.
+  const fetchRequiredPage = async (page: number) => {
+    const response = await fetchPage(page);
+    if (response == null) throw new Error(`Paginated list page ${page} returned no body`);
+    return response as RawPaginatedResponse;
+  };
+  const first = await fetchRequiredPage(1);
+  const rest = await Promise.all(
+    Array.from({ length: Math.max(first.totalPages - 1, 0) }, (_, i) => fetchRequiredPage(i + 2)),
+  );
   const results = [first, ...rest].flatMap((response) => response.results);
   const last = rest[rest.length - 1] ?? first;
 
