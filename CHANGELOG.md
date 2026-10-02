@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- **genre-tree**: `useListFullGenrePlaylists` fetches the remaining pages at most 4 at a time instead of all in parallel. The canonical tree's 17 concurrent requests OOM-killed grow-front's proxy container and returned 502s.
+
 ## [8.4.2] - 2026-10-02
 
 ### Fixed

@@ -185,6 +185,28 @@ describe("useGenrePlaylist", () => {
       expect(result.overallTotal).toBe(250);
     });
 
+    it("keeps at most 4 page requests in flight and preserves page order", async () => {
+      let inFlight = 0;
+      let maxInFlight = 0;
+      fetchMock.mockImplementation(async (_url, _a, _b, _c, { page }: { page: number }) => {
+        inFlight++;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        await new Promise((resolve) => setTimeout(resolve, (18 - page) % 5));
+        inFlight--;
+        return { overallTotal: 18, next: null, previous: null, results: [{ uuid: `gp${page}` }], page, pageSize: 1, totalPages: 18 };
+      });
+      renderHook(() => useListFullGenrePlaylists("reference", getBackendBaseUrl));
+      const { queryFn } = useQueryWithParseMock.mock.calls[0][0];
+
+      const result = await queryFn();
+
+      expect(fetchMock).toHaveBeenCalledTimes(18);
+      expect(maxInFlight).toBe(4);
+      expect(result.results.map((gp: { uuid: string }) => gp.uuid)).toEqual(
+        Array.from({ length: 18 }, (_, i) => `gp${i + 1}`),
+      );
+    });
+
     it("returns empty results with a single request when totalPages is 0", async () => {
       fetchMock.mockResolvedValueOnce({
         overallTotal: 0,
