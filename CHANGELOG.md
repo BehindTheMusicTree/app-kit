@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- **genre-tree**: `useListFullGenrePlaylists` rejects with a clear `page N returned no body` error when a page comes back empty (e.g. a `handleError` callback swallowed the failure) instead of crashing with a `TypeError`.
+
 ## [8.4.1] - 2026-10-02
 
 ### Changed

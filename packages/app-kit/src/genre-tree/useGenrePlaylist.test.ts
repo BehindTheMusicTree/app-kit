@@ -185,6 +185,52 @@ describe("useGenrePlaylist", () => {
       expect(result.overallTotal).toBe(250);
     });
 
+    it("returns empty results with a single request when totalPages is 0", async () => {
+      fetchMock.mockResolvedValueOnce({
+        overallTotal: 0,
+        next: null,
+        previous: null,
+        results: [],
+        page: 1,
+        pageSize: 100,
+        totalPages: 0,
+      });
+      renderHook(() => useListFullGenrePlaylists("reference", getBackendBaseUrl));
+      const { queryFn } = useQueryWithParseMock.mock.calls[0][0];
+
+      const result = await queryFn();
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(result.results).toEqual([]);
+    });
+
+    it("rejects with the page number when a later page returns no body", async () => {
+      fetchMock
+        .mockResolvedValueOnce({
+          overallTotal: 150,
+          next: "https://backend.example.com/genre-playlists/?page=2",
+          previous: null,
+          results: Array.from({ length: 100 }, (_, i) => ({ uuid: `gp${i}` })),
+          page: 1,
+          pageSize: 100,
+          totalPages: 2,
+        })
+        .mockResolvedValueOnce(null);
+      renderHook(() => useListFullGenrePlaylists("reference", getBackendBaseUrl));
+      const { queryFn } = useQueryWithParseMock.mock.calls[0][0];
+
+      await expect(queryFn()).rejects.toThrow("page 2 returned no body");
+    });
+
+    it("rejects when the first page returns no body", async () => {
+      fetchMock.mockResolvedValueOnce(null);
+      renderHook(() => useListFullGenrePlaylists("reference", getBackendBaseUrl));
+      const { queryFn } = useQueryWithParseMock.mock.calls[0][0];
+
+      await expect(queryFn()).rejects.toThrow("page 1 returned no body");
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
     it("invalidateFullGenrePlaylists invalidates the scoped full query key", () => {
       const { result } = renderHook(() => useListFullGenrePlaylists("reference", getBackendBaseUrl));
 
