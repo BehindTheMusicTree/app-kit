@@ -14,6 +14,8 @@ import { Scope } from "../transport/lib/scope";
 
 // grow-api clamps pageSize to PAGINATION_PAGE_SIZE_MAX (100); asking for more only hides the real page count.
 const FULL_LIST_PAGE_SIZE = 100;
+// An unbounded fan-out (17 parallel pages through grow-front's proxy) OOM-killed its 96m container.
+const FULL_LIST_CONCURRENCY = 4;
 
 type RawPaginatedResponse = {
   overallTotal: number;
@@ -28,9 +30,8 @@ type RawPaginatedResponse = {
 /**
  * Backends may clamp `pageSize` below what's requested (e.g. a server-side max page size), so a
  * single request can silently return fewer results than `overallTotal`. Reads `totalPages` from the
- * first page, then fetches the rest in parallel so load time doesn't scale with the page count.
+ * first page, then fetches the rest with at most FULL_LIST_CONCURRENCY requests in flight.
  */
-// ponytail: unbounded Promise.all; browsers cap per-host connections, add a limiter if pages reach the hundreds.
 const fetchAllPages = async (fetchPage: (page: number) => Promise<unknown>): Promise<RawPaginatedResponse> => {
   // fetch-wrapper resolves null (instead of throwing) when a handleError callback swallowed the failure.
   const fetchRequiredPage = async (page: number) => {
@@ -39,8 +40,16 @@ const fetchAllPages = async (fetchPage: (page: number) => Promise<unknown>): Pro
     return response as RawPaginatedResponse;
   };
   const first = await fetchRequiredPage(1);
-  const rest = await Promise.all(
-    Array.from({ length: Math.max(first.totalPages - 1, 0) }, (_, i) => fetchRequiredPage(i + 2)),
+  const remaining = Math.max(first.totalPages - 1, 0);
+  const rest: RawPaginatedResponse[] = new Array(remaining);
+  let nextIndex = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(FULL_LIST_CONCURRENCY, remaining) }, async () => {
+      while (nextIndex < remaining) {
+        const index = nextIndex++;
+        rest[index] = await fetchRequiredPage(index + 2);
+      }
+    }),
   );
   const results = [first, ...rest].flatMap((response) => response.results);
   const last = rest[rest.length - 1] ?? first;
