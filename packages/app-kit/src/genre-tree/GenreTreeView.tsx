@@ -10,6 +10,7 @@ import {
   GenreTreeViewSkeleton,
 } from "@behindthemusictree/genre-tree-view";
 import type {
+  ControlsOrientation,
   GenreTreeAction,
   GenreTreeNode,
   GenreTreeViewMode,
@@ -33,7 +34,7 @@ import GenrePlaylistTreeWheelRadialPopCore from "./playlist-tree/TreeWheelRadial
 import { GenreTreeWheelHandoff } from "./GenreTreeWheelHandoff";
 import GenreSearch from "./GenreSearch";
 
-export type { GenreTreeViewMode } from "@behindthemusictree/genre-tree-view";
+export type { ControlsOrientation, GenreTreeViewMode } from "@behindthemusictree/genre-tree-view";
 
 const HOVER_PREFETCH_DELAY_MS = 100;
 
@@ -52,6 +53,8 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   criteriaOverviewSchema?: z.ZodType<O, z.ZodTypeDef, unknown>;
   /** Consumer-specific rows rendered in the info panel after Summary. */
   renderGenreDetailExtras?: (overview: O) => ReactNode;
+  /** Layout of the wheel/tree floating zoom/pop/fit controls. Defaults to "vertical". */
+  controlsOrientation?: ControlsOrientation;
 };
 
 export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
@@ -64,6 +67,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   readOnly = false,
   criteriaOverviewSchema,
   renderGenreDetailExtras,
+  controlsOrientation,
 }: GenreTreeViewProps<O>) {
   const [reparentingGenreUuid, setReparentingGenreUuid] = useState<
     string | null
@@ -329,6 +333,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   showToolbar={showToolbar}
+                  controlsOrientation={controlsOrientation}
                 />
               </GenreTreeWheelHandoff>
             </div>
@@ -358,6 +363,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   showToolbar={showToolbar}
+                  controlsOrientation={controlsOrientation}
                 />
               </GenreTreeWheelHandoff>
             </div>
@@ -414,6 +420,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                           readOnly={readOnly}
                           showToolbar={showToolbar}
                           wheelZoom="modifier"
+                          controlsOrientation={controlsOrientation}
                         />
                       </div>
                     </div>

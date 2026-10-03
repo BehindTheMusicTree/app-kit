@@ -4,6 +4,7 @@ import { useCallback, useMemo, type ReactNode } from "react";
 import {
   GenreTreeOutline,
   GenreTreeWheelRadialPopCore,
+  type ControlsOrientation,
   type GenreTreeAction,
   type GenreTreeNode,
 } from "@behindthemusictree/genre-tree-view";
@@ -45,6 +46,9 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   allowWheelRotation?: boolean;
   /** When false, suppresses the hover toolbar on every node. Defaults to true. */
   showToolbar?: boolean;
+  /** Layout of the wheel's floating zoom/pop/fit controls; ignored in outline mode. Defaults to
+   * "vertical". */
+  controlsOrientation?: ControlsOrientation;
   /** When true, renders the same forest as GenreTreeOutline's nested-list text view instead of
    * the radial wheel. Defaults to false. */
   outline?: boolean;
@@ -69,6 +73,7 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
   readOnly = false,
   allowWheelRotation,
   showToolbar,
+  controlsOrientation,
   outline = false,
 }: GenrePlaylistTreeWheelRadialPopCoreProps<T>) {
   const { isPlaying, setIsPlaying } = usePlayer();
@@ -186,6 +191,10 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
   return outline ? (
     <GenreTreeOutline {...treeProps} />
   ) : (
-    <GenreTreeWheelRadialPopCore {...treeProps} allowWheelRotation={allowWheelRotation} />
+    <GenreTreeWheelRadialPopCore
+      {...treeProps}
+      allowWheelRotation={allowWheelRotation}
+      controlsOrientation={controlsOrientation}
+    />
   );
 }

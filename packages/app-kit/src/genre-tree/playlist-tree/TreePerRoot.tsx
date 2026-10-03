@@ -4,6 +4,7 @@ import { useCallback, useMemo, type ReactNode } from "react";
 import {
   GenreTree,
   getGenreTreeColor,
+  type ControlsOrientation,
   type GenreTreeAction,
   type GenreTreeNode,
   type WheelZoomMode,
@@ -47,6 +48,8 @@ export type GenrePlaylistTreePerRootProps<T extends TrackBase> = {
   /** When false, suppresses the hover toolbar on every node. Defaults to true. */
   showToolbar?: boolean;
   wheelZoom?: WheelZoomMode;
+  /** Layout of the floating zoom/pop/fit controls. Defaults to "vertical". */
+  controlsOrientation?: ControlsOrientation;
 };
 
 export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
@@ -69,6 +72,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
   readOnly = false,
   showToolbar,
   wheelZoom,
+  controlsOrientation,
 }: GenrePlaylistTreePerRootProps<T>) {
   const { isPlaying, setIsPlaying } = usePlayer();
   const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList<T>();
@@ -193,6 +197,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
       hideInfoPanelClose={hideInfoPanelClose}
       showToolbar={showToolbar}
       wheelZoom={wheelZoom}
+      controlsOrientation={controlsOrientation}
     />
   );
 }

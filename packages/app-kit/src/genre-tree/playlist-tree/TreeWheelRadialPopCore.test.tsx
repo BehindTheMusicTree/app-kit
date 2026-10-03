@@ -104,6 +104,14 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
         "allowWheelRotation",
       );
     });
+
+    it("passes controlsOrientation to the wheel but not to GenreTreeOutline", () => {
+      renderWheelRadialPopCore({ controlsOrientation: "horizontal" });
+      expect(genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0].controlsOrientation).toBe("horizontal");
+
+      renderWheelRadialPopCore({ outline: true, controlsOrientation: "horizontal" });
+      expect(genreTreeOutlinePropsMock.mock.calls[0][0]).not.toHaveProperty("controlsOrientation");
+    });
   });
 
   it("maps genre playlists to tree nodes including side", () => {

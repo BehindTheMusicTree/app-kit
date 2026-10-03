@@ -11,6 +11,14 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- **genre-tree**: `GenreTreeView` accepts `controlsOrientation?: "horizontal" | "vertical"` (default `"vertical"`), threaded into the wheel, pop-core and stacked renderers to lay out their floating zoom/pop/fit controls; `ControlsOrientation` type re-exported.
+
+### Changed
+
+- **genre-tree**: bump `@behindthemusictree/genre-tree-view` to 1.14.0.
+
 ## [8.4.4] - 2026-10-02
 
 ### Changed

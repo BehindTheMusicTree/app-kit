@@ -113,6 +113,24 @@ describe("GenrePlaylistTreePerRoot", () => {
     expect(capturedProps!.wheelZoom).toBe("modifier");
   });
 
+  it("passes controlsOrientation through to GenreTree", () => {
+    render(
+      <GenrePlaylistTreePerRoot
+        scope="reference"
+        rootUuid={playlistUuid}
+        genrePlaylistTreePerRoot={[genrePlaylist]}
+        reparentingGenreUuid={null}
+        setReparentingGenreUuid={vi.fn()}
+        handleGenreCreationAction={handleGenreCreationAction}
+        handleGenreRenameAction={handleGenreRenameAction}
+        getBackendBaseUrl={() => "https://api.example.com"}
+        controlsOrientation="horizontal"
+      />,
+    );
+
+    expect(capturedProps!.controlsOrientation).toBe("horizontal");
+  });
+
   describe("handlePlayPause", () => {
     it("toggles play state when the node is already the playing track list's origin", () => {
       trackList = { origin: { type: TrackListOriginType.GENRE_PLAYLIST, uuid: playlistUuid } };
