@@ -446,9 +446,14 @@ describe("PlayerProvider - loadTrackForPlayer (youtube)", () => {
     expect(ytPlayerCtor).toHaveBeenCalledTimes(1);
   });
 
-  it("logs an error when the YouTube player fires an error event", async () => {
-    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  it.each([
+    [150, "Embedding disabled by the video owner"],
+    [101, "Embedding disabled by the video owner"],
+    [100, "Video not found"],
+    [2, "YouTube playback error (code 2)"],
+  ])("on YouTube error %i, shows the error and fires onTrackEnd to advance", async (code, message) => {
     loadTrackMock.mockResolvedValue(makeYoutubeTrack());
+    const onTrackEnd = vi.fn();
 
     function Harness() {
       const player = usePlayer();
@@ -456,6 +461,8 @@ describe("PlayerProvider - loadTrackForPlayer (youtube)", () => {
         <div>
           <PlayerVideoSurface />
           <button onClick={() => player.loadTrackForPlayer("yt-1")}>load</button>
+          <button onClick={() => player.setOnTrackEnd(() => onTrackEnd)}>subscribe</button>
+          <p>{player.playerTrackObject?.loadError}</p>
         </div>
       );
     }
@@ -467,17 +474,22 @@ describe("PlayerProvider - loadTrackForPlayer (youtube)", () => {
     );
 
     await act(async () => {
-      (document.querySelector("button") as HTMLButtonElement).click();
+      screen.getByRole("button", { name: "subscribe" }).click();
+      screen.getByRole("button", { name: "load" }).click();
       await Promise.resolve();
+      await Promise.resolve();
+    });
+    await act(async () => {
+      ytPlayers[0].config.events.onReady();
       await Promise.resolve();
     });
 
     act(() => {
-      ytPlayers[0].config.events.onError({ data: 2 });
+      ytPlayers[0].config.events.onError({ data: code });
     });
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith("YouTube player error event fired:", 2);
-    consoleErrorSpy.mockRestore();
+    expect(screen.getByText(message)).toBeInTheDocument();
+    expect(onTrackEnd).toHaveBeenCalledTimes(1);
   });
 
   it("pauses an existing YouTube player when loading a different (audio) track", async () => {
@@ -639,6 +651,24 @@ describe("PlayerProvider - handleNextTrack / handlePreviousTrack", () => {
 
     expect(onTrackChange).toHaveBeenCalledWith(trackList[1]);
     expect(loadTrackMock).toHaveBeenCalledWith("b");
+  });
+
+  it("skips unplayable YouTube tracks in both directions", async () => {
+    loadTrackMock.mockResolvedValue(makeAudioTrack("x"));
+    const blocked: PlayerTrack = { ...makeYoutubeTrack("blocked"), unplayableReason: "Embedding disabled" } as PlayerTrack;
+    const list = [makeAudioTrack("a"), blocked, makeAudioTrack("c")];
+    const { result } = renderHook(() => usePlayer(), { wrapper });
+    const onTrackChange = vi.fn();
+
+    await act(async () => {
+      result.current.handleNextTrack(list, list[0], onTrackChange);
+      result.current.handlePreviousTrack(list, list[2], onTrackChange);
+      result.current.handleNextTrack([list[0], blocked], list[0], onTrackChange);
+      await Promise.resolve();
+    });
+
+    expect(onTrackChange.mock.calls).toEqual([[list[2]], [list[0]]]);
+    expect(loadTrackMock).not.toHaveBeenCalledWith("blocked");
   });
 
   it("goes back to the previous track and loads it", async () => {

@@ -127,4 +127,22 @@ describe("GenrePlaylistTracks", () => {
     expect(await screen.findByText("—")).toBeInTheDocument();
     expect(fetchGenrePlaylistTracksPage).toHaveBeenCalledWith("p1", "me", 1);
   });
+
+  it("greys out an unplayable track with its reason and a disabled play button", async () => {
+    fetchGenrePlaylistTracksPage.mockResolvedValueOnce({
+      tracks: [{ uuid: "x", title: "Blocked", artists: null, youtubeUnplayableReason: "private" }],
+      total: 1,
+      nextPage: null,
+    });
+
+    renderTracks();
+
+    const button = await screen.findByRole("button", { name: "Blocked — Private video" });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText("Private video")).toBeInTheDocument();
+    expect(screen.getByRole("listitem")).toHaveClass("opacity-50");
+    fireEvent.click(button);
+    expect(playNewTrackListFromGenrePlaylist).not.toHaveBeenCalled();
+  });
 });

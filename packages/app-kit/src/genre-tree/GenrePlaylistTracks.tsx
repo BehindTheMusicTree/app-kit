@@ -12,6 +12,7 @@ import { Scope } from "../transport/lib/scope";
 import { genrePlaylistQueryKeys } from "./api/genre-playlists";
 import { CriteriaPlaylistMinimum } from "./schemas/criteria-playlist/minimum";
 import { TrackBase } from "./schemas/track/base";
+import { unplayableReasonLabel } from "./schemas/youtube-track/detailed";
 import { useTrackList } from "./TrackListContext";
 
 export type GenrePlaylistTracksProps = {
@@ -83,6 +84,24 @@ export function GenrePlaylistTracks<T extends TrackBase>({
               : track.title;
             const isCurrent = playerTrackObject?.track.id === track.uuid;
             const isPlaying = isCurrent && playState === PlayStates.PLAYING;
+            const unplayableReason = unplayableReasonLabel(track);
+            if (unplayableReason) {
+              return (
+                <li key={track.uuid} className="flex items-center gap-1 py-0.5 opacity-50" title={unplayableReason}>
+                  <button
+                    type="button"
+                    disabled
+                    aria-disabled="true"
+                    aria-label={`${label} — ${unplayableReason}`}
+                    className="flex w-4 shrink-0 items-center justify-center p-0 [font-size:inherit] bg-transparent rounded-none border-0 opacity-0 cursor-not-allowed"
+                  >
+                    <FaPlay size={10} />
+                  </button>
+                  <span className="min-w-0 truncate">{label}</span>
+                  <span className="shrink-0 text-xs">{unplayableReason}</span>
+                </li>
+              );
+            }
             return (
               <li key={track.uuid} className="group flex items-center gap-1 py-0.5">
                 <button

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { YoutubeTrackDetailedSchema } from "./detailed";
+import { YoutubeTrackDetailedSchema, unplayableReasonLabel } from "./detailed";
 
 const uuid = "b1e6a1c8-0e3d-4d3d-9d2e-2f6c1a2b3c4d";
 
@@ -24,5 +24,23 @@ describe("YoutubeTrackDetailedSchema", () => {
   it("rejects a shape missing youtubeVideoId", () => {
     const { youtubeVideoId: _youtubeVideoId, ...invalid } = validYoutubeTrack;
     expect(() => YoutubeTrackDetailedSchema.parse(invalid)).toThrow();
+  });
+
+  it("defaults youtubeUnplayableReason to null when the key is absent", () => {
+    expect(YoutubeTrackDetailedSchema.parse(validYoutubeTrack).youtubeUnplayableReason).toBeNull();
+  });
+
+  it("parses a known unplayable reason and rejects an unknown one", () => {
+    const parsed = YoutubeTrackDetailedSchema.parse({ ...validYoutubeTrack, youtubeUnplayableReason: "not_embeddable" });
+    expect(parsed.youtubeUnplayableReason).toBe("not_embeddable");
+    expect(() => YoutubeTrackDetailedSchema.parse({ ...validYoutubeTrack, youtubeUnplayableReason: "nope" })).toThrow();
+  });
+});
+
+describe("unplayableReasonLabel", () => {
+  it("returns the label for a flagged track and null otherwise", () => {
+    expect(unplayableReasonLabel({ youtubeUnplayableReason: "region_whitelisted" })).toBe("Region restricted");
+    expect(unplayableReasonLabel({ youtubeUnplayableReason: null })).toBeNull();
+    expect(unplayableReasonLabel({ title: "audio track" })).toBeNull();
   });
 });
