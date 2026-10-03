@@ -44,10 +44,20 @@ export interface AudioPlayerTrack extends PlayerTrackBase {
 export interface YoutubePlayerTrack extends PlayerTrackBase {
   kind: "youtube";
   youtubeVideoId: string;
+  /** Set when the video can't be embedded/played; next/previous navigation skips the track. */
+  unplayableReason?: string | null;
 }
 
 /** Minimal shape the player needs to play a track and identify it. Extend as needed per app. */
 export type PlayerTrack = AudioPlayerTrack | YoutubePlayerTrack;
+
+const isPlayable = (track: PlayerTrack) => track.kind !== "youtube" || !track.unplayableReason;
+
+function youtubeErrorMessage(code: number): string {
+  if (code === 100) return "Video not found";
+  if (code === 101 || code === 150) return "Embedding disabled by the video owner";
+  return `YouTube playback error (code ${code})`;
+}
 
 interface PlayerTrackObject {
   track: PlayerTrack;
@@ -211,7 +221,11 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
             },
             onStateChange: handleYoutubeStateChange,
             onError: (event: YT.OnErrorEvent) => {
-              console.error("YouTube player error event fired:", event.data);
+              const loadError = youtubeErrorMessage(event.data);
+              setPlayerTrackObject((prev) => (prev ? { ...prev, loadError } : prev));
+              setPlayState(PlayStates.STOPPED);
+              setIsPlaying(false);
+              onTrackEndRef.current?.();
             },
           },
         });
@@ -260,9 +274,8 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
       const currentIndex = trackList.findIndex((track) => track.id === currentTrack.id);
       if (currentIndex === -1) return;
 
-      const nextIndex = currentIndex + 1;
-      if (nextIndex < trackList.length) {
-        const nextTrack = trackList[nextIndex];
+      const nextTrack = trackList.slice(currentIndex + 1).find(isPlayable);
+      if (nextTrack) {
         onTrackChange(nextTrack);
         loadTrackForPlayer(nextTrack.id);
       }
@@ -277,9 +290,8 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
       const currentIndex = trackList.findIndex((track) => track.id === currentTrack.id);
       if (currentIndex === -1) return;
 
-      const previousIndex = currentIndex - 1;
-      if (previousIndex >= 0) {
-        const previousTrack = trackList[previousIndex];
+      const previousTrack = trackList.slice(0, currentIndex).reverse().find(isPlayable);
+      if (previousTrack) {
         onTrackChange(previousTrack);
         loadTrackForPlayer(previousTrack.id);
       }

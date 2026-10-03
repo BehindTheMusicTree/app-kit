@@ -195,13 +195,31 @@ describe("TrackListContext", () => {
       expect(fetchMock).toHaveBeenCalledWith("me/genre-playlists/p1/tracks/", true, true, {}, { page: 3, pageSize: 100 });
     });
 
+    it("starts from the first playable track at or after startIndex", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      const tracks = makeTracks(4).map((track, i) =>
+        i === 1 ? { ...track, youtubeUnplayableReason: "not_embeddable" } : track,
+      );
+
+      await act(async () => {
+        await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", {
+          tracks,
+          total: 4,
+          nextPage: null,
+          startIndex: 1,
+        });
+      });
+
+      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t2");
+    });
+
     it("warns and does nothing when the playlist has no tracks", async () => {
       const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
       const { result } = renderHook(() => useTrackList(), { wrapper });
 
       await playGenre(result, makePage([]));
 
-      expect(warnSpy).toHaveBeenCalledWith("No tracks found in genre playlist");
+      expect(warnSpy).toHaveBeenCalledWith("No playable tracks found in genre playlist");
       expect(result.current.trackList).toBeNull();
       expect(showTrackListSidebarMock).not.toHaveBeenCalled();
       expect(loadTrackForPlayerMock).not.toHaveBeenCalled();

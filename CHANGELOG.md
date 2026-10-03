@@ -11,6 +11,15 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- **genre-tree**: `YoutubeTrackDetailedSchema` parses a nullable `youtubeUnplayableReason` (`not_found`, `not_embeddable`, `private`, `not_processed`, `region_whitelisted`; defaults to `null` when absent) and `unplayableReasonLabel(track)` returns its display label. Flagged tracks render greyed out with the reason in `GenrePlaylistTracks` and the track-list sidebar's `TrackItem`, can't be played, and are skipped when a genre playlist starts.
+- **player**: optional `YoutubePlayerTrack.unplayableReason`; `handleNextTrack` / `handlePreviousTrack` skip tracks that set it.
+
+### Changed
+
+- **player**: a YouTube player error now sets `playerTrackObject.loadError` ("Video not found", "Embedding disabled by the video owner", or "YouTube playback error (code N)"), stops playback and fires `onTrackEnd` to advance, instead of only logging.
+
 ## [9.0.1] - 2026-10-03
 
 ### Fixed

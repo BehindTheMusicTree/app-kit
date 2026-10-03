@@ -134,4 +134,14 @@ describe("TrackItem", () => {
     expect(loadTrackForPlayer).not.toHaveBeenCalled();
     expect(handlePlayPauseAction).not.toHaveBeenCalled();
   });
+
+  it("greys out an unplayable track, shows the reason, and offers no play control", () => {
+    render(<TrackItem track={makeTrack({ youtubeUnplayableReason: "not_embeddable" })} position={3} />);
+
+    expect(screen.getByText("Embedding disabled")).toBeInTheDocument();
+    expect(screen.getByTitle("Embedding disabled")).toHaveClass("opacity-50");
+    expect(screen.queryByRole("button", { name: "play-pause" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText("3"));
+    expect(loadTrackForPlayer).not.toHaveBeenCalled();
+  });
 });
