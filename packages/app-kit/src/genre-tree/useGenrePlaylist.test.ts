@@ -74,25 +74,19 @@ describe("useGenrePlaylist", () => {
   });
 
   describe("useListFullGenrePlaylists", () => {
-    it("queries the reference full endpoint and is always enabled for the reference scope", async () => {
+    it("loads the reference tree with exactly one request to the tree endpoint", async () => {
       useSessionMock.mockReturnValue({ session: null, sessionRestored: false });
-      fetchMock.mockResolvedValue({
-        overallTotal: 1,
-        next: null,
-        previous: null,
-        results: [{ uuid: "gp1" }],
-        page: 1,
-        pageSize: 100,
-        totalPages: 1,
-      });
+      fetchMock.mockResolvedValue([{ uuid: "gp1" }]);
       renderHook(() => useListFullGenrePlaylists("reference", getBackendBaseUrl));
       const { queryKey, enabled, queryFn } = useQueryWithParseMock.mock.calls[0][0];
 
       expect(queryKey).toEqual(["referenceGenrePlaylists", "https://backend.example.com", "full"]);
       expect(enabled).toBe(true);
 
-      await queryFn();
-      expect(fetchMock).toHaveBeenCalledWith("genre-playlists/", true, false, {}, { page: 1, pageSize: 100, treeName: "canonical" });
+      const result = await queryFn();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledWith("genre-playlists/tree/", true, false, {}, { treeName: "canonical" });
+      expect(result).toEqual([{ uuid: "gp1" }]);
     });
 
     it("queries the me full endpoint and gates on a restored session with a token", async () => {
@@ -111,8 +105,10 @@ describe("useGenrePlaylist", () => {
       expect(queryKey).toEqual(["meGenrePlaylists", "full"]);
       expect(enabled).toBe(true);
 
-      await queryFn();
+      const result = await queryFn();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith("me/genre-playlists/", true, true, {}, { page: 1, pageSize: 100, treeName: "canonical" });
+      expect(result).toEqual([{ uuid: "gp1" }]);
     });
 
     it("disables the me query until the session is restored", () => {
@@ -122,70 +118,7 @@ describe("useGenrePlaylist", () => {
       expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
     });
 
-    it("makes a single request when the first page is the only page", async () => {
-      fetchMock.mockResolvedValueOnce({
-        overallTotal: 1,
-        next: null,
-        previous: null,
-        results: [{ uuid: "gp1" }],
-        page: 1,
-        pageSize: 100,
-        totalPages: 1,
-      });
-      renderHook(() => useListFullGenrePlaylists("reference", getBackendBaseUrl));
-      const { queryFn } = useQueryWithParseMock.mock.calls[0][0];
-
-      const result = await queryFn();
-
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(result.results).toEqual([{ uuid: "gp1" }]);
-    });
-
-    it("fetches every page reported by totalPages and merges results in page order", async () => {
-      fetchMock
-        .mockResolvedValueOnce({
-          overallTotal: 250,
-          next: "https://backend.example.com/genre-playlists/?page=2",
-          previous: null,
-          results: Array.from({ length: 100 }, (_, i) => ({ uuid: `gp${i}` })),
-          page: 1,
-          pageSize: 100,
-          totalPages: 3,
-        })
-        .mockResolvedValueOnce({
-          overallTotal: 250,
-          next: "https://backend.example.com/genre-playlists/?page=3",
-          previous: "https://backend.example.com/genre-playlists/?page=1",
-          results: Array.from({ length: 100 }, (_, i) => ({ uuid: `gp${100 + i}` })),
-          page: 2,
-          pageSize: 100,
-          totalPages: 3,
-        })
-        .mockResolvedValueOnce({
-          overallTotal: 250,
-          next: null,
-          previous: "https://backend.example.com/genre-playlists/?page=2",
-          results: Array.from({ length: 50 }, (_, i) => ({ uuid: `gp${200 + i}` })),
-          page: 3,
-          pageSize: 100,
-          totalPages: 3,
-        });
-      renderHook(() => useListFullGenrePlaylists("reference", getBackendBaseUrl));
-      const { queryFn } = useQueryWithParseMock.mock.calls[0][0];
-
-      const result = await queryFn();
-
-      expect(fetchMock).toHaveBeenCalledTimes(3);
-      expect(fetchMock).toHaveBeenNthCalledWith(1, "genre-playlists/", true, false, {}, { page: 1, pageSize: 100, treeName: "canonical" });
-      expect(fetchMock).toHaveBeenNthCalledWith(2, "genre-playlists/", true, false, {}, { page: 2, pageSize: 100, treeName: "canonical" });
-      expect(fetchMock).toHaveBeenNthCalledWith(3, "genre-playlists/", true, false, {}, { page: 3, pageSize: 100, treeName: "canonical" });
-      expect(result.results.map((gp: { uuid: string }) => gp.uuid)).toEqual(
-        Array.from({ length: 250 }, (_, i) => `gp${i}`),
-      );
-      expect(result.overallTotal).toBe(250);
-    });
-
-    it("keeps at most 4 page requests in flight and preserves page order", async () => {
+    it("keeps at most 4 me page requests in flight and merges results in page order", async () => {
       let inFlight = 0;
       let maxInFlight = 0;
       fetchMock.mockImplementation(async (_url, _a, _b, _c, { page }: { page: number }) => {
@@ -195,19 +128,17 @@ describe("useGenrePlaylist", () => {
         inFlight--;
         return { overallTotal: 18, next: null, previous: null, results: [{ uuid: `gp${page}` }], page, pageSize: 1, totalPages: 18 };
       });
-      renderHook(() => useListFullGenrePlaylists("reference", getBackendBaseUrl));
+      renderHook(() => useListFullGenrePlaylists("me", getBackendBaseUrl));
       const { queryFn } = useQueryWithParseMock.mock.calls[0][0];
 
       const result = await queryFn();
 
       expect(fetchMock).toHaveBeenCalledTimes(18);
       expect(maxInFlight).toBe(4);
-      expect(result.results.map((gp: { uuid: string }) => gp.uuid)).toEqual(
-        Array.from({ length: 18 }, (_, i) => `gp${i + 1}`),
-      );
+      expect(result.map((gp: { uuid: string }) => gp.uuid)).toEqual(Array.from({ length: 18 }, (_, i) => `gp${i + 1}`));
     });
 
-    it("returns empty results with a single request when totalPages is 0", async () => {
+    it("returns an empty list with a single me request when totalPages is 0", async () => {
       fetchMock.mockResolvedValueOnce({
         overallTotal: 0,
         next: null,
@@ -217,20 +148,20 @@ describe("useGenrePlaylist", () => {
         pageSize: 100,
         totalPages: 0,
       });
-      renderHook(() => useListFullGenrePlaylists("reference", getBackendBaseUrl));
+      renderHook(() => useListFullGenrePlaylists("me", getBackendBaseUrl));
       const { queryFn } = useQueryWithParseMock.mock.calls[0][0];
 
       const result = await queryFn();
 
       expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(result.results).toEqual([]);
+      expect(result).toEqual([]);
     });
 
-    it("rejects with the page number when a later page returns no body", async () => {
+    it("rejects with the page number when a later me page returns no body", async () => {
       fetchMock
         .mockResolvedValueOnce({
           overallTotal: 150,
-          next: "https://backend.example.com/genre-playlists/?page=2",
+          next: "https://backend.example.com/me/genre-playlists/?page=2",
           previous: null,
           results: Array.from({ length: 100 }, (_, i) => ({ uuid: `gp${i}` })),
           page: 1,
@@ -238,15 +169,15 @@ describe("useGenrePlaylist", () => {
           totalPages: 2,
         })
         .mockResolvedValueOnce(null);
-      renderHook(() => useListFullGenrePlaylists("reference", getBackendBaseUrl));
+      renderHook(() => useListFullGenrePlaylists("me", getBackendBaseUrl));
       const { queryFn } = useQueryWithParseMock.mock.calls[0][0];
 
       await expect(queryFn()).rejects.toThrow("page 2 returned no body");
     });
 
-    it("rejects when the first page returns no body", async () => {
+    it("rejects when the first me page returns no body", async () => {
       fetchMock.mockResolvedValueOnce(null);
-      renderHook(() => useListFullGenrePlaylists("reference", getBackendBaseUrl));
+      renderHook(() => useListFullGenrePlaylists("me", getBackendBaseUrl));
       const { queryFn } = useQueryWithParseMock.mock.calls[0][0];
 
       await expect(queryFn()).rejects.toThrow("page 1 returned no body");
