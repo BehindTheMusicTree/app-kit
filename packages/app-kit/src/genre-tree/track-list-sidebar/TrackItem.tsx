@@ -6,6 +6,7 @@ import { usePlayer } from "../../player/PlayerContext";
 import { useTrackList } from "../TrackListContext";
 import TrackPositionPlayPause from "../TrackPositionPlayPause";
 import { TrackBase } from "../schemas/track/base";
+import { unplayableReasonLabel } from "../schemas/youtube-track/detailed";
 
 export interface TrackItemProps<T extends TrackBase> {
   track: T;
@@ -23,6 +24,7 @@ export default function TrackItem<T extends TrackBase>({
   const { handlePlayPauseAction, playerTrackObject, loadTrackForPlayer } = usePlayer();
   const { trackList, toTrackAtPosition } = useTrackList<T>();
   const scope = trackList?.origin?.scope ?? null;
+  const unplayableReason = unplayableReasonLabel(track);
 
   const handlePlayPauseClick = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -35,8 +37,21 @@ export default function TrackItem<T extends TrackBase>({
   };
 
   return (
-    <div className="track-item flex h-14 text-gray-400 hover:bg-gray-900 group">
-      <TrackPositionPlayPause position={position} uuid={track.uuid} handlePlayPauseClick={handlePlayPauseClick} />
+    <div
+      className={`track-item flex h-14 text-gray-400 ${unplayableReason ? "opacity-50" : "hover:bg-gray-900 group"}`}
+      title={unplayableReason ?? undefined}
+    >
+      {unplayableReason ? (
+        <div
+          className="flex items-center justify-center text-lg w-16"
+          style={{ minWidth: "64px", maxWidth: "64px" }}
+          aria-disabled="true"
+        >
+          {position}
+        </div>
+      ) : (
+        <TrackPositionPlayPause position={position} uuid={track.uuid} handlePlayPauseClick={handlePlayPauseClick} />
+      )}
       <div className="title-artist-container flex flex-col items-start justify-center w-1/2">
         <div className="title text-lg font-bold text-gray-300 text-overflow">{track.title}</div>
         {track.artists && track.artists.length > 0 ? (
@@ -44,6 +59,7 @@ export default function TrackItem<T extends TrackBase>({
         ) : (
           ""
         )}
+        {unplayableReason && <div className="text-xs">{unplayableReason}</div>}
       </div>
       <div className="album-name items-start justify-center w-1/3 ml-2 text-overflow ">
         {track.album ? track.album.name : ""}
