@@ -121,7 +121,7 @@ describe("GenreTreeView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useListFullGenrePlaylistsMock.mockReturnValue({
-      data: { results: [] },
+      data: [],
       isPending: false,
     });
     useFetchGenreOverviewMock.mockReturnValue({ data: undefined, isPending: false });
@@ -162,12 +162,10 @@ describe("GenreTreeView", () => {
 
   it("renders stacked view when selected, grouping playlists by root", () => {
     useListFullGenrePlaylistsMock.mockReturnValue({
-      data: {
-        results: [
-          makePlaylist({ uuid: "gp1", root: { uuid: "root1" } }),
-          makePlaylist({ uuid: "gp2", root: { uuid: "root2" } }),
-        ],
-      },
+      data: [
+        makePlaylist({ uuid: "gp1", root: { uuid: "root1" } }),
+        makePlaylist({ uuid: "gp2", root: { uuid: "root2" } }),
+      ],
       isPending: false,
     });
     renderView();
@@ -180,12 +178,10 @@ describe("GenreTreeView", () => {
 
   it("passes selectedNodeId only to the stacked tree whose root holds the selection", () => {
     useListFullGenrePlaylistsMock.mockReturnValue({
-      data: {
-        results: [
-          makePlaylist({ uuid: "gp1", root: { uuid: "root1" } }),
-          makePlaylist({ uuid: "gp2", name: "Rock", root: { uuid: "root2" } }),
-        ],
-      },
+      data: [
+        makePlaylist({ uuid: "gp1", root: { uuid: "root1" } }),
+        makePlaylist({ uuid: "gp2", name: "Rock", root: { uuid: "root2" } }),
+      ],
       isPending: false,
     });
     renderView();
@@ -201,7 +197,7 @@ describe("GenreTreeView", () => {
 
   it("switches to wheel view and passes genre playlists through", () => {
     useListFullGenrePlaylistsMock.mockReturnValue({
-      data: { results: [makePlaylist()] },
+      data: [makePlaylist()],
       isPending: false,
     });
     renderView();
@@ -229,7 +225,7 @@ describe("GenreTreeView", () => {
 
   it("switches back to stacked view", () => {
     useListFullGenrePlaylistsMock.mockReturnValue({
-      data: { results: [makePlaylist()] },
+      data: [makePlaylist()],
       isPending: false,
     });
     renderView();
@@ -250,7 +246,7 @@ describe("GenreTreeView", () => {
 
   it("passes readOnly through to the tree components", () => {
     useListFullGenrePlaylistsMock.mockReturnValue({
-      data: { results: [makePlaylist()] },
+      data: [makePlaylist()],
       isPending: false,
     });
     renderView({ readOnly: true });
@@ -264,7 +260,7 @@ describe("GenreTreeView", () => {
 
   it("passes reparentingGenreUuid updates through to the tree components", () => {
     useListFullGenrePlaylistsMock.mockReturnValue({
-      data: { results: [makePlaylist()] },
+      data: [makePlaylist()],
       isPending: false,
     });
     renderView();
@@ -287,7 +283,7 @@ describe("GenreTreeView", () => {
   describe("rotation and toolbar toggles", () => {
     it("default to off and are passed through to the wheel view", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: { results: [makePlaylist()] },
+        data: [makePlaylist()],
         isPending: false,
       });
       renderView();
@@ -302,7 +298,7 @@ describe("GenreTreeView", () => {
 
     it("toggle on and pass through to the wheel view", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: { results: [makePlaylist()] },
+        data: [makePlaylist()],
         isPending: false,
       });
       renderView();
@@ -321,16 +317,14 @@ describe("GenreTreeView", () => {
 
     it("pass through to the pop-core view", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: {
-          results: [
-            makePlaylist({
-              uuid: "gp1",
-              name: "Mainstream Pop",
-              root: { uuid: "gp1" },
-              parent: null,
-            }),
-          ],
-        },
+        data: [
+          makePlaylist({
+            uuid: "gp1",
+            name: "Mainstream Pop",
+            root: { uuid: "gp1" },
+            parent: null,
+          }),
+        ],
         isPending: false,
       });
       renderView();
@@ -350,7 +344,7 @@ describe("GenreTreeView", () => {
 
     it("hides the Rotation toggle in stacked view and passes showToolbar through", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: { results: [makePlaylist()] },
+        data: [makePlaylist()],
         isPending: false,
       });
       renderView();
@@ -370,7 +364,7 @@ describe("GenreTreeView", () => {
 
     it("renders stacked trees in modifier wheel-zoom mode so the list can scroll", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: { results: [makePlaylist()] },
+        data: [makePlaylist()],
         isPending: false,
       });
       renderView();
@@ -385,9 +379,7 @@ describe("GenreTreeView", () => {
 
   it("passes controlsOrientation through to the pop-core, wheel and stacked views", () => {
     useListFullGenrePlaylistsMock.mockReturnValue({
-      data: {
-        results: [makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" }, parent: null })],
-      },
+      data: [makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" }, parent: null })],
       isPending: false,
     });
     renderView({ controlsOrientation: "horizontal" });
@@ -405,16 +397,14 @@ describe("GenreTreeView", () => {
   describe("outline view", () => {
     it("switches to the outline view and hides the Rotation toggle", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: {
-          results: [
-            makePlaylist({
-              uuid: "gp1",
-              name: "Mainstream Pop",
-              root: { uuid: "gp1" },
-              parent: null,
-            }),
-          ],
-        },
+        data: [
+          makePlaylist({
+            uuid: "gp1",
+            name: "Mainstream Pop",
+            root: { uuid: "gp1" },
+            parent: null,
+          }),
+        ],
         isPending: false,
       });
       renderView();
@@ -427,7 +417,7 @@ describe("GenreTreeView", () => {
 
     it("falls back to the wheel view for a controlled outline mode with no 'Mainstream Pop' root", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: { results: [makePlaylist({ root: { uuid: "gp1" } })] },
+        data: [makePlaylist({ root: { uuid: "gp1" } })],
         isPending: false,
       });
       renderView({ viewMode: "outline" });
@@ -440,16 +430,14 @@ describe("GenreTreeView", () => {
   describe("pop-core view", () => {
     it("disables the Pop/Core toggle with an explanatory title when there is no 'Mainstream Pop' root", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: {
-          results: [
-            makePlaylist({
-              uuid: "gp1",
-              name: "Rock",
-              root: { uuid: "gp1" },
-              parent: null,
-            }),
-          ],
-        },
+        data: [
+          makePlaylist({
+            uuid: "gp1",
+            name: "Rock",
+            root: { uuid: "gp1" },
+            parent: null,
+          }),
+        ],
         isPending: false,
       });
       renderView();
@@ -464,16 +452,14 @@ describe("GenreTreeView", () => {
 
     it("enables the Pop/Core toggle when a 'Mainstream Pop' root exists", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: {
-          results: [
-            makePlaylist({
-              uuid: "gp1",
-              name: "Mainstream Pop",
-              root: { uuid: "gp1" },
-              parent: null,
-            }),
-          ],
-        },
+        data: [
+          makePlaylist({
+            uuid: "gp1",
+            name: "Mainstream Pop",
+            root: { uuid: "gp1" },
+            parent: null,
+          }),
+        ],
         isPending: false,
       });
       renderView();
@@ -483,16 +469,14 @@ describe("GenreTreeView", () => {
 
     it("switches to the pop-core view and passes genre playlists through", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: {
-          results: [
-            makePlaylist({
-              uuid: "gp1",
-              name: "Mainstream Pop",
-              root: { uuid: "gp1" },
-              parent: null,
-            }),
-          ],
-        },
+        data: [
+          makePlaylist({
+            uuid: "gp1",
+            name: "Mainstream Pop",
+            root: { uuid: "gp1" },
+            parent: null,
+          }),
+        ],
         isPending: false,
       });
       renderView();
@@ -517,16 +501,14 @@ describe("GenreTreeView", () => {
 
     it("passes readOnly through to the pop-core tree component", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: {
-          results: [
-            makePlaylist({
-              uuid: "gp1",
-              name: "Mainstream Pop",
-              root: { uuid: "gp1" },
-              parent: null,
-            }),
-          ],
-        },
+        data: [
+          makePlaylist({
+            uuid: "gp1",
+            name: "Mainstream Pop",
+            root: { uuid: "gp1" },
+            parent: null,
+          }),
+        ],
         isPending: false,
       });
       renderView({ readOnly: true });
@@ -556,16 +538,14 @@ describe("GenreTreeView", () => {
       // it must never be rendered here, not even for the one commit before the corrective effect
       // would otherwise run.
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: {
-          results: [
-            makePlaylist({
-              uuid: "gp1",
-              name: "Rock",
-              root: { uuid: "gp1" },
-              parent: null,
-            }),
-          ],
-        },
+        data: [
+          makePlaylist({
+            uuid: "gp1",
+            name: "Rock",
+            root: { uuid: "gp1" },
+            parent: null,
+          }),
+        ],
         isPending: false,
       });
       rerender(<GenreTreeView {...props} />);
@@ -601,16 +581,14 @@ describe("GenreTreeView", () => {
       ).toBeInTheDocument();
 
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: {
-          results: [
-            makePlaylist({
-              uuid: "gp1",
-              name: "Mainstream Pop",
-              root: { uuid: "gp1" },
-              parent: null,
-            }),
-          ],
-        },
+        data: [
+          makePlaylist({
+            uuid: "gp1",
+            name: "Mainstream Pop",
+            root: { uuid: "gp1" },
+            parent: null,
+          }),
+        ],
         isPending: false,
       });
       rerender(<GenreTreeView {...props} />);
@@ -629,16 +607,14 @@ describe("GenreTreeView", () => {
     it("reveals the pop-core graph and drops the skeleton only once the graph has had time to settle", () => {
       const raf = stubRaf();
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: {
-          results: [
-            makePlaylist({
-              uuid: "gp1",
-              name: "Mainstream Pop",
-              root: { uuid: "gp1" },
-              parent: null,
-            }),
-          ],
-        },
+        data: [
+          makePlaylist({
+            uuid: "gp1",
+            name: "Mainstream Pop",
+            root: { uuid: "gp1" },
+            parent: null,
+          }),
+        ],
         isPending: false,
       });
       renderView();
@@ -664,7 +640,7 @@ describe("GenreTreeView", () => {
     it("reveals the wheel graph and drops the skeleton only once the graph has had time to settle", () => {
       const raf = stubRaf();
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: { results: [makePlaylist()] },
+        data: [makePlaylist()],
         isPending: false,
       });
       renderView();
@@ -711,13 +687,11 @@ describe("GenreTreeView", () => {
 
     beforeEach(() => {
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: {
-          results: [
-            makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } }),
-            makePlaylist({ uuid: "gp2", criteria: { uuid: "c2", name: "Blues" } }),
-            makePlaylist({ uuid: "gp3", criteria: null }),
-          ],
-        },
+        data: [
+          makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } }),
+          makePlaylist({ uuid: "gp2", criteria: { uuid: "c2", name: "Blues" } }),
+          makePlaylist({ uuid: "gp3", criteria: null }),
+        ],
         isPending: false,
       });
     });
@@ -846,13 +820,11 @@ describe("GenreTreeView", () => {
     beforeEach(() => {
       vi.useFakeTimers();
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: {
-          results: [
-            makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } }),
-            makePlaylist({ uuid: "gp2", criteria: { uuid: "c2", name: "Blues" } }),
-            makePlaylist({ uuid: "gp3", criteria: null }),
-          ],
-        },
+        data: [
+          makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } }),
+          makePlaylist({ uuid: "gp2", criteria: { uuid: "c2", name: "Blues" } }),
+          makePlaylist({ uuid: "gp3", criteria: null }),
+        ],
         isPending: false,
       });
     });
@@ -912,7 +884,7 @@ describe("GenreTreeView", () => {
 
     it("passes onNodeHover to every tree renderer", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: { results: [makePlaylist({ uuid: "gp1", name: "Mainstream Pop", parent: null })] },
+        data: [makePlaylist({ uuid: "gp1", name: "Mainstream Pop", parent: null })],
         isPending: false,
       });
       renderView();
@@ -932,7 +904,7 @@ describe("GenreTreeView", () => {
   describe("genre search", () => {
     it("selecting a search result updates the info panel the same way a node click does", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: { results: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } })] },
+        data: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } })],
         isPending: false,
       });
       useFetchGenreOverviewMock.mockImplementation((id: string | null) =>
@@ -961,7 +933,7 @@ describe("GenreTreeView", () => {
 
     it("passes the selected node id through to the active tree renderer for highlighting", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: { results: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } })] },
+        data: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } })],
         isPending: false,
       });
       renderView();
@@ -977,7 +949,7 @@ describe("GenreTreeView", () => {
 
     it("fills the search bar with the selected genre's name and clears everything on ✕", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: { results: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } })] },
+        data: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } })],
         isPending: false,
       });
       renderView();
@@ -998,7 +970,7 @@ describe("GenreTreeView", () => {
 
     it("shows the name of a genre selected from the tree in the search bar", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: { results: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } })] },
+        data: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } })],
         isPending: false,
       });
       renderView();

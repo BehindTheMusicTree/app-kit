@@ -11,6 +11,16 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [9.0.0] - 2026-10-03
+
+### Breaking
+
+- **genre-tree**: `useListFullGenrePlaylists` now resolves to `CriteriaPlaylistSimple[]` for both scopes instead of a single-page paginated envelope — read `data` directly, not `data.results`.
+
+### Changed
+
+- **genre-tree**: the reference full list loads in a single `GET genre-playlists/tree/?treeName=canonical` request (grow-api ≥ 11.1.0) instead of paging through `genre-playlists/` 100 rows at a time; the `me` scope still paginates with at most 4 requests in flight.
+
 ## [8.5.0] - 2026-10-03
 
 ### Added

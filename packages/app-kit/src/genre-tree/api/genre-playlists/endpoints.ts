@@ -15,5 +15,5 @@ const makeGenrePlaylistEndpoints = (prefix: string) => ({
 
 export const genrePlaylistEndpoints = {
   me: makeGenrePlaylistEndpoints("me/"),
-  reference: makeGenrePlaylistEndpoints(""),
+  reference: { ...makeGenrePlaylistEndpoints(""), tree: () => "genre-playlists/tree/" },
 };
