@@ -383,6 +383,25 @@ describe("GenreTreeView", () => {
     });
   });
 
+  it("passes controlsOrientation through to the pop-core, wheel and stacked views", () => {
+    useListFullGenrePlaylistsMock.mockReturnValue({
+      data: {
+        results: [makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" }, parent: null })],
+      },
+      isPending: false,
+    });
+    renderView({ controlsOrientation: "horizontal" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Pop/Core" }));
+    expect(treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0].controlsOrientation).toBe("horizontal");
+
+    fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+    expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].controlsOrientation).toBe("horizontal");
+
+    fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
+    expect(treePerRootPropsMock.mock.calls.at(-1)?.[0].controlsOrientation).toBe("horizontal");
+  });
+
   describe("outline view", () => {
     it("switches to the outline view and hides the Rotation toggle", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
