@@ -3,6 +3,7 @@
 import { useCallback, useMemo, type ReactNode } from "react";
 import {
   GenreTreeWheel,
+  type ControlsOrientation,
   type GenreTreeAction,
   type GenreTreeNode,
 } from "@behindthemusictree/genre-tree-view";
@@ -46,6 +47,8 @@ export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
   allowWheelRotation?: boolean;
   /** When false, suppresses the hover toolbar on every node. Defaults to true. */
   showToolbar?: boolean;
+  /** Layout of the floating zoom/pop/fit controls. Defaults to "vertical". */
+  controlsOrientation?: ControlsOrientation;
 };
 
 export default function GenrePlaylistTreeWheel<T extends TrackBase>({
@@ -67,6 +70,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
   readOnly = false,
   allowWheelRotation,
   showToolbar,
+  controlsOrientation,
 }: GenrePlaylistTreeWheelProps<T>) {
   const { isPlaying, setIsPlaying } = usePlayer();
   const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList<T>();
@@ -190,6 +194,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
       hideInfoPanelClose={hideInfoPanelClose}
       allowWheelRotation={allowWheelRotation}
       showToolbar={showToolbar}
+      controlsOrientation={controlsOrientation}
     />
   );
 }
