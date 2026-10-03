@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [9.0.1] - 2026-10-03
+
 ### Fixed
 
 - **genre-tree**: bump `@behindthemusictree/genre-tree-view` to 1.14.1 — clicking inside the genre info panel no longer pans the tree underneath it.
