@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [9.0.0] - 2026-10-03
+
 ### Breaking
 
 - **genre-tree**: `useListFullGenrePlaylists` now resolves to `CriteriaPlaylistSimple[]` for both scopes instead of a single-page paginated envelope — read `data` directly, not `data.results`.
