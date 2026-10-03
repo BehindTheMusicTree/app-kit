@@ -86,19 +86,19 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const genrePlaylistByNodeId = useMemo(
     () =>
       new Map(
-        ((genrePlaylists?.results ?? []) as CriteriaPlaylistSimple[]).map(
+        (genrePlaylists ?? []).map(
           (gp) => [gp.uuid, gp],
         ),
       ),
-    [genrePlaylists?.results],
+    [genrePlaylists],
   );
 
   const selectedGenrePlaylist = useMemo(
     () =>
-      ((genrePlaylists?.results ?? []) as CriteriaPlaylistSimple[]).find(
+      (genrePlaylists ?? []).find(
         (gp) => gp.uuid === selectedNodeId,
       ),
-    [genrePlaylists?.results, selectedNodeId],
+    [genrePlaylists, selectedNodeId],
   );
 
   const handleSelectedNodeChange = useCallback(
@@ -165,12 +165,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
 
   const groupedGenrePlaylistsByRoot = useMemo(
     () =>
-      genrePlaylists?.results
-        ? getGenrePlaylistsGroupedByRoot(
-            genrePlaylists.results as CriteriaPlaylistSimple[],
-          )
-        : {},
-    [genrePlaylists?.results],
+      genrePlaylists ? getGenrePlaylistsGroupedByRoot(genrePlaylists) : {},
+    [genrePlaylists],
   );
 
   const isLoading = isListingGenrePlaylists;
@@ -178,14 +174,14 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const canShowPopCore = useMemo(
     () =>
       hasMainstreamPopRoot(
-        (genrePlaylists?.results ?? []).map((genrePlaylist) => ({
+        (genrePlaylists ?? []).map((genrePlaylist) => ({
           id: genrePlaylist.uuid,
           parentId: genrePlaylist.parent?.uuid ?? null,
           name: genrePlaylist.name,
           itemCount: genrePlaylist.tracksCount,
         })),
       ),
-    [genrePlaylists?.results],
+    [genrePlaylists],
   );
 
   // "outline" is GenreTreeOutline, which shares pop-core's "Mainstream Pop" requirement.
@@ -213,7 +209,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     <>
       {!isLoading && (
         <GenreSearch
-          genrePlaylists={(genrePlaylists?.results ?? []) as CriteriaPlaylistSimple[]}
+          genrePlaylists={genrePlaylists ?? []}
           onSelect={handleGenreSearchSelect}
           selectedName={selectedGenrePlaylist?.name ?? null}
           onClear={handleGenreSearchClear}
@@ -317,7 +313,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                 <GenrePlaylistTreeWheel
                   scope={scope}
                   genrePlaylists={
-                    (genrePlaylists?.results ?? []) as CriteriaPlaylistSimple[]
+                    genrePlaylists ?? []
                   }
                   reparentingGenreUuid={reparentingGenreUuid}
                   setReparentingGenreUuid={setReparentingGenreUuid}
@@ -344,11 +340,11 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                 <GenrePlaylistTreeWheelRadialPopCore
                   scope={scope}
                   // Non-null assertion, not `?? []`: reaching this branch requires canShowPopCore
-                  // to be true, which the useMemo above only sets once genrePlaylists.results is a
+                  // to be true, which the useMemo above only sets once genrePlaylists is a
                   // defined array containing a "Mainstream Pop" root, so it can't be nullish here —
                   // asserting it fails loudly instead of silently passing undefined if that
                   // invariant ever regresses.
-                  genrePlaylists={genrePlaylists!.results as CriteriaPlaylistSimple[]}
+                  genrePlaylists={genrePlaylists!}
                   reparentingGenreUuid={reparentingGenreUuid}
                   setReparentingGenreUuid={setReparentingGenreUuid}
                   handleGenreCreationAction={handleGenreCreationAction}
@@ -373,7 +369,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                 outline
                 scope={scope}
                 // Non-null assertion: same canShowPopCore invariant as the pop-core branch above.
-                genrePlaylists={genrePlaylists!.results as CriteriaPlaylistSimple[]}
+                genrePlaylists={genrePlaylists!}
                 reparentingGenreUuid={reparentingGenreUuid}
                 setReparentingGenreUuid={setReparentingGenreUuid}
                 handleGenreCreationAction={handleGenreCreationAction}

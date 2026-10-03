@@ -18,12 +18,7 @@ const FULL_LIST_PAGE_SIZE = 100;
 const FULL_LIST_CONCURRENCY = 4;
 
 type RawPaginatedResponse = {
-  overallTotal: number;
-  next: string | null;
-  previous: string | null;
   results: unknown[];
-  page: number;
-  pageSize: number;
   totalPages: number;
 };
 
@@ -32,7 +27,7 @@ type RawPaginatedResponse = {
  * single request can silently return fewer results than `overallTotal`. Reads `totalPages` from the
  * first page, then fetches the rest with at most FULL_LIST_CONCURRENCY requests in flight.
  */
-const fetchAllPages = async (fetchPage: (page: number) => Promise<unknown>): Promise<RawPaginatedResponse> => {
+const fetchAllPages = async (fetchPage: (page: number) => Promise<unknown>): Promise<unknown[]> => {
   // fetch-wrapper resolves null (instead of throwing) when a handleError callback swallowed the failure.
   const fetchRequiredPage = async (page: number) => {
     const response = await fetchPage(page);
@@ -51,10 +46,7 @@ const fetchAllPages = async (fetchPage: (page: number) => Promise<unknown>): Pro
       }
     }),
   );
-  const results = [first, ...rest].flatMap((response) => response.results);
-  const last = rest[rest.length - 1] ?? first;
-
-  return { ...last, results, page: 1, pageSize: results.length, totalPages: 1 };
+  return [first, ...rest].flatMap((response) => response.results);
 };
 
 export const useListGenrePlaylists = (page = 1, pageSize: number | string = 50, getBackendBaseUrl: () => string) => {
@@ -90,16 +82,18 @@ export const useListFullGenrePlaylists = (scope: Scope, getBackendBaseUrl: () =>
   const query = useQueryWithParse({
     queryKey,
     queryFn: () =>
-      fetchAllPages((page) =>
-        fetch(
-          scope === "reference" ? genrePlaylistEndpoints.reference.list() : genrePlaylistEndpoints.me.list(),
-          true,
-          scope === "me",
-          {},
-          { page, pageSize: FULL_LIST_PAGE_SIZE, treeName: "canonical" },
-        ),
-      ),
-    schema: PaginatedResponseSchema(CriteriaPlaylistSimpleSchema),
+      scope === "reference"
+        ? fetch(genrePlaylistEndpoints.reference.tree(), true, false, {}, { treeName: "canonical" })
+        : fetchAllPages((page) =>
+            fetch(
+              genrePlaylistEndpoints.me.list(),
+              true,
+              true,
+              {},
+              { page, pageSize: FULL_LIST_PAGE_SIZE, treeName: "canonical" },
+            ),
+          ),
+    schema: z.array(CriteriaPlaylistSimpleSchema),
     context: "useListFullGenrePlaylists",
     enabled: scope === "reference" || (sessionRestored && !!session?.accessToken),
   });
