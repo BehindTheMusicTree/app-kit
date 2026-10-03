@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [9.1.0] - 2026-10-03
+
 ### Added
 
 - **genre-tree**: `YoutubeTrackDetailedSchema` parses a nullable `youtubeUnplayableReason` (`not_found`, `not_embeddable`, `private`, `not_processed`, `region_whitelisted`; defaults to `null` when absent) and `unplayableReasonLabel(track)` returns its display label. Flagged tracks render greyed out with the reason in `GenrePlaylistTracks` and the track-list sidebar's `TrackItem`, can't be played, and are skipped when a genre playlist starts.
