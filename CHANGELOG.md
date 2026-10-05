@@ -11,6 +11,12 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [9.1.1] - 2026-10-05
+
+### Changed
+
+- **genre-tree**: bump `@behindthemusictree/genre-tree-view` to 1.15.0 — tree branches are now drawn at 1/6 of their child chip's height instead of as hairlines.
+
 ## [9.1.0] - 2026-10-03
 
 ### Added
