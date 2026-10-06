@@ -188,19 +188,15 @@ export function createNetworkOrBackendError(error: unknown, url: string, backend
   }
 
   if (error instanceof TypeError) {
-    if (error.message === "Failed to fetch") {
-      return isBackendError
-        ? createAppErrorFromErrorCode(ErrorCode.BACKEND_UNAVAILABLE)
-        : createAppErrorFromErrorCode(ErrorCode.NETWORK_FAILED_TO_FETCH);
-    } else if (error.message === "Network request failed") {
-      return isBackendError
-        ? createAppErrorFromErrorCode(ErrorCode.BACKEND_UNAVAILABLE)
-        : createAppErrorFromErrorCode(ErrorCode.NETWORK_CONNECTION_REFUSED);
-    } else if (error.message.includes("timeout")) {
+    if (error.message.includes("timeout")) {
       return isBackendError
         ? createAppErrorFromErrorCode(ErrorCode.BACKEND_REQUEST_TIMEOUT)
         : createAppErrorFromErrorCode(ErrorCode.NETWORK_TIMEOUT);
     }
+    // fetch rejects with a browser-specific TypeError ("Failed to fetch", "Load failed",
+    // "NetworkError when attempting to fetch resource.") that can't tell a dropped client
+    // connection from a down backend, so it must not be blamed on the backend.
+    return createAppErrorFromErrorCode(ErrorCode.NETWORK_FAILED_TO_FETCH);
   }
 
   if (error.name === "AbortError") {
