@@ -315,6 +315,17 @@ describe("createNetworkOrBackendError", () => {
       },
     );
 
+    it("unknown TypeError message -> NETWORK_FAILED_TO_FETCH for backend and non-backend URLs", () => {
+      withOnlineStatus(true, () => {
+        expect(createNetworkOrBackendError(new TypeError("something else"), backendUrl, backendBaseUrl).code).toBe(
+          ErrorCode.NETWORK_FAILED_TO_FETCH,
+        );
+        expect(createNetworkOrBackendError(new TypeError("something else"), otherUrl, backendBaseUrl).code).toBe(
+          ErrorCode.NETWORK_FAILED_TO_FETCH,
+        );
+      });
+    });
+
     it("message including 'timeout' + backend -> BACKEND_REQUEST_TIMEOUT", () => {
       withOnlineStatus(true, () => {
         const err = createNetworkOrBackendError(new TypeError("connection timeout"), backendUrl, backendBaseUrl);
