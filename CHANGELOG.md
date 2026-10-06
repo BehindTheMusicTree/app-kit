@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [9.3.0] - 2026-10-06
+
 ### Added
 
 - **genre-tree**: `CriteriaPlaylistSimpleSchema` parses a required `isUnacceptedRoot` boolean (served by the tree and list endpoints since grow-api PR #182; not on the detail endpoint, so `CriteriaPlaylistDetailedSchema` is unchanged). Code building `CriteriaPlaylistSimple` objects by hand (e.g. test fixtures) must now set it.
