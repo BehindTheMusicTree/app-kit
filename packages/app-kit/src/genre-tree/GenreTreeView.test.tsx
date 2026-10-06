@@ -427,6 +427,55 @@ describe("GenreTreeView", () => {
     });
   });
 
+  describe("criteria-less playlists (Genreless)", () => {
+    const pop = makePlaylist({
+      uuid: "gp1",
+      name: "Mainstream Pop",
+      root: { uuid: "gp1" },
+      parent: null,
+    });
+    const genreless = makePlaylist({
+      uuid: "gp2",
+      name: "Genreless",
+      root: { uuid: "gp2" },
+      parent: null,
+      criteria: null,
+    });
+
+    beforeEach(() => {
+      useListFullGenrePlaylistsMock.mockReturnValue({ data: [pop, genreless], isPending: false });
+    });
+
+    function searchGenreless() {
+      fireEvent.change(screen.getByLabelText("Search a genre"), { target: { value: "genrel" } });
+    }
+
+    it("excludes them from the wheel view and its search", () => {
+      renderView({ viewMode: "wheel" });
+
+      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].genrePlaylists).toEqual([pop]);
+      searchGenreless();
+      expect(screen.queryByRole("button", { name: "Genreless" })).not.toBeInTheDocument();
+    });
+
+    it("excludes them from the pop-core view", () => {
+      renderView({ viewMode: "pop-core" });
+
+      expect(treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0].genrePlaylists).toEqual([pop]);
+    });
+
+    it("keeps them in the outline view and its search", () => {
+      renderView({ viewMode: "outline" });
+
+      expect(treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0].genrePlaylists).toEqual([
+        pop,
+        genreless,
+      ]);
+      searchGenreless();
+      expect(screen.getByRole("button", { name: "Genreless" })).toBeInTheDocument();
+    });
+  });
+
   describe("pop-core view", () => {
     it("disables the Pop/Core toggle with an explanatory title when there is no 'Mainstream Pop' root", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({

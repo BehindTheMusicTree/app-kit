@@ -88,6 +88,7 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
         name: genrePlaylist.name,
         itemCount: genrePlaylist.tracksCount,
         actionable: Boolean(genrePlaylist.criteria),
+        detached: !genrePlaylist.criteria,
         side: genrePlaylist.criteria?.side ?? undefined,
       })),
     [genrePlaylists],

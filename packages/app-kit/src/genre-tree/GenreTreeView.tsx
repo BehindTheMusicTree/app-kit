@@ -205,11 +205,20 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       ? "wheel"
       : selectedViewMode;
 
+  // The wheels have no place for criteria-less playlists (Genreless); outline lists them apart.
+  const visibleGenrePlaylists = useMemo(
+    () =>
+      viewMode === "wheel" || viewMode === "pop-core"
+        ? (genrePlaylists ?? []).filter((gp) => gp.criteria)
+        : (genrePlaylists ?? []),
+    [genrePlaylists, viewMode],
+  );
+
   const actions = (
     <>
       {!isLoading && (
         <GenreSearch
-          genrePlaylists={genrePlaylists ?? []}
+          genrePlaylists={visibleGenrePlaylists}
           onSelect={handleGenreSearchSelect}
           selectedName={selectedGenrePlaylist?.name ?? null}
           onClear={handleGenreSearchClear}
@@ -312,9 +321,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
               <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
                 <GenrePlaylistTreeWheel
                   scope={scope}
-                  genrePlaylists={
-                    genrePlaylists ?? []
-                  }
+                  genrePlaylists={visibleGenrePlaylists}
                   reparentingGenreUuid={reparentingGenreUuid}
                   setReparentingGenreUuid={setReparentingGenreUuid}
                   handleGenreCreationAction={handleGenreCreationAction}
@@ -339,12 +346,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
               <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
                 <GenrePlaylistTreeWheelRadialPopCore
                   scope={scope}
-                  // Non-null assertion, not `?? []`: reaching this branch requires canShowPopCore
-                  // to be true, which the useMemo above only sets once genrePlaylists is a
-                  // defined array containing a "Mainstream Pop" root, so it can't be nullish here —
-                  // asserting it fails loudly instead of silently passing undefined if that
-                  // invariant ever regresses.
-                  genrePlaylists={genrePlaylists!}
+                  genrePlaylists={visibleGenrePlaylists}
                   reparentingGenreUuid={reparentingGenreUuid}
                   setReparentingGenreUuid={setReparentingGenreUuid}
                   handleGenreCreationAction={handleGenreCreationAction}
@@ -368,7 +370,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
               <GenrePlaylistTreeWheelRadialPopCore
                 outline
                 scope={scope}
-                // Non-null assertion: same canShowPopCore invariant as the pop-core branch above.
+                // Non-null assertion: reaching this branch requires canShowPopCore, which is only
+                // true once genrePlaylists is a defined array containing a "Mainstream Pop" root.
                 genrePlaylists={genrePlaylists!}
                 reparentingGenreUuid={reparentingGenreUuid}
                 setReparentingGenreUuid={setReparentingGenreUuid}
