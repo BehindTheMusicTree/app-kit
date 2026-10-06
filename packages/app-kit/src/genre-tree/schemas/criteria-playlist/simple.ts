@@ -10,6 +10,9 @@ export const CriteriaPlaylistSimpleSchema = CriteriaPlaylistDetailedSchema.pick(
   tracksCount: true,
   createdOn: true,
   updatedOn: true,
+}).extend({
+  // Only on the tree/list payloads, not the detail endpoint — hence not on the detailed schema.
+  isUnacceptedRoot: z.boolean(),
 });
 
 export type CriteriaPlaylistSimple = z.infer<typeof CriteriaPlaylistSimpleSchema>;

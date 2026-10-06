@@ -70,6 +70,7 @@ const genrePlaylist: CriteriaPlaylistSimple = {
   tracksCount: 3,
   createdOn: "2026-06-20T20:24:17.718222Z",
   updatedOn: "2026-06-20T20:24:17.718222Z",
+  isUnacceptedRoot: false,
 };
 
 function renderTree(nodes: CriteriaPlaylistSimple[] = [genrePlaylist]) {

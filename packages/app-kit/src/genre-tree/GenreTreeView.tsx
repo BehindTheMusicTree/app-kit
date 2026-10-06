@@ -205,14 +205,18 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       ? "wheel"
       : selectedViewMode;
 
-  // The wheels have no place for criteria-less playlists (Genreless); outline lists them apart.
-  const visibleGenrePlaylists = useMemo(
-    () =>
-      viewMode === "wheel" || viewMode === "pop-core"
-        ? (genrePlaylists ?? []).filter((gp) => gp.criteria)
-        : (genrePlaylists ?? []),
-    [genrePlaylists, viewMode],
-  );
+  // Unaccepted roots (and their subtrees) stay hidden until an admin accepts them; only the
+  // stacked view shows everything. The wheels also have no place for criteria-less playlists
+  // (Genreless), which outline lists apart.
+  const visibleGenrePlaylists = useMemo(() => {
+    const all = genrePlaylists ?? [];
+    if (viewMode === "stacked") return all;
+    const unacceptedRootUuids = new Set(all.filter((gp) => gp.isUnacceptedRoot).map((gp) => gp.uuid));
+    const accepted = all.filter(
+      (gp) => !gp.isUnacceptedRoot && !unacceptedRootUuids.has(gp.root.uuid),
+    );
+    return viewMode === "outline" ? accepted : accepted.filter((gp) => gp.criteria);
+  }, [genrePlaylists, viewMode]);
 
   const actions = (
     <>
@@ -370,9 +374,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
               <GenrePlaylistTreeWheelRadialPopCore
                 outline
                 scope={scope}
-                // Non-null assertion: reaching this branch requires canShowPopCore, which is only
-                // true once genrePlaylists is a defined array containing a "Mainstream Pop" root.
-                genrePlaylists={genrePlaylists!}
+                genrePlaylists={visibleGenrePlaylists}
                 reparentingGenreUuid={reparentingGenreUuid}
                 setReparentingGenreUuid={setReparentingGenreUuid}
                 handleGenreCreationAction={handleGenreCreationAction}

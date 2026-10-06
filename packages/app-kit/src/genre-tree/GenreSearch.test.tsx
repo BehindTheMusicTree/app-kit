@@ -12,6 +12,7 @@ const makeGenrePlaylist = (name: string): CriteriaPlaylistSimple => ({
   tracksCount: 0,
   createdOn: "2026-01-01T00:00:00Z",
   updatedOn: null,
+  isUnacceptedRoot: false,
 });
 
 describe("GenreSearch", () => {
