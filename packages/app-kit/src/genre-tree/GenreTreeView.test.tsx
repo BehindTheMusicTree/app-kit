@@ -101,6 +101,7 @@ function makePlaylist(overrides: Record<string, unknown> = {}) {
     parent: null,
     tracksCount: 3,
     criteria: { uuid: "c1", name: "Jazz" },
+    isUnacceptedRoot: false,
     ...overrides,
   };
 }
@@ -473,6 +474,72 @@ describe("GenreTreeView", () => {
       ]);
       searchGenreless();
       expect(screen.getByRole("button", { name: "Genreless" })).toBeInTheDocument();
+    });
+  });
+
+  describe("unaccepted roots", () => {
+    const pop = makePlaylist({
+      uuid: "gp1",
+      name: "Mainstream Pop",
+      root: { uuid: "gp1" },
+      parent: null,
+    });
+    const unacceptedRoot = makePlaylist({
+      uuid: "gp2",
+      name: "Imported Root",
+      root: { uuid: "gp2" },
+      parent: null,
+      isUnacceptedRoot: true,
+    });
+    const unacceptedChild = makePlaylist({
+      uuid: "gp3",
+      name: "Imported Child",
+      root: { uuid: "gp2" },
+      parent: { uuid: "gp2" },
+    });
+
+    beforeEach(() => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: [pop, unacceptedRoot, unacceptedChild],
+        isPending: false,
+      });
+    });
+
+    function searchImported() {
+      fireEvent.change(screen.getByLabelText("Search a genre"), { target: { value: "imported" } });
+    }
+
+    it("hides them and their subtree from the wheel view and its search", () => {
+      renderView({ viewMode: "wheel" });
+
+      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].genrePlaylists).toEqual([pop]);
+      searchImported();
+      expect(screen.queryByRole("button", { name: "Imported Root" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Imported Child" })).not.toBeInTheDocument();
+    });
+
+    it("hides them and their subtree from the pop-core view", () => {
+      renderView({ viewMode: "pop-core" });
+
+      expect(treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0].genrePlaylists).toEqual([pop]);
+    });
+
+    it("hides them and their subtree from the outline view", () => {
+      renderView({ viewMode: "outline" });
+
+      expect(treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0].genrePlaylists).toEqual([pop]);
+    });
+
+    it("keeps them and their subtree in the stacked view", () => {
+      renderView({ viewMode: "stacked" });
+
+      const rendered = treePerRootPropsMock.mock.calls.flatMap(
+        ([props]) => props.genrePlaylistTreePerRoot,
+      );
+      expect(rendered).toEqual(expect.arrayContaining([unacceptedRoot, unacceptedChild]));
+      searchImported();
+      expect(screen.getByRole("button", { name: "Imported Root" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Imported Child" })).toBeInTheDocument();
     });
   });
 

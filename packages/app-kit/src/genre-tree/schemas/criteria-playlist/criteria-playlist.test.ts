@@ -46,6 +46,7 @@ describe("CriteriaPlaylistSimpleSchema", () => {
       tracksCount: 3,
       createdOn: "2024-01-01T00:00:00.000Z",
       updatedOn: null,
+      isUnacceptedRoot: false,
     };
     expect(() => CriteriaPlaylistSimpleSchema.parse(valid)).not.toThrow();
   });

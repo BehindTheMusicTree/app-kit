@@ -11,6 +11,14 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- **genre-tree**: `CriteriaPlaylistSimpleSchema` parses a required `isUnacceptedRoot` boolean (served by the tree and list endpoints since grow-api PR #182; not on the detail endpoint, so `CriteriaPlaylistDetailedSchema` is unchanged). Code building `CriteriaPlaylistSimple` objects by hand (e.g. test fixtures) must now set it.
+
+### Changed
+
+- **genre-tree**: `GenreTreeView` hides unaccepted roots (imported top-level genres awaiting admin review) and their subtrees from the wheel, pop-core and outline views, and from `GenreSearch` in those views. The stacked view still shows everything.
+
 ## [9.2.0] - 2026-10-06
 
 ### Changed
