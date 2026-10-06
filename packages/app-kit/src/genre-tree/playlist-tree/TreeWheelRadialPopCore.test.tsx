@@ -114,7 +114,7 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
     });
   });
 
-  it("maps genre playlists to tree nodes including side", () => {
+  it("maps genre playlists to tree nodes including side, detaching criteria-less ones", () => {
     renderWheelRadialPopCore({
       genrePlaylists: [
         makeGenrePlaylist({
@@ -130,8 +130,8 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
 
     const { nodes } = genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0];
     expect(nodes).toEqual([
-      { id: "gp1", parentId: "root", name: "Jazz", itemCount: 3, actionable: true, side: "pop" },
-      { id: "gp2", parentId: null, name: "Rock", itemCount: 0, actionable: false, side: undefined },
+      { id: "gp1", parentId: "root", name: "Jazz", itemCount: 3, actionable: true, detached: false, side: "pop" },
+      { id: "gp2", parentId: null, name: "Rock", itemCount: 0, actionable: false, detached: true, side: undefined },
     ]);
   });
 
