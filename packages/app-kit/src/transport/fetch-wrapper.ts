@@ -1,6 +1,22 @@
 import { createAppErrorFromResult, createNetworkOrBackendError } from "./app-errors/app-error-factory";
 import { AppError } from "./app-errors/app-error";
 
+// Stale keep-alive connections (e.g. browser↔Cloudflare) can drop a request before it reaches the server.
+const NETWORK_RETRY_DELAYS_MS = [300, 900];
+
+const fetchWithNetworkRetry = async (url: string, options: RequestInit): Promise<Response> => {
+  const method = (options.method ?? "GET").toUpperCase();
+  const retryable = method === "GET" || method === "HEAD";
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fetch(url, options);
+    } catch (error) {
+      if (!retryable || options.signal?.aborted || attempt >= NETWORK_RETRY_DELAYS_MS.length) throw error;
+      await new Promise((resolve) => setTimeout(resolve, NETWORK_RETRY_DELAYS_MS[attempt]));
+    }
+  }
+};
+
 export const fetchWrapper = async <T>(
   url: string,
   requiresAuth: boolean,
@@ -37,7 +53,7 @@ export const fetchWrapper = async <T>(
   }
 
   try {
-    const result = await fetch(finalUrl, finalOptions);
+    const result = await fetchWithNetworkRetry(finalUrl, finalOptions);
 
     if (!result.ok) {
       const appError = await createAppErrorFromResult(result, backendBaseUrl);
