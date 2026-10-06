@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [9.2.0] - 2026-10-06
+
 ### Changed
 
 - **genre-tree**: bump `@behindthemusictree/genre-tree-view` to 1.16.0. Criteria-less genre playlists (Genreless) are no longer shown on the wheel or pop-core rings, nor offered by `GenreSearch` in those views; the outline lists them in a separate section after the tree (`detached` node flag).
