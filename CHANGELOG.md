@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- **transport**: `createNetworkOrBackendError` maps any `TypeError` thrown by `fetch` (Chrome "Failed to fetch", Safari "Load failed", Firefox "NetworkError when attempting to fetch resource.", React Native "Network request failed") to `NETWORK_FAILED_TO_FETCH`, including for backend URLs. Previously a dropped client connection to the backend surfaced as `BACKEND_UNAVAILABLE` (internal-error popup instead of the network one), and Safari/Firefox messages fell through to `BACKEND_INTERNAL_ERROR`/`NETWORK_UNKNOWN`. Timeout `TypeError`s keep their timeout codes.
+
 ## [9.3.1] - 2026-10-06
 
 ### Fixed
