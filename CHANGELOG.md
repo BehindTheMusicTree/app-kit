@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- **transport**: `fetchWrapper` retries GET/HEAD requests up to twice (300ms, 900ms) when `fetch` itself throws (dropped connection, e.g. `ERR_CONNECTION_CLOSED`), before surfacing the connectivity error. Error responses, aborted requests and other methods are never retried.
+
 ## [9.3.0] - 2026-10-06
 
 ### Added

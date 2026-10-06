@@ -138,7 +138,11 @@ describe("fetchWrapper", () => {
     const appError = new AppError(ErrorCode.BACKEND_AUTH_ERROR);
     createNetworkOrBackendErrorMock.mockReturnValue(appError);
 
-    await expect(fetchWrapper("things/", false)).rejects.toBe(appError);
+    vi.useFakeTimers();
+    const assertion = expect(fetchWrapper("things/", false)).rejects.toBe(appError);
+    await vi.runAllTimersAsync();
+    await assertion;
+    vi.useRealTimers();
     expect(createNetworkOrBackendErrorMock).toHaveBeenCalledWith(networkFailure, "things/", undefined);
   });
 
@@ -148,11 +152,62 @@ describe("fetchWrapper", () => {
     const appError = new AppError(ErrorCode.BACKEND_AUTH_ERROR);
     createNetworkOrBackendErrorMock.mockReturnValue(appError);
     const handleError = vi.fn();
+    vi.useFakeTimers();
 
-    const result = await fetchWrapper("things/", false, {}, undefined, undefined, undefined, handleError);
+    const pending = fetchWrapper("things/", false, {}, undefined, undefined, undefined, handleError);
+    await vi.runAllTimersAsync();
+    const result = await pending;
+    vi.useRealTimers();
 
     expect(result).toBeNull();
     expect(handleError).toHaveBeenCalledWith(appError);
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(3);
+  });
+
+  it("retries a GET once the network recovers", async () => {
+    vi.useFakeTimers();
+    vi.mocked(fetch)
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockResolvedValue({ ok: true, json: async () => ({ id: 1 }) } as unknown as Response);
+
+    const pending = fetchWrapper("things/", false);
+    await vi.runAllTimersAsync();
+    const result = await pending;
+    vi.useRealTimers();
+
+    expect(result).toEqual({ id: 1 });
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not retry a POST network failure", async () => {
+    vi.mocked(fetch).mockRejectedValue(new TypeError("Failed to fetch"));
+    createNetworkOrBackendErrorMock.mockReturnValue(new AppError(ErrorCode.BACKEND_AUTH_ERROR));
+    const handleError = vi.fn();
+
+    await fetchWrapper("things/", false, { method: "POST" }, undefined, undefined, undefined, handleError);
+
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
+    expect(handleError).toHaveBeenCalled();
+  });
+
+  it("does not retry a GET aborted by its signal", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    vi.mocked(fetch).mockRejectedValue(new DOMException("Aborted", "AbortError"));
+    createNetworkOrBackendErrorMock.mockReturnValue(new AppError(ErrorCode.BACKEND_AUTH_ERROR));
+
+    await fetchWrapper("things/", false, { signal: controller.signal }, undefined, undefined, undefined, vi.fn());
+
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not retry a GET that gets an error response", async () => {
+    vi.mocked(fetch).mockResolvedValue({ ok: false, status: 500 } as unknown as Response);
+    createAppErrorFromResultMock.mockResolvedValue(new AppError(ErrorCode.BACKEND_AUTH_ERROR));
+
+    await fetchWrapper("things/", false, {}, undefined, undefined, undefined, vi.fn());
+
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
   });
 
   it("passes backendBaseUrl through to the error factories", async () => {
