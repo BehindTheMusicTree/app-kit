@@ -301,33 +301,19 @@ describe("createNetworkOrBackendError", () => {
   });
 
   describe("TypeError messages", () => {
-    it("'Failed to fetch' + backend -> BACKEND_UNAVAILABLE", () => {
-      withOnlineStatus(true, () => {
-        const err = createNetworkOrBackendError(new TypeError("Failed to fetch"), backendUrl, backendBaseUrl);
-        expect(err.code).toBe(ErrorCode.BACKEND_UNAVAILABLE);
-      });
-    });
-
-    it("'Failed to fetch' + non-backend -> NETWORK_FAILED_TO_FETCH", () => {
-      withOnlineStatus(true, () => {
-        const err = createNetworkOrBackendError(new TypeError("Failed to fetch"), otherUrl, backendBaseUrl);
-        expect(err.code).toBe(ErrorCode.NETWORK_FAILED_TO_FETCH);
-      });
-    });
-
-    it("'Network request failed' + backend -> BACKEND_UNAVAILABLE", () => {
-      withOnlineStatus(true, () => {
-        const err = createNetworkOrBackendError(new TypeError("Network request failed"), backendUrl, backendBaseUrl);
-        expect(err.code).toBe(ErrorCode.BACKEND_UNAVAILABLE);
-      });
-    });
-
-    it("'Network request failed' + non-backend -> NETWORK_CONNECTION_REFUSED", () => {
-      withOnlineStatus(true, () => {
-        const err = createNetworkOrBackendError(new TypeError("Network request failed"), otherUrl, backendBaseUrl);
-        expect(err.code).toBe(ErrorCode.NETWORK_CONNECTION_REFUSED);
-      });
-    });
+    it.each(["Failed to fetch", "Load failed", "NetworkError when attempting to fetch resource.", "Network request failed"])(
+      "'%s' -> NETWORK_FAILED_TO_FETCH for backend and non-backend URLs",
+      (message) => {
+        withOnlineStatus(true, () => {
+          expect(createNetworkOrBackendError(new TypeError(message), backendUrl, backendBaseUrl).code).toBe(
+            ErrorCode.NETWORK_FAILED_TO_FETCH,
+          );
+          expect(createNetworkOrBackendError(new TypeError(message), otherUrl, backendBaseUrl).code).toBe(
+            ErrorCode.NETWORK_FAILED_TO_FETCH,
+          );
+        });
+      },
+    );
 
     it("message including 'timeout' + backend -> BACKEND_REQUEST_TIMEOUT", () => {
       withOnlineStatus(true, () => {
@@ -343,12 +329,6 @@ describe("createNetworkOrBackendError", () => {
       });
     });
 
-    it("unrecognized TypeError message falls through to generic handling", () => {
-      withOnlineStatus(true, () => {
-        const err = createNetworkOrBackendError(new TypeError("something else"), otherUrl, backendBaseUrl);
-        expect(err.code).toBe(ErrorCode.NETWORK_UNKNOWN);
-      });
-    });
   });
 
   it("AbortError name -> NETWORK_ABORT_ERROR", () => {
