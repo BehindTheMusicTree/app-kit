@@ -11,6 +11,12 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- **transport**: `fetchWrapper` checks the request with the `Request` constructor before sending it. A malformed request (invalid header value, URL, method, or a body on a GET/HEAD) now throws a `ClientError` (`CLIENT_INTERNAL_ERROR`, original `TypeError` on `cause`) without calling `fetch` or retrying. Previously `fetch`'s `TypeError` made it look like a dropped connection, so the network popup showed. The check is skipped when `Request`/`URL` globals are missing. **Behavior change for callers:** `useFetchWrapper().fetch` rethrows this `ClientError` instead of resolving `null` behind the connectivity popup — React Query surfaces it as a query/mutation error; direct callers relying on a `null` result must catch it.
+- **transport**: `createNetworkOrBackendError` maps a non-`TypeError` "Failed to fetch" error to `NETWORK_FAILED_TO_FETCH` for backend URLs too. `BACKEND_UNAVAILABLE` (`BAC2000`) is no longer produced by any code path.
+- **transport**: `CLIENT_INTERNAL_ERROR` message is now "Internal client error" (was "Internal server error").
+
 ## [9.3.2] - 2026-10-06
 
 ### Fixed

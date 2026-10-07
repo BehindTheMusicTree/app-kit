@@ -204,9 +204,7 @@ export function createNetworkOrBackendError(error: unknown, url: string, backend
   }
 
   if (error.message?.includes("Failed to fetch")) {
-    return isBackendError
-      ? createAppErrorFromErrorCode(ErrorCode.BACKEND_UNAVAILABLE)
-      : createAppErrorFromErrorCode(ErrorCode.NETWORK_FAILED_TO_FETCH);
+    return createAppErrorFromErrorCode(ErrorCode.NETWORK_FAILED_TO_FETCH);
   }
 
   if (error.message?.includes("not found")) {

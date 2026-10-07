@@ -1,5 +1,10 @@
-import { createAppErrorFromResult, createNetworkOrBackendError } from "./app-errors/app-error-factory";
+import {
+  createAppErrorFromErrorCode,
+  createAppErrorFromResult,
+  createNetworkOrBackendError,
+} from "./app-errors/app-error-factory";
 import { AppError } from "./app-errors/app-error";
+import { ErrorCode } from "./app-errors/app-error-codes";
 
 // Stale keep-alive connections (e.g. browser↔Cloudflare) can drop a request before it reaches the server.
 const NETWORK_RETRY_DELAYS_MS = [300, 900];
@@ -14,6 +19,25 @@ const fetchWithNetworkRetry = async (url: string, options: RequestInit): Promise
       if (!retryable || options.signal?.aborted || attempt >= NETWORK_RETRY_DELAYS_MS.length) throw error;
       await new Promise((resolve) => setTimeout(resolve, NETWORK_RETRY_DELAYS_MS[attempt]));
     }
+  }
+};
+
+// fetch rejects a malformed request (bad URL, header value, method) with the same TypeError as a
+// dropped connection; building the Request first tells our bug apart. The body is left out so it
+// isn't encoded twice, hence the manual body-on-GET/HEAD check.
+// ponytail: only catches what the Request constructor validates, not errors raised mid-fetch.
+// React Native's URL polyfill doesn't reject bad URLs, so the check is weaker there.
+const assertWellFormedRequest = (url: string, options: RequestInit) => {
+  if (typeof Request !== "function" || typeof URL !== "function") return;
+  try {
+    const base = globalThis.document?.baseURI ?? globalThis.location?.href;
+    const { method } = new Request(new URL(url, base), { ...options, body: undefined });
+    if (options.body != null && (method === "GET" || method === "HEAD")) {
+      throw new TypeError(`${method} request cannot have a body`);
+    }
+  } catch (error) {
+    if (!(error instanceof TypeError)) throw error;
+    throw Object.assign(createAppErrorFromErrorCode(ErrorCode.CLIENT_INTERNAL_ERROR), { cause: error });
   }
 };
 
@@ -53,6 +77,7 @@ export const fetchWrapper = async <T>(
   }
 
   try {
+    assertWellFormedRequest(finalUrl, finalOptions);
     const result = await fetchWithNetworkRetry(finalUrl, finalOptions);
 
     if (!result.ok) {

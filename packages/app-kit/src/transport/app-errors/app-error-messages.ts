@@ -73,7 +73,7 @@ export const ErrorMessages: Record<ErrorCode, string> = {
   [ErrorCode.CLIENT_FORBIDDEN]: "Forbidden",
   [ErrorCode.CLIENT_NOT_FOUND]: "Not found",
   [ErrorCode.CLIENT_UNAUTHORIZED]: "Unauthorized",
-  [ErrorCode.CLIENT_INTERNAL_ERROR]: "Internal server error",
+  [ErrorCode.CLIENT_INTERNAL_ERROR]: "Internal client error",
 
   // Service Errors
   [ErrorCode.SERVICE_BAD_REQUEST]: "Bad request",
