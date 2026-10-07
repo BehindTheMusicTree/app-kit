@@ -145,4 +145,24 @@ describe("GenrePlaylistTracks", () => {
     fireEvent.click(button);
     expect(playNewTrackListFromGenrePlaylist).not.toHaveBeenCalled();
   });
+
+  it("links tracks with an MBID to MusicBrainz without starting playback", async () => {
+    fetchGenrePlaylistTracksPage.mockResolvedValueOnce({
+      tracks: [
+        { uuid: "m", title: "Linked", artists: null, musicbrainzRecordingId: "b1e6a1c8-0e3d-4d3d-9d2e-2f6c1a2b3c4d" },
+        { uuid: "n", title: "Unlinked", artists: null },
+      ],
+      total: 2,
+      nextPage: null,
+    });
+
+    renderTracks();
+
+    const link = await screen.findByRole("link", { name: "View Linked on MusicBrainz" });
+    expect(link).toHaveAttribute("href", "https://musicbrainz.org/recording/b1e6a1c8-0e3d-4d3d-9d2e-2f6c1a2b3c4d");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    expect(screen.queryByRole("link", { name: "View Unlinked on MusicBrainz" })).not.toBeInTheDocument();
+    fireEvent.click(link);
+    expect(playNewTrackListFromGenrePlaylist).not.toHaveBeenCalled();
+  });
 });

@@ -11,6 +11,12 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [9.4.0] - 2026-10-07
+
+### Added
+
+- **genre-tree**: `YoutubeTrackDetailedSchema` parses `musicbrainzRecordingId` (nullable UUID, defaults to `null` when absent). New `musicBrainzRecordingUrl(track)` helper returns `https://musicbrainz.org/recording/<mbid>` or `null`. `TrackItem` and `GenrePlaylistTracks` render a "View on MusicBrainz" external link for tracks that have one.
+
 ## [9.3.3] - 2026-10-07
 
 ### Fixed
