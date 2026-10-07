@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { AppError } from "./app-errors/app-error";
+import { AppError, ClientError } from "./app-errors/app-error";
 import { ErrorCode } from "./app-errors/app-error-codes";
 
 const { createAppErrorFromResultMock, createNetworkOrBackendErrorMock } = vi.hoisted(() => ({
@@ -7,7 +7,9 @@ const { createAppErrorFromResultMock, createNetworkOrBackendErrorMock } = vi.hoi
   createNetworkOrBackendErrorMock: vi.fn(),
 }));
 
-vi.mock("./app-errors/app-error-factory", () => ({
+vi.mock("./app-errors/app-error-factory", async (importOriginal) => ({
+  createAppErrorFromErrorCode: (await importOriginal<typeof import("./app-errors/app-error-factory")>())
+    .createAppErrorFromErrorCode,
   createAppErrorFromResult: (...args: unknown[]) => createAppErrorFromResultMock(...args),
   createNetworkOrBackendError: (...args: unknown[]) => createNetworkOrBackendErrorMock(...args),
 }));
@@ -69,7 +71,7 @@ describe("fetchWrapper", () => {
     vi.mocked(fetch).mockResolvedValue({ ok: true, json: async () => ({}) } as unknown as Response);
     const body = new FormData();
 
-    await fetchWrapper("things/", false, { body }, "abc123");
+    await fetchWrapper("things/", false, { method: "POST", body }, "abc123");
 
     const [, options] = vi.mocked(fetch).mock.calls[0];
     expect((options as RequestInit).headers).toEqual({ Authorization: "Bearer abc123" });
@@ -177,6 +179,24 @@ describe("fetchWrapper", () => {
 
     expect(result).toEqual({ id: 1 });
     expect(vi.mocked(fetch)).toHaveBeenCalledTimes(2);
+  });
+
+  it("throws a ClientError without calling fetch when the request is malformed", async () => {
+    const pending = fetchWrapper("things/", false, { headers: { "X-Custom": "a\nb" } });
+
+    await expect(pending).rejects.toBeInstanceOf(ClientError);
+    await expect(pending).rejects.toMatchObject({ code: ErrorCode.CLIENT_INTERNAL_ERROR });
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+  });
+
+  it("passes a malformed-request ClientError to handleError", async () => {
+    const handleError = vi.fn();
+
+    const result = await fetchWrapper("things/", false, { body: "x" }, undefined, undefined, undefined, handleError);
+
+    expect(result).toBeNull();
+    expect(handleError).toHaveBeenCalledWith(expect.objectContaining({ code: ErrorCode.CLIENT_INTERNAL_ERROR }));
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
   });
 
   it("does not retry a POST network failure", async () => {

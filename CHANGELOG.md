@@ -11,6 +11,11 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- **transport**: `fetchWrapper` checks the request with the `Request` constructor before sending it. A malformed request (invalid header value, URL, or a body on a GET) now throws a `ClientError` (`CLIENT_INTERNAL_ERROR`) without calling `fetch` or retrying. Previously `fetch`'s `TypeError` made it look like a dropped connection, so the network popup showed. `useFetchWrapper` rethrows `ClientError`s to the caller instead of routing them to the connectivity popup.
+- **transport**: `createNetworkOrBackendError` maps a non-`TypeError` "Failed to fetch" error to `NETWORK_FAILED_TO_FETCH` for backend URLs too, instead of `BACKEND_UNAVAILABLE`.
+
 ## [9.3.2] - 2026-10-06
 
 ### Fixed

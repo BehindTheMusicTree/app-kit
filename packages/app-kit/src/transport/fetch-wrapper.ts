@@ -1,5 +1,10 @@
-import { createAppErrorFromResult, createNetworkOrBackendError } from "./app-errors/app-error-factory";
+import {
+  createAppErrorFromErrorCode,
+  createAppErrorFromResult,
+  createNetworkOrBackendError,
+} from "./app-errors/app-error-factory";
 import { AppError } from "./app-errors/app-error";
+import { ErrorCode } from "./app-errors/app-error-codes";
 
 // Stale keep-alive connections (e.g. browser↔Cloudflare) can drop a request before it reaches the server.
 const NETWORK_RETRY_DELAYS_MS = [300, 900];
@@ -53,6 +58,15 @@ export const fetchWrapper = async <T>(
   }
 
   try {
+    // fetch rejects a malformed request (bad URL, header value, body on GET) with the same
+    // TypeError as a dropped connection; building the Request first tells our bug apart.
+    // ponytail: only catches what the Request constructor validates, not errors raised mid-fetch.
+    try {
+      new Request(new URL(finalUrl, globalThis.location?.href), finalOptions);
+    } catch {
+      throw createAppErrorFromErrorCode(ErrorCode.CLIENT_INTERNAL_ERROR);
+    }
+
     const result = await fetchWithNetworkRetry(finalUrl, finalOptions);
 
     if (!result.ok) {
