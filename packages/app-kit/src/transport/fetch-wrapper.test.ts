@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { AppError, ClientError } from "./app-errors/app-error";
 import { ErrorCode } from "./app-errors/app-error-codes";
 
@@ -20,6 +20,10 @@ describe("fetchWrapper", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal("fetch", vi.fn());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("returns parsed json when the response is ok", async () => {
@@ -185,8 +189,41 @@ describe("fetchWrapper", () => {
     const pending = fetchWrapper("things/", false, { headers: { "X-Custom": "a\nb" } });
 
     await expect(pending).rejects.toBeInstanceOf(ClientError);
-    await expect(pending).rejects.toMatchObject({ code: ErrorCode.CLIENT_INTERNAL_ERROR });
+    await expect(pending).rejects.toMatchObject({
+      code: ErrorCode.CLIENT_INTERNAL_ERROR,
+      cause: expect.any(TypeError),
+    });
     expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+  });
+
+  it("rejects a body on a lowercase get without encoding the body", async () => {
+    const body = { toString: vi.fn(() => "x") } as unknown as BodyInit;
+
+    await expect(fetchWrapper("things/", false, { method: "get", body })).rejects.toBeInstanceOf(ClientError);
+    expect(body.toString).not.toHaveBeenCalled();
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+  });
+
+  it("skips validation when the Request global is missing", async () => {
+    vi.stubGlobal("Request", undefined);
+    vi.mocked(fetch).mockResolvedValue({ ok: true, json: async () => ({ id: 1 }) } as unknown as Response);
+
+    const result = await fetchWrapper("things/", false, { headers: { "X-Custom": "a\nb" } });
+
+    expect(result).toEqual({ id: 1 });
+  });
+
+  it("does not turn a non-TypeError from Request into a ClientError", async () => {
+    vi.stubGlobal(
+      "Request",
+      vi.fn(function () {
+        throw new ReferenceError("boom");
+      }),
+    );
+    createNetworkOrBackendErrorMock.mockReturnValue(new AppError(ErrorCode.NETWORK_FAILED_TO_FETCH));
+
+    await expect(fetchWrapper("things/", false)).rejects.toMatchObject({ code: ErrorCode.NETWORK_FAILED_TO_FETCH });
+    expect(createNetworkOrBackendErrorMock).toHaveBeenCalledWith(expect.any(ReferenceError), "things/", undefined);
   });
 
   it("passes a malformed-request ClientError to handleError", async () => {
