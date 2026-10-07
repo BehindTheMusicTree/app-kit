@@ -14,6 +14,7 @@ import { CriteriaPlaylistMinimum } from "./schemas/criteria-playlist/minimum";
 import { TrackBase } from "./schemas/track/base";
 import { unplayableReasonLabel } from "./schemas/youtube-track/detailed";
 import { useTrackList } from "./TrackListContext";
+import { MusicBrainzRecordingLink } from "./MusicBrainzRecordingLink";
 
 export type GenrePlaylistTracksProps = {
   genrePlaylist: CriteriaPlaylistMinimum;
@@ -98,6 +99,7 @@ export function GenrePlaylistTracks<T extends TrackBase>({
                     <FaPlay size={10} />
                   </button>
                   <span className="min-w-0 truncate">{label}</span>
+                  <MusicBrainzRecordingLink track={track} title={track.title} />
                   <span className="shrink-0 text-xs">{unplayableReason}</span>
                 </li>
               );
@@ -119,6 +121,7 @@ export function GenrePlaylistTracks<T extends TrackBase>({
                   )}
                 </button>
                 <span className="min-w-0 truncate">{label}</span>
+                <MusicBrainzRecordingLink track={track} title={track.title} />
               </li>
             );
           })}
