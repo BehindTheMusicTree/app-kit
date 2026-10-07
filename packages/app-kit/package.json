@@ -1,6 +1,6 @@
 {
   "name": "@behindthemusictree/app-kit",
-  "version": "9.3.2",
+  "version": "9.3.3",
   "description": "Shared transport, auth, popup, UI, player, and genre-tree plumbing for BehindTheMusicTree React apps",
   "repository": {
     "type": "git",

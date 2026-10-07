@@ -352,10 +352,10 @@ describe("createNetworkOrBackendError", () => {
   });
 
   describe("generic Error message matching", () => {
-    it("'Failed to fetch' + backend -> BACKEND_UNAVAILABLE", () => {
+    it("'Failed to fetch' + backend -> NETWORK_FAILED_TO_FETCH", () => {
       withOnlineStatus(true, () => {
         const err = createNetworkOrBackendError(new Error("Failed to fetch"), backendUrl, backendBaseUrl);
-        expect(err.code).toBe(ErrorCode.BACKEND_UNAVAILABLE);
+        expect(err.code).toBe(ErrorCode.NETWORK_FAILED_TO_FETCH);
       });
     });
 
