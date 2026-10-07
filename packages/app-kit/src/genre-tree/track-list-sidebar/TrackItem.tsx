@@ -7,6 +7,7 @@ import { useTrackList } from "../TrackListContext";
 import TrackPositionPlayPause from "../TrackPositionPlayPause";
 import { TrackBase } from "../schemas/track/base";
 import { unplayableReasonLabel } from "../schemas/youtube-track/detailed";
+import { MusicBrainzRecordingLink } from "../MusicBrainzRecordingLink";
 
 export interface TrackItemProps<T extends TrackBase> {
   track: T;
@@ -53,7 +54,10 @@ export default function TrackItem<T extends TrackBase>({
         <TrackPositionPlayPause position={position} uuid={track.uuid} handlePlayPauseClick={handlePlayPauseClick} />
       )}
       <div className="title-artist-container flex flex-col items-start justify-center w-1/2">
-        <div className="title text-lg font-bold text-gray-300 text-overflow">{track.title}</div>
+        <div className="flex max-w-full items-center gap-2">
+          <div className="title text-lg font-bold text-gray-300 text-overflow">{track.title}</div>
+          <MusicBrainzRecordingLink track={track} title={track.title} />
+        </div>
         {track.artists && track.artists.length > 0 ? (
           <div className="artist text-base text-overflow">{track.artists.map((artist) => artist.name).join(", ")}</div>
         ) : (

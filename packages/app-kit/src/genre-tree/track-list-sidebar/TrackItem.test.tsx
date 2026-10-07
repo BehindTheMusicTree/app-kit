@@ -144,4 +144,26 @@ describe("TrackItem", () => {
     fireEvent.click(screen.getByText("3"));
     expect(loadTrackForPlayer).not.toHaveBeenCalled();
   });
+
+  it("links to the MusicBrainz recording when the track has an MBID", () => {
+    const parentClick = vi.fn();
+    render(
+      <div onClick={parentClick}>
+        <TrackItem track={makeTrack({ musicbrainzRecordingId: "b1e6a1c8-0e3d-4d3d-9d2e-2f6c1a2b3c4d" })} position={1} />
+      </div>,
+    );
+
+    const link = screen.getByRole("link", { name: "View My Song on MusicBrainz" });
+    expect(link).toHaveAttribute("href", "https://musicbrainz.org/recording/b1e6a1c8-0e3d-4d3d-9d2e-2f6c1a2b3c4d");
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    fireEvent.click(link);
+    expect(parentClick).not.toHaveBeenCalled();
+  });
+
+  it("renders no MusicBrainz link without an MBID", () => {
+    render(<TrackItem track={makeTrack({ musicbrainzRecordingId: null })} position={1} />);
+
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+  });
 });

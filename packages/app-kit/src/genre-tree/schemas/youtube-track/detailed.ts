@@ -25,6 +25,8 @@ export const YoutubeTrackDetailedSchema = TrackBaseSchema.extend({
   youtubeVideoId: z.string(),
   // null = playable. Defaulted because older API responses omit the key.
   youtubeUnplayableReason: z.enum(YOUTUBE_UNPLAYABLE_REASONS).nullable().default(null),
+  // null for hand-made/admin tracks. Defaulted because older API responses omit the key.
+  musicbrainzRecordingId: z.string().uuid().nullable().default(null),
 }).transform((data) => ({ ...data, kind: "youtube" as const }));
 
 export type YoutubeTrackDetailed = z.infer<typeof YoutubeTrackDetailedSchema>;
@@ -34,4 +36,11 @@ export function unplayableReasonLabel(track: object): string | null {
   if (!("youtubeUnplayableReason" in track)) return null;
   const reason = track.youtubeUnplayableReason as YoutubeUnplayableReason | null | undefined;
   return reason ? YOUTUBE_UNPLAYABLE_REASON_LABELS[reason] : null;
+}
+
+/** MusicBrainz recording page URL, or null when the track has no recording MBID (or is not a YouTube track). */
+export function musicBrainzRecordingUrl(track: object): string | null {
+  if (!("musicbrainzRecordingId" in track)) return null;
+  const mbid = track.musicbrainzRecordingId as string | null | undefined;
+  return mbid ? `https://musicbrainz.org/recording/${mbid}` : null;
 }

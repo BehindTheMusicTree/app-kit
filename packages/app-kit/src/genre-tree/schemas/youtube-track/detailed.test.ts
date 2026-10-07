@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { YoutubeTrackDetailedSchema, unplayableReasonLabel } from "./detailed";
+import { YoutubeTrackDetailedSchema, musicBrainzRecordingUrl, unplayableReasonLabel } from "./detailed";
 
 const uuid = "b1e6a1c8-0e3d-4d3d-9d2e-2f6c1a2b3c4d";
 
@@ -34,6 +34,21 @@ describe("YoutubeTrackDetailedSchema", () => {
     const parsed = YoutubeTrackDetailedSchema.parse({ ...validYoutubeTrack, youtubeUnplayableReason: "not_embeddable" });
     expect(parsed.youtubeUnplayableReason).toBe("not_embeddable");
     expect(() => YoutubeTrackDetailedSchema.parse({ ...validYoutubeTrack, youtubeUnplayableReason: "nope" })).toThrow();
+  });
+
+  it("parses musicbrainzRecordingId, defaulting to null when absent and rejecting a non-uuid", () => {
+    expect(YoutubeTrackDetailedSchema.parse(validYoutubeTrack).musicbrainzRecordingId).toBeNull();
+    expect(YoutubeTrackDetailedSchema.parse({ ...validYoutubeTrack, musicbrainzRecordingId: null }).musicbrainzRecordingId).toBeNull();
+    expect(YoutubeTrackDetailedSchema.parse({ ...validYoutubeTrack, musicbrainzRecordingId: uuid }).musicbrainzRecordingId).toBe(uuid);
+    expect(() => YoutubeTrackDetailedSchema.parse({ ...validYoutubeTrack, musicbrainzRecordingId: "nope" })).toThrow();
+  });
+});
+
+describe("musicBrainzRecordingUrl", () => {
+  it("returns the recording URL when an MBID is present and null otherwise", () => {
+    expect(musicBrainzRecordingUrl({ musicbrainzRecordingId: uuid })).toBe(`https://musicbrainz.org/recording/${uuid}`);
+    expect(musicBrainzRecordingUrl({ musicbrainzRecordingId: null })).toBeNull();
+    expect(musicBrainzRecordingUrl({ title: "audio track" })).toBeNull();
   });
 });
 
