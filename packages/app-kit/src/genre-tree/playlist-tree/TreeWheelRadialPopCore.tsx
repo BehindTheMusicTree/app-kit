@@ -90,6 +90,7 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
         actionable: Boolean(genrePlaylist.criteria),
         detached: !genrePlaylist.criteria,
         side: genrePlaylist.criteria?.side ?? undefined,
+        wikidataId: genrePlaylist.criteria?.wikidataId ?? null,
       })),
     [genrePlaylists],
   );
