@@ -88,6 +88,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
         itemCount: genrePlaylist.tracksCount,
         actionable: Boolean(genrePlaylist.criteria),
         side: genrePlaylist.criteria?.side ?? undefined,
+        wikidataId: genrePlaylist.criteria?.wikidataId ?? null,
       })),
     [genrePlaylistTreePerRoot],
   );

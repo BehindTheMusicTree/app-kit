@@ -95,8 +95,8 @@ describe("GenrePlaylistTreeWheel", () => {
 
     const { nodes } = genreTreeWheelPropsMock.mock.calls[0][0];
     expect(nodes).toEqual([
-      { id: "gp1", parentId: "root", name: "Jazz", itemCount: 3, actionable: true, side: undefined },
-      { id: "gp2", parentId: null, name: "Rock", itemCount: 0, actionable: false, side: undefined },
+      { id: "gp1", parentId: "root", name: "Jazz", itemCount: 3, actionable: true, side: undefined, wikidataId: null },
+      { id: "gp2", parentId: null, name: "Rock", itemCount: 0, actionable: false, side: undefined, wikidataId: null },
     ]);
   });
 
