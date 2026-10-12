@@ -11,6 +11,12 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [9.5.0] - 2026-10-12
+
+### Changed
+
+- Root-genre colors in the playlist trees are now fixed per root, keyed by the genre's wikidata id (`criteria.wikidataId`, newly parsed by `CriteriaMinimumSchema`). Bumps `@behindthemusictree/genre-tree-view` to 1.17.0.
+
 ## [9.4.0] - 2026-10-07
 
 ### Added

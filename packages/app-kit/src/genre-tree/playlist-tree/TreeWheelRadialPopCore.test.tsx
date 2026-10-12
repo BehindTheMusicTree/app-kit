@@ -123,7 +123,7 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
           parent: { uuid: "root" },
           name: "Jazz",
           tracksCount: 3,
-          criteria: { uuid: "c1", name: "Jazz", side: "pop" },
+          criteria: { uuid: "c1", name: "Jazz", side: "pop", wikidataId: "Q8341" },
         }),
         makeGenrePlaylist({ uuid: "gp2", parent: null, name: "Rock", tracksCount: 0, criteria: null }),
       ],
@@ -131,8 +131,8 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
 
     const { nodes } = genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0];
     expect(nodes).toEqual([
-      { id: "gp1", parentId: "root", name: "Jazz", itemCount: 3, actionable: true, detached: false, side: "pop" },
-      { id: "gp2", parentId: null, name: "Rock", itemCount: 0, actionable: false, detached: true, side: undefined },
+      { id: "gp1", parentId: "root", name: "Jazz", itemCount: 3, actionable: true, detached: false, side: "pop", wikidataId: "Q8341" },
+      { id: "gp2", parentId: null, name: "Rock", itemCount: 0, actionable: false, detached: true, side: undefined, wikidataId: null },
     ]);
   });
 
