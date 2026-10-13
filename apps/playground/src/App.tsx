@@ -14,8 +14,8 @@ import {
   useFetchWrapper,
   libraryEndpoints,
   libraryQueryKeys,
-  YoutubeTrackDetailed,
-  YoutubeTrackDetailedSchema,
+  RecordingDetailed,
+  RecordingDetailedSchema,
 } from "@behindthemusictree/app-kit";
 import { Button, RingLoader, Skeleton } from "@behindthemusictree/ui";
 import GenreCreationPopup from "./GenreCreationPopup";
@@ -28,18 +28,21 @@ function useLoadTrack(): (trackId: string) => Promise<PlayerTrack> {
 
   return useCallback(
     async (trackId: string): Promise<PlayerTrack> => {
-      const track = await fetch<YoutubeTrackDetailed>(
-        libraryEndpoints.reference.youtube.detail(trackId),
+      const track = await fetch<RecordingDetailed>(
+        libraryEndpoints.reference.recordings.detail(trackId),
         true,
         false,
       );
       if (!track) {
         throw new Error(`Failed to load track ${trackId}`);
       }
+      if (!track.youtubeVideo) {
+        throw new Error(`Recording ${trackId} has no YouTube video`);
+      }
       return {
         id: trackId,
         kind: "youtube",
-        youtubeVideoId: track.youtubeVideoId,
+        youtubeVideoId: track.youtubeVideo.id,
         title: track.title,
         artists: track.artists?.map((artist) => ({ name: artist.name })),
       };
@@ -200,9 +203,9 @@ export function App() {
         <TrackListSidebarVisibilityProvider>
           <TrackListProvider
             getBackendBaseUrl={getBackendBaseUrl}
-            schema={YoutubeTrackDetailedSchema}
-            listEndpoint={libraryEndpoints.reference.youtube.list}
-            listQueryKey={libraryQueryKeys.reference.youtube.list}
+            schema={RecordingDetailedSchema}
+            listEndpoint={libraryEndpoints.reference.recordings.list}
+            listQueryKey={libraryQueryKeys.reference.recordings.list}
           >
             <AppContent />
           </TrackListProvider>

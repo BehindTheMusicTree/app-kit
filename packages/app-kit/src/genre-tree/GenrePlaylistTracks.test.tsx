@@ -130,7 +130,7 @@ describe("GenrePlaylistTracks", () => {
 
   it("greys out an unplayable track with its reason and a disabled play button", async () => {
     fetchGenrePlaylistTracksPage.mockResolvedValueOnce({
-      tracks: [{ uuid: "x", title: "Blocked", artists: null, youtubeUnplayableReason: "private" }],
+      tracks: [{ uuid: "x", title: "Blocked", artists: null, youtubeVideo: { id: "v1", unplayableReason: "private" }, musicbrainzRecordingId: null }],
       total: 1,
       nextPage: null,
     });
@@ -146,11 +146,23 @@ describe("GenrePlaylistTracks", () => {
     expect(playNewTrackListFromGenrePlaylist).not.toHaveBeenCalled();
   });
 
+  it("shows a recording without a video as unplayable", async () => {
+    fetchGenrePlaylistTracksPage.mockResolvedValueOnce({
+      tracks: [{ uuid: "x", title: "Lucky", artists: null, youtubeVideo: null, musicbrainzRecordingId: null }],
+      total: 1,
+      nextPage: null,
+    });
+
+    renderTracks();
+
+    expect(await screen.findByRole("button", { name: "Lucky — No video available" })).toBeDisabled();
+  });
+
   it("links tracks with an MBID to MusicBrainz without starting playback", async () => {
     fetchGenrePlaylistTracksPage.mockResolvedValueOnce({
       tracks: [
-        { uuid: "m", title: "Linked", artists: null, musicbrainzRecordingId: "b1e6a1c8-0e3d-4d3d-9d2e-2f6c1a2b3c4d" },
-        { uuid: "n", title: "Unlinked", artists: null },
+        { uuid: "m", title: "Linked", artists: null, youtubeVideo: { id: "v1", unplayableReason: null }, musicbrainzRecordingId: "b1e6a1c8-0e3d-4d3d-9d2e-2f6c1a2b3c4d" },
+        { uuid: "n", title: "Unlinked", artists: null, youtubeVideo: { id: "v1", unplayableReason: null }, musicbrainzRecordingId: null },
       ],
       total: 2,
       nextPage: null,

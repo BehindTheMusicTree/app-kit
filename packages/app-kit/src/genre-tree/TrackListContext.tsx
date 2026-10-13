@@ -16,7 +16,7 @@ import { useQueryWithParse } from "../transport/lib/use-query-with-parse";
 import { PaginatedResponseSchema } from "../transport/lib/paginated-response";
 import { parseWithLog } from "../transport/lib/parse-with-log";
 import { TrackBase } from "./schemas/track/base";
-import { unplayableReasonLabel } from "./schemas/youtube-track/detailed";
+import { isRecording, recordingUnplayableReason } from "./schemas/recording/detailed";
 import { CriteriaPlaylistMinimum } from "./schemas/criteria-playlist/minimum";
 import { makeTrackPlaylistRelPageSchema } from "./schemas/track-playlist-rel/without-playlist";
 import { genrePlaylistEndpoints } from "./api/genre-playlists";
@@ -203,7 +203,7 @@ export function TrackListProvider<T extends TrackBase>({
         if (request !== latestPlayRequestRef.current) return;
       }
       const { tracks, total, nextPage } = page;
-      const startTrack = tracks.slice(seed?.startIndex ?? 0).find((track) => !unplayableReasonLabel(track));
+      const startTrack = tracks.slice(seed?.startIndex ?? 0).find((track) => !isRecording(track) || !recordingUnplayableReason(track));
 
       if (!startTrack) {
         console.warn("No playable tracks found in genre playlist");
