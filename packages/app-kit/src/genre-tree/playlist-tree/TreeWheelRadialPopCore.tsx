@@ -52,6 +52,11 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   /** When true, renders the same forest as GenreTreeOutline's nested-list text view instead of
    * the radial wheel. Defaults to false. */
   outline?: boolean;
+  /** Zooms the pop-core wheel into this genre's subtree; must be a uuid present in
+   * `genrePlaylists`. Ignored in outline mode. */
+  focusGenreUuid?: string | null;
+  /** Fires when the user zooms in or goes back up a level. Ignored in outline mode. */
+  onFocusGenreChange?: (uuid: string | null) => void;
 };
 
 export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>({
@@ -75,6 +80,8 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
   showToolbar,
   controlsOrientation,
   outline = false,
+  focusGenreUuid,
+  onFocusGenreChange,
 }: GenrePlaylistTreeWheelRadialPopCoreProps<T>) {
   const { isPlaying, setIsPlaying } = usePlayer();
   const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList<T>();
@@ -197,6 +204,8 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
       {...treeProps}
       allowWheelRotation={allowWheelRotation}
       controlsOrientation={controlsOrientation}
+      focusNodeId={focusGenreUuid}
+      onFocusChange={onFocusGenreChange}
     />
   );
 }
