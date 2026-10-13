@@ -55,7 +55,7 @@ export * from "./schemas/criteria/lineage-rel/without-descendant";
 export * from "./schemas/criteria-playlist/minimum";
 export * from "./schemas/criteria-playlist/simple";
 export * from "./schemas/criteria-playlist/detailed";
-export * from "./schemas/youtube-track/detailed";
+export * from "./schemas/recording/detailed";
 export * from "./schemas/track/base";
 export * from "./schemas/track/minimum";
 export * from "./schemas/track-playlist-rel/without-playlist";

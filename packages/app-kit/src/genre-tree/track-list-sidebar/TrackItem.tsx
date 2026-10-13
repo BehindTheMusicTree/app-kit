@@ -6,7 +6,7 @@ import { usePlayer } from "../../player/PlayerContext";
 import { useTrackList } from "../TrackListContext";
 import TrackPositionPlayPause from "../TrackPositionPlayPause";
 import { TrackBase } from "../schemas/track/base";
-import { unplayableReasonLabel } from "../schemas/youtube-track/detailed";
+import { isRecording, recordingUnplayableReason } from "../schemas/recording/detailed";
 import { MusicBrainzRecordingLink } from "../MusicBrainzRecordingLink";
 
 export interface TrackItemProps<T extends TrackBase> {
@@ -25,7 +25,7 @@ export default function TrackItem<T extends TrackBase>({
   const { handlePlayPauseAction, playerTrackObject, loadTrackForPlayer } = usePlayer();
   const { trackList, toTrackAtPosition } = useTrackList<T>();
   const scope = trackList?.origin?.scope ?? null;
-  const unplayableReason = unplayableReasonLabel(track);
+  const unplayableReason = isRecording(track) ? recordingUnplayableReason(track) : null;
 
   const handlePlayPauseClick = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -56,7 +56,7 @@ export default function TrackItem<T extends TrackBase>({
       <div className="title-artist-container flex flex-col items-start justify-center w-1/2">
         <div className="flex max-w-full items-center gap-2">
           <div className="title text-lg font-bold text-gray-300 text-overflow">{track.title}</div>
-          <MusicBrainzRecordingLink track={track} title={track.title} />
+          {isRecording(track) && <MusicBrainzRecordingLink recording={track} />}
         </div>
         {track.artists && track.artists.length > 0 ? (
           <div className="artist text-base text-overflow">{track.artists.map((artist) => artist.name).join(", ")}</div>

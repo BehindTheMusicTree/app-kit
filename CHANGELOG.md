@@ -11,6 +11,18 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [10.0.0] - 2026-10-14
+
+### Breaking
+
+- The YouTube track entity is now a MusicBrainz recording: `YoutubeTrackDetailedSchema` / `YoutubeTrackDetailed` are renamed `RecordingDetailedSchema` / `RecordingDetailed`, and the flat `youtubeVideoId` / `youtubeUnplayableReason` fields are replaced by a nested, nullable `youtubeVideo: { id, unplayableReason }`. `musicbrainzRecordingId` and `youtubeVideo.unplayableReason` are required (nullable) with no defaults, and the output-side `kind: "youtube"` stamp is removed.
+- `unplayableReasonLabel(track: object)` is replaced by the typed `recordingUnplayableReason(recording: RecordingDetailed)`, which returns `NO_VIDEO_LABEL` ("No video available") for a recording without a video. `musicBrainzRecordingUrl` now takes a `RecordingDetailed`. New `isRecording(track)` type guard.
+- `libraryEndpoints.reference.youtube` / `libraryQueryKeys.reference.youtube` are now `reference.recordings`, targeting `library/recordings/` with query keys `referenceRecordings`.
+
+### Fixed
+
+- Genre playlist track pages that contain recordings without a YouTube video now parse instead of failing the whole page; those recordings are listed greyed out as "No video available" and skipped when picking the start track.
+
 ## [9.7.1] - 2026-10-13
 
 ### Fixed
