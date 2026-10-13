@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [9.6.0] - 2026-10-13
+
 ### Added
 
 - Pop-core tree: once zoomed in, the current root's name is shown in an empty spot on the tree (map-style region label). Bumps `@behindthemusictree/genre-tree-view` to 1.18.0.
