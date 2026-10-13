@@ -395,6 +395,26 @@ describe("GenreTreeView", () => {
     expect(treePerRootPropsMock.mock.calls.at(-1)?.[0].controlsOrientation).toBe("horizontal");
   });
 
+  it("passes focus props to the pop-core view only, not to outline", () => {
+    useListFullGenrePlaylistsMock.mockReturnValue({
+      data: [makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" }, parent: null })],
+      isPending: false,
+    });
+    const onFocusGenreChange = vi.fn();
+    renderView({ focusGenreUuid: "gp1", onFocusGenreChange });
+
+    fireEvent.click(screen.getByRole("button", { name: "Pop/Core" }));
+    const popCoreProps = treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0];
+    expect(popCoreProps.focusGenreUuid).toBe("gp1");
+    expect(popCoreProps.onFocusGenreChange).toBe(onFocusGenreChange);
+
+    fireEvent.click(screen.getByRole("button", { name: "Outline" }));
+    const outlineProps = treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0];
+    expect(outlineProps.outline).toBe(true);
+    expect(outlineProps).not.toHaveProperty("focusGenreUuid");
+    expect(outlineProps).not.toHaveProperty("onFocusGenreChange");
+  });
+
   describe("outline view", () => {
     it("switches to the outline view and hides the Rotation toggle", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
