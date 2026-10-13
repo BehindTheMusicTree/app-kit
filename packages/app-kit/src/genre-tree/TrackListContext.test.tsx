@@ -195,10 +195,14 @@ describe("TrackListContext", () => {
       expect(fetchMock).toHaveBeenCalledWith("me/genre-playlists/p1/tracks/", true, true, {}, { page: 3, pageSize: 100 });
     });
 
-    it("starts from the first playable track at or after startIndex", async () => {
+    it("starts from the first playable track at or after startIndex, skipping recordings without a video", async () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
       const tracks = makeTracks(4).map((track, i) =>
-        i === 1 ? { ...track, youtubeUnplayableReason: "not_embeddable" } : track,
+        i === 1
+          ? { ...track, youtubeVideo: null, musicbrainzRecordingId: null }
+          : i === 2
+            ? { ...track, youtubeVideo: { id: "v2", unplayableReason: "not_embeddable" }, musicbrainzRecordingId: null }
+            : track,
       );
 
       await act(async () => {
@@ -210,7 +214,7 @@ describe("TrackListContext", () => {
         });
       });
 
-      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t2");
+      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t3");
     });
 
     it("warns and does nothing when the playlist has no tracks", async () => {

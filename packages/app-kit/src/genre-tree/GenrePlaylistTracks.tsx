@@ -12,7 +12,7 @@ import { Scope } from "../transport/lib/scope";
 import { genrePlaylistQueryKeys } from "./api/genre-playlists";
 import { CriteriaPlaylistMinimum } from "./schemas/criteria-playlist/minimum";
 import { TrackBase } from "./schemas/track/base";
-import { unplayableReasonLabel } from "./schemas/youtube-track/detailed";
+import { isRecording, recordingUnplayableReason } from "./schemas/recording/detailed";
 import { useTrackList } from "./TrackListContext";
 import { MusicBrainzRecordingLink } from "./MusicBrainzRecordingLink";
 
@@ -85,7 +85,7 @@ export function GenrePlaylistTracks<T extends TrackBase>({
               : track.title;
             const isCurrent = playerTrackObject?.track.id === track.uuid;
             const isPlaying = isCurrent && playState === PlayStates.PLAYING;
-            const unplayableReason = unplayableReasonLabel(track);
+            const unplayableReason = isRecording(track) ? recordingUnplayableReason(track) : null;
             if (unplayableReason) {
               return (
                 <li key={track.uuid} className="flex items-center gap-1 py-0.5 opacity-50" title={unplayableReason}>
@@ -99,7 +99,7 @@ export function GenrePlaylistTracks<T extends TrackBase>({
                     <FaPlay size={10} />
                   </button>
                   <span className="min-w-0 truncate">{label}</span>
-                  <MusicBrainzRecordingLink track={track} title={track.title} />
+                  {isRecording(track) && <MusicBrainzRecordingLink recording={track} />}
                   <span className="shrink-0 text-xs">{unplayableReason}</span>
                 </li>
               );
@@ -121,7 +121,7 @@ export function GenrePlaylistTracks<T extends TrackBase>({
                   )}
                 </button>
                 <span className="min-w-0 truncate">{label}</span>
-                <MusicBrainzRecordingLink track={track} title={track.title} />
+                {isRecording(track) && <MusicBrainzRecordingLink recording={track} />}
               </li>
             );
           })}

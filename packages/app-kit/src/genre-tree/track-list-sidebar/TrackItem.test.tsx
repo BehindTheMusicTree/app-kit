@@ -136,7 +136,7 @@ describe("TrackItem", () => {
   });
 
   it("greys out an unplayable track, shows the reason, and offers no play control", () => {
-    render(<TrackItem track={makeTrack({ youtubeUnplayableReason: "not_embeddable" })} position={3} />);
+    render(<TrackItem track={makeTrack({ youtubeVideo: { id: "v1", unplayableReason: "not_embeddable" } })} position={3} />);
 
     expect(screen.getByText("Embedding disabled")).toBeInTheDocument();
     expect(screen.getByTitle("Embedding disabled")).toHaveClass("opacity-50");
@@ -145,11 +145,18 @@ describe("TrackItem", () => {
     expect(loadTrackForPlayer).not.toHaveBeenCalled();
   });
 
+  it("greys out a recording without a video as unplayable", () => {
+    render(<TrackItem track={makeTrack({ youtubeVideo: null, musicbrainzRecordingId: null })} position={2} />);
+
+    expect(screen.getByTitle("No video available")).toHaveClass("opacity-50");
+    expect(screen.queryByRole("button", { name: "play-pause" })).not.toBeInTheDocument();
+  });
+
   it("links to the MusicBrainz recording when the track has an MBID", () => {
     const parentClick = vi.fn();
     render(
       <div onClick={parentClick}>
-        <TrackItem track={makeTrack({ musicbrainzRecordingId: "b1e6a1c8-0e3d-4d3d-9d2e-2f6c1a2b3c4d" })} position={1} />
+        <TrackItem track={makeTrack({ youtubeVideo: { id: "v1", unplayableReason: null }, musicbrainzRecordingId: "b1e6a1c8-0e3d-4d3d-9d2e-2f6c1a2b3c4d" })} position={1} />
       </div>,
     );
 
@@ -162,7 +169,7 @@ describe("TrackItem", () => {
   });
 
   it("renders no MusicBrainz link without an MBID", () => {
-    render(<TrackItem track={makeTrack({ musicbrainzRecordingId: null })} position={1} />);
+    render(<TrackItem track={makeTrack({ youtubeVideo: { id: "v1", unplayableReason: null }, musicbrainzRecordingId: null })} position={1} />);
 
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
