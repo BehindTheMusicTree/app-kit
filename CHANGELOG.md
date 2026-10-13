@@ -11,6 +11,14 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Breaking
+
+- `GenreTreeView` / pop-core: `focusGenreUuid` and `onFocusGenreChange` must now be passed together or not at all (type-level only); passing just one is a type error. Existing consumers that pass both are unaffected.
+
+### Added
+
+- `onFocusGenreChange` now receives a second `reason` argument (`"zoom-in" | "back" | "search" | "rejected"`), so consumers can tell a rejected focus from the user's back action. New exported types `FocusChangeReason` and `GenreFocusProps`. Bumps `@behindthemusictree/genre-tree-view` to 1.20.0.
+
 ## [10.0.0] - 2026-10-14
 
 ### Breaking

@@ -41,6 +41,7 @@ vi.mock("../../player/PlayerContext", () => ({
 }));
 
 import GenrePlaylistTreeWheelRadialPopCore, {
+  type GenreFocusProps,
   type GenrePlaylistTreeWheelRadialPopCoreProps,
 } from "./TreeWheelRadialPopCore";
 import type { TrackBase } from "../schemas/track/base";
@@ -62,7 +63,10 @@ function makeGenrePlaylist(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function renderWheelRadialPopCore(overrides: Partial<GenrePlaylistTreeWheelRadialPopCoreProps<TrackBase>> = {}) {
+function renderWheelRadialPopCore(
+  overrides: Partial<Omit<GenrePlaylistTreeWheelRadialPopCoreProps<TrackBase>, keyof GenreFocusProps>> &
+    GenreFocusProps = {},
+) {
   const props: GenrePlaylistTreeWheelRadialPopCoreProps<TrackBase> = {
     scope: "me",
     genrePlaylists: [
