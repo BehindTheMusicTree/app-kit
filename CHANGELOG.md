@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [10.0.0] - 2026-10-14
+
 ### Breaking
 
 - The YouTube track entity is now a MusicBrainz recording: `YoutubeTrackDetailedSchema` / `YoutubeTrackDetailed` are renamed `RecordingDetailedSchema` / `RecordingDetailed`, and the flat `youtubeVideoId` / `youtubeUnplayableReason` fields are replaced by a nested, nullable `youtubeVideo: { id, unplayableReason }`. `musicbrainzRecordingId` and `youtubeVideo.unplayableReason` are required (nullable) with no defaults, and the output-side `kind: "youtube"` stamp is removed.
