@@ -11,6 +11,12 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [9.7.0] - 2026-10-13
+
+### Added
+
+- `GenreTreeView`: optional `focusGenreUuid` / `onFocusGenreChange` props control the pop-core wheel's zoom-in on a root's subtree ("Zoom in" button in the info panel, back button on the canvas). Pop-core view only; an unknown uuid throws, so consumers must validate untrusted input. Bumps `@behindthemusictree/genre-tree-view` to 1.19.1.
+
 ## [9.6.0] - 2026-10-13
 
 ### Added

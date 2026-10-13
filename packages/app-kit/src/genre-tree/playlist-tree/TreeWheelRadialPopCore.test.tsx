@@ -113,6 +113,19 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
       renderWheelRadialPopCore({ outline: true, controlsOrientation: "horizontal" });
       expect(genreTreeOutlinePropsMock.mock.calls[0][0]).not.toHaveProperty("controlsOrientation");
     });
+
+    it("forwards focus props to the wheel as focusNodeId/onFocusChange but not to GenreTreeOutline", () => {
+      const onFocusGenreChange = vi.fn();
+      renderWheelRadialPopCore({ focusGenreUuid: "gp1", onFocusGenreChange });
+      const wheelProps = genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0];
+      expect(wheelProps.focusNodeId).toBe("gp1");
+      expect(wheelProps.onFocusChange).toBe(onFocusGenreChange);
+
+      renderWheelRadialPopCore({ outline: true, focusGenreUuid: "gp1", onFocusGenreChange });
+      const outlineProps = genreTreeOutlinePropsMock.mock.calls[0][0];
+      expect(outlineProps).not.toHaveProperty("focusNodeId");
+      expect(outlineProps).not.toHaveProperty("onFocusChange");
+    });
   });
 
   it("maps genre playlists to tree nodes including side, detaching criteria-less ones", () => {

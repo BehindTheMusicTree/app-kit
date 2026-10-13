@@ -55,6 +55,11 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   renderGenreDetailExtras?: (overview: O) => ReactNode;
   /** Layout of the wheel/tree floating zoom/pop/fit controls. Defaults to "vertical". */
   controlsOrientation?: ControlsOrientation;
+  /** Pop-core view only: zooms the wheel into this genre's subtree. Must be a uuid of a genre
+   * shown in the pop-core view — unknown uuids throw, so validate untrusted input first. */
+  focusGenreUuid?: string | null;
+  /** Pop-core view only: fires when the user zooms in or goes back up a level. */
+  onFocusGenreChange?: (uuid: string | null) => void;
 };
 
 export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
@@ -68,6 +73,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   criteriaOverviewSchema,
   renderGenreDetailExtras,
   controlsOrientation,
+  focusGenreUuid,
+  onFocusGenreChange,
 }: GenreTreeViewProps<O>) {
   const [reparentingGenreUuid, setReparentingGenreUuid] = useState<
     string | null
@@ -366,6 +373,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   allowWheelRotation={allowWheelRotation}
                   showToolbar={showToolbar}
                   controlsOrientation={controlsOrientation}
+                  focusGenreUuid={focusGenreUuid}
+                  onFocusGenreChange={onFocusGenreChange}
                 />
               </GenreTreeWheelHandoff>
             </div>
