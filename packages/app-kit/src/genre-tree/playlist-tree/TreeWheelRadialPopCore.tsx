@@ -52,10 +52,11 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   /** When true, renders the same forest as GenreTreeOutline's nested-list text view instead of
    * the radial wheel. Defaults to false. */
   outline?: boolean;
-  /** Zooms the pop-core wheel into this genre's subtree; must be a uuid present in
-   * `genrePlaylists`. Ignored in outline mode. */
+  /** Zooms the pop-core wheel into this genre's subtree. An unknown or non-zoomable uuid shows
+   * the whole tree and fires `onFocusGenreChange(null)`. Ignored in outline mode. */
   focusGenreUuid?: string | null;
-  /** Fires when the user zooms in or goes back up a level. Ignored in outline mode. */
+  /** Fires when the user zooms in or goes back up a level, when an invalid focus is reset to
+   * null, and when a search pick outside the zoom refocuses to an ancestor. Ignored in outline mode. */
   onFocusGenreChange?: (uuid: string | null) => void;
 };
 
