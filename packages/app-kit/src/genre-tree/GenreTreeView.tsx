@@ -55,10 +55,11 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   renderGenreDetailExtras?: (overview: O) => ReactNode;
   /** Layout of the wheel/tree floating zoom/pop/fit controls. Defaults to "vertical". */
   controlsOrientation?: ControlsOrientation;
-  /** Pop-core view only: zooms the wheel into this genre's subtree. Must be a uuid of a genre
-   * shown in the pop-core view — unknown uuids throw, so validate untrusted input first. */
+  /** Pop-core view only: zooms the wheel into this genre's subtree. An unknown or non-zoomable
+   * uuid shows the whole tree and fires `onFocusGenreChange(null)`. */
   focusGenreUuid?: string | null;
-  /** Pop-core view only: fires when the user zooms in or goes back up a level. */
+  /** Pop-core view only: fires when the user zooms in or goes back up a level, when an invalid
+   * focus is reset to null, and when a search pick outside the zoom refocuses to an ancestor. */
   onFocusGenreChange?: (uuid: string | null) => void;
 };
 

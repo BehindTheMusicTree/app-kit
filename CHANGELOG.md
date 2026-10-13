@@ -11,6 +11,12 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [9.7.1] - 2026-10-13
+
+### Fixed
+
+- `GenreTreeView` pop-core: an unknown or non-zoomable `focusGenreUuid` no longer throws; the wheel shows the whole tree and calls `onFocusGenreChange(null)`, so consumers no longer need to validate it. "Zoom in" is only offered on roots with a single pop child, picking a search result outside the zoomed subtree refocuses to its nearest zoomable ancestor, and the center label has a wider click area. Bumps `@behindthemusictree/genre-tree-view` to 1.19.3.
+
 ## [9.7.0] - 2026-10-13
 
 ### Added
