@@ -27,6 +27,8 @@ import { MediaController, AudioMediaController, YoutubeMediaController } from ".
 import { loadYoutubeIframeApi } from "./youtubeIframeApi";
 
 export interface PlayerTrackArtist {
+  /** Lets consumers link the artist (e.g. to an artist page); absent for sources without artist ids. */
+  uuid?: string;
   name: string;
 }
 

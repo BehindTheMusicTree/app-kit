@@ -19,8 +19,13 @@ import { TrackBase } from "./schemas/track/base";
 import { CriteriaPlaylistMinimum } from "./schemas/criteria-playlist/minimum";
 import { makeTrackPlaylistRelPageSchema } from "./schemas/track-playlist-rel/without-playlist";
 import { genrePlaylistEndpoints } from "./api/genre-playlists";
-import TrackList, { TrackListFromTrack, TrackListFromCriteriaPlaylist } from "./models/TrackList";
-import { TrackListOriginFromTrack, TrackListOriginFromCriteriaPlaylist } from "./models/TrackListOrigin";
+import TrackList, { TrackListFromTrack, TrackListFromCriteriaPlaylist, TrackListFromArtist } from "./models/TrackList";
+import {
+  TrackListOriginFromTrack,
+  TrackListOriginFromCriteriaPlaylist,
+  TrackListOriginFromArtist,
+  ArtistTrackListOriginInput,
+} from "./models/TrackListOrigin";
 import { TrackListOriginType } from "./models/TrackListOriginType";
 import { Scope } from "../transport/lib/scope";
 import { usePlayer } from "../player/PlayerContext";
@@ -75,6 +80,11 @@ interface TrackListContextType<T extends TrackBase> {
     scope: Scope,
     options?: PlayGenrePlaylistOptions,
   ) => Promise<void>;
+  /**
+   * Plays a caller-supplied track list, starting at `startTrackUuid`. The list is not refetched
+   * or paged; pass every track that should be queued.
+   */
+  playNewTrackList: (tracks: T[], startTrackUuid: string, origin: ArtistTrackListOriginInput, scope: Scope) => void;
   /** One page of a genre playlist's tracks, parsed with the provider's track schema. */
   fetchGenrePlaylistTracksPage: (uuid: string, scope: Scope, page: number) => Promise<GenrePlaylistTracksPage<T>>;
   /** Appends the next tracks page of the current genre-playlist list; no-op when fully loaded or already loading. */
@@ -226,6 +236,19 @@ export function TrackListProvider<T extends TrackBase>({
     [fetchTracksPage, showTrackListSidebar, loadTrackForPlayer],
   );
 
+  const playNewTrackList = useCallback(
+    (tracks: T[], startTrackUuid: string, origin: ArtistTrackListOriginInput, scope: Scope) => {
+      const startTrack = tracks.find((track) => track.uuid === startTrackUuid);
+      if (!startTrack) throw new Error(`playNewTrackList: track ${startTrackUuid} is not in the list`);
+      latestPlayRequestRef.current++;
+      setTrackList(new TrackListFromArtist(tracks, new TrackListOriginFromArtist(origin, scope)));
+      setSelectedTrack(startTrack);
+      showTrackListSidebar();
+      loadTrackForPlayer(startTrack.uuid);
+    },
+    [showTrackListSidebar, loadTrackForPlayer],
+  );
+
   const loadMore = useCallback(async () => {
     if (!trackList || trackList.nextPage === null) return;
     const origin = trackList.origin as TrackListOriginFromCriteriaPlaylist;
@@ -265,6 +288,7 @@ export function TrackListProvider<T extends TrackBase>({
       toTrackAtPosition,
       playNewTrackListFromTrackUuid,
       playNewTrackListFromGenrePlaylist,
+      playNewTrackList,
       fetchGenrePlaylistTracksPage: fetchTracksPage,
       loadMore,
     }),
@@ -274,6 +298,7 @@ export function TrackListProvider<T extends TrackBase>({
       toTrackAtPosition,
       playNewTrackListFromTrackUuid,
       playNewTrackListFromGenrePlaylist,
+      playNewTrackList,
       fetchTracksPage,
       loadMore,
     ],

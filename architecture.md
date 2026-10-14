@@ -46,6 +46,12 @@ re-exported from the root barrel `src/index.ts`.
 | `player` | `src/player/` | `PlayerContext`, `MediaController`, playback state machine — generic over `PlayerTrack`, consumer supplies how to load a track |
 | `genre-tree` | `src/genre-tree/` | Scope-parameterized D3 genre tree view (`GenreTreeView`), its data hooks (`useGenre`, `useGenrePlaylist`), and the upload/playlist/track-list engine (`playlist-tree/`, `track-list-sidebar/`, `TrackListContext`) |
 
+`genre-tree` never knows a consumer's routes: artist names in track lists (`TrackItem`,
+`TrackListSidebar`, the genre detail panel via `GenreTreeView`) become links only when the
+consumer passes `getArtistHref(artist)`. `useTrackList().playNewTrackList(tracks, startTrackUuid,
+origin, scope)` plays any consumer-supplied list (e.g. an artist's tracks) without a backend
+playlist behind it.
+
 Adding a module: export it from the module's own barrel **and** `src/index.ts`, then add a
 matching entry to `tsup.config.ts` and the `exports` map in `packages/app-kit/package.json`.
 

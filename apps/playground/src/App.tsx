@@ -44,7 +44,7 @@ function useLoadTrack(): (trackId: string) => Promise<PlayerTrack> {
         kind: "youtube",
         youtubeVideoId: track.youtubeVideo.id,
         title: track.title,
-        artists: track.artists?.map((artist) => ({ name: artist.name })),
+        artists: track.artists?.map((artist) => ({ uuid: artist.uuid, name: artist.name })),
       };
     },
     [fetch],
@@ -88,6 +88,7 @@ function ReferenceGenreTree() {
       handleGenreCreationAction={showCriteriaCreationPopup}
       handleGenreRenameAction={showGenreRenamePopup}
       getBackendBaseUrl={getBackendBaseUrl}
+      getArtistHref={(artist) => `#artist-${artist.uuid}`}
     />
   );
 }

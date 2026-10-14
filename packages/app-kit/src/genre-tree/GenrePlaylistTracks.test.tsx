@@ -55,7 +55,7 @@ describe("GenrePlaylistTracks", () => {
     vi.unstubAllGlobals();
   });
 
-  const renderTracks = (scope: "me" | "reference" = "reference") =>
+  const renderTracks = (scope: "me" | "reference" = "reference", getArtistHref?: (artist: { uuid: string }) => string) =>
     render(
       <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
         <GenrePlaylistTracks
@@ -63,6 +63,7 @@ describe("GenrePlaylistTracks", () => {
           genrePlaylist={genrePlaylist}
           scope={scope}
           getBackendBaseUrl={() => "https://b"}
+          getArtistHref={getArtistHref}
         />
       </QueryClientProvider>,
     );
@@ -104,6 +105,14 @@ describe("GenrePlaylistTracks", () => {
 
     expect(errorSpy).toHaveBeenCalledWith("Failed to play genre playlist:", failure);
     errorSpy.mockRestore();
+  });
+
+  it("links artist names when getArtistHref is set", async () => {
+    fetchMock.mockResolvedValueOnce(recordingsPage([{ uuid: "t1", title: "Song", artists: [{ uuid: "x", name: "A" }] }]));
+
+    renderTracks("reference", (artist) => `/artists/${artist.uuid}`);
+
+    expect(await screen.findByRole("link", { name: "A" })).toHaveAttribute("href", "/artists/x");
   });
 
   it("does not play when the row text is clicked", async () => {

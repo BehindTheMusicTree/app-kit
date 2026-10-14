@@ -19,6 +19,7 @@ import { TrackBase } from "./schemas/track/base";
 import { isRecording, recordingUnplayableReason, RecordingDetailedSchema } from "./schemas/recording/detailed";
 import { GenrePlaylistTracksPage, useTrackList } from "./TrackListContext";
 import { MusicBrainzRecordingLink } from "./MusicBrainzRecordingLink";
+import { ArtistNames, GetArtistHref } from "./ArtistNames";
 
 const CATALOGUE_PAGE_SIZE = 100;
 const RecordingPageSchema = PaginatedResponseSchema(RecordingDetailedSchema);
@@ -28,6 +29,8 @@ export type GenrePlaylistTracksProps = {
   genrePlaylist: CriteriaPlaylistMinimum;
   scope: Scope;
   getBackendBaseUrl: () => string;
+  /** When set, artist names render as links to the returned URL. */
+  getArtistHref?: GetArtistHref;
 };
 
 /**
@@ -35,7 +38,13 @@ export type GenrePlaylistTracksProps = {
  * playing goes through the playable-only playlist. Other scopes have no catalogue endpoint; their
  * playlist is the catalogue (e.g. hear's uploaded tracks are always playable).
  */
-export function GenrePlaylistTracks({ genreUuid, genrePlaylist, scope, getBackendBaseUrl }: GenrePlaylistTracksProps) {
+export function GenrePlaylistTracks({
+  genreUuid,
+  genrePlaylist,
+  scope,
+  getBackendBaseUrl,
+  getArtistHref,
+}: GenrePlaylistTracksProps) {
   const { fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist } = useTrackList();
   const { session, sessionRestored } = useSession();
   const { playerTrackObject, playState, handlePlayPauseAction } = usePlayer();
@@ -116,7 +125,15 @@ export function GenrePlaylistTracks({ genreUuid, genrePlaylist, scope, getBacken
                   >
                     <FaPlay size={10} />
                   </button>
-                  <span className="min-w-0 truncate">{label}</span>
+                  <span className="min-w-0 truncate">
+                    {track.title}
+                    {track.artists?.length ? (
+                      <>
+                        {" — "}
+                        <ArtistNames artists={track.artists} getArtistHref={getArtistHref} />
+                      </>
+                    ) : null}
+                  </span>
                   {isRecording(track) && <MusicBrainzRecordingLink recording={track} />}
                   <span className="shrink-0 text-xs">{unplayableReason}</span>
                 </li>
@@ -138,7 +155,15 @@ export function GenrePlaylistTracks({ genreUuid, genrePlaylist, scope, getBacken
                     <FaPlay size={10} />
                   )}
                 </button>
-                <span className="min-w-0 truncate">{label}</span>
+                <span className="min-w-0 truncate">
+                    {track.title}
+                    {track.artists?.length ? (
+                      <>
+                        {" — "}
+                        <ArtistNames artists={track.artists} getArtistHref={getArtistHref} />
+                      </>
+                    ) : null}
+                  </span>
                 {isRecording(track) && <MusicBrainzRecordingLink recording={track} />}
               </li>
             );
