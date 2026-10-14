@@ -11,6 +11,16 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- `fetchGenrePlaylistTracksPage` takes an optional `from` track uuid (server `?from=`), and `TrackListOriginFromCriteriaPlaylist` carries it as `from` so later pages keep it.
+
+### Fixed
+
+- Playing a genre-catalogue row starts the queue at that track in one request (`?from=`, requires grow-api with genre-kit ≥ 0.46.1) instead of walking the playlist page by page; the queue no longer includes earlier tracks.
+- Playing a row whose track isn't in the playlist now rejects and shows an error popup instead of silently playing the playlist's first track.
+- `useInvalidateAllGenrePlaylistQueries` also invalidates the reference recordings queries, so the genre detail panel's catalogue refreshes after a genre edit.
+
 ## [10.4.0] - 2026-10-14
 
 ### Breaking

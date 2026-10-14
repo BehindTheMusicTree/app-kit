@@ -205,42 +205,60 @@ describe("TrackListContext", () => {
       expect(result.current.trackList?.nextPage).toBeNull();
     });
 
-    it("walks playlist pages until startRecordingUuid is found, keeping loaded pages for loadMore", async () => {
+    it("starts the list at startRecordingUuid in one request and keeps `from` for later pages", async () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
-      const first = makeTracks(3, "a");
-      const second = makeTracks(3, "b");
+      const first = makeTracks(3, "b");
       fetchMock
         .mockResolvedValueOnce(makePage(first, { page: 1, next: true, total: 250 }))
-        .mockResolvedValueOnce(makePage(second, { page: 2, next: true, total: 250 }))
-        .mockResolvedValueOnce(makePage(makeTracks(1, "u"), { page: 3, total: 250 }));
+        .mockResolvedValueOnce(makePage(makeTracks(1, "u"), { page: 2, total: 250 }));
 
       await act(async () => {
-        await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", { startRecordingUuid: "b1" });
+        await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", { startRecordingUuid: "b0" });
       });
 
-      expect(result.current.selectedTrack).toEqual(second[1]);
-      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("b1");
-      // The start track is near the end of the loaded pages, so auto-load continues from page 3.
-      expect(fetchMock).toHaveBeenCalledTimes(3);
-      expect(fetchMock).toHaveBeenLastCalledWith("me/genre-playlists/p1/tracks/", true, true, {}, { page: 3, pageSize: 100 });
-      expect(result.current.trackList?.tracks.map((track) => track.uuid)).toEqual(["a0", "a1", "a2", "b0", "b1", "b2", "u0"]);
+      expect(fetchMock).toHaveBeenNthCalledWith(1, "me/genre-playlists/p1/tracks/", true, true, {}, {
+        page: 1,
+        pageSize: 100,
+        from: "b0",
+      });
+      expect(result.current.selectedTrack).toEqual(first[0]);
+      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("b0");
+      // The start track is near the end of the loaded page, so auto-load fetches page 2 with the same `from`.
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(fetchMock).toHaveBeenLastCalledWith("me/genre-playlists/p1/tracks/", true, true, {}, {
+        page: 2,
+        pageSize: 100,
+        from: "b0",
+      });
+      expect(result.current.trackList?.tracks.map((track) => track.uuid)).toEqual(["b0", "b1", "b2", "u0"]);
     });
 
-    it("starts at the first track when startRecordingUuid is not in the playlist", async () => {
+    it("rejects when the first returned track is not startRecordingUuid", async () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
-      const first = makeTracks(2, "a");
-      const second = makeTracks(2, "b");
-      fetchMock
-        .mockResolvedValueOnce(makePage(first, { page: 1, next: true }))
-        .mockResolvedValueOnce(makePage(second, { page: 2 }));
+      fetchMock.mockResolvedValueOnce(makePage(makeTracks(2, "a")));
 
-      await act(async () => {
-        await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", { startRecordingUuid: "missing" });
-      });
+      await expect(
+        act(async () => {
+          await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", { startRecordingUuid: "b0" });
+        }),
+      ).rejects.toThrow("did not start at track b0");
 
-      expect(result.current.trackList?.tracks).toEqual([...first, ...second]);
-      expect(result.current.trackList?.nextPage).toBeNull();
-      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("a0");
+      expect(result.current.trackList).toBeNull();
+      expect(loadTrackForPlayerMock).not.toHaveBeenCalled();
+    });
+
+    it("rejects when the playlist doesn't contain startRecordingUuid (404)", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      // The fetch wrapper reports a backend 404 as a connectivity error and resolves null.
+      fetchMock.mockResolvedValueOnce(null);
+
+      await expect(
+        act(async () => {
+          await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", { startRecordingUuid: "b0" });
+        }),
+      ).rejects.toThrow("received null response");
+
+      expect(loadTrackForPlayerMock).not.toHaveBeenCalled();
     });
 
     it("warns and does nothing when the playlist has no tracks", async () => {

@@ -10,6 +10,7 @@ import { CriteriaPlaylistSimpleSchema } from "./schemas/criteria-playlist/simple
 
 import { PaginatedResponseSchema } from "../transport/lib/paginated-response";
 import { genrePlaylistEndpoints, genrePlaylistQueryKeys } from "./api/genre-playlists";
+import { libraryQueryKeys } from "./api/library";
 import { Scope } from "../transport/lib/scope";
 
 // grow-api clamps pageSize to PAGINATION_PAGE_SIZE_MAX (100); asking for more only hides the real page count.
@@ -130,5 +131,6 @@ export const useInvalidateAllGenrePlaylistQueries = () => {
     queryClient.invalidateQueries({ queryKey: genrePlaylistQueryKeys.me.all });
     queryClient.invalidateQueries({ queryKey: genrePlaylistQueryKeys.me.full });
     queryClient.invalidateQueries({ queryKey: genrePlaylistQueryKeys.reference.all });
+    queryClient.invalidateQueries({ queryKey: libraryQueryKeys.reference.recordings.all });
   };
 };
