@@ -34,7 +34,7 @@ Everything is also re-exported from the package root (`@behindthemusictree/app-k
 Several pieces are decoupled from any single app on purpose — `PlayerProvider` takes an injected
 `loadTrack` loader instead of a hardcoded data hook, and `AuthCallbackHandler` takes injected
 callback pathnames/handlers instead of hardcoded routes, and track lists (`GenreTreeView`,
-`TrackListSidebar`, `TrackItem`) take an optional `getArtistHref` to link artist names — so both consuming apps can plug in
+`TrackListSidebar`, `TrackItem`) take an optional `renderArtistLink` to render artist names as router links — so both consuming apps can plug in
 their own data layer and routes.
 
 ## Development

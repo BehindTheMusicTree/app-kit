@@ -7,15 +7,15 @@ import { useTrackList } from "../TrackListContext";
 import { useTrackListSidebarVisibility } from "../TrackListSidebarVisibilityContext";
 import { TrackListOriginType } from "../models/TrackListOriginType";
 import { TrackBase } from "../schemas/track/base";
-import { GetArtistHref } from "../ArtistNames";
+import { RenderArtistLink } from "../ArtistNames";
 
 export interface TrackListSidebarProps<T extends TrackBase> {
   className?: string;
   renderDuration?: (track: T) => ReactNode;
   renderActions?: (track: T) => ReactNode;
   layout?: "fixed" | "inline";
-  /** When set, artist names render as links to the returned URL. */
-  getArtistHref?: GetArtistHref;
+  /** When set, artist names render through it (e.g. a router `Link`). */
+  renderArtistLink?: RenderArtistLink;
 }
 
 export default function TrackListSidebar<T extends TrackBase>({
@@ -23,7 +23,7 @@ export default function TrackListSidebar<T extends TrackBase>({
   renderDuration,
   renderActions,
   layout = "fixed",
-  getArtistHref,
+  renderArtistLink,
 }: TrackListSidebarProps<T>) {
   const { trackList, loadMore } = useTrackList<T>();
   const loadMoreSentinelRef = useRef<HTMLLIElement>(null);
@@ -88,7 +88,7 @@ export default function TrackListSidebar<T extends TrackBase>({
               position={index + 1}
               renderDuration={renderDuration}
               renderActions={renderActions}
-              getArtistHref={getArtistHref}
+              renderArtistLink={renderArtistLink}
             />
           </li>
         ))}

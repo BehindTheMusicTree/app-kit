@@ -19,7 +19,7 @@ import { TrackBase } from "./schemas/track/base";
 import { isRecording, recordingUnplayableReason, RecordingDetailedSchema } from "./schemas/recording/detailed";
 import { GenrePlaylistTracksPage, useTrackList } from "./TrackListContext";
 import { MusicBrainzRecordingLink } from "./MusicBrainzRecordingLink";
-import { ArtistNames, GetArtistHref } from "./ArtistNames";
+import { ArtistNames, RenderArtistLink } from "./ArtistNames";
 
 const CATALOGUE_PAGE_SIZE = 100;
 const RecordingPageSchema = PaginatedResponseSchema(RecordingDetailedSchema);
@@ -29,8 +29,8 @@ export type GenrePlaylistTracksProps = {
   genrePlaylist: CriteriaPlaylistMinimum;
   scope: Scope;
   getBackendBaseUrl: () => string;
-  /** When set, artist names render as links to the returned URL. */
-  getArtistHref?: GetArtistHref;
+  /** When set, artist names render through it (e.g. a router `Link`). */
+  renderArtistLink?: RenderArtistLink;
 };
 
 /**
@@ -43,7 +43,7 @@ export function GenrePlaylistTracks({
   genrePlaylist,
   scope,
   getBackendBaseUrl,
-  getArtistHref,
+  renderArtistLink,
 }: GenrePlaylistTracksProps) {
   const { fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist } = useTrackList();
   const { session, sessionRestored } = useSession();
@@ -130,7 +130,7 @@ export function GenrePlaylistTracks({
                     {track.artists?.length ? (
                       <>
                         {" — "}
-                        <ArtistNames artists={track.artists} getArtistHref={getArtistHref} />
+                        <ArtistNames artists={track.artists} renderArtistLink={renderArtistLink} />
                       </>
                     ) : null}
                   </span>
@@ -160,7 +160,7 @@ export function GenrePlaylistTracks({
                     {track.artists?.length ? (
                       <>
                         {" — "}
-                        <ArtistNames artists={track.artists} getArtistHref={getArtistHref} />
+                        <ArtistNames artists={track.artists} renderArtistLink={renderArtistLink} />
                       </>
                     ) : null}
                   </span>

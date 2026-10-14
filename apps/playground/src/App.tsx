@@ -88,7 +88,7 @@ function ReferenceGenreTree() {
       handleGenreCreationAction={showCriteriaCreationPopup}
       handleGenreRenameAction={showGenreRenamePopup}
       getBackendBaseUrl={getBackendBaseUrl}
-      getArtistHref={(artist) => `#artist-${artist.uuid}`}
+      renderArtistLink={(artist) => <a href={`#artist-${artist.uuid}`}>{artist.name}</a>}
     />
   );
 }

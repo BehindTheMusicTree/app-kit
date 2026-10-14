@@ -26,7 +26,6 @@ import {
   TrackListOriginFromArtist,
   ArtistTrackListOriginInput,
 } from "./models/TrackListOrigin";
-import { TrackListOriginType } from "./models/TrackListOriginType";
 import { Scope } from "../transport/lib/scope";
 import { usePlayer } from "../player/PlayerContext";
 import { useTrackListSidebarVisibility } from "./TrackListSidebarVisibilityContext";
@@ -135,43 +134,13 @@ export function TrackListProvider<T extends TrackBase>({
     [fetch, pageSchema],
   );
 
-  // Create a memoized track list that updates when tracks changes
+  // Swap in fresh data for any listed track the list query returns, whatever the list's origin.
   const currentTrackList = useMemo(() => {
     if (!trackList) return null;
-
-    const tracks = tracksResponse?.results || [];
-
-    // If the current track list is from a single track, update it with fresh data
-    if (trackList.origin.type === TrackListOriginType.TRACK) {
-      const origin = trackList.origin as TrackListOriginFromTrack<T>;
-
-      // Find the updated version of the original track in the fresh data
-      const updatedOriginalTrack = tracks.find((track) => track.uuid === origin.track.uuid);
-
-      if (updatedOriginalTrack) {
-        // Create a new track list with the updated track
-        return new TrackListFromTrack([updatedOriginalTrack], origin);
-      }
-    }
-    // If the current track list is from a genre playlist, update tracks with fresh data
-    else if (trackList.origin.type === TrackListOriginType.GENRE_PLAYLIST) {
-      const origin = trackList.origin as TrackListOriginFromCriteriaPlaylist;
-
-      // Update all tracks in the playlist with fresh data
-      const updatedTracks = trackList.tracks.map((originalTrack) => {
-        const updatedTrack = tracks.find((track) => track.uuid === originalTrack.uuid);
-        return updatedTrack || originalTrack; // Use updated track if found, otherwise keep original
-      });
-
-      // Check if any tracks were actually updated
-      const hasUpdates = updatedTracks.some((updatedTrack, index) => updatedTrack !== trackList.tracks[index]);
-
-      if (hasUpdates) {
-        return new TrackListFromCriteriaPlaylist(updatedTracks, origin, trackList.total, trackList.nextPage);
-      }
-    }
-
-    return trackList;
+    const freshTracks = new Map((tracksResponse?.results ?? []).map((track) => [track.uuid, track]));
+    const tracks = trackList.tracks.map((track) => freshTracks.get(track.uuid) ?? track);
+    if (tracks.every((track, index) => track === trackList.tracks[index])) return trackList;
+    return new TrackList(tracks, trackList.origin, trackList.total, trackList.nextPage);
   }, [trackList, tracksResponse]);
 
   const toTrackAtPosition = useCallback(
