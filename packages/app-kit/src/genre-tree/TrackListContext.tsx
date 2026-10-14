@@ -70,9 +70,9 @@ interface TrackListContextType<T extends TrackBase> {
   toTrackAtPosition: (position: number) => void;
   playNewTrackListFromTrackUuid: (track: T, scope: Scope) => void;
   /**
-   * Fetches the playlist's tracks and plays its first track. Rejects on fetch/parse failure.
-   * With `startRecordingUuid`, fetches pages until that track is found and starts there; falls
-   * back to the first track when the playlist doesn't contain it.
+   * Fetches the playlist's first tracks page and plays its first track. Rejects on fetch/parse failure.
+   * With `startRecordingUuid`, the list starts at that track (`?from=`), so earlier tracks aren't
+   * queued; rejects when the playlist doesn't contain it.
    */
   playNewTrackListFromGenrePlaylist: (
     genrePlaylist: CriteriaPlaylistMinimum,
@@ -84,8 +84,13 @@ interface TrackListContextType<T extends TrackBase> {
    * or paged; pass every track that should be queued.
    */
   playNewTrackList: (tracks: T[], startTrackUuid: string, origin: ArtistTrackListOriginInput, scope: Scope) => void;
-  /** One page of a genre playlist's tracks, parsed with the provider's track schema. */
-  fetchGenrePlaylistTracksPage: (uuid: string, scope: Scope, page: number) => Promise<GenrePlaylistTracksPage<T>>;
+  /** One page of a genre playlist's tracks, parsed with the provider's track schema; `from` starts the list at that track. */
+  fetchGenrePlaylistTracksPage: (
+    uuid: string,
+    scope: Scope,
+    page: number,
+    from?: string,
+  ) => Promise<GenrePlaylistTracksPage<T>>;
   /** Appends the next tracks page of the current genre-playlist list; no-op when fully loaded or already loading. */
   loadMore: () => Promise<void>;
 }
@@ -121,9 +126,10 @@ export function TrackListProvider<T extends TrackBase>({
   const loadingOriginRef = useRef<TrackListOriginFromCriteriaPlaylist | null>(null);
 
   const fetchTracksPage = useCallback(
-    async (uuid: string, scope: Scope, page: number): Promise<GenrePlaylistTracksPage<T>> => {
+    async (uuid: string, scope: Scope, page: number, from?: string): Promise<GenrePlaylistTracksPage<T>> => {
       const endpoint = genrePlaylistEndpoints[scope].tracks(uuid);
-      const response = await fetch(endpoint, true, scope === "me", {}, { page, pageSize: GENRE_PLAYLIST_PAGE_SIZE });
+      const params = { page, pageSize: GENRE_PLAYLIST_PAGE_SIZE, ...(from && { from }) };
+      const response = await fetch(endpoint, true, scope === "me", {}, params);
       const parsed = parseWithLog(pageSchema, response, "fetchGenrePlaylistTracksPage");
       return {
         tracks: parsed.results.map((rel) => rel.track as T),
@@ -169,35 +175,27 @@ export function TrackListProvider<T extends TrackBase>({
   const playNewTrackListFromGenrePlaylist = useCallback(
     async (genrePlaylist: CriteriaPlaylistMinimum, scope: Scope, options?: PlayGenrePlaylistOptions) => {
       const request = ++latestPlayRequestRef.current;
-      const startRecordingUuid = options?.startRecordingUuid;
-      const pages: GenrePlaylistTracksPage<T>[] = [];
-      let startTrack: T | undefined;
+      const from = options?.startRecordingUuid;
+      let page: GenrePlaylistTracksPage<T>;
       try {
-        // ponytail: linear page walk to find the start track; add a server position lookup if playlists grow large.
-        let pageNumber: number | null = 1;
-        while (pageNumber !== null) {
-          const page = await fetchTracksPage(genrePlaylist.uuid, scope, pageNumber);
-          if (request !== latestPlayRequestRef.current) return;
-          pages.push(page);
-          startTrack = page.tracks.find((track) => track.uuid === startRecordingUuid);
-          if (!startRecordingUuid || startTrack) break;
-          pageNumber = page.nextPage;
-        }
+        page = await fetchTracksPage(genrePlaylist.uuid, scope, 1, from);
       } catch (error) {
         if (request !== latestPlayRequestRef.current) return;
         throw error;
       }
-      const tracks = pages.flatMap((page) => page.tracks);
-      startTrack ??= tracks[0];
+      if (request !== latestPlayRequestRef.current) return;
 
+      const startTrack = page.tracks[0];
+      if (from && startTrack?.uuid !== from) {
+        throw new Error(`Genre playlist ${genrePlaylist.uuid} did not start at track ${from}`);
+      }
       if (!startTrack) {
         console.warn("No playable tracks found in genre playlist");
         return;
       }
 
-      const { total, nextPage } = pages[pages.length - 1];
-      const origin = new TrackListOriginFromCriteriaPlaylist(genrePlaylist, scope);
-      setTrackList(new TrackListFromCriteriaPlaylist(tracks, origin, total, nextPage));
+      const origin = new TrackListOriginFromCriteriaPlaylist(genrePlaylist, scope, from);
+      setTrackList(new TrackListFromCriteriaPlaylist(page.tracks, origin, page.total, page.nextPage));
       setSelectedTrack(startTrack);
       showTrackListSidebar();
       loadTrackForPlayer(startTrack.uuid);
@@ -226,7 +224,7 @@ export function TrackListProvider<T extends TrackBase>({
     const requestedPage = trackList.nextPage;
     loadingOriginRef.current = origin;
     try {
-      const page = await fetchTracksPage(origin.uuid, origin.scope, requestedPage);
+      const page = await fetchTracksPage(origin.uuid, origin.scope, requestedPage, origin.from);
       setTrackList((prev) => {
         // A stale loadMore closure can refetch a page that was already appended.
         if (prev?.origin !== origin || prev.nextPage !== requestedPage) return prev;

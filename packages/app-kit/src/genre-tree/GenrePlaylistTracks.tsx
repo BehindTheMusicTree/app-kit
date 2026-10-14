@@ -11,6 +11,8 @@ import { PaginatedResponseSchema } from "../transport/lib/paginated-response";
 import { parseWithLog } from "../transport/lib/parse-with-log";
 import { usePlayer } from "../player/PlayerContext";
 import { PlayStates } from "../player/PlayStates";
+import { InternalErrorPopup, usePopup } from "../popup";
+import { ErrorCode } from "../transport/app-errors/app-error-codes";
 import { Scope } from "../transport/lib/scope";
 import { genrePlaylistQueryKeys } from "./api/genre-playlists";
 import { libraryEndpoints, libraryQueryKeys } from "./api/library";
@@ -48,6 +50,7 @@ export function GenrePlaylistTracks({
   const { fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist } = useTrackList();
   const { session, sessionRestored } = useSession();
   const { playerTrackObject, playState, handlePlayPauseAction } = usePlayer();
+  const { showPopup } = usePopup();
   const { uuid } = genrePlaylist;
 
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
@@ -92,9 +95,10 @@ export function GenrePlaylistTracks({
   const total = pages[0]?.total;
 
   const play = (startRecordingUuid: string) => {
-    playNewTrackListFromGenrePlaylist(genrePlaylist, scope, { startRecordingUuid }).catch((error) =>
-      console.error("Failed to play genre playlist:", error),
-    );
+    playNewTrackListFromGenrePlaylist(genrePlaylist, scope, { startRecordingUuid }).catch((error) => {
+      console.error("Failed to play genre playlist:", error);
+      showPopup(<InternalErrorPopup errorCode={ErrorCode.CLIENT_UNKNOWN} />);
+    });
   };
 
   return (
