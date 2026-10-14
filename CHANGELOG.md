@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [10.2.0] - 2026-10-14
+
 ### Breaking
 
 - `GenrePlaylistTracks` requires a new `genreUuid` prop (`GenreDetailExtras` passes it).
