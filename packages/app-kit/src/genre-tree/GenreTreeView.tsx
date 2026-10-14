@@ -23,7 +23,7 @@ import { Scope } from "../transport/lib/scope";
 import { useListFullGenrePlaylists } from "./useGenrePlaylist";
 import { usePrefetchGenreOverview } from "./useGenre";
 import { GenreDetailExtras } from "./GenreDetailExtras";
-import type { GetArtistHref } from "./ArtistNames";
+import type { RenderArtistLink } from "./ArtistNames";
 import {
   getGenrePlaylistsGroupedByRoot,
   hasMainstreamPopRoot,
@@ -61,8 +61,8 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   renderGenreDetailExtras?: (overview: O) => ReactNode;
   /** Layout of the wheel/tree floating zoom/pop/fit controls. Defaults to "vertical". */
   controlsOrientation?: ControlsOrientation;
-  /** When set, artist names in the info panel's track list render as links to the returned URL. */
-  getArtistHref?: GetArtistHref;
+  /** When set, artist names in the info panel's track list render through it (e.g. a router `Link`). */
+  renderArtistLink?: RenderArtistLink;
 } & GenreFocusProps;
 
 export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
@@ -76,7 +76,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   criteriaOverviewSchema,
   renderGenreDetailExtras,
   controlsOrientation,
-  getArtistHref,
+  renderArtistLink,
   ...focus
 }: GenreTreeViewProps<O>) {
   const [reparentingGenreUuid, setReparentingGenreUuid] = useState<
@@ -145,11 +145,11 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           getBackendBaseUrl={getBackendBaseUrl}
           criteriaOverviewSchema={criteriaOverviewSchema}
           renderGenreDetailExtras={renderGenreDetailExtras}
-          getArtistHref={getArtistHref}
+          renderArtistLink={renderArtistLink}
         />
       );
     },
-    [genrePlaylistByNodeId, scope, getBackendBaseUrl, criteriaOverviewSchema, renderGenreDetailExtras, getArtistHref],
+    [genrePlaylistByNodeId, scope, getBackendBaseUrl, criteriaOverviewSchema, renderGenreDetailExtras, renderArtistLink],
   );
 
   const prefetchGenreOverview = usePrefetchGenreOverview<O>(

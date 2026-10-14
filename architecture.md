@@ -48,7 +48,8 @@ re-exported from the root barrel `src/index.ts`.
 
 `genre-tree` never knows a consumer's routes: artist names in track lists (`TrackItem`,
 `TrackListSidebar`, the genre detail panel via `GenreTreeView`) become links only when the
-consumer passes `getArtistHref(artist)`. `useTrackList().playNewTrackList(tracks, startTrackUuid,
+consumer passes `renderArtistLink(artist)`, which returns its own router link so navigation stays
+client-side and playback keeps running. `useTrackList().playNewTrackList(tracks, startTrackUuid,
 origin, scope)` plays any consumer-supplied list (e.g. an artist's tracks) without a backend
 playlist behind it.
 

@@ -18,6 +18,7 @@ vi.mock("../auth/SessionContext", () => ({
 
 import { GenrePlaylistTracks } from "./GenrePlaylistTracks";
 import { PlayStates } from "../player/PlayStates";
+import type { RenderArtistLink } from "./ArtistNames";
 
 const genrePlaylist = { uuid: "p1", name: "Jazz" };
 const makeTracks = (count: number, prefix: string) =>
@@ -55,7 +56,7 @@ describe("GenrePlaylistTracks", () => {
     vi.unstubAllGlobals();
   });
 
-  const renderTracks = (scope: "me" | "reference" = "reference", getArtistHref?: (artist: { uuid: string }) => string) =>
+  const renderTracks = (scope: "me" | "reference" = "reference", renderArtistLink?: RenderArtistLink) =>
     render(
       <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
         <GenrePlaylistTracks
@@ -63,7 +64,7 @@ describe("GenrePlaylistTracks", () => {
           genrePlaylist={genrePlaylist}
           scope={scope}
           getBackendBaseUrl={() => "https://b"}
-          getArtistHref={getArtistHref}
+          renderArtistLink={renderArtistLink}
         />
       </QueryClientProvider>,
     );
@@ -107,10 +108,10 @@ describe("GenrePlaylistTracks", () => {
     errorSpy.mockRestore();
   });
 
-  it("links artist names when getArtistHref is set", async () => {
+  it("links artist names when renderArtistLink is set", async () => {
     fetchMock.mockResolvedValueOnce(recordingsPage([{ uuid: "t1", title: "Song", artists: [{ uuid: "x", name: "A" }] }]));
 
-    renderTracks("reference", (artist) => `/artists/${artist.uuid}`);
+    renderTracks("reference", (artist) => <a href={`/artists/${artist.uuid}`}>{artist.name}</a>);
 
     expect(await screen.findByRole("link", { name: "A" })).toHaveAttribute("href", "/artists/x");
   });

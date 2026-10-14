@@ -60,14 +60,35 @@ describe("TrackItem", () => {
     expect(screen.getByText("Rock")).toBeInTheDocument();
   });
 
-  it("links each artist when getArtistHref is set", () => {
-    render(<TrackItem track={makeTrack()} position={1} getArtistHref={(artist) => `/artists/${artist.uuid}`} />);
+  it("renders each artist through renderArtistLink for client-side navigation", () => {
+    const navigate = vi.fn();
+    const RouterLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
+      <a
+        href={href}
+        onClick={(event) => {
+          event.preventDefault();
+          navigate(href);
+        }}
+      >
+        {children}
+      </a>
+    );
+    render(
+      <TrackItem
+        track={makeTrack()}
+        position={1}
+        renderArtistLink={(artist) => <RouterLink href={`/artists/${artist.uuid}`}>{artist.name}</RouterLink>}
+      />,
+    );
 
-    expect(screen.getByRole("link", { name: "Artist One" })).toHaveAttribute("href", "/artists/artist-1");
     expect(screen.getByRole("link", { name: "Artist Two" })).toHaveAttribute("href", "/artists/artist-2");
+    fireEvent.click(screen.getByRole("link", { name: "Artist One" }));
+
+    expect(navigate).toHaveBeenCalledWith("/artists/artist-1");
+    expect(loadTrackForPlayer).not.toHaveBeenCalled();
   });
 
-  it("renders artists as plain text without getArtistHref", () => {
+  it("renders artists as plain text without renderArtistLink", () => {
     render(<TrackItem track={makeTrack()} position={1} />);
 
     expect(screen.queryByRole("link", { name: "Artist One" })).not.toBeInTheDocument();

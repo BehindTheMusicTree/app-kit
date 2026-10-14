@@ -25,7 +25,7 @@ export type { TrackListSidebarProps } from "./track-list-sidebar/TrackListSideba
 export { default as TrackItem } from "./track-list-sidebar/TrackItem";
 export type { TrackItemProps } from "./track-list-sidebar/TrackItem";
 export { ArtistNames } from "./ArtistNames";
-export type { GetArtistHref } from "./ArtistNames";
+export type { RenderArtistLink } from "./ArtistNames";
 export { default as TrackPositionPlayPause } from "./TrackPositionPlayPause";
 export type { TrackPositionPlayPauseProps } from "./TrackPositionPlayPause";
 export { default as Rating } from "./Rating";

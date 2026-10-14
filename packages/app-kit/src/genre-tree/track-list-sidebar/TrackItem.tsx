@@ -8,15 +8,15 @@ import TrackPositionPlayPause from "../TrackPositionPlayPause";
 import { TrackBase } from "../schemas/track/base";
 import { isRecording, recordingUnplayableReason } from "../schemas/recording/detailed";
 import { MusicBrainzRecordingLink } from "../MusicBrainzRecordingLink";
-import { ArtistNames, GetArtistHref } from "../ArtistNames";
+import { ArtistNames, RenderArtistLink } from "../ArtistNames";
 
 export interface TrackItemProps<T extends TrackBase> {
   track: T;
   position: number;
   renderDuration?: (track: T) => ReactNode;
   renderActions?: (track: T) => ReactNode;
-  /** When set, artist names render as links to the returned URL. */
-  getArtistHref?: GetArtistHref;
+  /** When set, artist names render through it (e.g. a router `Link`). */
+  renderArtistLink?: RenderArtistLink;
 }
 
 export default function TrackItem<T extends TrackBase>({
@@ -24,7 +24,7 @@ export default function TrackItem<T extends TrackBase>({
   position,
   renderDuration,
   renderActions,
-  getArtistHref,
+  renderArtistLink,
 }: TrackItemProps<T>) {
   const { handlePlayPauseAction, playerTrackObject, loadTrackForPlayer } = usePlayer();
   const { trackList, toTrackAtPosition } = useTrackList<T>();
@@ -64,7 +64,7 @@ export default function TrackItem<T extends TrackBase>({
         </div>
         {track.artists && track.artists.length > 0 ? (
           <div className="artist text-base text-overflow">
-            <ArtistNames artists={track.artists} getArtistHref={getArtistHref} />
+            <ArtistNames artists={track.artists} renderArtistLink={renderArtistLink} />
           </div>
         ) : (
           ""
