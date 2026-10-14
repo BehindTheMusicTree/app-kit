@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [10.4.1] - 2026-10-14
+
 ### Added
 
 - `fetchGenrePlaylistTracksPage` takes an optional `from` track uuid (server `?from=`), and `TrackListOriginFromCriteriaPlaylist` carries it as `from` so later pages keep it.
