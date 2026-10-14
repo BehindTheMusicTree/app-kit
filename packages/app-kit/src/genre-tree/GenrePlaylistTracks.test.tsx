@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-const { useTrackListMock, usePlayerMock, fetchMock } = vi.hoisted(() => ({
+const { useTrackListMock, usePlayerMock, fetchMock, showPopupMock } = vi.hoisted(() => ({
+  showPopupMock: vi.fn(),
   useTrackListMock: vi.fn(),
   usePlayerMock: vi.fn(),
   fetchMock: vi.fn(),
@@ -12,6 +13,10 @@ vi.mock("./TrackListContext", () => ({ useTrackList: useTrackListMock }));
 vi.mock("../player/PlayerContext", () => ({ usePlayer: usePlayerMock }));
 vi.mock("../transport/useFetchWrapper", () => ({ useFetchWrapper: () => ({ fetch: fetchMock }) }));
 vi.mock("../transport/lib/parse-with-log", () => ({ parseWithLog: (_schema: unknown, data: unknown) => data }));
+vi.mock("../popup", () => ({
+  usePopup: () => ({ showPopup: showPopupMock }),
+  InternalErrorPopup: () => null,
+}));
 vi.mock("../auth/SessionContext", () => ({
   useSession: () => ({ session: { accessToken: "token" }, sessionRestored: true }),
 }));
@@ -92,7 +97,7 @@ describe("GenrePlaylistTracks", () => {
     expect(playNewTrackListFromGenrePlaylist).toHaveBeenCalledWith(genrePlaylist, "reference", { startRecordingUuid: "b0" });
   });
 
-  it("lists artists and logs when playing fails", async () => {
+  it("lists artists, logs and shows an error popup when playing fails", async () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const failure = new Error("boom");
     playNewTrackListFromGenrePlaylist.mockRejectedValueOnce(failure);
@@ -105,6 +110,7 @@ describe("GenrePlaylistTracks", () => {
     });
 
     expect(errorSpy).toHaveBeenCalledWith("Failed to play genre playlist:", failure);
+    expect(showPopupMock).toHaveBeenCalledTimes(1);
     errorSpy.mockRestore();
   });
 

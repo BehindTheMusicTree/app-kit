@@ -31,7 +31,12 @@ export class TrackListOriginFromTrack<T extends TrackBase = TrackBase> extends T
 }
 
 export class TrackListOriginFromCriteriaPlaylist extends TrackListOrigin {
-  constructor(public criteriaPlaylist: CriteriaPlaylistMinimum, scope: Scope) {
+  /** `from`: the track the list starts at (server-side `?from=`), kept so later pages use it too. */
+  constructor(
+    public criteriaPlaylist: CriteriaPlaylistMinimum,
+    scope: Scope,
+    public from?: string,
+  ) {
     super(TrackListOriginType.GENRE_PLAYLIST, criteriaPlaylist.name, criteriaPlaylist.uuid, scope);
   }
 }
