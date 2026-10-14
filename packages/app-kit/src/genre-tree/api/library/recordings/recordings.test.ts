@@ -21,6 +21,7 @@ describe("makeRecordingQueryKeys", () => {
     expect(keys.all).toEqual(["referenceRecordings"]);
     expect(keys.list(3)).toEqual(["referenceRecordings", "list", 3]);
     expect(keys.detail(uuid)).toEqual(["referenceRecordings", "detail", uuid]);
+    expect(keys.byGenre("https://b", uuid)).toEqual(["referenceRecordings", "https://b", "genre", uuid]);
   });
 });
 

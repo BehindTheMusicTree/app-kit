@@ -16,7 +16,6 @@ import { useQueryWithParse } from "../transport/lib/use-query-with-parse";
 import { PaginatedResponseSchema } from "../transport/lib/paginated-response";
 import { parseWithLog } from "../transport/lib/parse-with-log";
 import { TrackBase } from "./schemas/track/base";
-import { isRecording, recordingUnplayableReason } from "./schemas/recording/detailed";
 import { CriteriaPlaylistMinimum } from "./schemas/criteria-playlist/minimum";
 import { makeTrackPlaylistRelPageSchema } from "./schemas/track-playlist-rel/without-playlist";
 import { genrePlaylistEndpoints } from "./api/genre-playlists";
@@ -58,7 +57,7 @@ export function useListTracks<T>(
 
 export type GenrePlaylistTracksPage<T> = { tracks: T[]; total: number; nextPage: number | null };
 
-export type GenrePlaylistTracksSeed<T> = GenrePlaylistTracksPage<T> & { startIndex: number };
+export type PlayGenrePlaylistOptions = { startRecordingUuid?: string };
 
 interface TrackListContextType<T extends TrackBase> {
   trackList: TrackList<T> | null;
@@ -67,13 +66,14 @@ interface TrackListContextType<T extends TrackBase> {
   toTrackAtPosition: (position: number) => void;
   playNewTrackListFromTrackUuid: (track: T, scope: Scope) => void;
   /**
-   * Fetches the playlist's first tracks page and plays its first track. Rejects on fetch/parse failure.
-   * With `seed`, plays `seed.tracks[seed.startIndex]` from already-loaded pages instead of fetching.
+   * Fetches the playlist's tracks and plays its first track. Rejects on fetch/parse failure.
+   * With `startRecordingUuid`, fetches pages until that track is found and starts there; falls
+   * back to the first track when the playlist doesn't contain it.
    */
   playNewTrackListFromGenrePlaylist: (
     genrePlaylist: CriteriaPlaylistMinimum,
     scope: Scope,
-    seed?: GenrePlaylistTracksSeed<T>,
+    options?: PlayGenrePlaylistOptions,
   ) => Promise<void>;
   /** One page of a genre playlist's tracks, parsed with the provider's track schema. */
   fetchGenrePlaylistTracksPage: (uuid: string, scope: Scope, page: number) => Promise<GenrePlaylistTracksPage<T>>;
@@ -188,28 +188,35 @@ export function TrackListProvider<T extends TrackBase>({
   );
 
   const playNewTrackListFromGenrePlaylist = useCallback(
-    async (genrePlaylist: CriteriaPlaylistMinimum, scope: Scope, seed?: GenrePlaylistTracksSeed<T>) => {
+    async (genrePlaylist: CriteriaPlaylistMinimum, scope: Scope, options?: PlayGenrePlaylistOptions) => {
       const request = ++latestPlayRequestRef.current;
-      let page: GenrePlaylistTracksPage<T>;
-      if (seed) {
-        page = seed;
-      } else {
-        try {
-          page = await fetchTracksPage(genrePlaylist.uuid, scope, 1);
-        } catch (error) {
+      const startRecordingUuid = options?.startRecordingUuid;
+      const pages: GenrePlaylistTracksPage<T>[] = [];
+      let startTrack: T | undefined;
+      try {
+        // ponytail: linear page walk to find the start track; add a server position lookup if playlists grow large.
+        let pageNumber: number | null = 1;
+        while (pageNumber !== null) {
+          const page = await fetchTracksPage(genrePlaylist.uuid, scope, pageNumber);
           if (request !== latestPlayRequestRef.current) return;
-          throw error;
+          pages.push(page);
+          startTrack = page.tracks.find((track) => track.uuid === startRecordingUuid);
+          if (!startRecordingUuid || startTrack) break;
+          pageNumber = page.nextPage;
         }
+      } catch (error) {
         if (request !== latestPlayRequestRef.current) return;
+        throw error;
       }
-      const { tracks, total, nextPage } = page;
-      const startTrack = tracks.slice(seed?.startIndex ?? 0).find((track) => !isRecording(track) || !recordingUnplayableReason(track));
+      const tracks = pages.flatMap((page) => page.tracks);
+      startTrack ??= tracks[0];
 
       if (!startTrack) {
         console.warn("No playable tracks found in genre playlist");
         return;
       }
 
+      const { total, nextPage } = pages[pages.length - 1];
       const origin = new TrackListOriginFromCriteriaPlaylist(genrePlaylist, scope);
       setTrackList(new TrackListFromCriteriaPlaylist(tracks, origin, total, nextPage));
       setSelectedTrack(startTrack);

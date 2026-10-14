@@ -15,6 +15,5 @@ export const genrePlaylistQueryKeys = {
     list: (baseUrl: string, page: number) => ["referenceGenrePlaylists", baseUrl, "list", page] as const,
     full: (baseUrl: string) => ["referenceGenrePlaylists", baseUrl, "full"] as const,
     detail: (baseUrl: string, uuid: string) => ["referenceGenrePlaylists", baseUrl, uuid] as const,
-    tracks: (baseUrl: string, uuid: string) => ["referenceGenrePlaylists", baseUrl, uuid, "tracks"] as const,
   },
 };
