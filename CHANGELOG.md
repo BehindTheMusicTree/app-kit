@@ -25,6 +25,10 @@ easy to spot when bumping.
 
 - `loadMore` and the near-end auto-load now work for artist lists as well as genre playlists.
 
+### Security
+
+- Bump `uuid` to 11.1.1 and `next` (dev) to ^15.5.27; override `postcss`, `source-map-js`, `esbuild` and `postcss-selector-parser` to patched versions in the dev/test dependency tree.
+
 ## [10.4.1] - 2026-10-14
 
 ### Added
