@@ -24,6 +24,10 @@ easy to spot when bumping.
 - Genre detail panel (reference scope) lists the genre's whole recordings catalogue via `library/recordings/?genre=<uuid>`, playable or not; unplayable rows show their reason and have no play action, and the count is the catalogue total. Playing still goes through the playable-only genre playlist. The `me` scope (hear) keeps its playlist listing.
 - New query key `libraryQueryKeys.reference.recordings.byGenre`.
 
+### Security
+
+- Override `undici` to `^8.10.2` (resolves 8.12.1) to clear Dependabot advisories on 8.10.0. Dev/test-only (pulled in by jsdom); nothing shipped to consumers changes.
+
 ## [10.1.0] - 2026-10-14
 
 ### Breaking
