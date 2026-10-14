@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [11.0.0] - 2026-10-14
+
 ### Breaking
 
 - `useTrackList().playNewTrackList(tracks, startTrackUuid, origin, scope)` is removed. Use `playNewTrackListFromArtist(artist, scope, { ordering, startRecordingUuid? })`, which fetches the artist's playable recordings (`library/recordings/?artist=&playable=true&ordering=&page_size=100`, requires grow-api >= 12.8.0) and pages lazily.
