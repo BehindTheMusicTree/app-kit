@@ -14,8 +14,8 @@ updates:
     directory: /
     target-branch: develop
     registries:
-      - npmjs
       - github-packages
+      - npmjs
     schedule:
       interval: weekly
     # Security updates only: 0 disables routine version-bump PRs.
