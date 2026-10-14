@@ -294,7 +294,6 @@ describe("GenreTreeView", () => {
       expect(treeWheelPropsMock.mock.calls[0][0].allowWheelRotation).toBe(
         false,
       );
-      expect(treeWheelPropsMock.mock.calls[0][0].showToolbar).toBe(false);
     });
 
     it("toggle on and pass through to the wheel view", () => {
@@ -306,14 +305,10 @@ describe("GenreTreeView", () => {
 
       fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
       fireEvent.click(screen.getByRole("button", { name: "Rotation" }));
-      fireEvent.click(screen.getByRole("button", { name: "Toolbar" }));
 
       expect(
         treeWheelPropsMock.mock.calls.at(-1)?.[0].allowWheelRotation,
       ).toBe(true);
-      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].showToolbar).toBe(
-        true,
-      );
     });
 
     it("pass through to the pop-core view", () => {
@@ -332,18 +327,14 @@ describe("GenreTreeView", () => {
 
       fireEvent.click(screen.getByRole("button", { name: "Pop/Core" }));
       fireEvent.click(screen.getByRole("button", { name: "Rotation" }));
-      fireEvent.click(screen.getByRole("button", { name: "Toolbar" }));
 
       expect(
         treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0]
           .allowWheelRotation,
       ).toBe(true);
-      expect(
-        treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0].showToolbar,
-      ).toBe(true);
     });
 
-    it("hides the Rotation toggle in stacked view and passes showToolbar through", () => {
+    it("hides the Rotation toggle in stacked view", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
         data: [makePlaylist()],
         isPending: false,
@@ -356,11 +347,6 @@ describe("GenreTreeView", () => {
         screen.queryByRole("button", { name: "Rotation" }),
       ).not.toBeInTheDocument();
 
-      fireEvent.click(screen.getByRole("button", { name: "Toolbar" }));
-
-      expect(treePerRootPropsMock.mock.calls.at(-1)?.[0].showToolbar).toBe(
-        true,
-      );
     });
 
     it("renders stacked trees in modifier wheel-zoom mode so the list can scroll", () => {
