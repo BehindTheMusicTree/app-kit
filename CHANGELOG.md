@@ -11,6 +11,12 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- Optional `getArtistHref(artist)` prop on `TrackItem`, `TrackListSidebar`, and `GenreTreeView` (genre detail panel track list): when set, artist names render as links. New exports `ArtistNames` and `GetArtistHref`.
+- `useTrackList().playNewTrackList(tracks, startTrackUuid, origin, scope)` plays an arbitrary track list, with an artist origin (`{ type: "artist", uuid, name }`, type `ArtistTrackListOriginInput`). New `TrackListOriginType.ARTIST`, `TrackListOriginFromArtist` and `TrackListFromArtist`; the sidebar labels it "Artist".
+- `PlayerTrackArtist` gains an optional `uuid`.
+
 ### Security
 
 - Narrow the `undici` override to `undici@<8.10.2` so it only lifts vulnerable versions and no longer pins undici to 8.x for future jsdom upgrades.

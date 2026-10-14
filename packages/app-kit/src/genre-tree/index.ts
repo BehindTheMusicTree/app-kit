@@ -24,18 +24,27 @@ export { default as TrackListSidebar } from "./track-list-sidebar/TrackListSideb
 export type { TrackListSidebarProps } from "./track-list-sidebar/TrackListSidebar";
 export { default as TrackItem } from "./track-list-sidebar/TrackItem";
 export type { TrackItemProps } from "./track-list-sidebar/TrackItem";
+export { ArtistNames } from "./ArtistNames";
+export type { GetArtistHref } from "./ArtistNames";
 export { default as TrackPositionPlayPause } from "./TrackPositionPlayPause";
 export type { TrackPositionPlayPauseProps } from "./TrackPositionPlayPause";
 export { default as Rating } from "./Rating";
 export type { RatingProps } from "./Rating";
 
 // Models
-export { default as TrackList, TrackListFromTrack, TrackListFromCriteriaPlaylist } from "./models/TrackList";
+export {
+  default as TrackList,
+  TrackListFromTrack,
+  TrackListFromCriteriaPlaylist,
+  TrackListFromArtist,
+} from "./models/TrackList";
 export {
   default as TrackListOrigin,
   TrackListOriginFromTrack,
   TrackListOriginFromCriteriaPlaylist,
+  TrackListOriginFromArtist,
 } from "./models/TrackListOrigin";
+export type { ArtistTrackListOriginInput } from "./models/TrackListOrigin";
 export * from "./models/TrackListOriginType";
 
 // Schemas / domain types

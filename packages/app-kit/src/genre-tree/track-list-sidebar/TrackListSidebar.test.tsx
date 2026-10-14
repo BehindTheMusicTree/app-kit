@@ -11,7 +11,9 @@ vi.mock("../TrackListSidebarVisibilityContext", () => ({
   useTrackListSidebarVisibility: useTrackListSidebarVisibilityMock,
 }));
 vi.mock("./TrackItem", () => ({
-  default: ({ track }: { track: { uuid: string; title: string } }) => <span>{track.title}</span>,
+  default: ({ track, getArtistHref }: { track: { uuid: string; title: string }; getArtistHref?: unknown }) => (
+    <span data-has-artist-href={String(!!getArtistHref)}>{track.title}</span>
+  ),
 }));
 
 import TrackListSidebar from "./TrackListSidebar";
@@ -78,6 +80,17 @@ describe("TrackListSidebar", () => {
 
     expect(screen.getByText(/track playlist/)).toBeInTheDocument();
     expect(screen.getByText(/1 track /)).toBeInTheDocument();
+  });
+
+  it("labels an artist origin and passes getArtistHref to each track", () => {
+    useTrackListMock.mockReturnValue({
+      trackList: makeTrackList({ origin: { label: "Miles Davis", type: TrackListOriginType.ARTIST } }),
+    });
+
+    render(<TrackListSidebar getArtistHref={(artist) => `/artists/${artist.uuid}`} />);
+
+    expect(screen.getByText(/• Artist •/)).toBeInTheDocument();
+    expect(screen.getByText("Song One")).toHaveAttribute("data-has-artist-href", "true");
   });
 
   it("shows the playlist total rather than the loaded count", () => {
