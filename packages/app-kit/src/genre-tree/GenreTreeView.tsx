@@ -30,11 +30,16 @@ import {
 
 import GenrePlaylistTreePerRoot from "./playlist-tree/TreePerRoot";
 import GenrePlaylistTreeWheel from "./playlist-tree/TreeWheel";
-import GenrePlaylistTreeWheelRadialPopCore from "./playlist-tree/TreeWheelRadialPopCore";
+import GenrePlaylistTreeWheelRadialPopCore, { type GenreFocusProps } from "./playlist-tree/TreeWheelRadialPopCore";
 import { GenreTreeWheelHandoff } from "./GenreTreeWheelHandoff";
 import GenreSearch from "./GenreSearch";
 
-export type { ControlsOrientation, GenreTreeViewMode } from "@behindthemusictree/genre-tree-view";
+export type {
+  ControlsOrientation,
+  FocusChangeReason,
+  GenreTreeViewMode,
+} from "@behindthemusictree/genre-tree-view";
+export type { GenreFocusProps } from "./playlist-tree/TreeWheelRadialPopCore";
 
 const HOVER_PREFETCH_DELAY_MS = 100;
 
@@ -55,13 +60,7 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   renderGenreDetailExtras?: (overview: O) => ReactNode;
   /** Layout of the wheel/tree floating zoom/pop/fit controls. Defaults to "vertical". */
   controlsOrientation?: ControlsOrientation;
-  /** Pop-core view only: zooms the wheel into this genre's subtree. An unknown or non-zoomable
-   * uuid shows the whole tree and fires `onFocusGenreChange(null)`. */
-  focusGenreUuid?: string | null;
-  /** Pop-core view only: fires when the user zooms in or goes back up a level, when an invalid
-   * focus is reset to null, and when a search pick outside the zoom refocuses to an ancestor. */
-  onFocusGenreChange?: (uuid: string | null) => void;
-};
+} & GenreFocusProps;
 
 export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   scope,
@@ -74,8 +73,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   criteriaOverviewSchema,
   renderGenreDetailExtras,
   controlsOrientation,
-  focusGenreUuid,
-  onFocusGenreChange,
+  ...focus
 }: GenreTreeViewProps<O>) {
   const [reparentingGenreUuid, setReparentingGenreUuid] = useState<
     string | null
@@ -374,8 +372,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   allowWheelRotation={allowWheelRotation}
                   showToolbar={showToolbar}
                   controlsOrientation={controlsOrientation}
-                  focusGenreUuid={focusGenreUuid}
-                  onFocusGenreChange={onFocusGenreChange}
+                  {...focus}
                 />
               </GenreTreeWheelHandoff>
             </div>

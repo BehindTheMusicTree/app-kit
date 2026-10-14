@@ -28,7 +28,7 @@ vi.stubGlobal(
 );
 
 describe("GenrePlaylistTreeWheelRadialPopCore focus (real genre-tree-view)", () => {
-  it("resets an unknown focusGenreUuid via onFocusGenreChange(null) without throwing", () => {
+  it("resets an unknown focusGenreUuid via onFocusGenreChange(null, rejected) without throwing", () => {
     const onFocusGenreChange = vi.fn();
     const genrePlaylists = [
       {
@@ -61,6 +61,6 @@ describe("GenrePlaylistTreeWheelRadialPopCore focus (real genre-tree-view)", () 
     ).not.toThrow();
 
     expect(onFocusGenreChange).toHaveBeenCalledTimes(1);
-    expect(onFocusGenreChange).toHaveBeenCalledWith(null);
+    expect(onFocusGenreChange).toHaveBeenCalledWith(null, "rejected");
   });
 });

@@ -69,7 +69,7 @@ vi.mock("@behindthemusictree/genre-tree-view", async (importOriginal) => ({
     ),
 }));
 
-import { GenreTreeView, type GenreTreeViewProps } from "./GenreTreeView";
+import { GenreTreeView, type GenreFocusProps, type GenreTreeViewProps } from "./GenreTreeView";
 
 const getBackendBaseUrl = () => "https://backend.example.com";
 
@@ -106,7 +106,7 @@ function makePlaylist(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function renderView(overrides: Partial<GenreTreeViewProps> = {}) {
+function renderView(overrides: Partial<Omit<GenreTreeViewProps, keyof GenreFocusProps>> & GenreFocusProps = {}) {
   const props: GenreTreeViewProps = {
     scope: "me",
     handleGenreCreationAction: vi.fn(),
@@ -413,6 +413,20 @@ describe("GenreTreeView", () => {
     expect(outlineProps.outline).toBe(true);
     expect(outlineProps).not.toHaveProperty("focusGenreUuid");
     expect(outlineProps).not.toHaveProperty("onFocusGenreChange");
+  });
+
+  it("requires focusGenreUuid and onFocusGenreChange together at the type level", () => {
+    const base = {
+      scope: "me",
+      handleGenreCreationAction: vi.fn(),
+      handleGenreRenameAction: vi.fn(),
+      getBackendBaseUrl,
+    } as const;
+    // @ts-expect-error focusGenreUuid without onFocusGenreChange
+    const focusOnly: GenreTreeViewProps = { ...base, focusGenreUuid: "gp1" };
+    // @ts-expect-error onFocusGenreChange without focusGenreUuid
+    const callbackOnly: GenreTreeViewProps = { ...base, onFocusGenreChange: vi.fn() };
+    expect([focusOnly, callbackOnly]).toHaveLength(2);
   });
 
   describe("outline view", () => {
