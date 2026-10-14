@@ -5,6 +5,7 @@ import {
   GenreTreeOutline,
   GenreTreeWheelRadialPopCore,
   type ControlsOrientation,
+  type FocusChangeReason,
   type GenreTreeAction,
   type GenreTreeNode,
 } from "@behindthemusictree/genre-tree-view";
@@ -19,6 +20,19 @@ import { TrackBase } from "../schemas/track/base";
 import { CriteriaPlaylistSimple } from "../schemas/criteria-playlist/simple";
 import { CriteriaMinimum } from "../schemas/criteria/minimum";
 import { Scope } from "../../transport/lib/scope";
+
+/** Pop-core focus is controlled-only: pass both props or neither. Ignored in outline mode. */
+export type GenreFocusProps =
+  | { focusGenreUuid?: undefined; onFocusGenreChange?: undefined }
+  | {
+      /** Zooms the pop-core wheel into this genre's subtree. An unknown or non-zoomable uuid shows
+       * the whole tree and fires `onFocusGenreChange(null, "rejected")`. */
+      focusGenreUuid: string | null;
+      /** Fires with the genre to focus and why: `"zoom-in"` / `"back"` from the user's zoom
+       * controls, `"search"` when a selection outside the zoom refocuses to an ancestor, and
+       * `"rejected"` when an invalid `focusGenreUuid` is reset to null. */
+      onFocusGenreChange: (uuid: string | null, reason: FocusChangeReason) => void;
+    };
 
 export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   scope: Scope;
@@ -52,38 +66,34 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   /** When true, renders the same forest as GenreTreeOutline's nested-list text view instead of
    * the radial wheel. Defaults to false. */
   outline?: boolean;
-  /** Zooms the pop-core wheel into this genre's subtree. An unknown or non-zoomable uuid shows
-   * the whole tree and fires `onFocusGenreChange(null)`. Ignored in outline mode. */
-  focusGenreUuid?: string | null;
-  /** Fires when the user zooms in or goes back up a level, when an invalid focus is reset to
-   * null, and when a search pick outside the zoom refocuses to an ancestor. Ignored in outline mode. */
-  onFocusGenreChange?: (uuid: string | null) => void;
-};
+} & GenreFocusProps;
 
-export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>({
-  scope,
-  className,
-  genrePlaylists,
-  reparentingGenreUuid,
-  setReparentingGenreUuid,
-  handleGenreCreationAction,
-  handleGenreRenameAction,
-  getBackendBaseUrl,
-  additionalActions,
-  onNodeClick,
-  onNodeHover,
-  renderExtraDetails,
-  selectedNodeId,
-  onSelectedNodeChange,
-  hideInfoPanelClose,
-  readOnly = false,
-  allowWheelRotation,
-  showToolbar,
-  controlsOrientation,
-  outline = false,
-  focusGenreUuid,
-  onFocusGenreChange,
-}: GenrePlaylistTreeWheelRadialPopCoreProps<T>) {
+export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>(
+  props: GenrePlaylistTreeWheelRadialPopCoreProps<T>,
+) {
+  const {
+    scope,
+    className,
+    genrePlaylists,
+    reparentingGenreUuid,
+    setReparentingGenreUuid,
+    handleGenreCreationAction,
+    handleGenreRenameAction,
+    getBackendBaseUrl,
+    additionalActions,
+    onNodeClick,
+    onNodeHover,
+    renderExtraDetails,
+    selectedNodeId,
+    onSelectedNodeChange,
+    hideInfoPanelClose,
+    readOnly = false,
+    allowWheelRotation,
+    showToolbar,
+    controlsOrientation,
+    outline = false,
+  } = props;
+  const focus: GenreFocusProps = props;
   const { isPlaying, setIsPlaying } = usePlayer();
   const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList<T>();
   const { mutate: updateGenreMutate } = useUpdateGenre(scope, getBackendBaseUrl);
@@ -205,8 +215,9 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
       {...treeProps}
       allowWheelRotation={allowWheelRotation}
       controlsOrientation={controlsOrientation}
-      focusNodeId={focusGenreUuid}
-      onFocusChange={onFocusGenreChange}
+      {...(focus.onFocusGenreChange
+        ? { focusNodeId: focus.focusGenreUuid, onFocusChange: focus.onFocusGenreChange }
+        : { focusNodeId: undefined, onFocusChange: undefined })}
     />
   );
 }
