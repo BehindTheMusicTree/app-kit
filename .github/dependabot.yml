@@ -1,21 +1,16 @@
 version: 2
 registries:
-  # Without an explicit base, Dependabot routes unscoped packages to GitHub Packages (404).
-  npmjs:
-    type: npm-registry
-    url: https://registry.npmjs.org
-    replaces-base: true
   github-packages:
     type: npm-registry
     url: https://npm.pkg.github.com
     token: ${{secrets.GH_PACKAGES_TOKEN_READ}}
+    replaces-base: false
 updates:
   - package-ecosystem: npm
     directory: /
     target-branch: develop
     registries:
       - github-packages
-      - npmjs
     schedule:
       interval: weekly
     # Security updates only: 0 disables routine version-bump PRs.
