@@ -249,14 +249,14 @@ describe("TrackListContext", () => {
 
     it("rejects when the playlist doesn't contain startRecordingUuid (404)", async () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
-      const notFound = new Error("Track b0 is not in this playlist.");
-      fetchMock.mockRejectedValueOnce(notFound);
+      // The fetch wrapper reports a backend 404 as a connectivity error and resolves null.
+      fetchMock.mockResolvedValueOnce(null);
 
       await expect(
         act(async () => {
           await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", { startRecordingUuid: "b0" });
         }),
-      ).rejects.toBe(notFound);
+      ).rejects.toThrow("received null response");
 
       expect(loadTrackForPlayerMock).not.toHaveBeenCalled();
     });
