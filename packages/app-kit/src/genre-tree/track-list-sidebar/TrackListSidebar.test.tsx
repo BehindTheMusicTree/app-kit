@@ -11,8 +11,8 @@ vi.mock("../TrackListSidebarVisibilityContext", () => ({
   useTrackListSidebarVisibility: useTrackListSidebarVisibilityMock,
 }));
 vi.mock("./TrackItem", () => ({
-  default: ({ track, getArtistHref }: { track: { uuid: string; title: string }; getArtistHref?: unknown }) => (
-    <span data-has-artist-href={String(!!getArtistHref)}>{track.title}</span>
+  default: ({ track, renderArtistLink }: { track: { uuid: string; title: string }; renderArtistLink?: unknown }) => (
+    <span data-has-artist-link={String(!!renderArtistLink)}>{track.title}</span>
   ),
 }));
 
@@ -82,15 +82,15 @@ describe("TrackListSidebar", () => {
     expect(screen.getByText(/1 track /)).toBeInTheDocument();
   });
 
-  it("labels an artist origin and passes getArtistHref to each track", () => {
+  it("labels an artist origin and passes renderArtistLink to each track", () => {
     useTrackListMock.mockReturnValue({
       trackList: makeTrackList({ origin: { label: "Miles Davis", type: TrackListOriginType.ARTIST } }),
     });
 
-    render(<TrackListSidebar getArtistHref={(artist) => `/artists/${artist.uuid}`} />);
+    render(<TrackListSidebar renderArtistLink={(artist) => artist.name} />);
 
     expect(screen.getByText(/• Artist •/)).toBeInTheDocument();
-    expect(screen.getByText("Song One")).toHaveAttribute("data-has-artist-href", "true");
+    expect(screen.getByText("Song One")).toHaveAttribute("data-has-artist-link", "true");
   });
 
   it("shows the playlist total rather than the loaded count", () => {

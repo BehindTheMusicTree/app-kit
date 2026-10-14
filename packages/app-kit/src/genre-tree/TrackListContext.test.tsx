@@ -604,6 +604,22 @@ describe("TrackListContext", () => {
 
       expect(result.current.trackList?.tracks).toEqual([trackA]);
     });
+
+    it("updates matching tracks in an artist list", () => {
+      const trackA = makeTrack("a", "Track A");
+      const trackB = makeTrack("b", "Track B");
+      const updatedA = makeTrack("a", "Track A Updated");
+      useQueryWithParseMock.mockReturnValue({ data: { results: [updatedA] } });
+
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+
+      act(() => {
+        result.current.playNewTrackList([trackA, trackB], "b", { type: "artist", uuid: "ar1", name: "Artist" }, "reference");
+      });
+
+      expect(result.current.trackList?.tracks).toEqual([updatedA, trackB]);
+      expect(result.current.trackList?.origin.type).toBe(TrackListOriginType.ARTIST);
+    });
   });
 
   describe("useListTracks", () => {

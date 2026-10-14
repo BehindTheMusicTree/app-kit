@@ -11,6 +11,20 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [10.4.0] - 2026-10-14
+
+### Breaking
+
+- `getArtistHref` (on `TrackItem`, `TrackListSidebar`, `GenreTreeView`, `GenrePlaylistTracks`, `ArtistNames`) is replaced by `renderArtistLink(artist) => ReactNode`, and the `GetArtistHref` export by `RenderArtistLink`. Return your router's link (e.g. `<Link href={`/artists/${artist.uuid}`}>{artist.name}</Link>`) so navigation stays client-side and playback isn't interrupted by a full page reload. No consumer used `getArtistHref` yet.
+
+### Changed
+
+- Artist links in track lists render through the consumer's `renderArtistLink` (replacing `getArtistHref`); link styling (e.g. hover underline) is now the consumer's.
+
+### Fixed
+
+- Tracks in an artist list played via `playNewTrackList` now refresh with fresh list-query data, like single-track and genre-playlist lists.
+
 ## [10.3.0] - 2026-10-14
 
 ### Added

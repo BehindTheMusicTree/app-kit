@@ -8,7 +8,7 @@ import { Scope } from "../transport/lib/scope";
 import { useFetchGenreOverview } from "./useGenre";
 import { CriteriaPlaylistMinimum } from "./schemas/criteria-playlist/minimum";
 import { GenrePlaylistTracks } from "./GenrePlaylistTracks";
-import { GetArtistHref } from "./ArtistNames";
+import { RenderArtistLink } from "./ArtistNames";
 
 export type GenreDetailExtrasProps<O extends CriteriaOverview> = {
   genreUuid: string;
@@ -17,7 +17,7 @@ export type GenreDetailExtrasProps<O extends CriteriaOverview> = {
   getBackendBaseUrl: () => string;
   criteriaOverviewSchema?: z.ZodType<O, z.ZodTypeDef, unknown>;
   renderGenreDetailExtras?: (overview: O) => ReactNode;
-  getArtistHref?: GetArtistHref;
+  renderArtistLink?: RenderArtistLink;
 };
 
 // Owns the overview fetch so its pending → success transitions re-render only the info panel,
@@ -29,7 +29,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
   getBackendBaseUrl,
   criteriaOverviewSchema,
   renderGenreDetailExtras,
-  getArtistHref,
+  renderArtistLink,
 }: GenreDetailExtrasProps<O>) {
   const { data: overview, isPending } = useFetchGenreOverview<O>(
     genreUuid,
@@ -76,7 +76,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
         genrePlaylist={genrePlaylist}
         scope={scope}
         getBackendBaseUrl={getBackendBaseUrl}
-        getArtistHref={getArtistHref}
+        renderArtistLink={renderArtistLink}
       />
     </>
   );

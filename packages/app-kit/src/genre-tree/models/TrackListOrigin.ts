@@ -2,8 +2,8 @@
  * Trimmed from grow-the-music-tree-frontend's original `TrackListOrigin.ts`: dropped
  * `TrackListOriginFromPlaylist` (Spotify-library playlist origin, backed by a `PlaylistDetailed`
  * schema that's part of grow's separate Spotify-library feature, out of scope for this package).
- * Only the track and genre-playlist origins — which back this shared tree+upload+playback
- * workspace — are kept.
+ * Kept origins: a single track, a genre playlist, and an artist (a caller-supplied list played
+ * through `playNewTrackList`).
  */
 import { TrackBase } from "../schemas/track/base";
 import { CriteriaPlaylistMinimum } from "../schemas/criteria-playlist/minimum";
