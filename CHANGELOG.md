@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Security
+
+- Override `undici` to `^8.10.2` (resolves 8.12.1) to clear Dependabot advisories on 8.10.0. Dev/test-only (pulled in by jsdom); nothing shipped to consumers changes.
+
 ## [10.1.0] - 2026-10-14
 
 ### Breaking
