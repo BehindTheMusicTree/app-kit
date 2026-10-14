@@ -68,7 +68,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
           )}
         </div>
       )}
-      <GenrePlaylistTracks genrePlaylist={genrePlaylist} scope={scope} getBackendBaseUrl={getBackendBaseUrl} />
+      <GenrePlaylistTracks genreUuid={genreUuid} genrePlaylist={genrePlaylist} scope={scope} getBackendBaseUrl={getBackendBaseUrl} />
     </>
   );
 }

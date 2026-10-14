@@ -170,51 +170,42 @@ describe("TrackListContext", () => {
       expect(result.current.trackList?.nextPage).toBeNull();
     });
 
-    it("plays seeded tracks from startIndex without fetching, then loadMore continues from seed.nextPage", async () => {
+    it("walks playlist pages until startRecordingUuid is found, keeping loaded pages for loadMore", async () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
-      const tracks = makeTracks(20);
+      const first = makeTracks(3, "a");
+      const second = makeTracks(3, "b");
+      fetchMock
+        .mockResolvedValueOnce(makePage(first, { page: 1, next: true, total: 250 }))
+        .mockResolvedValueOnce(makePage(second, { page: 2, next: true, total: 250 }))
+        .mockResolvedValueOnce(makePage(makeTracks(1, "u"), { page: 3, total: 250 }));
 
       await act(async () => {
-        await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", {
-          tracks,
-          total: 250,
-          nextPage: 3,
-          startIndex: 5,
-        });
+        await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", { startRecordingUuid: "b1" });
       });
 
-      expect(fetchMock).not.toHaveBeenCalled();
-      expect(result.current.trackList?.tracks).toEqual(tracks);
-      expect(result.current.selectedTrack).toEqual(tracks[5]);
-      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t5");
-
-      fetchMock.mockResolvedValueOnce(makePage(makeTracks(1, "u"), { page: 3, total: 250 }));
-      await act(async () => {
-        await result.current.loadMore();
-      });
-      expect(fetchMock).toHaveBeenCalledWith("me/genre-playlists/p1/tracks/", true, true, {}, { page: 3, pageSize: 100 });
+      expect(result.current.selectedTrack).toEqual(second[1]);
+      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("b1");
+      // The start track is near the end of the loaded pages, so auto-load continues from page 3.
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+      expect(fetchMock).toHaveBeenLastCalledWith("me/genre-playlists/p1/tracks/", true, true, {}, { page: 3, pageSize: 100 });
+      expect(result.current.trackList?.tracks.map((track) => track.uuid)).toEqual(["a0", "a1", "a2", "b0", "b1", "b2", "u0"]);
     });
 
-    it("starts from the first playable track at or after startIndex, skipping recordings without a video", async () => {
+    it("starts at the first track when startRecordingUuid is not in the playlist", async () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
-      const tracks = makeTracks(4).map((track, i) =>
-        i === 1
-          ? { ...track, youtubeVideo: null, musicbrainzRecordingId: null }
-          : i === 2
-            ? { ...track, youtubeVideo: { id: "v2", unplayableReason: "not_embeddable" }, musicbrainzRecordingId: null }
-            : track,
-      );
+      const first = makeTracks(2, "a");
+      const second = makeTracks(2, "b");
+      fetchMock
+        .mockResolvedValueOnce(makePage(first, { page: 1, next: true }))
+        .mockResolvedValueOnce(makePage(second, { page: 2 }));
 
       await act(async () => {
-        await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", {
-          tracks,
-          total: 4,
-          nextPage: null,
-          startIndex: 1,
-        });
+        await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", { startRecordingUuid: "missing" });
       });
 
-      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t3");
+      expect(result.current.trackList?.tracks).toEqual([...first, ...second]);
+      expect(result.current.trackList?.nextPage).toBeNull();
+      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("a0");
     });
 
     it("warns and does nothing when the playlist has no tracks", async () => {
