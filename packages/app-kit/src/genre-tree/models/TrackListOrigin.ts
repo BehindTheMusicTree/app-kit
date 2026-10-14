@@ -2,8 +2,8 @@
  * Trimmed from grow-the-music-tree-frontend's original `TrackListOrigin.ts`: dropped
  * `TrackListOriginFromPlaylist` (Spotify-library playlist origin, backed by a `PlaylistDetailed`
  * schema that's part of grow's separate Spotify-library feature, out of scope for this package).
- * Kept origins: a single track, a genre playlist, and an artist (a caller-supplied list played
- * through `playNewTrackList`).
+ * Kept origins: a single track, a genre playlist, and an artist (their playable recordings,
+ * paged through `playNewTrackListFromArtist`).
  */
 import { TrackBase } from "../schemas/track/base";
 import { CriteriaPlaylistMinimum } from "../schemas/criteria-playlist/minimum";
@@ -41,11 +41,18 @@ export class TrackListOriginFromCriteriaPlaylist extends TrackListOrigin {
   }
 }
 
-/** Describes where an arbitrary track list passed to `playNewTrackList` comes from. */
-export type ArtistTrackListOriginInput = { type: "artist"; uuid: string; name: string };
+export type ArtistRecordingsOrdering = "title" | "-title" | "albumYear" | "-albumYear";
+
+export type ArtistTrackListOriginInput = { uuid: string; name: string };
 
 export class TrackListOriginFromArtist extends TrackListOrigin {
-  constructor(public artist: ArtistTrackListOriginInput, scope: Scope) {
+  /** `ordering`/`from`: kept so later pages use the same order and start track. */
+  constructor(
+    public artist: ArtistTrackListOriginInput,
+    scope: Scope,
+    public ordering: ArtistRecordingsOrdering,
+    public from?: string,
+  ) {
     super(TrackListOriginType.ARTIST, artist.name, artist.uuid, scope);
   }
 }

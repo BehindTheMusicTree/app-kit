@@ -44,7 +44,7 @@ export {
   TrackListOriginFromCriteriaPlaylist,
   TrackListOriginFromArtist,
 } from "./models/TrackListOrigin";
-export type { ArtistTrackListOriginInput } from "./models/TrackListOrigin";
+export type { ArtistTrackListOriginInput, ArtistRecordingsOrdering } from "./models/TrackListOrigin";
 export * from "./models/TrackListOriginType";
 
 // Schemas / domain types
