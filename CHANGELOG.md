@@ -11,6 +11,17 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Breaking
+
+- `GenrePlaylistTracks` requires a new `genreUuid` prop (`GenreDetailExtras` passes it).
+- `playNewTrackListFromGenrePlaylist(genrePlaylist, scope, seed)` third argument is now `{ startRecordingUuid?: string }`: it fetches playlist pages until that recording is found (first track if absent) and keeps the loaded pages for `loadMore`. `GenrePlaylistTracksSeed` is removed; new exported type `PlayGenrePlaylistOptions`.
+- `genrePlaylistQueryKeys.reference.tracks` is removed (the reference detail panel now caches under `libraryQueryKeys.reference.recordings.byGenre`).
+
+### Changed
+
+- Genre detail panel (reference scope) lists the genre's whole recordings catalogue via `library/recordings/?genre=<uuid>`, playable or not; unplayable rows show their reason and have no play action, and the count is the catalogue total. Playing still goes through the playable-only genre playlist. The `me` scope (hear) keeps its playlist listing.
+- New query key `libraryQueryKeys.reference.recordings.byGenre`.
+
 ### Security
 
 - Override `undici` to `^8.10.2` (resolves 8.12.1) to clear Dependabot advisories on 8.10.0. Dev/test-only (pulled in by jsdom); nothing shipped to consumers changes.
