@@ -176,6 +176,8 @@ describe("TrackListContext", () => {
         false,
         {},
         { artist: "a1", playable: true, ordering: "-albumYear", page: 1, pageSize: 100 },
+        false,
+        false,
       );
       expect(result.current.trackList?.tracks).toEqual(tracks);
       expect(result.current.trackList?.total).toBe(5);
@@ -241,6 +243,20 @@ describe("TrackListContext", () => {
         ).rejects.toThrow("Artist a1 did not start at recording t1");
       });
       expect(loadTrackForPlayerMock).not.toHaveBeenCalled();
+    });
+
+    it("skips the global error for the first page when a start recording is given", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      fetchMock.mockResolvedValueOnce(makeArtistPage(makeTracks(1)));
+
+      await act(async () => {
+        await result.current.playNewTrackListFromArtist(artist, "reference", {
+          ordering: "title",
+          startRecordingUuid: "t0",
+        });
+      });
+
+      expect(fetchMock.mock.calls[0][6]).toBe(true);
     });
 
     it("rejects the me scope without fetching", async () => {

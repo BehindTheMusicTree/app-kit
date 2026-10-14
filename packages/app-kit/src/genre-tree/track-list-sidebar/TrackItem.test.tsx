@@ -21,8 +21,8 @@ function makeTrack(overrides: Record<string, unknown> = {}) {
     uuid: "track-1",
     title: "My Song",
     artists: [
-      { name: "Artist One", uuid: "artist-1", isSpecialPurpose: false },
-      { name: "Artist Two", uuid: "artist-2", isSpecialPurpose: false },
+      { name: "Artist One", uuid: "artist-1" },
+      { name: "Artist Two", uuid: "artist-2" },
     ],
     album: { name: "My Album", uuid: "album-1" },
     genre: { name: "Rock", uuid: "genre-1" },

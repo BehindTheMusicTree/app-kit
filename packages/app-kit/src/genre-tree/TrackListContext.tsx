@@ -154,7 +154,6 @@ export function TrackListProvider<T extends TrackBase>({
 
   const fetchArtistTracksPage = useCallback(
     async (origin: TrackListOriginFromArtist, page: number): Promise<GenrePlaylistTracksPage<T>> => {
-      if (origin.scope !== "reference") throw new Error("Artist track lists only support the reference scope");
       const params = {
         artist: origin.uuid,
         playable: true,
@@ -163,7 +162,16 @@ export function TrackListProvider<T extends TrackBase>({
         pageSize: TRACKS_PAGE_SIZE,
         ...(origin.from && { from: origin.from }),
       };
-      const response = await fetch(libraryEndpoints.reference.recordings.list(), true, false, {}, params);
+      const response = await fetch(
+        libraryEndpoints.reference.recordings.list(),
+        true,
+        false,
+        {},
+        params,
+        false,
+        // A start recording that isn't playable 404s; surface it as a rejection, not the global error.
+        page === 1 && !!origin.from,
+      );
       const parsed = parseWithLog(artistPageSchema, response, "fetchArtistTracksPage");
       return { tracks: parsed.results, total: parsed.overallTotal, nextPage: parsed.next ? parsed.page + 1 : null };
     },
@@ -235,6 +243,7 @@ export function TrackListProvider<T extends TrackBase>({
 
   const playNewTrackListFromArtist = useCallback(
     async (artist: ArtistTrackListOriginInput, scope: Scope, options: PlayArtistOptions) => {
+      if (scope !== "reference") throw new Error("Artist track lists only support the reference scope");
       const request = ++latestPlayRequestRef.current;
       const from = options.startRecordingUuid;
       const origin = new TrackListOriginFromArtist(artist, scope, options.ordering, from);

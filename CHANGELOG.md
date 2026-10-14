@@ -15,11 +15,11 @@ easy to spot when bumping.
 
 - `useTrackList().playNewTrackList(tracks, startTrackUuid, origin, scope)` is removed. Use `playNewTrackListFromArtist(artist, scope, { ordering, startRecordingUuid? })`, which fetches the artist's playable recordings (`library/recordings/?artist=&playable=true&ordering=&page_size=100`, requires grow-api >= 12.8.0) and pages lazily.
 - `ArtistTrackListOriginInput` is now `{ uuid, name }` (no `type`); `TrackListOriginFromArtist` takes `(artist, scope, ordering, from?)` and `TrackListFromArtist` takes `(tracks, origin, total, nextPage)`.
-- `ArtistMinimumSchema` requires `isSpecialPurpose: boolean` (grow-api >= 12.8.0).
 
 ### Added
 
 - `playNewTrackListFromArtist` and the `ArtistRecordingsOrdering` / `PlayArtistOptions` types.
+- `ArtistMinimumSchema` gains `isSpecialPurpose` (optional boolean; grow-api >= 12.8.0 sends it, hear-api does not yet).
 
 ### Changed
 
