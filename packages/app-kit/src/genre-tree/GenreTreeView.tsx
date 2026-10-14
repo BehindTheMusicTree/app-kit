@@ -86,7 +86,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     useState<GenreTreeViewMode>("pop-core");
   const isControlled = controlledViewMode !== undefined;
   const [allowWheelRotation, setAllowWheelRotation] = useState(false);
-  const [showToolbar, setShowToolbar] = useState(false);
 
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
@@ -302,13 +301,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
               Rotation
             </Button>
           )}
-          <Button
-            variant={showToolbar ? "default" : "outline"}
-            size="sm"
-            onClick={() => setShowToolbar((prev) => !prev)}
-          >
-            Toolbar
-          </Button>
         </div>
       )}
       {!isLoading && !readOnly && (
@@ -350,7 +342,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   selectedNodeId={selectedNodeId}
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
-                  showToolbar={showToolbar}
                   controlsOrientation={controlsOrientation}
                 />
               </GenreTreeWheelHandoff>
@@ -375,7 +366,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   selectedNodeId={selectedNodeId}
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
-                  showToolbar={showToolbar}
                   controlsOrientation={controlsOrientation}
                   {...focus}
                 />
@@ -399,7 +389,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                 renderExtraDetails={renderExtraDetails}
                 selectedNodeId={selectedNodeId}
                 readOnly={readOnly}
-                showToolbar={showToolbar}
               />
             </div>
           ) : (
@@ -431,7 +420,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                             uuid === selectedGenrePlaylist?.root.uuid ? selectedNodeId : null
                           }
                           readOnly={readOnly}
-                          showToolbar={showToolbar}
                           wheelZoom="modifier"
                           controlsOrientation={controlsOrientation}
                         />

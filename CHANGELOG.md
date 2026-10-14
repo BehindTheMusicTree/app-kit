@@ -11,6 +11,11 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- Bump `@behindthemusictree/genre-tree-view` to 2.0.0: node actions (play, add, rename, …) now render in the node info panel instead of a hover toolbar.
+- `GenreTreeView`: removed the "Toolbar" toggle, since the actions are always available in the info panel.
+
 ## [11.0.0] - 2026-10-14
 
 ### Breaking
