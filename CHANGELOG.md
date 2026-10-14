@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Security
+
+- Narrow the `undici` override to `undici@<8.10.2` so it only lifts vulnerable versions and no longer pins undici to 8.x for future jsdom upgrades.
+
 ## [10.2.0] - 2026-10-14
 
 ### Breaking
