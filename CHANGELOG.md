@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [10.3.0] - 2026-10-14
+
 ### Added
 
 - Optional `getArtistHref(artist)` prop on `TrackItem`, `TrackListSidebar`, and `GenreTreeView` (genre detail panel track list): when set, artist names render as links. New exports `ArtistNames` and `GetArtistHref`.
