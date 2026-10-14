@@ -159,7 +159,7 @@ describe("TrackListSidebar", () => {
       intersect(true);
 
       await vi.waitFor(() =>
-        expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to load more genre playlist tracks:", error),
+        expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to load more tracks:", error),
       );
       consoleErrorSpy.mockRestore();
     });

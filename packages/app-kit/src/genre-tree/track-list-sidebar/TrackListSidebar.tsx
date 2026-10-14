@@ -34,7 +34,7 @@ export default function TrackListSidebar<T extends TrackBase>({
     if (!hasMore || !sentinel) return;
     const observer = new IntersectionObserver((entries) => {
       if (entries.some((entry) => entry.isIntersecting)) {
-        loadMore().catch((error) => console.error("Failed to load more genre playlist tracks:", error));
+        loadMore().catch((error) => console.error("Failed to load more tracks:", error));
       }
     });
     observer.observe(sentinel);

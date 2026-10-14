@@ -49,9 +49,9 @@ re-exported from the root barrel `src/index.ts`.
 `genre-tree` never knows a consumer's routes: artist names in track lists (`TrackItem`,
 `TrackListSidebar`, the genre detail panel via `GenreTreeView`) become links only when the
 consumer passes `renderArtistLink(artist)`, which returns its own router link so navigation stays
-client-side and playback keeps running. `useTrackList().playNewTrackList(tracks, startTrackUuid,
-origin, scope)` plays any consumer-supplied list (e.g. an artist's tracks) without a backend
-playlist behind it.
+client-side and playback keeps running. `useTrackList().playNewTrackListFromArtist(artist, scope,
+{ ordering, startRecordingUuid? })` queues an artist's playable recordings (`library/recordings/?artist=&playable=true`),
+paging lazily through `loadMore` like the genre-playlist origin.
 
 Adding a module: export it from the module's own barrel **and** `src/index.ts`, then add a
 matching entry to `tsup.config.ts` and the `exports` map in `packages/app-kit/package.json`.
