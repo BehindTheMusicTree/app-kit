@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- `GenrePlaylistTracks` (reference scope) requests `withTotal=false`: no `COUNT(*)` on huge genre subtrees; the `Tracks` title shows no count when the backend returns a null total.
+
 ## [11.1.0] - 2026-10-14
 
 ### Changed

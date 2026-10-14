@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { z } from "zod";
 import { FaPlay, FaPause } from "react-icons/fa";
 import { RingLoader } from "@behindthemusictree/ui";
 
@@ -24,7 +25,11 @@ import { MusicBrainzRecordingLink } from "./MusicBrainzRecordingLink";
 import { ArtistNames, RenderArtistLink } from "./ArtistNames";
 
 const CATALOGUE_PAGE_SIZE = 100;
-const RecordingPageSchema = PaginatedResponseSchema(RecordingDetailedSchema);
+// withTotal=false: the backend skips COUNT(*) so huge genre subtrees page without timing out.
+const RecordingPageSchema = PaginatedResponseSchema(RecordingDetailedSchema).extend({
+  overallTotal: z.number().nullable(),
+  totalPages: z.number().nullable(),
+});
 
 export type GenrePlaylistTracksProps = {
   genreUuid: string;
@@ -60,14 +65,14 @@ export function GenrePlaylistTracks({
       scope === "me"
         ? genrePlaylistQueryKeys.me.tracks(uuid)
         : libraryQueryKeys.reference.recordings.byGenre(getBackendBaseUrl(), genreUuid),
-    queryFn: async ({ pageParam }): Promise<GenrePlaylistTracksPage<TrackBase>> => {
+    queryFn: async ({ pageParam }): Promise<Omit<GenrePlaylistTracksPage<TrackBase>, "total"> & { total: number | null }> => {
       if (scope === "me") return fetchGenrePlaylistTracksPage(uuid, scope, pageParam);
       const response = await fetch(
         libraryEndpoints.reference.recordings.list(),
         true,
         false,
         {},
-        { genre: genreUuid, page: pageParam, pageSize: CATALOGUE_PAGE_SIZE },
+        { genre: genreUuid, page: pageParam, pageSize: CATALOGUE_PAGE_SIZE, withTotal: false },
       );
       const parsed = parseWithLog(RecordingPageSchema, response, "GenrePlaylistTracks");
       return { tracks: parsed.results, total: parsed.overallTotal, nextPage: parsed.next ? parsed.page + 1 : null };
@@ -92,7 +97,7 @@ export function GenrePlaylistTracks({
 
   const pages = data?.pages ?? [];
   const tracks = pages.flatMap((page) => page.tracks);
-  const total = pages[0]?.total;
+  const total = pages[0]?.total ?? undefined;
 
   const play = (startRecordingUuid: string) => {
     playNewTrackListFromGenrePlaylist(genrePlaylist, scope, { startRecordingUuid }).catch((error) => {
