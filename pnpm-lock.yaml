@@ -18,7 +18,7 @@ catalogs:
 
 overrides:
   sharp: ^0.35.4
-  undici: ^8.10.2
+  undici@<8.10.2: ^8.10.2
 
 importers:
 
