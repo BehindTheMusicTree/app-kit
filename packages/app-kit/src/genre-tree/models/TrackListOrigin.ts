@@ -35,3 +35,12 @@ export class TrackListOriginFromCriteriaPlaylist extends TrackListOrigin {
     super(TrackListOriginType.GENRE_PLAYLIST, criteriaPlaylist.name, criteriaPlaylist.uuid, scope);
   }
 }
+
+/** Describes where an arbitrary track list passed to `playNewTrackList` comes from. */
+export type ArtistTrackListOriginInput = { type: "artist"; uuid: string; name: string };
+
+export class TrackListOriginFromArtist extends TrackListOrigin {
+  constructor(public artist: ArtistTrackListOriginInput, scope: Scope) {
+    super(TrackListOriginType.ARTIST, artist.name, artist.uuid, scope);
+  }
+}

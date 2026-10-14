@@ -60,6 +60,19 @@ describe("TrackItem", () => {
     expect(screen.getByText("Rock")).toBeInTheDocument();
   });
 
+  it("links each artist when getArtistHref is set", () => {
+    render(<TrackItem track={makeTrack()} position={1} getArtistHref={(artist) => `/artists/${artist.uuid}`} />);
+
+    expect(screen.getByRole("link", { name: "Artist One" })).toHaveAttribute("href", "/artists/artist-1");
+    expect(screen.getByRole("link", { name: "Artist Two" })).toHaveAttribute("href", "/artists/artist-2");
+  });
+
+  it("renders artists as plain text without getArtistHref", () => {
+    render(<TrackItem track={makeTrack()} position={1} />);
+
+    expect(screen.queryByRole("link", { name: "Artist One" })).not.toBeInTheDocument();
+  });
+
   it("renders empty strings when artists, album, and genre are missing", () => {
     render(<TrackItem track={makeTrack({ artists: null, album: null, genre: null })} position={1} />);
 

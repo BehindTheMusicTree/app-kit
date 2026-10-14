@@ -7,12 +7,15 @@ import { useTrackList } from "../TrackListContext";
 import { useTrackListSidebarVisibility } from "../TrackListSidebarVisibilityContext";
 import { TrackListOriginType } from "../models/TrackListOriginType";
 import { TrackBase } from "../schemas/track/base";
+import { GetArtistHref } from "../ArtistNames";
 
 export interface TrackListSidebarProps<T extends TrackBase> {
   className?: string;
   renderDuration?: (track: T) => ReactNode;
   renderActions?: (track: T) => ReactNode;
   layout?: "fixed" | "inline";
+  /** When set, artist names render as links to the returned URL. */
+  getArtistHref?: GetArtistHref;
 }
 
 export default function TrackListSidebar<T extends TrackBase>({
@@ -20,6 +23,7 @@ export default function TrackListSidebar<T extends TrackBase>({
   renderDuration,
   renderActions,
   layout = "fixed",
+  getArtistHref,
 }: TrackListSidebarProps<T>) {
   const { trackList, loadMore } = useTrackList<T>();
   const loadMoreSentinelRef = useRef<HTMLLIElement>(null);
@@ -56,9 +60,11 @@ export default function TrackListSidebar<T extends TrackBase>({
           </div>
         </div>
         <div className="info flex flex-col justify-center items-center text-m pt-1 mr-2">
-          {trackList && trackList.origin.type === TrackListOriginType.GENRE_PLAYLIST
+          {trackList.origin.type === TrackListOriginType.GENRE_PLAYLIST
             ? "• Genre playlist • "
-            : "• track playlist • "}
+            : trackList.origin.type === TrackListOriginType.ARTIST
+              ? "• Artist • "
+              : "• track playlist • "}
           {trackList.total + " track" + (trackList.total > 1 ? "s •" : " •")}
         </div>
         <div
@@ -77,7 +83,13 @@ export default function TrackListSidebar<T extends TrackBase>({
       >
         {trackList.tracks.map((track, index) => (
           <li key={track.uuid}>
-            <TrackItem track={track} position={index + 1} renderDuration={renderDuration} renderActions={renderActions} />
+            <TrackItem
+              track={track}
+              position={index + 1}
+              renderDuration={renderDuration}
+              renderActions={renderActions}
+              getArtistHref={getArtistHref}
+            />
           </li>
         ))}
         {hasMore && <li ref={loadMoreSentinelRef} aria-hidden="true" className="h-px" />}

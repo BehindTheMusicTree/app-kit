@@ -34,6 +34,7 @@ vi.mock("./TrackListSidebarVisibilityContext", () => ({
 
 import { TrackListProvider, useTrackList, useListTracks } from "./TrackListContext";
 import type { TrackBase } from "./schemas/track/base";
+import { TrackListOriginType } from "./models/TrackListOriginType";
 
 const getBackendBaseUrl = () => "https://backend.example.com";
 const listEndpoint = (page: number) => `tracks/?page=${page}`;
@@ -142,6 +143,40 @@ describe("TrackListContext", () => {
       expect(result.current.trackList?.tracks).toEqual([track]);
       expect(showTrackListSidebarMock).toHaveBeenCalled();
       expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t1");
+    });
+  });
+
+  describe("playNewTrackList", () => {
+    const artist = { type: "artist" as const, uuid: "a1", name: "Miles Davis" };
+
+    it("queues the given tracks with an artist origin and starts at the requested track", () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      const tracks = makeTracks(3);
+
+      act(() => {
+        result.current.playNewTrackList(tracks, "t1", artist, "reference");
+      });
+
+      expect(result.current.trackList?.tracks).toEqual(tracks);
+      expect(result.current.trackList?.origin).toMatchObject({
+        type: TrackListOriginType.ARTIST,
+        label: "Miles Davis",
+        uuid: "a1",
+        scope: "reference",
+      });
+      expect(result.current.trackList?.nextPage).toBeNull();
+      expect(result.current.selectedTrack).toEqual(tracks[1]);
+      expect(showTrackListSidebarMock).toHaveBeenCalled();
+      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t1");
+    });
+
+    it("throws when the start track is not in the list", () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+
+      expect(() => result.current.playNewTrackList(makeTracks(2), "missing", artist, "reference")).toThrow(
+        "playNewTrackList: track missing is not in the list",
+      );
+      expect(loadTrackForPlayerMock).not.toHaveBeenCalled();
     });
   });
 
