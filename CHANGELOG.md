@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [10.1.0] - 2026-10-14
+
 ### Breaking
 
 - `GenreTreeView` / pop-core: `focusGenreUuid` and `onFocusGenreChange` must now be passed together or not at all (type-level only); passing just one is a type error. Existing consumers that pass both are unaffected.
