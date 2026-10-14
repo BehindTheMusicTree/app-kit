@@ -40,7 +40,9 @@ export class TrackListFromArtist<T extends TrackBase = TrackBase> extends TrackL
   constructor(
     public tracks: T[],
     public origin: TrackListOriginFromArtist,
+    total: number,
+    nextPage: number | null,
   ) {
-    super(tracks, origin);
+    super(tracks, origin, total, nextPage);
   }
 }

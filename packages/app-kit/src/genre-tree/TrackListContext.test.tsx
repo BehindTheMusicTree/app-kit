@@ -72,6 +72,18 @@ function makePage(tracks: TrackBase[], { page = 1, next = false, total = tracks.
   };
 }
 
+function makeArtistPage(tracks: TrackBase[], { page = 1, next = false, total = tracks.length } = {}) {
+  return {
+    overallTotal: total,
+    next: next ? `https://backend.example.com/library/recordings/?page=${page + 1}` : null,
+    previous: null,
+    results: tracks,
+    page,
+    pageSize: 100,
+    totalPages: 1,
+  };
+}
+
 function makeTracks(count: number, prefix = "t") {
   return Array.from({ length: count }, (_, index) => makeTrack(`${prefix}${index}`, `Track ${index}`));
 }
@@ -146,37 +158,116 @@ describe("TrackListContext", () => {
     });
   });
 
-  describe("playNewTrackList", () => {
-    const artist = { type: "artist" as const, uuid: "a1", name: "Miles Davis" };
+  describe("playNewTrackListFromArtist", () => {
+    const artist = { uuid: "a1", name: "Miles Davis" };
 
-    it("queues the given tracks with an artist origin and starts at the requested track", () => {
+    it("fetches the first playable page, starts the artist origin, and loads lazily", async () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
       const tracks = makeTracks(3);
+      fetchMock.mockResolvedValueOnce(makeArtistPage(tracks, { next: true, total: 5 }));
 
-      act(() => {
-        result.current.playNewTrackList(tracks, "t1", artist, "reference");
+      await act(async () => {
+        await result.current.playNewTrackListFromArtist(artist, "reference", { ordering: "-albumYear" });
       });
 
+      expect(fetchMock).toHaveBeenCalledWith(
+        "library/recordings/",
+        true,
+        false,
+        {},
+        { artist: "a1", playable: true, ordering: "-albumYear", page: 1, pageSize: 100 },
+        false,
+        false,
+      );
       expect(result.current.trackList?.tracks).toEqual(tracks);
+      expect(result.current.trackList?.total).toBe(5);
+      expect(result.current.trackList?.nextPage).toBe(2);
       expect(result.current.trackList?.origin).toMatchObject({
         type: TrackListOriginType.ARTIST,
         label: "Miles Davis",
         uuid: "a1",
         scope: "reference",
+        ordering: "-albumYear",
       });
-      expect(result.current.trackList?.nextPage).toBeNull();
-      expect(result.current.selectedTrack).toEqual(tracks[1]);
+      expect(result.current.selectedTrack).toEqual(tracks[0]);
       expect(showTrackListSidebarMock).toHaveBeenCalled();
+      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t0");
+    });
+
+    it("starts at the requested recording with ?from= and keeps it for later pages", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      fetchMock.mockResolvedValueOnce(makeArtistPage(makeTracks(2).slice(1), { next: true }));
+
+      await act(async () => {
+        await result.current.playNewTrackListFromArtist(artist, "reference", {
+          ordering: "title",
+          startRecordingUuid: "t1",
+        });
+      });
+      fetchMock.mockResolvedValueOnce(makeArtistPage(makeTracks(1, "u"), { page: 2 }));
+      await act(async () => {
+        await result.current.loadMore();
+      });
+
+      expect(fetchMock.mock.calls[0][4]).toMatchObject({ from: "t1", page: 1 });
+      expect(fetchMock.mock.calls[1][4]).toMatchObject({ from: "t1", page: 2, artist: "a1", ordering: "title" });
       expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t1");
     });
 
-    it("throws when the start track is not in the list", () => {
+    it("loadMore appends page 2 and finishes paging", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      fetchMock.mockResolvedValueOnce(makeArtistPage(makeTracks(20), { next: true, total: 21 }));
+      await act(async () => {
+        await result.current.playNewTrackListFromArtist(artist, "reference", { ordering: "title" });
+      });
+      const page2 = makeTracks(1, "u");
+      fetchMock.mockResolvedValueOnce(makeArtistPage(page2, { page: 2, total: 21 }));
+
+      await act(async () => {
+        await result.current.loadMore();
+      });
+
+      expect(result.current.trackList?.tracks).toHaveLength(21);
+      expect(result.current.trackList?.tracks[20]).toEqual(page2[0]);
+      expect(result.current.trackList?.nextPage).toBeNull();
+      expect(result.current.trackList?.origin.type).toBe(TrackListOriginType.ARTIST);
+    });
+
+    it("rejects when the list does not start at the requested recording", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      fetchMock.mockResolvedValueOnce(makeArtistPage(makeTracks(2)));
+
+      await act(async () => {
+        await expect(
+          result.current.playNewTrackListFromArtist(artist, "reference", { ordering: "title", startRecordingUuid: "t1" }),
+        ).rejects.toThrow("Artist a1 did not start at recording t1");
+      });
+      expect(loadTrackForPlayerMock).not.toHaveBeenCalled();
+    });
+
+    it("skips the global error for the first page when a start recording is given", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      fetchMock.mockResolvedValueOnce(makeArtistPage(makeTracks(1)));
+
+      await act(async () => {
+        await result.current.playNewTrackListFromArtist(artist, "reference", {
+          ordering: "title",
+          startRecordingUuid: "t0",
+        });
+      });
+
+      expect(fetchMock.mock.calls[0][6]).toBe(true);
+    });
+
+    it("rejects the me scope without fetching", async () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
 
-      expect(() => result.current.playNewTrackList(makeTracks(2), "missing", artist, "reference")).toThrow(
-        "playNewTrackList: track missing is not in the list",
-      );
-      expect(loadTrackForPlayerMock).not.toHaveBeenCalled();
+      await act(async () => {
+        await expect(
+          result.current.playNewTrackListFromArtist(artist, "me", { ordering: "title" }),
+        ).rejects.toThrow("Artist track lists only support the reference scope");
+      });
+      expect(fetchMock).not.toHaveBeenCalled();
     });
   });
 
@@ -509,7 +600,7 @@ describe("TrackListContext", () => {
       });
 
       await vi.waitFor(() =>
-        expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to load more genre playlist tracks:", error),
+        expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to load more tracks:", error),
       );
       consoleErrorSpy.mockRestore();
     });
@@ -623,7 +714,7 @@ describe("TrackListContext", () => {
       expect(result.current.trackList?.tracks).toEqual([trackA]);
     });
 
-    it("updates matching tracks in an artist list", () => {
+    it("updates matching tracks in an artist list", async () => {
       const trackA = makeTrack("a", "Track A");
       const trackB = makeTrack("b", "Track B");
       const updatedA = makeTrack("a", "Track A Updated");
@@ -631,8 +722,11 @@ describe("TrackListContext", () => {
 
       const { result } = renderHook(() => useTrackList(), { wrapper });
 
-      act(() => {
-        result.current.playNewTrackList([trackA, trackB], "b", { type: "artist", uuid: "ar1", name: "Artist" }, "reference");
+      fetchMock.mockResolvedValueOnce(makeArtistPage([trackA, trackB]));
+      await act(async () => {
+        await result.current.playNewTrackListFromArtist({ uuid: "ar1", name: "Artist" }, "reference", {
+          ordering: "title",
+        });
       });
 
       expect(result.current.trackList?.tracks).toEqual([updatedA, trackB]);
