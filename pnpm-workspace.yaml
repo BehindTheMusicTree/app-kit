@@ -19,3 +19,7 @@ onlyBuiltDependencies:
 overrides:
   sharp: ^0.35.4
   "undici@<8.10.2": ^8.10.2
+  "postcss@<8.5.23": ^8.5.23
+  "source-map-js@<1.2.2": ^1.2.2
+  "esbuild@<0.28.1": ^0.28.1
+  "postcss-selector-parser@<7.1.6": ^7.1.6
