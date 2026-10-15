@@ -11,6 +11,12 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [11.3.1] - 2026-10-15
+
+### Fixed
+
+- Bump `@behindthemusictree/genre-tree-view` to 2.1.0: root labels in the pop-core wheel are now clickable.
+
 ## [11.3.0] - 2026-10-15
 
 ### Changed
