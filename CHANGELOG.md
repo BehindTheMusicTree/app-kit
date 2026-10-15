@@ -11,6 +11,14 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- `GenrePlaylistTracks` (reference scope) pages recordings by keyset `cursor` (read from the `next` link) instead of `page`; requires grow-api >= 12.10.0.
+
+### Fixed
+
+- `GenrePlaylistTracks` shows an error with a Retry button when the request fails, instead of "—" (which now means a genuinely empty catalogue).
+
 ## [11.2.0] - 2026-10-15
 
 ### Changed
