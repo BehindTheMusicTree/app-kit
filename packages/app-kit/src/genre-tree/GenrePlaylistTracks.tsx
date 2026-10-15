@@ -25,11 +25,19 @@ import { MusicBrainzRecordingLink } from "./MusicBrainzRecordingLink";
 import { ArtistNames, RenderArtistLink } from "./ArtistNames";
 
 const CATALOGUE_PAGE_SIZE = 100;
-// withTotal=false: the backend skips COUNT(*) so huge genre subtrees page without timing out.
+// withTotal=false: the backend skips COUNT(*) and pages by keyset cursor, so huge genre subtrees
+// stay O(page) at any depth; page numbers and totals are then null.
 const RecordingPageSchema = PaginatedResponseSchema(RecordingDetailedSchema).extend({
   overallTotal: z.number().nullable(),
+  page: z.number().nullable(),
   totalPages: z.number().nullable(),
 });
+
+const nextCursor = (next: string): string => {
+  const cursor = new URL(next).searchParams.get("cursor");
+  if (!cursor) throw new Error(`Recordings next link has no cursor: ${next}`);
+  return cursor;
+};
 
 export type GenrePlaylistTracksProps = {
   genreUuid: string;
@@ -60,24 +68,24 @@ export function GenrePlaylistTracks({
 
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
 
-  const { data, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery({
+  const { data, isPending, isError, refetch, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery({
     queryKey:
       scope === "me"
         ? genrePlaylistQueryKeys.me.tracks(uuid)
         : libraryQueryKeys.reference.recordings.byGenre(getBackendBaseUrl(), genreUuid),
-    queryFn: async ({ pageParam }): Promise<Omit<GenrePlaylistTracksPage<TrackBase>, "total"> & { total: number | null }> => {
-      if (scope === "me") return fetchGenrePlaylistTracksPage(uuid, scope, pageParam);
+    queryFn: async ({ pageParam }): Promise<Omit<GenrePlaylistTracksPage<TrackBase>, "total" | "nextPage"> & { total: number | null; nextPage: number | string | null }> => {
+      if (scope === "me") return fetchGenrePlaylistTracksPage(uuid, scope, Number(pageParam));
       const response = await fetch(
         libraryEndpoints.reference.recordings.list(),
         true,
         false,
         {},
-        { genre: genreUuid, page: pageParam, pageSize: CATALOGUE_PAGE_SIZE, withTotal: false },
+        { genre: genreUuid, pageSize: CATALOGUE_PAGE_SIZE, withTotal: false, ...(pageParam && { cursor: pageParam }) },
       );
       const parsed = parseWithLog(RecordingPageSchema, response, "GenrePlaylistTracks");
-      return { tracks: parsed.results, total: parsed.overallTotal, nextPage: parsed.next ? parsed.page + 1 : null };
+      return { tracks: parsed.results, total: parsed.overallTotal, nextPage: parsed.next ? nextCursor(parsed.next) : null };
     },
-    initialPageParam: 1,
+    initialPageParam: scope === "me" ? 1 : "",
     getNextPageParam: (lastPage) => lastPage.nextPage ?? undefined,
     enabled: scope !== "me" || (sessionRestored && !!session?.accessToken),
   });
@@ -111,6 +119,13 @@ export function GenrePlaylistTracks({
       <span className="gtv-info-panel-children-title">Tracks{total !== undefined && ` (${total})`}</span>
       {isPending ? (
         <div className="h-4 w-3/4 animate-pulse rounded bg-gray-200" aria-busy="true" />
+      ) : isError && tracks.length === 0 ? (
+        <p role="alert">
+          Couldn&apos;t load tracks.{" "}
+          <button type="button" onClick={() => void refetch()}>
+            Retry
+          </button>
+        </p>
       ) : tracks.length === 0 ? (
         <p>—</p>
       ) : (
