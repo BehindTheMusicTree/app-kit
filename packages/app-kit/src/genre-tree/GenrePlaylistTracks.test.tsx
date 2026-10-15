@@ -28,14 +28,14 @@ import type { RenderArtistLink } from "./ArtistNames";
 const genrePlaylist = { uuid: "p1", name: "Jazz" };
 const makeTracks = (count: number, prefix: string) =>
   Array.from({ length: count }, (_, i) => ({ uuid: `${prefix}${i}`, title: `Song ${prefix}${i}`, artists: null }));
-const recordingsPage = (results: unknown[], { page = 1, next = false, total = results.length } = {}) => ({
+const recordingsPage = (results: unknown[], { next = false, total = results.length as number | null } = {}) => ({
   overallTotal: total,
-  next: next ? `https://b/library/recordings/?page=${page + 1}` : null,
+  next: next ? "https://b/library/recordings/?genre=g1&pageSize=100&cursor=CUR2" : null,
   previous: null,
   results,
-  page,
+  page: null,
   pageSize: 100,
-  totalPages: 1,
+  totalPages: null,
 });
 
 describe("GenrePlaylistTracks", () => {
@@ -79,22 +79,51 @@ describe("GenrePlaylistTracks", () => {
     const page2 = makeTracks(2, "b");
     fetchMock
       .mockResolvedValueOnce(recordingsPage(page1, { next: true, total: 250 }))
-      .mockResolvedValueOnce(recordingsPage(page2, { page: 2, next: true, total: 250 }));
+      .mockResolvedValueOnce(recordingsPage(page2, { next: true, total: 250 }));
 
     renderTracks();
 
     expect(await screen.findByRole("button", { name: "Play Song a1" })).toBeInTheDocument();
     expect(screen.getByText("Tracks (250)")).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith("library/recordings/", true, false, {}, { genre: "g1", page: 1, pageSize: 100, withTotal: false });
+    expect(fetchMock).toHaveBeenCalledWith("library/recordings/", true, false, {}, { genre: "g1", pageSize: 100, withTotal: false });
 
     await act(async () => {
       observerCallback([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver);
     });
     fireEvent.click(await screen.findByRole("button", { name: "Play Song b0" }));
 
-    expect(fetchMock).toHaveBeenLastCalledWith("library/recordings/", true, false, {}, { genre: "g1", page: 2, pageSize: 100, withTotal: false });
+    expect(fetchMock).toHaveBeenLastCalledWith("library/recordings/", true, false, {}, { genre: "g1", pageSize: 100, withTotal: false, cursor: "CUR2" });
     expect(fetchGenrePlaylistTracksPage).not.toHaveBeenCalled();
     expect(playNewTrackListFromGenrePlaylist).toHaveBeenCalledWith(genrePlaylist, "reference", { startRecordingUuid: "b0" });
+  });
+
+  it("shows a dash for an empty catalogue and no count when the total is null", async () => {
+    fetchMock.mockResolvedValueOnce(recordingsPage([], { total: null }));
+
+    renderTracks();
+
+    expect(await screen.findByText("—")).toBeInTheDocument();
+    expect(screen.getByText("Tracks")).toBeInTheDocument();
+  });
+
+  it("shows an error with a retry instead of a dash when the request fails", async () => {
+    fetchMock.mockRejectedValueOnce(new Error("boom")).mockResolvedValueOnce(recordingsPage(makeTracks(1, "a")));
+
+    renderTracks();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't load tracks.");
+    expect(screen.queryByText("—")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+    expect(await screen.findByRole("button", { name: "Play Song a0" })).toBeInTheDocument();
+  });
+
+  it("shows the error state when the next link carries no cursor", async () => {
+    fetchMock.mockResolvedValueOnce({ ...recordingsPage(makeTracks(1, "a")), next: "https://b/library/recordings/?genre=g1" });
+
+    renderTracks();
+
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
   });
 
   it("lists artists, logs and shows an error popup when playing fails", async () => {
