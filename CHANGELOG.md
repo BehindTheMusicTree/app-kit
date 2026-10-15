@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [11.3.0] - 2026-10-15
+
 ### Changed
 
 - `GenrePlaylistTracks` (reference scope) pages recordings by keyset `cursor` (read from the `next` link) instead of `page`; requires grow-api >= 12.10.0.
