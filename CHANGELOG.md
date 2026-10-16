@@ -15,6 +15,10 @@ easy to spot when bumping.
 
 - Bump `@behindthemusictree/genre-tree-view` to 2.1.0: root labels in the pop-core wheel are now clickable.
 
+### Changed
+
+- Bump `@behindthemusictree/genre-tree-view` to 2.2.0: any node with children is zoomable in the pop-core wheel; back controls offer Previous / Parent / Root, and `onFocusGenreChange` can now report reasons `"previous"` and `"root"`; search outside the current view refocuses on the result's top-level root.
+
 ## [11.3.0] - 2026-10-15
 
 ### Changed
