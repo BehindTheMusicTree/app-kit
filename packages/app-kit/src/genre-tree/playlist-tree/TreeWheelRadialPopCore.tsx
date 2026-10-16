@@ -28,8 +28,9 @@ export type GenreFocusProps =
       /** Zooms the pop-core wheel into this genre's subtree. An unknown or non-zoomable uuid shows
        * the whole tree and fires `onFocusGenreChange(null, "rejected")`. */
       focusGenreUuid: string | null;
-      /** Fires with the genre to focus and why: `"zoom-in"` / `"back"` from the user's zoom
-       * controls, `"search"` when a selection outside the zoom refocuses to an ancestor, and
+      /** Fires with the genre to focus and why: `"zoom-in"` / `"back"` (parent) / `"previous"` /
+       * `"root"` from the user's zoom controls, `"search"` when a selection outside the zoom refocuses
+       * to its top-level root (null for Mainstream Pop), and
        * `"rejected"` when an invalid `focusGenreUuid` is reset to null. */
       onFocusGenreChange: (uuid: string | null, reason: FocusChangeReason) => void;
     };
