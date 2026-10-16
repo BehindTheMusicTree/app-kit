@@ -13,6 +13,7 @@ easy to spot when bumping.
 
 ### Changed
 
+- Bump `@behindthemusictree/genre-tree-view` to 2.2.1: pop-core back controls keep history from the displayed focus (no stale Previous after consumer-driven focus changes or deleted nodes; Previous stays reachable after Root).
 - Bump `@behindthemusictree/genre-tree-view` to 2.2.0: any node with children is zoomable in the pop-core wheel; back controls offer Previous / Parent / Root, and `onFocusGenreChange` can now report reasons `"previous"` and `"root"`; search outside the current view refocuses on the result's top-level root.
 
 ## [11.3.1] - 2026-10-15
