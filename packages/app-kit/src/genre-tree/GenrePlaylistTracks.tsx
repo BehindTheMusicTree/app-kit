@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { FaPlay, FaPause } from "react-icons/fa";
@@ -33,13 +33,32 @@ const RecordingPageSchema = PaginatedResponseSchema(RecordingDetailedSchema).ext
   totalPages: z.number().nullable(),
 });
 
+// Container query on the list (arbitrary variant: Tailwind 3 core has no `@container`): once the
+// list is wide (expanded info panel), title, artist and album become columns instead of one line.
+// Class names stay literal so Tailwind's scanner sees them.
+const TEXT_CELL = "min-w-0 flex-1 truncate [@container(min-width:40rem)]:flex [@container(min-width:40rem)]:gap-2";
+const TITLE_CELL = "[@container(min-width:40rem)]:flex-[2] [@container(min-width:40rem)]:truncate";
+const COLUMN_CELL = "[@container(min-width:40rem)]:flex-1 [@container(min-width:40rem)]:truncate";
+const ALBUM_CELL = `hidden [@container(min-width:40rem)]:block ${COLUMN_CELL}`;
+const SEPARATOR = "[@container(min-width:40rem)]:hidden";
+
 const nextCursor = (next: string): string => {
   const cursor = new URL(next).searchParams.get("cursor");
   if (!cursor) throw new Error(`Recordings next link has no cursor: ${next}`);
   return cursor;
 };
 
-export type GenrePlaylistTracksProps = {
+// Recordings are not narrowed to RecordingDetailed here: "me" scope lists uploaded tracks too.
+export type GenrePlaylistTracksSlots = {
+  /** Rendered first in each row, e.g. a selection checkbox. `index` is the row's position in the loaded list. */
+  renderRecordingLeading?: (recording: TrackBase, index: number) => ReactNode;
+  /** Rendered last in each row. The recording's own genre is `recording.genre`. */
+  renderRecordingActions?: (recording: TrackBase) => ReactNode;
+  /** Rendered between the title and the list, e.g. a "+ Link" button or a selection bar. */
+  renderTracksToolbar?: () => ReactNode;
+};
+
+export type GenrePlaylistTracksProps = GenrePlaylistTracksSlots & {
   genreUuid: string;
   genrePlaylist: CriteriaPlaylistMinimum;
   scope: Scope;
@@ -59,6 +78,9 @@ export function GenrePlaylistTracks({
   scope,
   getBackendBaseUrl,
   renderArtistLink,
+  renderRecordingLeading,
+  renderRecordingActions,
+  renderTracksToolbar,
 }: GenrePlaylistTracksProps) {
   const { fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist } = useTrackList();
   const { session, sessionRestored } = useSession();
@@ -117,6 +139,7 @@ export function GenrePlaylistTracks({
   return (
     <div className="gtv-info-panel-children">
       <span className="gtv-info-panel-children-title">Tracks{total !== undefined && ` (${total})`}</span>
+      {renderTracksToolbar?.()}
       {isPending ? (
         <div className="h-4 w-3/4 animate-pulse rounded bg-gray-200" aria-busy="true" />
       ) : isError && tracks.length === 0 ? (
@@ -129,17 +152,32 @@ export function GenrePlaylistTracks({
       ) : tracks.length === 0 ? (
         <p>—</p>
       ) : (
-        <ul className="max-h-64 overflow-y-auto" aria-label={`${genrePlaylist.name} tracks`}>
-          {tracks.map((track) => {
+        <ul className="max-h-64 overflow-y-auto [container-type:inline-size]" aria-label={`${genrePlaylist.name} tracks`}>
+          {tracks.map((track, index) => {
             const label = track.artists?.length
               ? `${track.title} — ${track.artists.map((artist) => artist.name).join(", ")}`
               : track.title;
             const isCurrent = playerTrackObject?.track.id === track.uuid;
             const isPlaying = isCurrent && playState === PlayStates.PLAYING;
+            const text = (
+              <span className={TEXT_CELL}>
+                <span className={TITLE_CELL}>{track.title}</span>
+                {track.artists?.length ? <span className={SEPARATOR}>{" — "}</span> : null}
+                <span className={COLUMN_CELL}>
+                  {track.artists?.length ? (
+                    <ArtistNames artists={track.artists} renderArtistLink={renderArtistLink} />
+                  ) : null}
+                </span>
+                {track.album && <span className={ALBUM_CELL}>{track.album.name}</span>}
+              </span>
+            );
+            const leading = renderRecordingLeading?.(track, index);
+            const actions = renderRecordingActions?.(track);
             const unplayableReason = isRecording(track) ? recordingUnplayableReason(track) : null;
             if (unplayableReason) {
               return (
                 <li key={track.uuid} className="flex items-center gap-1 py-0.5 opacity-50" title={unplayableReason}>
+                  {leading}
                   <button
                     type="button"
                     disabled
@@ -149,22 +187,16 @@ export function GenrePlaylistTracks({
                   >
                     <FaPlay size={10} />
                   </button>
-                  <span className="min-w-0 truncate">
-                    {track.title}
-                    {track.artists?.length ? (
-                      <>
-                        {" — "}
-                        <ArtistNames artists={track.artists} renderArtistLink={renderArtistLink} />
-                      </>
-                    ) : null}
-                  </span>
+                  {text}
                   {isRecording(track) && <MusicBrainzRecordingLink recording={track} />}
                   <span className="shrink-0 text-xs">{unplayableReason}</span>
+                  {actions}
                 </li>
               );
             }
             return (
               <li key={track.uuid} className="group flex items-center gap-1 py-0.5">
+                {leading}
                 <button
                   type="button"
                   aria-label={`${isPlaying ? "Pause" : "Play"} ${label}`}
@@ -179,16 +211,9 @@ export function GenrePlaylistTracks({
                     <FaPlay size={10} />
                   )}
                 </button>
-                <span className="min-w-0 truncate">
-                    {track.title}
-                    {track.artists?.length ? (
-                      <>
-                        {" — "}
-                        <ArtistNames artists={track.artists} renderArtistLink={renderArtistLink} />
-                      </>
-                    ) : null}
-                  </span>
+                {text}
                 {isRecording(track) && <MusicBrainzRecordingLink recording={track} />}
+                {actions}
               </li>
             );
           })}
