@@ -17,7 +17,7 @@ easy to spot when bumping.
 
 ### Fixed
 
-- `useDeleteGenre` no longer fails with "Invalid response from server" on the backend's `204 No Content`.
+- `useDeleteGenre` no longer fails with "Invalid response from server" on the backend's `204 No Content`. It now bypasses the global error popup so failures reject the mutation instead of resolving as `null`; consumers handle `onError`.
 
 ## [11.4.0] - 2026-10-19
 

@@ -340,7 +340,7 @@ describe("useGenre", () => {
 
       await mutationFn({ uuid: "g1" });
 
-      expect(fetchMock).toHaveBeenCalledWith("genres/g1/", true, false, { method: "DELETE" });
+      expect(fetchMock).toHaveBeenCalledWith("genres/g1/", true, false, { method: "DELETE" }, undefined, false, true);
     });
 
     it("mutationFn DELETEs the me endpoint", async () => {
@@ -350,7 +350,7 @@ describe("useGenre", () => {
 
       await mutationFn({ uuid: "g1" });
 
-      expect(fetchMock).toHaveBeenCalledWith("me/genres/g1/", true, true, { method: "DELETE" });
+      expect(fetchMock).toHaveBeenCalledWith("me/genres/g1/", true, true, { method: "DELETE" }, undefined, false, true);
     });
 
     it("onSuccess invalidates the reference list and detail query keys plus genre playlist queries", () => {
