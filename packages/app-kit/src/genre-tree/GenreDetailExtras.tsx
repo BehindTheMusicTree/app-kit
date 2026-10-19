@@ -7,10 +7,17 @@ import { CriteriaOverview } from "./schemas/criteria/overview";
 import { Scope } from "../transport/lib/scope";
 import { useFetchGenreOverview } from "./useGenre";
 import { CriteriaPlaylistMinimum } from "./schemas/criteria-playlist/minimum";
-import { GenrePlaylistTracks } from "./GenrePlaylistTracks";
+import { GenrePlaylistTracks, type GenrePlaylistTracksSlots } from "./GenrePlaylistTracks";
 import { RenderArtistLink } from "./ArtistNames";
 
-export type GenreDetailExtrasProps<O extends CriteriaOverview> = {
+export type GenreDetailSlots<O extends CriteriaOverview> = {
+  /** Replaces the default Summary section. */
+  renderSummary?: (overview: O) => ReactNode;
+  /** Replaces the default Essential tracks section. */
+  renderEssentialTracks?: (overview: O) => ReactNode;
+};
+
+export type GenreDetailExtrasProps<O extends CriteriaOverview> = GenreDetailSlots<O> & GenrePlaylistTracksSlots & {
   genreUuid: string;
   genrePlaylist: CriteriaPlaylistMinimum;
   scope: Scope;
@@ -30,6 +37,9 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
   criteriaOverviewSchema,
   renderGenreDetailExtras,
   renderArtistLink,
+  renderSummary,
+  renderEssentialTracks,
+  ...trackSlots
 }: GenreDetailExtrasProps<O>) {
   const { data: overview, isPending } = useFetchGenreOverview<O>(
     genreUuid,
@@ -52,12 +62,19 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
 
   return (
     <>
-      <div className="gtv-info-panel-children">
-        <span className="gtv-info-panel-children-title">Summary</span>
-        <p>{summary ?? "—"}</p>
-      </div>
+      {renderSummary ? (
+        renderSummary(overview)
+      ) : (
+        <div className="gtv-info-panel-children">
+          <span className="gtv-info-panel-children-title">Summary</span>
+          <p>{summary ?? "—"}</p>
+        </div>
+      )}
       {renderGenreDetailExtras?.(overview)}
-      {essentialTracks && (
+      {renderEssentialTracks ? (
+        renderEssentialTracks(overview)
+      ) : (
+        essentialTracks && (
         <div className="gtv-info-panel-children">
           <span className="gtv-info-panel-children-title">Essential tracks</span>
           {essentialTracks.length > 0 ? (
@@ -70,6 +87,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
             <p>—</p>
           )}
         </div>
+        )
       )}
       <GenrePlaylistTracks
         genreUuid={genreUuid}
@@ -77,6 +95,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
         scope={scope}
         getBackendBaseUrl={getBackendBaseUrl}
         renderArtistLink={renderArtistLink}
+        {...trackSlots}
       />
     </>
   );

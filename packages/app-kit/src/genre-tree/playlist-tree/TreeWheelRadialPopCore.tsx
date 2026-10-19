@@ -20,6 +20,7 @@ import { TrackBase } from "../schemas/track/base";
 import { CriteriaPlaylistSimple } from "../schemas/criteria-playlist/simple";
 import { CriteriaMinimum } from "../schemas/criteria/minimum";
 import { Scope } from "../../transport/lib/scope";
+import type { InfoPanelCurationProps } from "./infoPanelCurationProps";
 
 /** Pop-core focus is controlled-only: pass both props or neither. Ignored in outline mode. */
 export type GenreFocusProps =
@@ -67,7 +68,8 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   /** When true, renders the same forest as GenreTreeOutline's nested-list text view instead of
    * the radial wheel. Defaults to false. */
   outline?: boolean;
-} & GenreFocusProps;
+} & GenreFocusProps &
+  InfoPanelCurationProps;
 
 export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>(
   props: GenrePlaylistTreeWheelRadialPopCoreProps<T>,
@@ -95,6 +97,15 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     outline = false,
   } = props;
   const focus: GenreFocusProps = props;
+  const infoPanelCuration: InfoPanelCurationProps = {
+    editMode: props.editMode,
+    onEditModeChange: props.onEditModeChange,
+    renderTitleEditor: props.renderTitleEditor,
+    renderParentsEditor: props.renderParentsEditor,
+    renderDangerZone: props.renderDangerZone,
+    expanded: props.expanded,
+    onExpandedChange: props.onExpandedChange,
+  };
   const { isPlaying, setIsPlaying } = usePlayer();
   const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList<T>();
   const { mutate: updateGenreMutate } = useUpdateGenre(scope, getBackendBaseUrl);
@@ -207,6 +218,7 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     onSelectedNodeChange,
     hideInfoPanelClose,
     showToolbar,
+    ...infoPanelCuration,
   };
 
   return outline ? (

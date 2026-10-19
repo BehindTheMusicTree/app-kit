@@ -11,9 +11,16 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- `GenreTreeView` (and the wheel / stacked / pop-core wrappers) pass through the genre-tree-view 2.3.1 info panel curation props: `editMode`, `onEditModeChange`, `renderTitleEditor`, `renderParentsEditor`, `renderDangerZone`, `expanded`, `onExpandedChange`.
+- Detail slots on `GenreTreeView`: `renderSummary` and `renderEssentialTracks` replace the default sections; `renderRecordingLeading`, `renderRecordingActions` and `renderTracksToolbar` decorate the recordings list.
+- `editGenreRecordingPages` helper to optimistically edit the cached genre recordings infinite query.
+- Recordings list shows title, artist and album as columns when the info panel is expanded.
+
 ### Changed
 
-- Bump `@behindthemusictree/genre-tree-view` to 2.2.0: any node with children is zoomable in the pop-core wheel; back controls offer Previous / Parent / Root, and `onFocusGenreChange` can now report reasons `"previous"` and `"root"`; search outside the current view refocuses on the result's top-level root.
+- Bump `@behindthemusictree/genre-tree-view` to 2.3.1 (previously 2.2.0): any node with children is zoomable in the pop-core wheel; back controls offer Previous / Parent / Root, and `onFocusGenreChange` can now report reasons `"previous"` and `"root"`; search outside the current view refocuses on the result's top-level root.
 
 ## [11.3.1] - 2026-10-15
 

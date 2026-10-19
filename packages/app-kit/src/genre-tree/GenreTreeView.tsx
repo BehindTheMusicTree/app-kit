@@ -22,7 +22,9 @@ import { CriteriaOverview } from "./schemas/criteria/overview";
 import { Scope } from "../transport/lib/scope";
 import { useListFullGenrePlaylists } from "./useGenrePlaylist";
 import { usePrefetchGenreOverview } from "./useGenre";
-import { GenreDetailExtras } from "./GenreDetailExtras";
+import { GenreDetailExtras, type GenreDetailSlots } from "./GenreDetailExtras";
+import type { GenrePlaylistTracksSlots } from "./GenrePlaylistTracks";
+import type { InfoPanelCurationProps } from "./playlist-tree/infoPanelCurationProps";
 import type { RenderArtistLink } from "./ArtistNames";
 import {
   getGenrePlaylistsGroupedByRoot,
@@ -63,7 +65,10 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   controlsOrientation?: ControlsOrientation;
   /** When set, artist names in the info panel's track list render through it (e.g. a router `Link`). */
   renderArtistLink?: RenderArtistLink;
-} & GenreFocusProps;
+} & GenreDetailSlots<O> &
+  GenrePlaylistTracksSlots &
+  InfoPanelCurationProps &
+  GenreFocusProps;
 
 export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   scope,
@@ -77,8 +82,29 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   renderGenreDetailExtras,
   controlsOrientation,
   renderArtistLink,
+  renderSummary,
+  renderEssentialTracks,
+  renderRecordingLeading,
+  renderRecordingActions,
+  renderTracksToolbar,
+  editMode,
+  onEditModeChange,
+  renderTitleEditor,
+  renderParentsEditor,
+  renderDangerZone,
+  expanded,
+  onExpandedChange,
   ...focus
 }: GenreTreeViewProps<O>) {
+  const infoPanelCuration: InfoPanelCurationProps = {
+    editMode,
+    onEditModeChange,
+    renderTitleEditor,
+    renderParentsEditor,
+    renderDangerZone,
+    expanded,
+    onExpandedChange,
+  };
   const [reparentingGenreUuid, setReparentingGenreUuid] = useState<
     string | null
   >(null);
@@ -145,10 +171,23 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           criteriaOverviewSchema={criteriaOverviewSchema}
           renderGenreDetailExtras={renderGenreDetailExtras}
           renderArtistLink={renderArtistLink}
+          renderSummary={renderSummary}
+          renderEssentialTracks={renderEssentialTracks}
+          renderRecordingLeading={renderRecordingLeading}
+          renderRecordingActions={renderRecordingActions}
+          renderTracksToolbar={renderTracksToolbar}
         />
       );
     },
-    [genrePlaylistByNodeId, scope, getBackendBaseUrl, criteriaOverviewSchema, renderGenreDetailExtras, renderArtistLink],
+    [genrePlaylistByNodeId, scope, getBackendBaseUrl, criteriaOverviewSchema,
+      renderGenreDetailExtras,
+      renderArtistLink,
+      renderSummary,
+      renderEssentialTracks,
+      renderRecordingLeading,
+      renderRecordingActions,
+      renderTracksToolbar,
+    ],
   );
 
   const prefetchGenreOverview = usePrefetchGenreOverview<O>(
@@ -343,6 +382,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   controlsOrientation={controlsOrientation}
+                  {...infoPanelCuration}
                 />
               </GenreTreeWheelHandoff>
             </div>
@@ -367,6 +407,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   controlsOrientation={controlsOrientation}
+                  {...infoPanelCuration}
                   {...focus}
                 />
               </GenreTreeWheelHandoff>
@@ -389,6 +430,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                 renderExtraDetails={renderExtraDetails}
                 selectedNodeId={selectedNodeId}
                 readOnly={readOnly}
+                {...infoPanelCuration}
               />
             </div>
           ) : (
@@ -422,6 +464,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                           readOnly={readOnly}
                           wheelZoom="modifier"
                           controlsOrientation={controlsOrientation}
+                          {...infoPanelCuration}
                         />
                       </div>
                     </div>

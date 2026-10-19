@@ -1,5 +1,8 @@
 // Tree view + data hooks
 export * from "./GenreTreeView";
+export type { GenreDetailSlots } from "./GenreDetailExtras";
+export type { GenrePlaylistTracksSlots } from "./GenrePlaylistTracks";
+export type { InfoPanelCurationProps } from "./playlist-tree/infoPanelCurationProps";
 export { default as GenrePlaylistTreePerRoot } from "./playlist-tree/TreePerRoot";
 export type { GenrePlaylistTreePerRootProps } from "./playlist-tree/TreePerRoot";
 export { default as GenreSearch } from "./GenreSearch";
@@ -79,3 +82,4 @@ export * from "./lib/rating";
 export * from "./lib/formatting";
 export * from "./lib/genre-playlist-helpers";
 export * from "./lib/genre-search";
+export * from "./lib/genre-recordings-cache";

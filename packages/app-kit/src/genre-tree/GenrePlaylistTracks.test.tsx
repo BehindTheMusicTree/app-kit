@@ -222,4 +222,37 @@ describe("GenrePlaylistTracks", () => {
     fireEvent.click(link);
     expect(playNewTrackListFromGenrePlaylist).not.toHaveBeenCalled();
   });
+
+  it("renders the leading, actions and toolbar slots around each recording", async () => {
+    fetchMock.mockResolvedValueOnce(recordingsPage(makeTracks(2, "a")));
+
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <GenrePlaylistTracks
+          genreUuid="g1"
+          genrePlaylist={genrePlaylist}
+          scope="reference"
+          getBackendBaseUrl={() => "https://b"}
+          renderTracksToolbar={() => <button type="button">Link tracks</button>}
+          renderRecordingLeading={(recording, index) => <input type="checkbox" aria-label={`Select ${recording.title} #${index}`} />}
+          renderRecordingActions={(recording) => <button type="button">Unlink {recording.title}</button>}
+        />
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByRole("checkbox", { name: "Select Song a0 #0" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Link tracks" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Select Song a0 #0" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Select Song a1 #1" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Unlink Song a1" })).toBeInTheDocument();
+  });
+
+  it("renders no slot content by default", async () => {
+    fetchMock.mockResolvedValueOnce(recordingsPage(makeTracks(1, "a")));
+
+    renderTracks();
+
+    await screen.findByRole("button", { name: "Play Song a0" });
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+  });
 });
