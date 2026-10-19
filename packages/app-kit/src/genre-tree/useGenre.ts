@@ -187,13 +187,11 @@ export function useDeleteGenre(scope: Scope, getBackendBaseUrl: () => string) {
 
   return useValidatedMutation({
     inputSchema: z.object({ uuid: z.string() }),
-    outputSchema: CriteriaDetailedSchema,
+    outputSchema: z.null(),
     mutationFn: async ({ uuid }) => {
       const endpoint = scope === "reference" ? genreEndpoints.reference.delete(uuid) : genreEndpoints.me.delete(uuid);
-      const response = await fetch(endpoint, true, scope === "me", {
-        method: "DELETE",
-      });
-      return response;
+      // Global error handling makes the wrapper return null too, indistinguishable from a 204.
+      return fetch(endpoint, true, scope === "me", { method: "DELETE" }, undefined, false, true);
     },
     onSuccess: (_, { uuid }) => {
       const queryKey = scope === "reference" ? genreQueryKeys.reference.all : genreQueryKeys.me.all;

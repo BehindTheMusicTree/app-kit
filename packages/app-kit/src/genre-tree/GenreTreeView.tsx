@@ -54,6 +54,11 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   /** Controlled view mode. When provided, the internal Stacked/Wheel toggle is not rendered — the consumer owns that UI. */
   viewMode?: GenreTreeViewMode;
+  /** Controlled selection (a genre playlist uuid, i.e. the tree node id). When provided, the
+   * consumer owns it — e.g. to move the selection after deleting the selected genre. */
+  selectedNodeId?: string | null;
+  /** Called on every user-driven selection change (tree click, search pick, search clear). */
+  onSelectedNodeIdChange?: (nodeId: string | null) => void;
   /** When true, hides the "Add root" button and suppresses per-node
    * create/rename/reparent affordances, for a read-only consumer. Defaults to false. */
   readOnly?: boolean;
@@ -77,6 +82,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   getBackendBaseUrl,
   additionalActions,
   viewMode: controlledViewMode,
+  selectedNodeId: controlledSelectedNodeId,
+  onSelectedNodeIdChange,
   readOnly = false,
   criteriaOverviewSchema,
   renderGenreDetailExtras,
@@ -113,7 +120,16 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const isControlled = controlledViewMode !== undefined;
   const [allowWheelRotation, setAllowWheelRotation] = useState(false);
 
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [internalSelectedNodeId, setInternalSelectedNodeId] = useState<string | null>(null);
+  const isSelectionControlled = controlledSelectedNodeId !== undefined;
+  const selectedNodeId = isSelectionControlled ? controlledSelectedNodeId : internalSelectedNodeId;
+  const setSelectedNodeId = useCallback(
+    (nodeId: string | null) => {
+      if (!isSelectionControlled) setInternalSelectedNodeId(nodeId);
+      onSelectedNodeIdChange?.(nodeId);
+    },
+    [isSelectionControlled, onSelectedNodeIdChange],
+  );
 
   const { data: genrePlaylists, isPending: isListingGenrePlaylists } =
     useListFullGenrePlaylists(scope, getBackendBaseUrl);
@@ -140,18 +156,18 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     (node: GenreTreeNode | null) => {
       setSelectedNodeId(node?.id ?? null);
     },
-    [],
+    [setSelectedNodeId],
   );
 
   const handleGenreSearchClear = useCallback(() => {
     setSelectedNodeId(null);
-  }, []);
+  }, [setSelectedNodeId]);
 
   const handleGenreSearchSelect = useCallback(
     (genrePlaylist: CriteriaPlaylistSimple) => {
       setSelectedNodeId(genrePlaylist.uuid);
     },
-    [],
+    [setSelectedNodeId],
   );
 
   // Stable across selections: the overview fetch lives in GenreDetailExtras, so its loading
