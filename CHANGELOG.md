@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [11.5.0] - 2026-10-19
+
 ### Added
 
 - `GenreTreeView` accepts a controlled selection: `selectedNodeId?: string | null` and `onSelectedNodeIdChange?: (nodeId: string | null) => void`. Without them the selection stays internal.
