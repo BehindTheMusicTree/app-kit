@@ -219,6 +219,7 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     hideInfoPanelClose,
     showToolbar,
     ...infoPanelCuration,
+    readOnly,
   };
 
   return outline ? (

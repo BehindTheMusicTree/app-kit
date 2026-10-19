@@ -162,14 +162,12 @@ export function GenrePlaylistTracks({
             const text = (
               <span className={TEXT_CELL}>
                 <span className={TITLE_CELL}>{track.title}</span>
-                {track.artists?.length ? (
-                  <>
-                    <span className={SEPARATOR}>{" — "}</span>
-                    <span className={COLUMN_CELL}>
-                      <ArtistNames artists={track.artists} renderArtistLink={renderArtistLink} />
-                    </span>
-                  </>
-                ) : null}
+                {track.artists?.length ? <span className={SEPARATOR}>{" — "}</span> : null}
+                <span className={COLUMN_CELL}>
+                  {track.artists?.length ? (
+                    <ArtistNames artists={track.artists} renderArtistLink={renderArtistLink} />
+                  ) : null}
+                </span>
                 {track.album && <span className={ALBUM_CELL}>{track.album.name}</span>}
               </span>
             );

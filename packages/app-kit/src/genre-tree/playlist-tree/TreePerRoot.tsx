@@ -202,6 +202,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
       wheelZoom={wheelZoom}
       controlsOrientation={controlsOrientation}
       {...infoPanelCuration}
+      readOnly={readOnly}
     />
   );
 }

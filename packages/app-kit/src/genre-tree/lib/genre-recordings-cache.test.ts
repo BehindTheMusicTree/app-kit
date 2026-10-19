@@ -18,7 +18,9 @@ describe("editGenreRecordingPages", () => {
   it("removes tracks and lowers total by the removed count", () => {
     const result = editGenreRecordingPages(data, (tracks) => tracks.filter((t) => t.uuid !== "b"));
     expect(result?.pages.map((p) => p.tracks.map((t) => t.uuid))).toEqual([["a"], ["c"]]);
-    expect(result?.pages.map((p) => p.total)).toEqual([2, 3]);
+    expect(result?.pages.map((p) => p.total)).toEqual([2, 2]);
+    const onPage2 = editGenreRecordingPages(data, (tracks) => tracks.filter((t) => t.uuid !== "c"));
+    expect(onPage2?.pages.map((p) => p.total)).toEqual([2, 2]);
     expect(result?.pageParams).toBe(data.pageParams);
   });
 

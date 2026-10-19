@@ -1,13 +1,15 @@
-import type { ReactNode } from "react";
-import type { GenreTreeNode } from "@behindthemusictree/genre-tree-view";
+import type { GenreTreeProps } from "@behindthemusictree/genre-tree-view";
 
-/** Controlled edit/expand state and edit-mode slots of the info panel; see genre-tree-view's `GenreTreeProps`. */
-export type InfoPanelCurationProps = {
-  editMode?: boolean;
-  onEditModeChange?: (on: boolean) => void;
-  renderTitleEditor?: (node: GenreTreeNode) => ReactNode;
-  renderParentsEditor?: (node: GenreTreeNode) => ReactNode;
-  renderDangerZone?: (node: GenreTreeNode) => ReactNode;
-  expanded?: boolean;
-  onExpandedChange?: (on: boolean) => void;
-};
+/** Controlled edit/expand state and edit-mode slots of the info panel, as typed by genre-tree-view. */
+export type InfoPanelCurationProps = Partial<
+  Pick<
+    GenreTreeProps,
+    | "editMode"
+    | "onEditModeChange"
+    | "renderTitleEditor"
+    | "renderParentsEditor"
+    | "renderDangerZone"
+    | "expanded"
+    | "onExpandedChange"
+  >
+>;

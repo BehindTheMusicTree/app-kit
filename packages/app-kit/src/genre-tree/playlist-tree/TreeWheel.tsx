@@ -199,6 +199,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
       showToolbar={showToolbar}
       controlsOrientation={controlsOrientation}
       {...infoPanelCuration}
+      readOnly={readOnly}
     />
   );
 }
