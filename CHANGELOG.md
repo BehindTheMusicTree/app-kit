@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [11.4.0] - 2026-10-19
+
 ### Added
 
 - `GenreTreeView` (and the wheel / stacked / pop-core wrappers) pass through the genre-tree-view 2.3.1 info panel curation props: `editMode`, `onEditModeChange`, `renderTitleEditor`, `renderParentsEditor`, `renderDangerZone`, `expanded`, `onExpandedChange`.
