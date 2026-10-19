@@ -325,24 +325,32 @@ describe("useGenre", () => {
   });
 
   describe("useDeleteGenre", () => {
+    it("accepts the null body the fetch wrapper returns on 204", async () => {
+      fetchMock.mockResolvedValue(null);
+      renderHook(() => useDeleteGenre("reference", getBackendBaseUrl));
+      const { mutationFn, outputSchema } = useValidatedMutationMock.mock.calls[0][0];
+
+      expect(outputSchema.safeParse(await mutationFn({ uuid: "g1" })).success).toBe(true);
+    });
+
     it("mutationFn DELETEs the scoped endpoint", async () => {
-      fetchMock.mockResolvedValue({ uuid: "g1" });
+      fetchMock.mockResolvedValue(null);
       renderHook(() => useDeleteGenre("reference", getBackendBaseUrl));
       const { mutationFn } = useValidatedMutationMock.mock.calls[0][0];
 
       await mutationFn({ uuid: "g1" });
 
-      expect(fetchMock).toHaveBeenCalledWith("genres/g1/", true, false, { method: "DELETE" });
+      expect(fetchMock).toHaveBeenCalledWith("genres/g1/", true, false, { method: "DELETE" }, undefined, false, true);
     });
 
     it("mutationFn DELETEs the me endpoint", async () => {
-      fetchMock.mockResolvedValue({ uuid: "g1" });
+      fetchMock.mockResolvedValue(null);
       renderHook(() => useDeleteGenre("me", getBackendBaseUrl));
       const { mutationFn } = useValidatedMutationMock.mock.calls[0][0];
 
       await mutationFn({ uuid: "g1" });
 
-      expect(fetchMock).toHaveBeenCalledWith("me/genres/g1/", true, true, { method: "DELETE" });
+      expect(fetchMock).toHaveBeenCalledWith("me/genres/g1/", true, true, { method: "DELETE" }, undefined, false, true);
     });
 
     it("onSuccess invalidates the reference list and detail query keys plus genre playlist queries", () => {
