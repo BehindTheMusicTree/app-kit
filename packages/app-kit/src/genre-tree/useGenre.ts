@@ -187,7 +187,7 @@ export function useDeleteGenre(scope: Scope, getBackendBaseUrl: () => string) {
 
   return useValidatedMutation({
     inputSchema: z.object({ uuid: z.string() }),
-    outputSchema: CriteriaDetailedSchema,
+    outputSchema: z.null(),
     mutationFn: async ({ uuid }) => {
       const endpoint = scope === "reference" ? genreEndpoints.reference.delete(uuid) : genreEndpoints.me.delete(uuid);
       const response = await fetch(endpoint, true, scope === "me", {

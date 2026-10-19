@@ -1122,6 +1122,43 @@ describe("GenreTreeView", () => {
       expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].selectedNodeId).toBeNull();
     });
 
+    it("follows a controlled selectedNodeId and reports user selections without owning them", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: [
+          makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } }),
+          makePlaylist({ uuid: "gp2", name: "Blues", criteria: { uuid: "c2", name: "Blues" } }),
+        ],
+        isPending: false,
+      });
+      const onSelectedNodeIdChange = vi.fn();
+      const props: GenreTreeViewProps = {
+        scope: "me",
+        handleGenreCreationAction: vi.fn(),
+        handleGenreRenameAction: vi.fn(),
+        getBackendBaseUrl,
+        viewMode: "wheel",
+        selectedNodeId: "gp1",
+        onSelectedNodeIdChange,
+      };
+      const { rerender } = render(<GenreTreeView {...props} />);
+      const input = screen.getByRole("textbox", { name: "Search a genre" });
+
+      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].selectedNodeId).toBe("gp1");
+      expect(input).toHaveValue("Jazz");
+
+      act(() => {
+        treeWheelPropsMock.mock.calls.at(-1)?.[0].onSelectedNodeChange({ id: "gp2" });
+      });
+
+      expect(onSelectedNodeIdChange).toHaveBeenCalledWith("gp2");
+      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].selectedNodeId).toBe("gp1");
+
+      rerender(<GenreTreeView {...props} selectedNodeId="gp2" />);
+
+      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].selectedNodeId).toBe("gp2");
+      expect(input).toHaveValue("Blues");
+    });
+
     it("shows the name of a genre selected from the tree in the search bar", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
         data: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } })],

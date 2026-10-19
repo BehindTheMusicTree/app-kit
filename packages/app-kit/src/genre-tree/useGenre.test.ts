@@ -325,8 +325,16 @@ describe("useGenre", () => {
   });
 
   describe("useDeleteGenre", () => {
+    it("accepts the null body the fetch wrapper returns on 204", async () => {
+      fetchMock.mockResolvedValue(null);
+      renderHook(() => useDeleteGenre("reference", getBackendBaseUrl));
+      const { mutationFn, outputSchema } = useValidatedMutationMock.mock.calls[0][0];
+
+      expect(outputSchema.safeParse(await mutationFn({ uuid: "g1" })).success).toBe(true);
+    });
+
     it("mutationFn DELETEs the scoped endpoint", async () => {
-      fetchMock.mockResolvedValue({ uuid: "g1" });
+      fetchMock.mockResolvedValue(null);
       renderHook(() => useDeleteGenre("reference", getBackendBaseUrl));
       const { mutationFn } = useValidatedMutationMock.mock.calls[0][0];
 
@@ -336,7 +344,7 @@ describe("useGenre", () => {
     });
 
     it("mutationFn DELETEs the me endpoint", async () => {
-      fetchMock.mockResolvedValue({ uuid: "g1" });
+      fetchMock.mockResolvedValue(null);
       renderHook(() => useDeleteGenre("me", getBackendBaseUrl));
       const { mutationFn } = useValidatedMutationMock.mock.calls[0][0];
 

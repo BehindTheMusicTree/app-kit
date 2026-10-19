@@ -11,6 +11,14 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- `GenreTreeView` accepts a controlled selection: `selectedNodeId?: string | null` and `onSelectedNodeIdChange?: (nodeId: string | null) => void`. Without them the selection stays internal.
+
+### Fixed
+
+- `useDeleteGenre` no longer fails with "Invalid response from server" on the backend's `204 No Content`.
+
 ## [11.4.0] - 2026-10-19
 
 ### Added
