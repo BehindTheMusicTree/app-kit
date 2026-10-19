@@ -259,6 +259,24 @@ describe("GenreTreeView", () => {
     expect(treeWheelPropsMock.mock.calls[0][0].readOnly).toBe(true);
   });
 
+  it("passes the info panel curation props through to the stacked and wheel trees", () => {
+    useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist()], isPending: false });
+    const curation = {
+      editMode: true,
+      onEditModeChange: vi.fn(),
+      renderTitleEditor: vi.fn(),
+      renderParentsEditor: vi.fn(),
+      renderDangerZone: vi.fn(),
+      expanded: true,
+      onExpandedChange: vi.fn(),
+    };
+    renderView({ ...curation });
+    fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
+    expect(treePerRootPropsMock.mock.calls.at(-1)?.[0]).toMatchObject(curation);
+    fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+    expect(treeWheelPropsMock.mock.calls.at(-1)?.[0]).toMatchObject(curation);
+  });
+
   it("passes reparentingGenreUuid updates through to the tree components", () => {
     useListFullGenrePlaylistsMock.mockReturnValue({
       data: [makePlaylist()],

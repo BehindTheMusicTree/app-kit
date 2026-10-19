@@ -20,6 +20,7 @@ import { TrackBase } from "../schemas/track/base";
 import { CriteriaPlaylistSimple } from "../schemas/criteria-playlist/simple";
 import { CriteriaMinimum } from "../schemas/criteria/minimum";
 import { Scope } from "../../transport/lib/scope";
+import type { InfoPanelCurationProps } from "./infoPanelCurationProps";
 
 export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
   scope: Scope;
@@ -49,7 +50,7 @@ export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
   showToolbar?: boolean;
   /** Layout of the floating zoom/pop/fit controls. Defaults to "vertical". */
   controlsOrientation?: ControlsOrientation;
-};
+} & InfoPanelCurationProps;
 
 export default function GenrePlaylistTreeWheel<T extends TrackBase>({
   scope,
@@ -71,6 +72,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
   allowWheelRotation,
   showToolbar,
   controlsOrientation,
+  ...infoPanelCuration
 }: GenrePlaylistTreeWheelProps<T>) {
   const { isPlaying, setIsPlaying } = usePlayer();
   const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList<T>();
@@ -196,6 +198,8 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
       allowWheelRotation={allowWheelRotation}
       showToolbar={showToolbar}
       controlsOrientation={controlsOrientation}
+      {...infoPanelCuration}
+      readOnly={readOnly}
     />
   );
 }
