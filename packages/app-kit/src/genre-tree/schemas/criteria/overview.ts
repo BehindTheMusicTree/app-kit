@@ -6,6 +6,8 @@ import { TrackMinimumSchema } from "../track/minimum";
 export const CriteriaOverviewSchema = UuidResourceSchema.extend({
   name: z.string(),
   summary: z.string().nullable(),
+  description: z.string().nullable(),
+  summarySourceUrl: z.string().url().nullable(),
   essentialTracks: z.array(TrackMinimumSchema).optional(),
 });
 
