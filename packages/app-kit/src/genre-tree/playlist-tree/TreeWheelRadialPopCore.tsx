@@ -105,6 +105,7 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     renderDangerZone: props.renderDangerZone,
     expanded: props.expanded,
     onExpandedChange: props.onExpandedChange,
+    overlayPanel: props.overlayPanel,
   };
   const { isPlaying, setIsPlaying } = usePlayer();
   const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList<T>();

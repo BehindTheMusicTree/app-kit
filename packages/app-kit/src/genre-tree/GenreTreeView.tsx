@@ -101,6 +101,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   renderDangerZone,
   expanded,
   onExpandedChange,
+  overlayPanel,
   ...focus
 }: GenreTreeViewProps<O>) {
   const infoPanelCuration: InfoPanelCurationProps = {
@@ -111,6 +112,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     renderDangerZone,
     expanded,
     onExpandedChange,
+    overlayPanel,
   };
   const [reparentingGenreUuid, setReparentingGenreUuid] = useState<
     string | null
