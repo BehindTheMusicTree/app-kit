@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [11.8.0] - 2026-10-20
+
 ### Changed
 
 - Bump `@behindthemusictree/genre-tree-view` to 2.5.0 (info panel mini tree with a collapsible Family section; `overlayPanel` honours `--gtv-overlay-panel-right`).
