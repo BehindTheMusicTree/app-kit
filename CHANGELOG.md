@@ -11,6 +11,14 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- `GenreTreeView` accepts `overlayPanel?: { title; content; onClose }` and forwards it to every view; it renders over the map at the expanded detail panel's size, independent of selection (requires `@behindthemusictree/genre-tree-view` 2.4.0). In the stacked view only the first root draws it.
+
+### Changed
+
+- Bump `@behindthemusictree/genre-tree-view` to 2.4.0.
+
 ## [11.6.0] - 2026-10-20
 
 ### Added

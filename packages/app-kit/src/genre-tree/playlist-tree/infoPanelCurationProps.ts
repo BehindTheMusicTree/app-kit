@@ -1,6 +1,6 @@
 import type { GenreTreeProps } from "@behindthemusictree/genre-tree-view";
 
-/** Controlled edit/expand state and edit-mode slots of the info panel, as typed by genre-tree-view. */
+/** Controlled edit/expand state and edit-mode slots of the info panel, plus the generic overlay panel, as typed by genre-tree-view. */
 export type InfoPanelCurationProps = Partial<
   Pick<
     GenreTreeProps,
@@ -11,5 +11,6 @@ export type InfoPanelCurationProps = Partial<
     | "renderDangerZone"
     | "expanded"
     | "onExpandedChange"
+    | "overlayPanel"
   >
 >;
