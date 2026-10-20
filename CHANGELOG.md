@@ -11,6 +11,12 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [11.6.0] - 2026-10-20
+
+### Added
+
+- `CriteriaOverview` carries `description` (English Wikidata short description) and `summarySourceUrl` (Wikipedia source of the summary). The genre panel shows the description above the Summary and a "Source: Wikipedia" link after it, outside the `renderSummary` slot.
+
 ## [11.5.0] - 2026-10-19
 
 ### Added

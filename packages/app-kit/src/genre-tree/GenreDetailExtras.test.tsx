@@ -56,6 +56,34 @@ describe("GenreDetailExtras", () => {
     expect(renderEssentialTracks).toHaveBeenCalledWith(overview);
   });
 
+  it("shows the description only when present", () => {
+    useFetchGenreOverviewMock.mockReturnValue({
+      data: { ...overview, description: "music genre" },
+      isPending: false,
+    });
+    const { unmount } = renderExtras();
+    expect(screen.getByText("music genre")).toBeInTheDocument();
+    unmount();
+
+    useFetchGenreOverviewMock.mockReturnValue({ data: { ...overview, description: null }, isPending: false });
+    renderExtras();
+    expect(screen.queryByText("music genre")).not.toBeInTheDocument();
+  });
+
+  it("links the Wikipedia source only with summarySourceUrl, even with renderSummary", () => {
+    renderExtras();
+    expect(screen.queryByRole("link", { name: /wikipedia/i })).not.toBeInTheDocument();
+
+    useFetchGenreOverviewMock.mockReturnValue({
+      data: { ...overview, summarySourceUrl: "https://en.wikipedia.org/wiki/Jazz" },
+      isPending: false,
+    });
+    renderExtras({ renderSummary: () => <p>Custom summary</p> });
+    const link = screen.getByRole("link", { name: /wikipedia/i });
+    expect(link).toHaveAttribute("href", "https://en.wikipedia.org/wiki/Jazz");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
   it("forwards the track slots to GenrePlaylistTracks", () => {
     const renderRecordingLeading = vi.fn();
     const renderRecordingActions = vi.fn();
