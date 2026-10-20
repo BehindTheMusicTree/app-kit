@@ -58,10 +58,11 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
   }
   if (!overview) return null;
 
-  const { summary, essentialTracks } = overview;
+  const { summary, description, summarySourceUrl, essentialTracks } = overview;
 
   return (
     <>
+      {description && <p className="text-sm text-gray-500">{description}</p>}
       {renderSummary ? (
         renderSummary(overview)
       ) : (
@@ -69,6 +70,16 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
           <span className="gtv-info-panel-children-title">Summary</span>
           <p>{summary ?? "—"}</p>
         </div>
+      )}
+      {summarySourceUrl && (
+        <a
+          href={summarySourceUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm text-gray-500 underline hover:text-gray-700"
+        >
+          Source: Wikipedia
+        </a>
       )}
       {renderGenreDetailExtras?.(overview)}
       {renderEssentialTracks ? (
