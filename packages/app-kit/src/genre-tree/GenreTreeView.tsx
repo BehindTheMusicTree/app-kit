@@ -101,6 +101,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   renderDangerZone,
   expanded,
   onExpandedChange,
+  overlayPanel,
   ...focus
 }: GenreTreeViewProps<O>) {
   const infoPanelCuration: InfoPanelCurationProps = {
@@ -111,6 +112,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     renderDangerZone,
     expanded,
     onExpandedChange,
+    overlayPanel,
   };
   const [reparentingGenreUuid, setReparentingGenreUuid] = useState<
     string | null
@@ -452,7 +454,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           ) : (
             <div className="tree-container relative flex flex-col gap-4 w-full pt-14 overflow-x-auto overflow-y-auto text-gray-800">
               {Object.entries(groupedGenrePlaylistsByRoot).map(
-                ([uuid, genrePlaylistTreePerRoot]) => {
+                ([uuid, genrePlaylistTreePerRoot], rootIndex) => {
                   return (
                     <div
                       key={uuid}
@@ -481,6 +483,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                           wheelZoom="modifier"
                           controlsOrientation={controlsOrientation}
                           {...infoPanelCuration}
+                          // Every tree draws its own overlay; render it once, not per root.
+                          overlayPanel={rootIndex === 0 ? overlayPanel : undefined}
                         />
                       </div>
                     </div>

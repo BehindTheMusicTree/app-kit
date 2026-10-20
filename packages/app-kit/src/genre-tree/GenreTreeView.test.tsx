@@ -277,6 +277,40 @@ describe("GenreTreeView", () => {
     expect(treeWheelPropsMock.mock.calls.at(-1)?.[0]).toMatchObject(curation);
   });
 
+  it("forwards overlayPanel to every view", () => {
+    useListFullGenrePlaylistsMock.mockReturnValue({
+      data: [makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" }, parent: null })],
+      isPending: false,
+    });
+    const overlayPanel = { title: "About", content: <p>About body</p>, onClose: vi.fn() };
+    renderView({ overlayPanel });
+    fireEvent.click(screen.getByRole("button", { name: "Pop/Core" }));
+    expect(treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0].overlayPanel).toBe(overlayPanel);
+    fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
+    expect(treePerRootPropsMock.mock.calls.at(-1)?.[0].overlayPanel).toBe(overlayPanel);
+    fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+    expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].overlayPanel).toBe(overlayPanel);
+  });
+
+  it("hands overlayPanel to a single root in the stacked view", () => {
+    useListFullGenrePlaylistsMock.mockReturnValue({
+      data: [
+        makePlaylist({ uuid: "a", name: "A", root: { uuid: "a" }, parent: null }),
+        makePlaylist({ uuid: "b", name: "B", root: { uuid: "b" }, parent: null }),
+      ],
+      isPending: false,
+    });
+    const overlayPanel = { title: "About", content: <p>About body</p>, onClose: vi.fn() };
+    renderView({ overlayPanel });
+    fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
+    treePerRootPropsMock.mockClear();
+    cleanup();
+    renderView({ overlayPanel, viewMode: "stacked" });
+    const withOverlay = treePerRootPropsMock.mock.calls.filter(([props]) => props.overlayPanel);
+    expect(treePerRootPropsMock.mock.calls.length).toBeGreaterThan(1);
+    expect(new Set(withOverlay.map(([props]) => props.rootUuid)).size).toBe(1);
+  });
+
   it("passes reparentingGenreUuid updates through to the tree components", () => {
     useListFullGenrePlaylistsMock.mockReturnValue({
       data: [makePlaylist()],
