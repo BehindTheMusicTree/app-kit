@@ -1,41 +1,37 @@
 # app-kit
 
-`@behindthemusictree/app-kit` — shared transport, auth, popup, UI, player, and genre-tree
-plumbing for BehindTheMusicTree React apps. `grow-the-music-tree-frontend` and
-`hear-the-music-tree-frontend` both consume this one implementation instead of maintaining
-forked copies.
+Two lockstep-versioned packages for BehindTheMusicTree React apps, consumed by
+`grow-the-music-tree-frontend` and `hear-the-music-tree-frontend`:
 
-## Package
+- [`@behindthemusictree/app-kit`](packages/app-kit) — headless: transport, auth, popup state,
+  player, and genre-tree data and state hooks. No styling.
+- [`@behindthemusictree/app-kit-ui`](packages/app-kit-ui) — the styled BTMT components built on
+  the hooks above, themed through CSS variables. See its README for the theme tokens.
 
-See [`packages/app-kit`](packages/app-kit). Published to GitHub Packages as
-`@behindthemusictree/app-kit`, with a subpath per module:
+Use app-kit alone to build a different design; add app-kit-ui for the BTMT one.
+
+## app-kit
+
+Published to GitHub Packages, with a subpath per module (also re-exported from the root):
 
 ```tsx
 import { useFetchWrapper } from "@behindthemusictree/app-kit/transport";
-import { SessionContext, AuthCallbackHandler } from "@behindthemusictree/app-kit/auth";
+import { SessionProvider, useAuthCallback } from "@behindthemusictree/app-kit/auth";
 import { PopupProvider, usePopup } from "@behindthemusictree/app-kit/popup";
-import { Table, Button, Skeleton } from "@behindthemusictree/app-kit/ui";
 import { PlayerProvider, type PlayerTrack } from "@behindthemusictree/app-kit/player";
-import { GenreTreeView, useGenre } from "@behindthemusictree/app-kit/genre-tree";
+import { useGenreTreeViewState, useGenreSearch } from "@behindthemusictree/app-kit/genre-tree";
 ```
 
-Everything is also re-exported from the package root (`@behindthemusictree/app-kit`).
-
 - `transport` — fetch wrapper, query client, app-error types, subdomain base-URL builder
-- `auth` — session context, code-exchange core, logout, OAuth callback handler
-- `popup` — popup context, base popup chrome
-- `ui` — `Table`, `Skeleton`, `Input`, `Button`, `Pagination`, `RingLoader`, upload popup/buttons
+- `auth` — session context, code-exchange core, logout, `useAuthCallback`
+- `popup` — popup context and state, `useConnectivityErrorPopup`, `useTrackUpload`
 - `player` — generic `PlayerTrack`-based playback context (consumer supplies `loadTrack`)
-- `genre-tree` — scope-parameterized (`"me" | "reference"`) D3 genre tree view, its data hooks,
-  and the upload/playlist/track-list engine it depends on. Wheel/Pop-Core rendering wraps
-  `@behindthemusictree/genre-tree-view`, a separately published package pinned via the
-  `pnpm-workspace.yaml` catalog.
+- `genre-tree` — scope-parameterized (`"me" | "reference"`) schemas, data hooks, track-list
+  providers, and the `useGenreTreeViewState` / `useGenreSearch` hooks
 
-Several pieces are decoupled from any single app on purpose — `PlayerProvider` takes an injected
-`loadTrack` loader instead of a hardcoded data hook, and `AuthCallbackHandler` takes injected
-callback pathnames/handlers instead of hardcoded routes, and track lists (`GenreTreeView`,
-`TrackListSidebar`, `TrackItem`) take an optional `renderArtistLink` to render artist names as router links — so both consuming apps can plug in
-their own data layer and routes.
+Pieces are decoupled from any single app: `PlayerProvider` takes an injected `loadTrack`,
+`useAuthCallback` takes injected pathnames and handlers, and track lists take an optional
+`renderArtistLink`.
 
 ## Development
 
@@ -60,7 +56,7 @@ _(For maintainers, run from a clean, up-to-date `develop`)_
 pnpm release patch   # or minor / major
 ```
 
-Cuts a `release/X.Y.Z` branch off `develop`, bumps the package version, moves `CHANGELOG.md`'s
+Cuts a `release/X.Y.Z` branch off `develop`, bumps both package versions, moves `CHANGELOG.md`'s
 `[Unreleased]` section under the new version, then merges into both `main` (tagged) and
 `develop` and pushes — the tag push triggers `.github/workflows/publish.yml` to build and
 publish to GitHub Packages.

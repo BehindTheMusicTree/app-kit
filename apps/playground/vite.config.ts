@@ -20,6 +20,14 @@ export default defineConfig(({ mode }) => {
           find: /^@behindthemusictree\/app-kit$/,
           replacement: path.resolve(dirname, "../../packages/app-kit/src/index.ts"),
         },
+        {
+          find: /^@behindthemusictree\/app-kit\/(.+)$/,
+          replacement: path.resolve(dirname, "../../packages/app-kit/src/$1/index.ts"),
+        },
+        {
+          find: /^@behindthemusictree\/app-kit-ui\/(.+)$/,
+          replacement: path.resolve(dirname, "../../packages/app-kit-ui/src/$1/index.ts"),
+        },
       ],
     },
     define: {

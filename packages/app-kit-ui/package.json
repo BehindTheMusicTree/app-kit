@@ -1,0 +1,88 @@
+{
+  "name": "@behindthemusictree/app-kit-ui",
+  "version": "12.0.0",
+  "description": "Styled BehindTheMusicTree React components (popups, auth callback, genre tree) built on the headless @behindthemusictree/app-kit",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BehindTheMusicTree/app-kit.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./popup": {
+      "types": "./dist/popup/index.d.ts",
+      "import": "./dist/popup/index.js",
+      "require": "./dist/popup/index.cjs"
+    },
+    "./auth": {
+      "types": "./dist/auth/index.d.ts",
+      "import": "./dist/auth/index.js",
+      "require": "./dist/auth/index.cjs"
+    },
+    "./genre-tree": {
+      "types": "./dist/genre-tree/index.d.ts",
+      "import": "./dist/genre-tree/index.js",
+      "require": "./dist/genre-tree/index.cjs"
+    },
+    "./genre-tree/styles.css": "./dist/genre-tree/styles.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup && node scripts/copy-genre-tree-css.mjs",
+    "lint": "tsc --noEmit",
+    "test": "vitest run --coverage"
+  },
+  "peerDependencies": {
+    "@behindthemusictree/app-kit": "^12.0.0",
+    "@behindthemusictree/ui": "^0.2.0",
+    "@tanstack/react-query": ">=5.0.0",
+    "next": ">=14.0.0",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "dependencies": {
+    "@behindthemusictree/genre-tree-view": "catalog:",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.487.0",
+    "react-icons": "^5.5.0",
+    "tailwind-merge": "^3.2.0",
+    "uuid": "11.1.1",
+    "zod": "^3.24.3"
+  },
+  "devDependencies": {
+    "@behindthemusictree/app-kit": "workspace:^",
+    "@behindthemusictree/ui": "catalog:",
+    "@tanstack/react-query": "^5.72.2",
+    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@types/uuid": "^10.0.0",
+    "@types/youtube": "^0.3.0",
+    "@vitest/coverage-v8": "^4.1.11",
+    "jsdom": "^30.0.1",
+    "next": "^15.5.27",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vite": "^7.3.6",
+    "vitest": "^4.1.11"
+  },
+  "author": "Andreas Garcia",
+  "license": "ISC"
+}

@@ -259,6 +259,67 @@ describe("TrackListContext", () => {
       expect(fetchMock.mock.calls[0][6]).toBe(true);
     });
 
+    it("drops an artist response that arrives after a newer play request", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      const slow = deferred<unknown>();
+      fetchMock.mockReturnValueOnce(slow.promise);
+      let first!: Promise<void>;
+      act(() => {
+        first = result.current.playNewTrackListFromArtist(artist, "reference", { ordering: "-albumYear" });
+      });
+
+      await playGenre(result, makePage(makeTracks(1, "new")));
+      await act(async () => {
+        slow.resolve(makeArtistPage(makeTracks(1, "old")));
+        await first;
+      });
+
+      expect(result.current.selectedTrack?.uuid).toBe("new0");
+      expect(loadTrackForPlayerMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("swallows the failure of an artist request superseded by a newer play", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      const slow = deferred<unknown>();
+      fetchMock.mockReturnValueOnce(slow.promise);
+      let first!: Promise<void>;
+      act(() => {
+        first = result.current.playNewTrackListFromArtist(artist, "reference", { ordering: "-albumYear" });
+      });
+
+      await playGenre(result, makePage(makeTracks(1, "new")));
+      await act(async () => {
+        slow.reject(new Error("offline"));
+        await expect(first).resolves.toBeUndefined();
+      });
+
+      expect(result.current.selectedTrack?.uuid).toBe("new0");
+    });
+
+    it("rejects when the first artist page fails and the request is current", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      fetchMock.mockRejectedValueOnce(new Error("offline"));
+
+      await act(async () => {
+        await expect(result.current.playNewTrackListFromArtist(artist, "reference", { ordering: "-albumYear" })).rejects.toThrow("offline");
+      });
+    });
+
+    it("warns and does nothing when the artist has no playable recordings", async () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      fetchMock.mockResolvedValueOnce(makeArtistPage([]));
+
+      await act(async () => {
+        await result.current.playNewTrackListFromArtist(artist, "reference", { ordering: "-albumYear" });
+      });
+
+      expect(warnSpy).toHaveBeenCalledWith("No playable recordings found for artist");
+      expect(result.current.trackList).toBeNull();
+
+      warnSpy.mockRestore();
+    });
+
     it("rejects the me scope without fetching", async () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
 
