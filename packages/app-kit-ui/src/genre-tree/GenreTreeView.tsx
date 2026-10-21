@@ -267,7 +267,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
 
   return (
     <div className={["relative flex flex-col h-full", className].filter(Boolean).join(" ")}>
-      <div className="actions-container absolute left-3 top-3 z-30 flex items-center gap-2">
+      <div className="actions-container absolute left-5 top-5 z-30 flex items-center gap-2">
         {actions}
       </div>
       <div className="content-container flex-1 min-h-0 flex flex-row gap-4">
@@ -275,8 +275,9 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           {isLoading ? (
             <GenreTreeViewSkeleton viewMode={viewMode} />
           ) : viewMode === "wheel" ? (
-            // Search bar is h-10 at top-3: 12px + 40px + 8px gap puts the info panel just below it.
-            <div className="tree-container relative flex-1 w-full min-h-0 [--gtv-info-panel-top:60px]">
+            // The info panel's top edge aligns with the tree's, 8px above the h-10 search bar at top-5;
+            // the header inset (8px + 40px + 4px) extends its fill behind the search bar, Google Maps style.
+            <div className="tree-container relative flex-1 w-full min-h-0 [--gtv-info-panel-top:12px] [--gtv-info-panel-header-inset:52px]">
               <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
                 <GenrePlaylistTreeWheel
                   scope={scope}
@@ -300,8 +301,9 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
               </GenreTreeWheelHandoff>
             </div>
           ) : viewMode === "pop-core" ? (
-            // Search bar is h-10 at top-3: 12px + 40px + 8px gap puts the info panel just below it.
-            <div className="tree-container relative flex-1 w-full min-h-0 [--gtv-info-panel-top:60px]">
+            // The info panel's top edge aligns with the tree's, 8px above the h-10 search bar at top-5;
+            // the header inset (8px + 40px + 4px) extends its fill behind the search bar, Google Maps style.
+            <div className="tree-container relative flex-1 w-full min-h-0 [--gtv-info-panel-top:12px] [--gtv-info-panel-header-inset:52px]">
               <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
                 <GenrePlaylistTreeWheelRadialPopCore
                   scope={scope}
@@ -326,7 +328,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
               </GenreTreeWheelHandoff>
             </div>
           ) : viewMode === "outline" ? (
-            <div className="tree-container flex-1 min-h-0 w-full overflow-y-auto relative pt-16">
+            <div className="tree-container flex-1 min-h-0 w-full overflow-y-auto relative [--gtv-info-panel-top:12px] [--gtv-info-panel-header-inset:52px]">
               <GenrePlaylistTreeWheelRadialPopCore
                 outline
                 scope={scope}

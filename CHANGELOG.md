@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- `GenreTreeView`: the genre search bar now sits inside the detail panel's header, Google Maps style — the panel starts at the top of the tree and its header fill extends behind the search bar (via genre-tree-view's `--gtv-info-panel-header-inset`), in the wheel, pop-core and outline views. The search bar moves to 20px from the top-left and narrows to 264px so it keeps an 8px gutter inside the 280px panel.
+
 ## [13.0.0] - 2026-10-21
 
 ## [13.0.0] - 2026-10-21
