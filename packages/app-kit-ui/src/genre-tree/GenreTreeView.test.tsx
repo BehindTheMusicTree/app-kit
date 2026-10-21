@@ -9,6 +9,8 @@ const {
   treePerRootPropsMock,
   treeWheelPropsMock,
   treeWheelRadialPopCorePropsMock,
+  setIsPlayingMock,
+  playNewTrackListFromGenrePlaylistMock,
 } = vi.hoisted(() => ({
   useListFullGenrePlaylistsMock: vi.fn(),
   useFetchGenreOverviewMock: vi.fn(),
@@ -16,6 +18,18 @@ const {
   treePerRootPropsMock: vi.fn(),
   treeWheelPropsMock: vi.fn(),
   treeWheelRadialPopCorePropsMock: vi.fn(),
+  setIsPlayingMock: vi.fn(),
+  playNewTrackListFromGenrePlaylistMock: vi.fn(() => Promise.resolve()),
+}));
+
+vi.mock("../../../app-kit/src/player/PlayerContext", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  usePlayer: () => ({ isPlaying: false, setIsPlaying: setIsPlayingMock }),
+}));
+
+vi.mock("../../../app-kit/src/genre-tree/TrackListContext", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  useTrackList: () => ({ trackList: null, playNewTrackListFromGenrePlaylist: playNewTrackListFromGenrePlaylistMock }),
 }));
 
 // useGenreTreeViewState and GenreDetailExtras reach these hooks through app-kit's internal modules,
@@ -1189,6 +1203,20 @@ describe("GenreTreeView", () => {
 
       expect(input).toHaveValue("");
       expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].selectedNodeId).toBeNull();
+    });
+
+    it("plays the selected genre from the search bar's Play button", () => {
+      const jazz = makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } });
+      useListFullGenrePlaylistsMock.mockReturnValue({ data: [jazz], isPending: false });
+      renderView();
+      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+      expect(screen.queryByRole("button", { name: "Play" })).not.toBeInTheDocument();
+
+      fireEvent.change(screen.getByRole("textbox", { name: "Search a genre" }), { target: { value: "Ja" } });
+      fireEvent.click(screen.getByRole("button", { name: "Jazz" }));
+      fireEvent.click(screen.getByRole("button", { name: "Play" }));
+
+      expect(playNewTrackListFromGenrePlaylistMock).toHaveBeenCalledWith(jazz, "me");
     });
 
     it("follows a controlled selectedNodeId and reports user selections without owning them", () => {

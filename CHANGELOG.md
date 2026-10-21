@@ -11,6 +11,16 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- `GenreTreeView`: the genre search field now holds a Zoom in button (pop-core, when the selected genre is zoomable) and a Play/Pause button for the selected genre; the detail panel's own Zoom in and Play buttons are hidden in their favor.
+- `GenreTreeView`: optional `allowWheelRotation` prop to control wheel rotation from the host (hides the built-in Rotation toggle), and `showAddRoot` (default `true`) to hide the built-in Add root button.
+- `GenreSearch`: optional `onZoomIn`, `onPlayPause` and `isPlaying` props.
+
+### Changed
+
+- `GenreTreeView`: the detail panel header sits flush under the search field with symmetric padding.
+
 ## [13.2.0] - 2026-10-21
 
 ### Changed
