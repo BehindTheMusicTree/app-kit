@@ -1,15 +1,20 @@
 ## What this is
 
-`@behindthemusictree/app-kit` — shared transport, auth, popup, UI, player, and genre-tree
-plumbing consumed by `grow-the-music-tree-frontend` and `hear-the-music-tree-frontend`. Nothing
-in `packages/app-kit/src` should import from either consuming app; all app-specific behavior
+Two lockstep-versioned packages consumed by `grow-the-music-tree-frontend` and
+`hear-the-music-tree-frontend`: `@behindthemusictree/app-kit` (headless transport, auth, popup
+state, player, genre-tree hooks) and `@behindthemusictree/app-kit-ui` (the styled components built
+on it). Nothing in either package should import from a consuming app; all app-specific behavior
 (data hooks, routes, popups) is passed in via props/callbacks.
+
+Nothing styled goes in `packages/app-kit`: no JSX with classes, and no `ui`, `lucide-react`,
+`react-icons`, `clsx`, `tailwind-merge` or `genre-tree-view` imports (`pnpm lint` enforces it).
+Put the logic in an app-kit hook and the markup in app-kit-ui, which reads colors from CSS tokens.
 
 ## Stack
 
 - TypeScript (strict), React — no framework of its own; consumers are Next.js apps
 - Build: tsup (ESM + CJS + `.d.ts`) — multi-entry, one output per subpath
-- Package manager: pnpm workspaces (`packages/app-kit`, `apps/playground`)
+- Package manager: pnpm workspaces (`packages/app-kit`, `packages/app-kit-ui`, `apps/playground`)
 - Registry: GitHub Packages (`https://npm.pkg.github.com`, scope `@behindthemusictree`)
 
 ## Architecture
@@ -22,13 +27,14 @@ to be" framing. History belongs in git log and `CHANGELOG.md`, not in reference 
 
 ## Critical paths
 
-- `packages/app-kit/src/{transport,auth,popup,ui,player,genre-tree}/` — one folder per subpath
+- `packages/app-kit/src/{transport,auth,popup,player,genre-tree}/` — one folder per subpath
   export; each has its own `index.ts` barrel
+- `packages/app-kit-ui/src/{popup,auth,genre-tree}/` — styled components, one folder per subpath
 - `packages/app-kit/src/index.ts` — root barrel re-exporting every module
 - `packages/app-kit/tsup.config.ts` — entry map; keep in sync with `src/*/index.ts` and the
   `exports` field in `packages/app-kit/package.json`
 - `apps/playground/` — manual Vite harness for exercising exported components; not published.
-  It aliases `@behindthemusictree/app-kit` to `packages/app-kit/src` in `vite.config.ts`, so
+  It aliases `@behindthemusictree/app-kit` and `app-kit-ui` (root and subpaths) to their `src` in `vite.config.ts`, so
   the running app never serves a stale `dist/` (type-checking still reads `dist/*.d.ts`).
   Its backend proxy (`/api/grow-prototype-proxy`, `vite.config.ts`) only exists in Vite's dev
   server — the Vercel-hosted PR preview build has no equivalent, so preview builds 404 on that
@@ -36,7 +42,7 @@ to be" framing. History belongs in git log and `CHANGELOG.md`, not in reference 
 - `scripts/release.sh` + `.github/workflows/publish.yml` — version bump → tag → publish pipeline
 - `CHANGELOG.md` — update `[Unreleased]` for every user-facing change
 - `pnpm-workspace.yaml` — catalog pin for `@behindthemusictree/genre-tree-view`, the separately
-  published D3 tree component that `genre-tree`'s Wheel/Pop-Core views wrap; bump it here to pick
+  published D3 tree component that `app-kit-ui`'s Wheel/Pop-Core views wrap; bump it here to pick
   up a new release of that package
 
 ## Conventions
@@ -44,7 +50,7 @@ to be" framing. History belongs in git log and `CHANGELOG.md`, not in reference 
 - Adding a module: export it from the module's own barrel AND `src/index.ts`, then add a
   matching entry to `tsup.config.ts` and `packages/app-kit/package.json`'s `exports` map
 - Keep modules decoupled from any one consumer: inject data loaders and callbacks (see
-  `PlayerProvider`'s `loadTrack` prop and `AuthCallbackHandler`'s callback props) rather than
+  `PlayerProvider`'s `loadTrack` prop and `useAuthCallback`'s callback options) rather than
   importing a specific app's hooks or routes
 - `genre-tree` is scope-parameterized (`"me" | "reference"`) — do not hardcode either scope's
   assumptions into shared components

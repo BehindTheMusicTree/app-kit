@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@behindthemusictree/app-kit": "workspace:*",
+    "@behindthemusictree/app-kit-ui": "workspace:*",
+    "@behindthemusictree/brand": "catalog:",
     "@behindthemusictree/genre-tree-view": "catalog:",
     "@behindthemusictree/ui": "catalog:",
     "@tanstack/react-query": "^5.72.2",

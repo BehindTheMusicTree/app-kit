@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `@behindthemusictree/app-kit` are documented here.
+All notable changes to `@behindthemusictree/app-kit` are documented here; `@behindthemusictree/app-kit-ui` is versioned in lockstep.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Any change that requires a consumer to update its own code (removed/renamed export,
@@ -10,6 +10,29 @@ package has many direct consumers across the frontend, so breaking changes must 
 easy to spot when bumping.
 
 ## [Unreleased]
+
+## [13.0.0] - 2026-10-21
+
+## [13.0.0] - 2026-10-21
+
+### Breaking
+
+- `@behindthemusictree/app-kit` is now **headless**: no styling, Tailwind, `@behindthemusictree/ui`, `lucide-react`, `react-icons`, `clsx`, `tailwind-merge` or `@behindthemusictree/genre-tree-view` dependency or peer. Every styled component moved to the new, lockstep-versioned `@behindthemusictree/app-kit-ui` package (peers on `app-kit` `^13.0.0` and `ui`).
+
+| Export | Before | Now |
+| --- | --- | --- |
+| `BasePopup`, `PopupTitle`, `PopupButtons`, `AuthPopup`, `AuthErrorPopup`, `SpotifyAuthErrorPopup`, `InternalErrorPopup`, `NetworkErrorPopup`, `TrackUploadPopup` | `app-kit/popup` | `app-kit-ui/popup` |
+| `AuthCallbackHandler` | `app-kit/auth` | `app-kit-ui/auth` |
+| `GenreTreeView`, `GenreTreeViewSkeleton`, `GenreSearch`, `TrackListSidebar`, `TrackItem`, `TrackPositionPlayPause`, `Rating`, `GenrePlaylistTracks`, `GenreDetailExtras`, `ArtistNames`, `MusicBrainzRecordingLink`, `playlist-tree/*` | `app-kit/genre-tree` | `app-kit-ui/genre-tree` |
+| `@behindthemusictree/genre-tree-view` styles | `app-kit/genre-tree` | `app-kit-ui/genre-tree/styles.css` |
+
+- `hasMainstreamPopRoot` takes `{ parentId: string | null; name: string }[]` instead of `GenreTreeNode[]`.
+- Styled components read colors from the CSS tokens listed in the `app-kit-ui` README instead of hard-coded Tailwind colors.
+
+### Added
+
+- `app-kit` headless hooks: `useAuthCallback`, `useGenreTreeViewState`, `useGenreSearch`, `useTrackUpload`.
+- `GenreTreeView` (in `app-kit-ui`) takes `className` on its root, with no default `mt-4`, and `showDisplayOptions` (default `true`).
 
 ## [12.0.0] - 2026-10-21
 

@@ -3,9 +3,9 @@ import { describe, it, expect } from "vitest";
 import * as genreTree from "./index";
 
 describe("genre-tree barrel", () => {
-  it("re-exports tree view components and data hooks", () => {
-    expect(genreTree.GenreTreeSkeleton).toBeTypeOf("function");
-    expect(genreTree.GenrePlaylistTreePerRoot).toBeTypeOf("function");
+  it("re-exports data hooks and view-state hooks", () => {
+    expect(genreTree.useGenreTreeViewState).toBeTypeOf("function");
+    expect(genreTree.useGenreSearch).toBeTypeOf("function");
     expect(genreTree.useListGenres).toBeTypeOf("function");
     expect(genreTree.useFetchGenre).toBeTypeOf("function");
     expect(genreTree.useListGenrePlaylists).toBeTypeOf("function");
@@ -18,10 +18,7 @@ describe("genre-tree barrel", () => {
     expect(genreTree.useTrackList).toBeTypeOf("function");
     expect(genreTree.TrackListSidebarVisibilityProvider).toBeTypeOf("function");
     expect(genreTree.useTrackListSidebarVisibility).toBeTypeOf("function");
-    expect(genreTree.TrackListSidebar).toBeTypeOf("function");
-    expect(genreTree.TrackItem).toBeTypeOf("function");
-    expect(genreTree.TrackPositionPlayPause).toBeTypeOf("function");
-    expect(genreTree.Rating).toBeTypeOf("function");
+    expect(genreTree.ArtistNames).toBeTypeOf("function");
   });
 
   it("re-exports models", () => {

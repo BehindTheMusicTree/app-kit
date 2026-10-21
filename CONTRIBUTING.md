@@ -100,8 +100,9 @@ sanity-check UI changes before opening a PR.
 
 Generic, stateless UI primitives (`Button`, `Input`, `Table`, ...) live in
 [`@behindthemusictree/ui`](https://github.com/BehindTheMusicTree/ui), not in this package. This
-package consumes `@behindthemusictree/ui` to build its business-logic modules (`popup`,
-`genre-tree`, ...); it should not grow new generic UI components of its own.
+package never imports it: `packages/app-kit` is headless, and only `packages/app-kit-ui` consumes
+`@behindthemusictree/ui` to build the styled business components. Neither should grow new generic
+UI components of its own.
 
 When adding a new module, export it from both its own barrel (`src/<module>/index.ts`) and the
 root barrel (`src/index.ts`), and add a matching subpath entry to `tsup.config.ts` and the

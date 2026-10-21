@@ -2,8 +2,6 @@ import { useCallback, useState } from "react";
 import {
   PopupProvider,
   usePopup,
-  BasePopup,
-  GenreTreeView,
   CriteriaMinimum,
   PlayerProvider,
   PlayerVideoSurface,
@@ -17,6 +15,8 @@ import {
   RecordingDetailed,
   RecordingDetailedSchema,
 } from "@behindthemusictree/app-kit";
+import { BasePopup } from "@behindthemusictree/app-kit-ui/popup";
+import { GenreTreeView } from "@behindthemusictree/app-kit-ui/genre-tree";
 import { Button, RingLoader, Skeleton } from "@behindthemusictree/ui";
 import GenreCreationPopup from "./GenreCreationPopup";
 import GenreRenamePopup from "./GenreRenamePopup";

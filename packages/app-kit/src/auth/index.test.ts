@@ -17,6 +17,6 @@ describe("auth barrel", () => {
     expect(auth.clearStoredRedirectUrl).toBeTypeOf("function");
     expect(auth.createLogout).toBeTypeOf("function");
     expect(auth.useLogout).toBeTypeOf("function");
-    expect(auth.AuthCallbackHandler).toBeTypeOf("function");
+    expect(auth.useAuthCallback).toBeTypeOf("function");
   });
 });
