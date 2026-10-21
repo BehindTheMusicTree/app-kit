@@ -30,7 +30,7 @@ export default function GenreSearch({
   });
 
   return (
-    <div className="genre-search relative w-[280px] shrink-0">
+    <div className="genre-search relative w-[264px] shrink-0">
       <Search
         aria-hidden="true"
         className="absolute left-3 top-1/2 w-4 h-4 text-[var(--color-neutral-500)] -translate-y-1/2 pointer-events-none"
