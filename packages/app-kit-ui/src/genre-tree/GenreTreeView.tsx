@@ -19,7 +19,8 @@ import type {
 import { CriteriaMinimum } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaOverview } from "@behindthemusictree/app-kit/genre-tree";
 import { Scope } from "@behindthemusictree/app-kit/transport";
-import { useGenreTreeViewState } from "@behindthemusictree/app-kit/genre-tree";
+import { useGenreTreeViewState, useTrackList, TrackListOriginType } from "@behindthemusictree/app-kit/genre-tree";
+import { usePlayer } from "@behindthemusictree/app-kit/player";
 import { GenreDetailExtras, type GenreDetailSlots } from "./GenreDetailExtras";
 import type { GenrePlaylistTracksSlots } from "./GenrePlaylistTracks";
 import type { InfoPanelCurationProps } from "./playlist-tree/infoPanelCurationProps";
@@ -58,6 +59,10 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   className?: string;
   /** Shows the "Tree display options" group (e.g. Rotation). Defaults to true. */
   showDisplayOptions?: boolean;
+  /** Shows the "Add root" button (still hidden when `readOnly`). Defaults to true; a host rendering its own passes false. */
+  showAddRoot?: boolean;
+  /** Controlled wheel rotation. When provided, the internal Rotation toggle is not rendered — the consumer owns that UI. */
+  allowWheelRotation?: boolean;
   /** Parses the selected genre's overview; pass an extended schema to keep consumer-specific fields. */
   criteriaOverviewSchema?: z.ZodType<O, z.ZodTypeDef, unknown>;
   /** Consumer-specific rows rendered in the info panel after Summary. */
@@ -83,6 +88,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   readOnly = false,
   className,
   showDisplayOptions = true,
+  showAddRoot = true,
+  allowWheelRotation: controlledAllowWheelRotation,
   criteriaOverviewSchema,
   renderGenreDetailExtras,
   controlsOrientation,
@@ -126,7 +133,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     isViewModeControlled: isControlled,
     setViewMode,
     canShowPopCore,
-    allowWheelRotation,
+    allowWheelRotation: internalAllowWheelRotation,
     toggleWheelRotation,
     reparentingGenreUuid,
     setReparentingGenreUuid,
@@ -143,6 +150,43 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const handleSelectedNodeChange = selectNode;
   const handleGenreSearchClear = clearSelection;
   const handleGenreSearchSelect = selectGenrePlaylist;
+
+  const { isPlaying, setIsPlaying } = usePlayer();
+  const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList();
+  const isSelectedPlaying =
+    trackList?.origin.type === TrackListOriginType.GENRE_PLAYLIST &&
+    trackList.origin.uuid === selectedGenrePlaylist?.uuid &&
+    isPlaying;
+  const canPlay =
+    selectedGenrePlaylist !== undefined &&
+    selectedGenrePlaylist !== null &&
+    selectedGenrePlaylist.tracksCount > 0;
+  const handleGenreSearchPlayPause = () => {
+    if (!selectedGenrePlaylist) return;
+    if (trackList?.origin.type === TrackListOriginType.GENRE_PLAYLIST && trackList.origin.uuid === selectedGenrePlaylist.uuid) {
+      setIsPlaying(!isPlaying);
+      return;
+    }
+    playNewTrackListFromGenrePlaylist(selectedGenrePlaylist, scope).catch((error) => {
+      console.error("Failed to load genre playlist tracks:", error);
+    });
+  };
+
+  // Mirrors genre-tree-view's isZoomableNode: a node zooms when it has children and at most one pop-side child.
+  const selectedUuid = selectedGenrePlaylist?.uuid;
+  const selectedChildren = selectedUuid
+    ? visibleGenrePlaylists.filter((genrePlaylist) => genrePlaylist.parent?.uuid === selectedUuid)
+    : [];
+  const canZoomIn =
+    viewMode === "pop-core" &&
+    focus.onFocusGenreChange !== undefined &&
+    selectedUuid !== undefined &&
+    focus.focusGenreUuid !== selectedUuid &&
+    selectedChildren.length > 0 &&
+    selectedChildren.filter((child) => child.criteria?.side === "pop").length <= 1;
+  const handleGenreSearchZoomIn = () => {
+    if (selectedUuid) focus.onFocusGenreChange?.(selectedUuid, "zoom-in");
+  };
 
   // Stable across selections: the overview fetch lives in GenreDetailExtras, so its loading
   // states re-render only the info panel, never the tree.
@@ -180,6 +224,9 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     ],
   );
 
+  const isRotationControlled = controlledAllowWheelRotation !== undefined;
+  const allowWheelRotation = controlledAllowWheelRotation ?? internalAllowWheelRotation;
+
   const actions = (
     <>
       {!isLoading && (
@@ -188,6 +235,9 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           onSelect={handleGenreSearchSelect}
           selectedName={selectedGenrePlaylist?.name ?? null}
           onClear={handleGenreSearchClear}
+          onZoomIn={canZoomIn ? handleGenreSearchZoomIn : undefined}
+          onPlayPause={canPlay ? handleGenreSearchPlayPause : undefined}
+          isPlaying={isSelectedPlaying}
         />
       )}
       {!isLoading && !isControlled && (
@@ -244,7 +294,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           role="group"
           aria-label="Tree display options"
         >
-          {viewMode !== "stacked" && viewMode !== "outline" && (
+          {!isRotationControlled && viewMode !== "stacked" && viewMode !== "outline" && (
             <Button
               variant={allowWheelRotation ? "default" : "outline"}
               size="sm"
@@ -255,7 +305,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           )}
         </div>
       )}
-      {!isLoading && !readOnly && (
+      {!isLoading && !readOnly && showAddRoot && (
         <IconTextButton
           icon={Plus}
           text="Add root"
@@ -276,8 +326,10 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             <GenreTreeViewSkeleton viewMode={viewMode} />
           ) : viewMode === "wheel" ? (
             // The info panel's top edge aligns with the tree's, 8px above the h-10 search bar at top-5;
-            // the header inset (8px + 40px + 4px) extends its fill behind the search bar, Google Maps style.
-            <div className="tree-container relative flex-1 w-full min-h-0 [--gtv-info-panel-top:12px] [--gtv-info-panel-header-inset:52px]">
+            // the header inset (10px padding + 38px = the search bar's bottom edge) extends its fill behind the search bar,
+            // Google Maps style; the 8px bottom padding mirrors the 8px above the bar, and the hidden title's height is zeroed.
+            // The panel's own Zoom in button is hidden: the search bar carries it.
+            <div className="tree-container relative flex-1 w-full min-h-0 [--gtv-info-panel-top:12px] [--gtv-info-panel-header-inset:38px] [&_.gtv-info-panel-header]:pb-2 [&_.gtv-info-panel-title--hidden]:h-0 [&_.gtv-toolbar>.gtv-toolbar-btn:first-child]:hidden">
               <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
                 <GenrePlaylistTreeWheel
                   scope={scope}
@@ -304,7 +356,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           ) : viewMode === "pop-core" ? (
             // The info panel's top edge aligns with the tree's, 8px above the h-10 search bar at top-5;
             // the header inset (8px + 40px + 4px) extends its fill behind the search bar, Google Maps style.
-            <div className="tree-container relative flex-1 w-full min-h-0 [--gtv-info-panel-top:12px] [--gtv-info-panel-header-inset:52px]">
+            <div className="tree-container relative flex-1 w-full min-h-0 [--gtv-info-panel-top:12px] [--gtv-info-panel-header-inset:38px] [&_.gtv-info-panel-header]:pb-2 [&_.gtv-info-panel-title--hidden]:h-0 [&_.gtv-toolbar>.gtv-toolbar-btn:first-child]:hidden [&_.gtv-info-panel-zoom-in]:hidden">
               <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
                 <GenrePlaylistTreeWheelRadialPopCore
                   scope={scope}

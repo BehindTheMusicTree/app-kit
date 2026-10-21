@@ -86,4 +86,27 @@ describe("GenreSearch", () => {
     expect(onClear).toHaveBeenCalledTimes(1);
     expect(screen.getByLabelText("Search a genre")).toHaveValue("");
   });
+
+  it("shows Zoom in only when onZoomIn is given, and fires it", () => {
+    const onZoomIn = vi.fn();
+    const { rerender } = render(<GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} />);
+    expect(screen.queryByRole("button", { name: "Zoom in" })).not.toBeInTheDocument();
+
+    rerender(<GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} onZoomIn={onZoomIn} />);
+    fireEvent.click(screen.getByRole("button", { name: "Zoom in" }));
+
+    expect(onZoomIn).toHaveBeenCalledOnce();
+  });
+
+  it("shows Play or Pause per isPlaying when onPlayPause is given, and fires it", () => {
+    const onPlayPause = vi.fn();
+    const { rerender } = render(
+      <GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} onPlayPause={onPlayPause} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Play" }));
+    expect(onPlayPause).toHaveBeenCalledOnce();
+
+    rerender(<GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} onPlayPause={onPlayPause} isPlaying />);
+    expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument();
+  });
 });
