@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [13.3.0] - 2026-10-21
+
 ### Added
 
 - `GenreTreeView`: the genre search field now holds a Zoom in button (pop-core, when the selected genre is zoomable) and a Play/Pause button for the selected genre; the detail panel's own Zoom in and Play buttons are hidden in their favor.
