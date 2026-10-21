@@ -1183,6 +1183,7 @@ describe("GenreTreeView", () => {
 
       expect(input).toHaveValue("Jazz");
       expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].hideInfoPanelClose).toBe(true);
+      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].hideInfoPanelTitle).toBe(true);
 
       fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
 
