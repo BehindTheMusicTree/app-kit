@@ -13,6 +13,8 @@ easy to spot when bumping.
 
 ## [13.0.0] - 2026-10-21
 
+## [13.0.0] - 2026-10-21
+
 ### Breaking
 
 - `@behindthemusictree/app-kit` is now **headless**: no styling, Tailwind, `@behindthemusictree/ui`, `lucide-react`, `react-icons`, `clsx`, `tailwind-merge` or `@behindthemusictree/genre-tree-view` dependency or peer. Every styled component moved to the new, lockstep-versioned `@behindthemusictree/app-kit-ui` package (peers on `app-kit` `^13.0.0` and `ui`).
