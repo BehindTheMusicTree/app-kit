@@ -42,6 +42,8 @@ export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
   onSelectedNodeChange?: (node: GenreTreeNode | null) => void;
   /** Hides the info panel's header close button. */
   hideInfoPanelClose?: boolean;
+  /** Hides the info panel header's node name. */
+  hideInfoPanelTitle?: boolean;
   /** When true, suppresses per-node create/rename/reparent affordances. Defaults to false. */
   readOnly?: boolean;
   /** When false, clicking a chip still selects its root, but the wheel doesn't spin to the
@@ -69,6 +71,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
   selectedNodeId,
   onSelectedNodeChange,
   hideInfoPanelClose,
+  hideInfoPanelTitle,
   readOnly = false,
   allowWheelRotation,
   showToolbar,
@@ -196,6 +199,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
       selectedNodeId={selectedNodeId}
       onSelectedNodeChange={onSelectedNodeChange}
       hideInfoPanelClose={hideInfoPanelClose}
+      hideInfoPanelTitle={hideInfoPanelTitle}
       allowWheelRotation={allowWheelRotation}
       showToolbar={showToolbar}
       controlsOrientation={controlsOrientation}

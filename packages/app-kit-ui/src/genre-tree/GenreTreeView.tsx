@@ -290,6 +290,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   additionalActions={additionalActions}
                   onSelectedNodeChange={handleSelectedNodeChange}
                   hideInfoPanelClose
+                  hideInfoPanelTitle
                   onNodeHover={handleNodeHover}
                   renderExtraDetails={renderExtraDetails}
                   selectedNodeId={selectedNodeId}
@@ -316,6 +317,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   additionalActions={additionalActions}
                   onSelectedNodeChange={handleSelectedNodeChange}
                   hideInfoPanelClose
+                  hideInfoPanelTitle
                   onNodeHover={handleNodeHover}
                   renderExtraDetails={renderExtraDetails}
                   selectedNodeId={selectedNodeId}
@@ -341,6 +343,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                 additionalActions={additionalActions}
                 onSelectedNodeChange={handleSelectedNodeChange}
                 hideInfoPanelClose
+                hideInfoPanelTitle
                 onNodeHover={handleNodeHover}
                 renderExtraDetails={renderExtraDetails}
                 selectedNodeId={selectedNodeId}
@@ -370,6 +373,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                           additionalActions={additionalActions}
                           onSelectedNodeChange={handleSelectedNodeChange}
                           hideInfoPanelClose
+                          hideInfoPanelTitle
                           onNodeHover={handleNodeHover}
                           renderExtraDetails={renderExtraDetails}
                           // Each root has its own panel; null closes the one not holding the selection.
