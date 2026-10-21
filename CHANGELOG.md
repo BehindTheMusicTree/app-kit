@@ -11,6 +11,13 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [13.1.0] - 2026-10-21
+
+### Changed
+
+- `GenreTreeView`: the genre search bar now sits inside the detail panel's header, Google Maps style — the panel starts at the top of the tree and its header fill extends behind the search bar (via genre-tree-view's `--gtv-info-panel-header-inset`), in the wheel, pop-core and outline views. The search bar moves to 20px from the top-left and narrows to 264px so it keeps an 8px gutter inside the 280px panel.
+- `GenreTreeView` (pop-core): the zoom navigation is genre-tree-view 2.7.0's single breadcrumb centred at the top of the wheel (bottom-left in narrow containers), clear of the search bar and the detail panel; the Parent button is gone and long trails collapse behind "…".
+
 ## [13.0.0] - 2026-10-21
 
 ## [13.0.0] - 2026-10-21
