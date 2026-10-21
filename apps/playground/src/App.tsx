@@ -51,8 +51,18 @@ function useLoadTrack(): (trackId: string) => Promise<PlayerTrack> {
   );
 }
 
+const VIEW_MODES = [
+  { mode: "pop-core", label: "Pop/Core" },
+  { mode: "wheel", label: "Wheel" },
+  { mode: "stacked", label: "Stacked" },
+  { mode: "outline", label: "Outline" },
+] as const;
+
 function ReferenceGenreTree() {
   const { showPopup, hidePopup } = usePopup();
+  const [viewMode, setViewMode] = useState<(typeof VIEW_MODES)[number]["mode"]>("pop-core");
+  const [allowWheelRotation, setAllowWheelRotation] = useState(false);
+  const [focusGenreUuid, setFocusGenreUuid] = useState<string | null>(null);
 
   const showCriteriaCreationPopup = useCallback(
     (parent: CriteriaMinimum | null = null) => {
@@ -83,13 +93,39 @@ function ReferenceGenreTree() {
   );
 
   return (
-    <GenreTreeView
-      scope="reference"
-      handleGenreCreationAction={showCriteriaCreationPopup}
-      handleGenreRenameAction={showGenreRenamePopup}
-      getBackendBaseUrl={getBackendBaseUrl}
-      renderArtistLink={(artist) => <a href={`#artist-${artist.uuid}`}>{artist.name}</a>}
-    />
+    <>
+      <div className="flex items-center gap-1 mb-2" role="group" aria-label="Tree view mode">
+        {VIEW_MODES.map(({ mode, label }) => (
+          <Button key={mode} variant={viewMode === mode ? "default" : "outline"} size="sm" onClick={() => setViewMode(mode)}>
+            {label}
+          </Button>
+        ))}
+        {viewMode !== "stacked" && viewMode !== "outline" && (
+          <Button
+            variant={allowWheelRotation ? "default" : "outline"}
+            size="sm"
+            onClick={() => setAllowWheelRotation((allowed) => !allowed)}
+          >
+            Rotation
+          </Button>
+        )}
+        <Button size="sm" onClick={() => showCriteriaCreationPopup(null)}>
+          Add root
+        </Button>
+      </div>
+      <GenreTreeView
+        scope="reference"
+        viewMode={viewMode}
+        allowWheelRotation={allowWheelRotation}
+      showAddRoot={false}
+        focusGenreUuid={focusGenreUuid}
+        onFocusGenreChange={setFocusGenreUuid}
+        handleGenreCreationAction={showCriteriaCreationPopup}
+        handleGenreRenameAction={showGenreRenamePopup}
+        getBackendBaseUrl={getBackendBaseUrl}
+        renderArtistLink={(artist) => <a href={`#artist-${artist.uuid}`}>{artist.name}</a>}
+      />
+    </>
   );
 }
 
