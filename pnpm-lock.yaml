@@ -6,15 +6,12 @@ settings:
 
 catalogs:
   default:
-    '@behindthemusictree/brand':
-      specifier: 12.0.0
-      version: 12.0.0
     '@behindthemusictree/genre-tree-view':
       specifier: 2.5.0
       version: 2.5.0
     '@behindthemusictree/ui':
-      specifier: ^0.1.0
-      version: 0.1.0
+      specifier: ^0.2.0
+      version: 0.2.0
 
 overrides:
   sharp: ^0.35.4
@@ -42,7 +39,7 @@ importers:
         version: 2.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@behindthemusictree/ui':
         specifier: 'catalog:'
-        version: 0.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 0.2.0(@behindthemusictree/brand@12.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@tanstack/react-query':
         specifier: ^5.72.2
         version: 5.101.4(react@18.3.1)
@@ -80,15 +77,9 @@ importers:
 
   packages/app-kit:
     dependencies:
-      '@behindthemusictree/brand':
-        specifier: 'catalog:'
-        version: 12.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@behindthemusictree/genre-tree-view':
         specifier: 'catalog:'
         version: 2.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@behindthemusictree/ui':
-        specifier: 'catalog:'
-        version: 0.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -108,6 +99,9 @@ importers:
         specifier: ^3.24.3
         version: 3.25.76
     devDependencies:
+      '@behindthemusictree/ui':
+        specifier: 'catalog:'
+        version: 0.2.0(@behindthemusictree/brand@12.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@tanstack/react-query':
         specifier: ^5.72.2
         version: 5.101.4(react@18.3.1)
@@ -280,9 +274,10 @@ packages:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
 
-  '@behindthemusictree/ui@0.1.0':
-    resolution: {integrity: sha512-qLQup6B1U8ZisC7g63HLNW8B8nnJ/EX7CEJIS3mpQVT1W0xauxHb+q5abtGHFPo54RxLd9eftQqTBiP3eule4A==, tarball: https://npm.pkg.github.com/download/@behindthemusictree/ui/0.1.0/c6dbdf3309d97be45f21d558a292f968e953a668}
+  '@behindthemusictree/ui@0.2.0':
+    resolution: {integrity: sha512-8Km4C3kLs3POjI6BU+zoWqk4RelmK+p1zYdFvDoxgKm22GWlSkr8UxQ/IYN0ATMvwWgVs260RKhIp0QGgc9siA==, tarball: https://npm.pkg.github.com/download/@behindthemusictree/ui/0.2.0/03ecdf81dfda7aa0c5f95782340b3915ab5d15dd}
     peerDependencies:
+      '@behindthemusictree/brand': ^12.0.0
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
 
@@ -2244,8 +2239,9 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
       react-icons: 5.7.0(react@18.3.1)
 
-  '@behindthemusictree/ui@0.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@behindthemusictree/ui@0.2.0(@behindthemusictree/brand@12.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
+      '@behindthemusictree/brand': 12.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       class-variance-authority: 0.7.1
       clsx: 2.1.1
       lucide-react: 0.487.0(react@18.3.1)
