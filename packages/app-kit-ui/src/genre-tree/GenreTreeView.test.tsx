@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { render, screen, fireEvent, act, cleanup } from "@testing-library/react";
+import { render, screen, fireEvent, act, cleanup, waitFor } from "@testing-library/react";
 import { z } from "zod";
 
 const {
@@ -10,6 +10,7 @@ const {
   treeWheelPropsMock,
   treeWheelRadialPopCorePropsMock,
   setIsPlayingMock,
+  trackListState,
   playNewTrackListFromGenrePlaylistMock,
 } = vi.hoisted(() => ({
   useListFullGenrePlaylistsMock: vi.fn(),
@@ -19,6 +20,7 @@ const {
   treeWheelPropsMock: vi.fn(),
   treeWheelRadialPopCorePropsMock: vi.fn(),
   setIsPlayingMock: vi.fn(),
+  trackListState: { value: null as unknown },
   playNewTrackListFromGenrePlaylistMock: vi.fn(() => Promise.resolve()),
 }));
 
@@ -29,7 +31,7 @@ vi.mock("../../../app-kit/src/player/PlayerContext", async (importOriginal) => (
 
 vi.mock("../../../app-kit/src/genre-tree/TrackListContext", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
-  useTrackList: () => ({ trackList: null, playNewTrackListFromGenrePlaylist: playNewTrackListFromGenrePlaylistMock }),
+  useTrackList: () => ({ trackList: trackListState.value, playNewTrackListFromGenrePlaylist: playNewTrackListFromGenrePlaylistMock }),
 }));
 
 // useGenreTreeViewState and GenreDetailExtras reach these hooks through app-kit's internal modules,
@@ -1217,6 +1219,58 @@ describe("GenreTreeView", () => {
       fireEvent.click(screen.getByRole("button", { name: "Play" }));
 
       expect(playNewTrackListFromGenrePlaylistMock).toHaveBeenCalledWith(jazz, "me");
+    });
+
+    it("pauses instead of reloading when the selected genre is already the playing tracklist", () => {
+      const jazz = makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } });
+      useListFullGenrePlaylistsMock.mockReturnValue({ data: [jazz], isPending: false });
+      trackListState.value = { origin: { type: "GENRE_PLAYLIST", uuid: "gp1" } };
+      renderView();
+      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+
+      fireEvent.change(screen.getByRole("textbox", { name: "Search a genre" }), { target: { value: "Ja" } });
+      fireEvent.click(screen.getByRole("button", { name: "Jazz" }));
+      fireEvent.click(screen.getByRole("button", { name: "Play" }));
+
+      expect(setIsPlayingMock).toHaveBeenCalledWith(true);
+      expect(playNewTrackListFromGenrePlaylistMock).not.toHaveBeenCalled();
+      trackListState.value = null;
+    });
+
+    it("logs when loading the genre playlist tracks fails", async () => {
+      const jazz = makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } });
+      useListFullGenrePlaylistsMock.mockReturnValue({ data: [jazz], isPending: false });
+      const failure = new Error("boom");
+      playNewTrackListFromGenrePlaylistMock.mockRejectedValueOnce(failure);
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+      renderView();
+      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+
+      fireEvent.change(screen.getByRole("textbox", { name: "Search a genre" }), { target: { value: "Ja" } });
+      fireEvent.click(screen.getByRole("button", { name: "Jazz" }));
+      fireEvent.click(screen.getByRole("button", { name: "Play" }));
+
+      await waitFor(() => expect(errorSpy).toHaveBeenCalledWith("Failed to load genre playlist tracks:", failure));
+      errorSpy.mockRestore();
+    });
+
+    it("zooms from the search bar in pop-core when the selected genre has children", () => {
+      const parent = makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" }, criteria: { uuid: "c1", name: "Mainstream Pop" } });
+      const child = makePlaylist({
+        uuid: "gp2",
+        name: "Bebop",
+        parent: { uuid: "gp1" },
+        criteria: { uuid: "c2", name: "Bebop", side: "pop" },
+      });
+      useListFullGenrePlaylistsMock.mockReturnValue({ data: [parent, child], isPending: false });
+      const onFocusGenreChange = vi.fn();
+      renderView({ viewMode: "pop-core", focusGenreUuid: null, onFocusGenreChange });
+
+      fireEvent.change(screen.getByRole("textbox", { name: "Search a genre" }), { target: { value: "Main" } });
+      fireEvent.click(screen.getByRole("button", { name: "Mainstream Pop" }));
+      fireEvent.click(screen.getByRole("button", { name: "Zoom in" }));
+
+      expect(onFocusGenreChange).toHaveBeenCalledWith("gp1", "zoom-in");
     });
 
     it("follows a controlled selectedNodeId and reports user selections without owning them", () => {
