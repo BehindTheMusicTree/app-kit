@@ -45,6 +45,8 @@ export type GenrePlaylistTreePerRootProps<T extends TrackBase> = {
   onSelectedNodeChange?: (node: GenreTreeNode | null) => void;
   /** Hides the info panel's header close button. */
   hideInfoPanelClose?: boolean;
+  /** Hides the info panel header's node name. */
+  hideInfoPanelTitle?: boolean;
   /** When true, suppresses per-node create/rename/reparent affordances. Defaults to false. */
   readOnly?: boolean;
   /** When false, suppresses the hover toolbar on every node. Defaults to true. */
@@ -71,6 +73,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
   selectedNodeId,
   onSelectedNodeChange,
   hideInfoPanelClose,
+  hideInfoPanelTitle,
   readOnly = false,
   showToolbar,
   wheelZoom,
@@ -199,6 +202,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
       selectedNodeId={selectedNodeId}
       onSelectedNodeChange={onSelectedNodeChange}
       hideInfoPanelClose={hideInfoPanelClose}
+      hideInfoPanelTitle={hideInfoPanelTitle}
       showToolbar={showToolbar}
       wheelZoom={wheelZoom}
       controlsOrientation={controlsOrientation}
