@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [12.0.0] - 2026-10-21
+
 ### Breaking
 
 - `@behindthemusictree/ui` is now a **peer dependency** (`^0.2.0`) instead of a bundled dependency. Apps must install it themselves, so they own the single copy of the design layer; the apps already import it directly. Add `@behindthemusictree/ui` to your `dependencies` when bumping.
