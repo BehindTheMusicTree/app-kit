@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [13.2.0] - 2026-10-21
+
 ### Changed
 
 - `GenreTreeView`: the detail panel header no longer repeats the selected genre's name, since the search bar floated over it already shows it (genre-tree-view 2.8.0's `hideInfoPanelTitle`, forwarded by `TreeWheel`, `TreeWheelRadialPopCore` and `TreePerRoot`). The colored header now scrolls with the panel, and a hovered wheel label takes its node's color.
