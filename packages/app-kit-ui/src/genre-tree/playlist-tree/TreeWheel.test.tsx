@@ -1,0 +1,312 @@
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { render } from "@testing-library/react";
+
+const {
+  genreTreeWheelPropsMock,
+  usePlayerMock,
+  useTrackListMock,
+  updateGenreMutateMock,
+  playGenreMock,
+  showPopupMock,
+} = vi.hoisted(() => ({
+  genreTreeWheelPropsMock: vi.fn(),
+  usePlayerMock: vi.fn(),
+  useTrackListMock: vi.fn(),
+  updateGenreMutateMock: vi.fn(),
+  playGenreMock: vi.fn(),
+  showPopupMock: vi.fn(),
+}));
+
+vi.mock("../../popup/InternalErrorPopup", () => ({ default: () => null }));
+vi.mock("@behindthemusictree/app-kit/popup", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  usePopup: () => ({ showPopup: showPopupMock, hidePopup: vi.fn() }),
+}));
+
+vi.mock("@behindthemusictree/genre-tree-view", () => ({
+  GenreTreeWheel: (props: unknown) => {
+    genreTreeWheelPropsMock(props);
+    return null;
+  },
+}));
+
+vi.mock("@behindthemusictree/app-kit/genre-tree", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  useTrackList: () => useTrackListMock(),
+  useUpdateGenre: () => ({ mutate: updateGenreMutateMock }),
+}));
+
+
+
+vi.mock("@behindthemusictree/app-kit/player", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  usePlayer: () => usePlayerMock(),
+}));
+
+import GenrePlaylistTreeWheel, { type GenrePlaylistTreeWheelProps } from "./TreeWheel";
+import type { TrackBase } from "@behindthemusictree/app-kit/genre-tree";
+import { ErrorCode } from "@behindthemusictree/app-kit/transport";
+
+const getBackendBaseUrl = () => "https://backend.example.com";
+
+function makeGenrePlaylist(overrides: Record<string, unknown> = {}) {
+  return {
+    uuid: "gp1",
+    name: "Jazz",
+    parent: null,
+    root: { uuid: "root1", name: "Root" },
+    tracksCount: 3,
+    criteria: { uuid: "c1", name: "Jazz" },
+    createdOn: "2024-01-01T00:00:00.000Z",
+    updatedOn: null,
+    isUnacceptedRoot: false,
+    ...overrides,
+  };
+}
+
+function renderWheel(overrides: Partial<GenrePlaylistTreeWheelProps<TrackBase>> = {}) {
+  const props: GenrePlaylistTreeWheelProps<TrackBase> = {
+    scope: "me",
+    genrePlaylists: [makeGenrePlaylist()] as GenrePlaylistTreeWheelProps<TrackBase>["genrePlaylists"],
+    reparentingGenreUuid: null,
+    setReparentingGenreUuid: vi.fn(),
+    handleGenreCreationAction: vi.fn(),
+    handleGenreRenameAction: vi.fn(),
+    getBackendBaseUrl,
+    ...overrides,
+  };
+  render(<GenrePlaylistTreeWheel {...props} />);
+  return props;
+}
+
+describe("GenrePlaylistTreeWheel", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    usePlayerMock.mockReturnValue({ isPlaying: false, setIsPlaying: vi.fn() });
+    useTrackListMock.mockReturnValue({ trackList: null, playNewTrackListFromGenrePlaylist: playGenreMock });
+    playGenreMock.mockResolvedValue(undefined);
+  });
+
+  it("maps genre playlists to tree nodes", () => {
+    renderWheel({
+      genrePlaylists: [
+        makeGenrePlaylist({ uuid: "gp1", parent: { uuid: "root" }, name: "Jazz", tracksCount: 3, criteria: {} }),
+        makeGenrePlaylist({ uuid: "gp2", parent: null, name: "Rock", tracksCount: 0, criteria: null }),
+      ],
+    });
+
+    const { nodes } = genreTreeWheelPropsMock.mock.calls[0][0];
+    expect(nodes).toEqual([
+      { id: "gp1", parentId: "root", name: "Jazz", itemCount: 3, actionable: true, side: undefined, wikidataId: null },
+      { id: "gp2", parentId: null, name: "Rock", itemCount: 0, actionable: false, side: undefined, wikidataId: null },
+    ]);
+  });
+
+  it("has no playing node when there is no track list", () => {
+    renderWheel();
+    expect(genreTreeWheelPropsMock.mock.calls[0][0].playingNodeId).toBeNull();
+  });
+
+  it("has no playing node when the track list origin is a single track", () => {
+    useTrackListMock.mockReturnValue({
+      trackList: { origin: { type: "TRACK", uuid: "t1" } },
+      playNewTrackListFromGenrePlaylist: vi.fn(),
+    });
+    renderWheel();
+    expect(genreTreeWheelPropsMock.mock.calls[0][0].playingNodeId).toBeNull();
+  });
+
+  it("reports the playing node id when the track list is a genre playlist", () => {
+    useTrackListMock.mockReturnValue({
+      trackList: { origin: { type: "GENRE_PLAYLIST", uuid: "gp1" } },
+      playNewTrackListFromGenrePlaylist: vi.fn(),
+    });
+    renderWheel();
+    expect(genreTreeWheelPropsMock.mock.calls[0][0].playingNodeId).toBe("gp1");
+  });
+
+  it("passes controlsOrientation through to GenreTreeWheel", () => {
+    renderWheel({ controlsOrientation: "horizontal" });
+    expect(genreTreeWheelPropsMock.mock.calls[0][0].controlsOrientation).toBe("horizontal");
+  });
+
+  it("passes playState based on isPlaying", () => {
+    usePlayerMock.mockReturnValue({ isPlaying: true, setIsPlaying: vi.fn() });
+    renderWheel();
+    expect(genreTreeWheelPropsMock.mock.calls[0][0].playState).toBe("playing");
+  });
+
+  describe("onPlayPause", () => {
+    it("does nothing when the genre playlist is not found", () => {
+      const setIsPlaying = vi.fn();
+      usePlayerMock.mockReturnValue({ isPlaying: false, setIsPlaying });
+      renderWheel();
+
+      genreTreeWheelPropsMock.mock.calls[0][0].onPlayPause("missing");
+
+      expect(setIsPlaying).not.toHaveBeenCalled();
+      expect(playGenreMock).not.toHaveBeenCalled();
+    });
+
+    it("toggles isPlaying when the playlist is already the current track list", () => {
+      const setIsPlaying = vi.fn();
+      usePlayerMock.mockReturnValue({ isPlaying: false, setIsPlaying });
+      useTrackListMock.mockReturnValue({
+        trackList: { origin: { type: "GENRE_PLAYLIST", uuid: "gp1" } },
+        playNewTrackListFromGenrePlaylist: vi.fn(),
+      });
+      renderWheel();
+
+      genreTreeWheelPropsMock.mock.calls[0][0].onPlayPause("gp1");
+
+      expect(setIsPlaying).toHaveBeenCalledWith(true);
+      expect(playGenreMock).not.toHaveBeenCalled();
+    });
+
+    it("does nothing when the playlist has no tracks", () => {
+      renderWheel({ genrePlaylists: [makeGenrePlaylist({ tracksCount: 0 })] });
+
+      genreTreeWheelPropsMock.mock.calls[0][0].onPlayPause("gp1");
+
+      expect(playGenreMock).not.toHaveBeenCalled();
+    });
+
+    it("plays the node's genre playlist", () => {
+      renderWheel();
+
+      genreTreeWheelPropsMock.mock.calls[0][0].onPlayPause("gp1");
+
+      expect(playGenreMock).toHaveBeenCalledWith(expect.objectContaining({ uuid: "gp1" }), "me");
+    });
+
+    it("logs an error when loading the tracks fails", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const error = new Error("boom");
+      playGenreMock.mockRejectedValueOnce(error);
+      renderWheel();
+
+      genreTreeWheelPropsMock.mock.calls[0][0].onPlayPause("gp1");
+
+      await vi.waitFor(() => expect(errorSpy).toHaveBeenCalledWith("Failed to load genre playlist tracks:", error));
+      expect(showPopupMock).toHaveBeenCalledWith(
+        expect.objectContaining({ props: expect.objectContaining({ errorCode: ErrorCode.CLIENT_UNKNOWN }) }),
+      );
+      errorSpy.mockRestore();
+    });
+  });
+
+  describe("onAddChild", () => {
+    it("does nothing when the playlist is missing or has no criteria", () => {
+      const handleGenreCreationAction = vi.fn();
+      renderWheel({
+        genrePlaylists: [makeGenrePlaylist({ criteria: null })],
+        handleGenreCreationAction,
+      });
+
+      genreTreeWheelPropsMock.mock.calls[0][0].onAddChild("gp1");
+      genreTreeWheelPropsMock.mock.calls[0][0].onAddChild("missing");
+
+      expect(handleGenreCreationAction).not.toHaveBeenCalled();
+    });
+
+    it("calls handleGenreCreationAction with the playlist's criteria", () => {
+      const handleGenreCreationAction = vi.fn();
+      const criteria = { uuid: "c1", name: "Jazz" };
+      renderWheel({ genrePlaylists: [makeGenrePlaylist({ criteria })], handleGenreCreationAction });
+
+      genreTreeWheelPropsMock.mock.calls[0][0].onAddChild("gp1");
+
+      expect(handleGenreCreationAction).toHaveBeenCalledWith(criteria);
+    });
+  });
+
+  describe("onRenameRequest", () => {
+    it("does nothing when the node's playlist has no criteria", () => {
+      const handleGenreRenameAction = vi.fn();
+      renderWheel({ genrePlaylists: [makeGenrePlaylist({ criteria: null })], handleGenreRenameAction });
+
+      genreTreeWheelPropsMock.mock.calls[0][0].onRenameRequest({ id: "gp1", name: "Jazz" });
+
+      expect(handleGenreRenameAction).not.toHaveBeenCalled();
+    });
+
+    it("calls handleGenreRenameAction with the playlist's criteria", () => {
+      const handleGenreRenameAction = vi.fn();
+      const criteria = { uuid: "c1", name: "Jazz" };
+      renderWheel({ genrePlaylists: [makeGenrePlaylist({ criteria })], handleGenreRenameAction });
+
+      genreTreeWheelPropsMock.mock.calls[0][0].onRenameRequest({ id: "gp1", name: "Jazz" });
+
+      expect(handleGenreRenameAction).toHaveBeenCalledWith(criteria);
+    });
+  });
+
+  it("onDeleteRequest prompts for confirmation", () => {
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    renderWheel();
+
+    genreTreeWheelPropsMock.mock.calls[0][0].onDeleteRequest({ id: "gp1", name: "Jazz" });
+
+    expect(confirmSpy).toHaveBeenCalledWith('Are you sure you want to delete "Jazz"?');
+    confirmSpy.mockRestore();
+  });
+
+  it("onReparentRequest sets the reparenting genre uuid", () => {
+    const setReparentingGenreUuid = vi.fn();
+    renderWheel({ setReparentingGenreUuid });
+
+    genreTreeWheelPropsMock.mock.calls[0][0].onReparentRequest({ id: "gp1", name: "Jazz" });
+
+    expect(setReparentingGenreUuid).toHaveBeenCalledWith("gp1");
+  });
+
+  it("onReparent mutates the genre parent and clears reparenting state on success", () => {
+    const setReparentingGenreUuid = vi.fn();
+    renderWheel({ setReparentingGenreUuid });
+
+    genreTreeWheelPropsMock.mock.calls[0][0].onReparent("gp1", "gp2");
+
+    expect(updateGenreMutateMock).toHaveBeenCalledWith(
+      { uuid: "gp1", data: { parent: "gp2" } },
+      expect.objectContaining({ onSuccess: expect.any(Function) }),
+    );
+
+    const { onSuccess } = updateGenreMutateMock.mock.calls[0][1];
+    onSuccess();
+
+    expect(setReparentingGenreUuid).toHaveBeenCalledWith(null);
+  });
+
+  it("passes reparentingGenreUuid and additionalActions through", () => {
+    const additionalActions = vi.fn();
+    renderWheel({ reparentingGenreUuid: "gp1", additionalActions });
+
+    const props = genreTreeWheelPropsMock.mock.calls[0][0];
+    expect(props.reparentingNodeId).toBe("gp1");
+    expect(props.additionalActions).toBe(additionalActions);
+  });
+
+  describe("readOnly", () => {
+    it("omits create/rename/reparent/delete handlers when readOnly is true", () => {
+      renderWheel({ readOnly: true });
+
+      const props = genreTreeWheelPropsMock.mock.calls[0][0];
+      expect(props.onAddChild).toBeUndefined();
+      expect(props.onRenameRequest).toBeUndefined();
+      expect(props.onReparentRequest).toBeUndefined();
+      expect(props.onReparent).toBeUndefined();
+      expect(props.onDeleteRequest).toBeUndefined();
+    });
+
+    it("keeps create/rename/reparent/delete handlers when readOnly is omitted", () => {
+      renderWheel();
+
+      const props = genreTreeWheelPropsMock.mock.calls[0][0];
+      expect(props.onAddChild).toBeInstanceOf(Function);
+      expect(props.onRenameRequest).toBeInstanceOf(Function);
+      expect(props.onReparentRequest).toBeInstanceOf(Function);
+      expect(props.onReparent).toBeInstanceOf(Function);
+      expect(props.onDeleteRequest).toBeInstanceOf(Function);
+    });
+  });
+});

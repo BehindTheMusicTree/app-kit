@@ -1,7 +1,7 @@
 {
   "name": "@behindthemusictree/app-kit",
   "version": "12.0.0",
-  "description": "Shared transport, auth, popup, UI, player, and genre-tree plumbing for BehindTheMusicTree React apps",
+  "description": "Headless transport, auth, popup state, player, and genre-tree data plumbing for BehindTheMusicTree React apps",
   "repository": {
     "type": "git",
     "url": "https://github.com/BehindTheMusicTree/app-kit.git"
@@ -43,36 +43,28 @@
       "types": "./dist/genre-tree/index.d.ts",
       "import": "./dist/genre-tree/index.js",
       "require": "./dist/genre-tree/index.cjs"
-    },
-    "./genre-tree/styles.css": "./dist/genre-tree/styles.css"
+    }
   },
   "files": [
     "dist"
   ],
   "scripts": {
     "dev": "tsup --watch",
-    "build": "tsup && node scripts/copy-genre-tree-css.mjs",
-    "lint": "tsc --noEmit",
+    "build": "tsup",
+    "lint": "tsc --noEmit && node scripts/check-headless.mjs",
     "test": "vitest run --coverage"
   },
   "peerDependencies": {
-    "@behindthemusictree/ui": "^0.2.0",
     "@tanstack/react-query": ">=5.0.0",
     "next": ">=14.0.0",
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0"
   },
   "dependencies": {
-    "@behindthemusictree/genre-tree-view": "catalog:",
-    "clsx": "^2.1.1",
-    "lucide-react": "^0.487.0",
-    "react-icons": "^5.5.0",
-    "tailwind-merge": "^3.2.0",
     "uuid": "11.1.1",
     "zod": "^3.24.3"
   },
   "devDependencies": {
-    "@behindthemusictree/ui": "catalog:",
     "@tanstack/react-query": "^5.72.2",
     "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.2",

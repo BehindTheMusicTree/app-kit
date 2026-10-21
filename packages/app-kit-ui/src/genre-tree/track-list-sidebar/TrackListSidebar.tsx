@@ -1,0 +1,99 @@
+"use client";
+
+import { ReactNode, useEffect, useRef } from "react";
+
+import TrackItem from "./TrackItem";
+import { useTrackList } from "@behindthemusictree/app-kit/genre-tree";
+import { useTrackListSidebarVisibility } from "@behindthemusictree/app-kit/genre-tree";
+import { TrackListOriginType } from "@behindthemusictree/app-kit/genre-tree";
+import { TrackBase } from "@behindthemusictree/app-kit/genre-tree";
+import { RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
+
+export interface TrackListSidebarProps<T extends TrackBase> {
+  className?: string;
+  renderDuration?: (track: T) => ReactNode;
+  renderActions?: (track: T) => ReactNode;
+  layout?: "fixed" | "inline";
+  /** When set, artist names render through it (e.g. a router `Link`). */
+  renderArtistLink?: RenderArtistLink;
+}
+
+export default function TrackListSidebar<T extends TrackBase>({
+  className = "",
+  renderDuration,
+  renderActions,
+  layout = "fixed",
+  renderArtistLink,
+}: TrackListSidebarProps<T>) {
+  const { trackList, loadMore } = useTrackList<T>();
+  const loadMoreSentinelRef = useRef<HTMLLIElement>(null);
+  const hasMore = !!trackList && trackList.nextPage !== null;
+
+  useEffect(() => {
+    const sentinel = loadMoreSentinelRef.current;
+    if (!hasMore || !sentinel) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        loadMore().catch((error) => console.error("Failed to load more tracks:", error));
+      }
+    });
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loadMore]);
+  const { hideTrackListSidebar } = useTrackListSidebarVisibility();
+
+  const positionClasses =
+    layout === "inline"
+      ? "relative w-full flex h-full flex-col"
+      : "fixed right-0 w-144";
+
+  return trackList ? (
+    <div
+      className={`track-list-sidebar ${positionClasses} rounded-2xl bg-gray-950 pb-1 ${className}`}
+      style={layout === "fixed" ? { bottom: "79px" /* Match player height exactly */ } : undefined}
+    >
+      <div className="header flex h-16 px-4 py-2 text-[var(--color-neutral-300)]">
+        <div className="origin flex text-xl ">
+          <div className="from h-auto flex flex-col justify-center items-center mr-2">From</div>
+          <div className="name-container flex flex-col justify-center items-center text-[var(--color-neutral-300)] font-bold pr-2 max-w-trackListName">
+            <div className="name text-overflow">{trackList.origin.label}</div>
+          </div>
+        </div>
+        <div className="info flex flex-col justify-center items-center text-m pt-1 mr-2">
+          {trackList.origin.type === TrackListOriginType.GENRE_PLAYLIST
+            ? "• Genre playlist • "
+            : trackList.origin.type === TrackListOriginType.ARTIST
+              ? "• Artist • "
+              : "• track playlist • "}
+          {trackList.total + " track" + (trackList.total > 1 ? "s •" : " •")}
+        </div>
+        <div
+          className="flex-grow flex flex-col items-end justify-center h-full cursor-pointer"
+          onClick={hideTrackListSidebar}
+        >
+          &#10005;
+        </div>
+      </div>
+      <ul
+        className={
+          layout === "inline"
+            ? "track-list flex-1 min-h-0 overflow-auto list-none p-0 m-0"
+            : "track-list overflow-auto max-h-[calc(100vh-63.5px-79px-56px-3.5px)] list-none p-0 m-0"
+        }
+      >
+        {trackList.tracks.map((track, index) => (
+          <li key={track.uuid}>
+            <TrackItem
+              track={track}
+              position={index + 1}
+              renderDuration={renderDuration}
+              renderActions={renderActions}
+              renderArtistLink={renderArtistLink}
+            />
+          </li>
+        ))}
+        {hasMore && <li ref={loadMoreSentinelRef} aria-hidden="true" className="h-px" />}
+      </ul>
+    </div>
+  ) : null;
+}

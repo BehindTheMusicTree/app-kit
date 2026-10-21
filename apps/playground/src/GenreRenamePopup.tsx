@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { BasePopup, CriteriaMinimum, Scope, useUpdateGenre } from "@behindthemusictree/app-kit";
+import { CriteriaMinimum, Scope, useUpdateGenre } from "@behindthemusictree/app-kit";
+import { BasePopup } from "@behindthemusictree/app-kit-ui/popup";
 
 type GenreRenamePopupProps = {
   genre: CriteriaMinimum;

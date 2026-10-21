@@ -33,6 +33,14 @@ fi
 OLD_VERSION=$(node -p "require('./packages/app-kit/package.json').version")
 (cd packages/app-kit && npm version "$BUMP" --no-git-tag-version > /dev/null)
 NEW_VERSION=$(node -p "require('./packages/app-kit/package.json').version")
+(cd packages/app-kit-ui && npm version "$NEW_VERSION" --no-git-tag-version > /dev/null)
+node -e "
+const fs = require('fs');
+const p = 'packages/app-kit-ui/package.json';
+const pkg = JSON.parse(fs.readFileSync(p, 'utf8'));
+pkg.peerDependencies['@behindthemusictree/app-kit'] = '^' + process.argv[1];
+fs.writeFileSync(p, JSON.stringify(pkg, null, 2) + '\\n');
+" "$NEW_VERSION"
 TODAY=$(date +%Y-%m-%d)
 
 RELEASE_BRANCH="release/$NEW_VERSION"
@@ -55,7 +63,7 @@ s = s.replace(needle, (m) => {
 fs.writeFileSync('CHANGELOG.md', s);
 " "$NEW_VERSION" "$TODAY"
 
-git add packages/app-kit/package.json pnpm-lock.yaml CHANGELOG.md
+git add packages/app-kit/package.json packages/app-kit-ui/package.json pnpm-lock.yaml CHANGELOG.md
 git commit -m "chore: release $NEW_VERSION"
 
 git push -u origin "$RELEASE_BRANCH"
