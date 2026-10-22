@@ -95,6 +95,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
         actionable: Boolean(genrePlaylist.criteria),
         side: genrePlaylist.criteria?.side ?? undefined,
         wikidataId: genrePlaylist.criteria?.wikidataId ?? null,
+        umbrella: genrePlaylist.isUmbrella,
       })),
     [genrePlaylistTreePerRoot],
   );
