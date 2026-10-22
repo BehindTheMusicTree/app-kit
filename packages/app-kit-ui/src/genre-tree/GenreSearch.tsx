@@ -101,6 +101,7 @@ export default function GenreSearch({
                 onClick={() => select(genrePlaylist)}
               >
                 {genrePlaylist.name}
+                {genrePlaylist.isUmbrella && <span className="ml-2 text-xs italic text-[var(--color-neutral-500)]">umbrella</span>}
               </button>
             </li>
           ))}

@@ -11,6 +11,14 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- `isUmbrella` (optional) on the tree/list criteria-playlist payload, passed to the genre tree as `umbrella` (badge in the info panel, italic labels) and flagged in `GenreSearch` results.
+
+### Changed
+
+- `@behindthemusictree/genre-tree-view` 2.8.0 → 2.9.0.
+
 ## [13.3.0] - 2026-10-21
 
 ### Added

@@ -32,6 +32,15 @@ describe("GenreSearch", () => {
     expect(screen.queryByText("Ambient")).not.toBeInTheDocument();
   });
 
+  it("flags umbrella results with a badge", () => {
+    const umbrella = { ...makeGenrePlaylist("Techno"), isUmbrella: true };
+    render(<GenreSearch genrePlaylists={[umbrella, makeGenrePlaylist("Technoid")]} onSelect={vi.fn()} />);
+
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "techno" } });
+
+    expect(screen.getAllByText("umbrella")).toHaveLength(1);
+  });
+
   it("calls onSelect with the matching genre playlist when a result is clicked", () => {
     const onSelect = vi.fn();
     render(<GenreSearch genrePlaylists={genrePlaylists} onSelect={onSelect} />);
