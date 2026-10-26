@@ -1,5 +1,5 @@
 /**
- * "reference" (community genre tree, grow-the-music-tree-api) tracks are MusicBrainz recordings,
+ * "reference" (community genre tree, grow-the-music-tree-api) tracks are songs (keyed on a representative MusicBrainz recording id),
  * played via embedded YouTube when a video is linked, so they get a "recordings" endpoint group
  * (list/detail/delete only). Other scopes/track kinds are injected by consumers via
  * `TrackListProvider`'s `listEndpoint`/`listQueryKey` props rather than defined here.
