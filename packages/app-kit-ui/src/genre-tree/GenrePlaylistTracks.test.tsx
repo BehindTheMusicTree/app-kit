@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { screen, fireEvent, act } from "@testing-library/react";
+import { render } from "../test-utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const { useTrackListMock, usePlayerMock, fetchMock, showPopupMock } = vi.hoisted(() => ({

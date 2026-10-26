@@ -8,6 +8,7 @@ import { useTrackListSidebarVisibility } from "@behindthemusictree/app-kit/genre
 import { TrackListOriginType } from "@behindthemusictree/app-kit/genre-tree";
 import { TrackBase } from "@behindthemusictree/app-kit/genre-tree";
 import { RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
+import { useTrackNoun } from "@behindthemusictree/app-kit/track-noun";
 
 export interface TrackListSidebarProps<T extends TrackBase> {
   className?: string;
@@ -26,6 +27,7 @@ export default function TrackListSidebar<T extends TrackBase>({
   renderArtistLink,
 }: TrackListSidebarProps<T>) {
   const { trackList, loadMore } = useTrackList<T>();
+  const trackNoun = useTrackNoun();
   const loadMoreSentinelRef = useRef<HTMLLIElement>(null);
   const hasMore = !!trackList && trackList.nextPage !== null;
 
@@ -64,8 +66,8 @@ export default function TrackListSidebar<T extends TrackBase>({
             ? "• Genre playlist • "
             : trackList.origin.type === TrackListOriginType.ARTIST
               ? "• Artist • "
-              : "• track playlist • "}
-          {trackList.total + " track" + (trackList.total > 1 ? "s •" : " •")}
+              : `• ${trackNoun.singular} playlist • `}
+          {`${trackList.total} ${trackList.total > 1 ? trackNoun.plural : trackNoun.singular} •`}
         </div>
         <div
           className="flex-grow flex flex-col items-end justify-center h-full cursor-pointer"

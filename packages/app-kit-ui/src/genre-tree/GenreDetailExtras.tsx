@@ -9,11 +9,12 @@ import { useFetchGenreOverview } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaPlaylistMinimum } from "@behindthemusictree/app-kit/genre-tree";
 import { GenrePlaylistTracks, type GenrePlaylistTracksSlots } from "./GenrePlaylistTracks";
 import { RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
+import { useTrackNoun } from "@behindthemusictree/app-kit/track-noun";
 
 export type GenreDetailSlots<O extends CriteriaOverview> = {
   /** Replaces the default Summary section. */
   renderSummary?: (overview: O) => ReactNode;
-  /** Replaces the default Essential tracks section. */
+  /** Replaces the default Essential section (e.g. "Essential songs"). */
   renderEssentialTracks?: (overview: O) => ReactNode;
 };
 
@@ -41,6 +42,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
   renderEssentialTracks,
   ...trackSlots
 }: GenreDetailExtrasProps<O>) {
+  const trackNoun = useTrackNoun();
   const { data: overview, isPending } = useFetchGenreOverview<O>(
     genreUuid,
     scope,
@@ -87,7 +89,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
       ) : (
         essentialTracks && (
         <div className="gtv-info-panel-children">
-          <span className="gtv-info-panel-children-title">Essential tracks</span>
+          <span className="gtv-info-panel-children-title">Essential {trackNoun.plural}</span>
           {essentialTracks.length > 0 ? (
             <ul className="list-disc pl-5">
               {essentialTracks.map((track) => (
