@@ -11,6 +11,12 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [17.1.1] - 2026-10-26
+
+### Changed
+
+- Bump `@behindthemusictree/genre-tree-view` to 4.0.0: genre counts are now shown as given (`tracksCount` is already a subtree total) instead of being rolled up again, which fixes double-counted genre counts.
+
 ## [17.1.0] - 2026-10-26
 
 ### Changed
