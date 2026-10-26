@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [17.2.0] - 2026-10-26
+
 ### Changed
 
 - Songs without a YouTube video show a crossed-out YouTube icon (accessible name "No video available") instead of the "No video available" text in `TrackItem` and `GenrePlaylistTracks`.
