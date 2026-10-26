@@ -5,7 +5,7 @@ export type { InfoPanelCurationProps } from "./playlist-tree/infoPanelCurationPr
 export { default as GenrePlaylistTreePerRoot } from "./playlist-tree/TreePerRoot";
 export type { GenrePlaylistTreePerRootProps } from "./playlist-tree/TreePerRoot";
 export { default as GenreSearch } from "./GenreSearch";
-export type { GenreSearchProps } from "./GenreSearch";
+export type { GenreSearchProps, GenreSearchExtraResults } from "./GenreSearch";
 export {
   GenreTreeSkeleton,
   GenreTreeWheelSkeleton,

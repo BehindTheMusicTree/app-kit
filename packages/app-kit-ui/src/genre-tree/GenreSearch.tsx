@@ -1,23 +1,33 @@
 "use client";
 
-import { Pause, Play, Search, X, ZoomIn } from "lucide-react";
+import type { ReactNode } from "react";
+import { ArrowLeft, Search, X } from "lucide-react";
 import { Input } from "@behindthemusictree/ui";
 
 import { CriteriaPlaylistSimple, useGenreSearch } from "@behindthemusictree/app-kit/genre-tree";
+
+export type GenreSearchExtraResults = {
+  /** Heading of this group; genre matches then get a "Genres" heading above it. */
+  label: string;
+  items: { key: string; content: ReactNode; onSelect: () => void }[];
+  /** Announced politely, e.g. "No artists found". */
+  status?: string;
+};
 
 export type GenreSearchProps = {
   genrePlaylists: CriteriaPlaylistSimple[];
   onSelect: (genrePlaylist: CriteriaPlaylistSimple) => void;
   /** Name of the currently selected genre; fills the input whenever it changes. */
   selectedName?: string | null;
+  /** When set, renders a "Previous" button left of the text; shown only when the host's CSS reveals `.genre-search-previous`. */
+  onPrevious?: () => void;
   /** Called by the clear button, after it empties the input. */
   onClear?: () => void;
-  /** When set, shows a "Zoom in" button that fires it. */
-  onZoomIn?: () => void;
-  /** When set, shows a Play/Pause button at the right end of the field that fires it. */
-  onPlayPause?: () => void;
-  isPlaying?: boolean;
   placeholder?: string;
+  /** Called with what the user types, and with "" on clear or pick; never when `selectedName` refills the input. */
+  onQueryChange?: (query: string) => void;
+  /** A second result group (e.g. artists) the host resolves from `onQueryChange`. */
+  extraResults?: GenreSearchExtraResults;
 };
 
 export default function GenreSearch({
@@ -25,10 +35,10 @@ export default function GenreSearch({
   onSelect,
   selectedName = null,
   onClear,
-  onZoomIn,
-  onPlayPause,
-  isPlaying = false,
+  onPrevious,
   placeholder = "Search a genre…",
+  onQueryChange,
+  extraResults,
 }: GenreSearchProps) {
   const { query, setQuery, results, canClear, clear, select } = useGenreSearch({
     genrePlaylists,
@@ -37,71 +47,88 @@ export default function GenreSearch({
     onClear,
   });
 
+  const extraItems = query !== "" && query !== selectedName ? (extraResults?.items ?? []) : [];
+  const showList = results.length > 0 || extraItems.length > 0;
+  const heading = "px-3 pt-2 pb-1 text-xs font-medium uppercase text-[var(--color-neutral-500)]";
+
   return (
     <div className="genre-search relative w-[264px] shrink-0">
-      <Search
-        aria-hidden="true"
-        className="absolute left-3 top-1/2 w-4 h-4 text-[var(--color-neutral-500)] -translate-y-1/2 pointer-events-none"
-      />
+      {onPrevious && (
+        <button
+          type="button"
+          aria-label="Previous"
+          title="Previous"
+          className="genre-search-previous absolute left-2 top-1/2 z-10 hidden p-1.5 text-[var(--color-neutral-500)] bg-transparent rounded-full -translate-y-1/2 hover:bg-[var(--color-neutral-100)] hover:text-[var(--color-text)]"
+          onClick={onPrevious}
+        >
+          <ArrowLeft aria-hidden="true" className="w-4 h-4" />
+        </button>
+      )}
       <Input
         type="text"
         value={query}
-        onChange={(event) => setQuery(event.target.value)}
+        onChange={(event) => {
+          setQuery(event.target.value);
+          onQueryChange?.(event.target.value);
+        }}
         placeholder={placeholder}
         aria-label="Search a genre"
-        className={`pl-9 ${onPlayPause ? (onZoomIn ? "pr-24" : "pr-16") : onZoomIn ? "pr-16" : "pr-9"} bg-white border-[var(--color-neutral-200)] rounded-full shadow-md`}
+        className="pl-4 pr-16 transition-[padding] duration-200 ease-out motion-reduce:transition-none bg-white border-[var(--color-neutral-200)] rounded-full shadow-md"
       />
-      {(onZoomIn || onPlayPause || canClear) && (
-        <div className="absolute right-2 top-1/2 flex items-center -translate-y-1/2">
-          {onZoomIn && (
-            <button
-              type="button"
-              aria-label="Zoom in"
-              title="Zoom in"
-              className="p-1 text-[var(--color-neutral-500)] bg-transparent rounded-full hover:bg-[var(--color-neutral-100)] hover:text-[var(--color-text)]"
-              onClick={onZoomIn}
-            >
-              <ZoomIn aria-hidden="true" className="w-4 h-4" />
-            </button>
-          )}
+      <div className="absolute right-2 top-1/2 flex items-center -translate-y-1/2">
+          <span className="p-1 text-[var(--color-neutral-500)] pointer-events-none">
+            <Search aria-hidden="true" className="w-4 h-4" />
+          </span>
           {canClear && (
             <button
               type="button"
               aria-label="Clear search"
               className="p-1 text-[var(--color-neutral-500)] bg-transparent rounded-full hover:bg-[var(--color-neutral-100)] hover:text-[var(--color-text)]"
-              onClick={clear}
+              onClick={() => {
+                clear();
+                onQueryChange?.("");
+              }}
             >
               <X aria-hidden="true" className="w-4 h-4" />
             </button>
           )}
-          {onPlayPause && (
-            <button
-              type="button"
-              aria-label={isPlaying ? "Pause" : "Play"}
-              title={isPlaying ? "Pause" : "Play"}
-              className="p-1 text-[var(--color-neutral-500)] bg-transparent rounded-full hover:bg-[var(--color-neutral-100)] hover:text-[var(--color-text)]"
-              onClick={onPlayPause}
-            >
-              {isPlaying ? (
-                <Pause aria-hidden="true" className="w-4 h-4" />
-              ) : (
-                <Play aria-hidden="true" className="w-4 h-4" />
-              )}
-            </button>
-          )}
-        </div>
+      </div>
+      {extraResults?.status && (
+        <p role="status" aria-live="polite" className="sr-only">
+          {extraResults.status}
+        </p>
       )}
-      {results.length > 0 && (
+      {showList && (
         <ul className="genre-search-results absolute z-40 w-full max-h-64 mt-1 overflow-y-auto bg-white border border-[var(--color-neutral-200)] rounded-xl shadow-md">
+          {extraResults && results.length > 0 && <li className={heading}>Genres</li>}
           {results.map((genrePlaylist) => (
             <li key={genrePlaylist.uuid}>
               <button
                 type="button"
                 className="w-full px-3 py-1.5 text-left bg-transparent rounded-none hover:bg-[var(--color-neutral-100)]"
-                onClick={() => select(genrePlaylist)}
+                onClick={() => {
+                  select(genrePlaylist);
+                  onQueryChange?.("");
+                }}
               >
                 {genrePlaylist.name}
                 {genrePlaylist.isUmbrella && <span className="ml-2 text-xs italic text-[var(--color-neutral-500)]">umbrella</span>}
+              </button>
+            </li>
+          ))}
+          {extraResults && extraItems.length > 0 && <li className={heading}>{extraResults.label}</li>}
+          {extraItems.map((item) => (
+            <li key={item.key}>
+              <button
+                type="button"
+                className="w-full px-3 py-1.5 text-left bg-transparent rounded-none hover:bg-[var(--color-neutral-100)]"
+                onClick={() => {
+                  setQuery("");
+                  onQueryChange?.("");
+                  item.onSelect();
+                }}
+              >
+                {item.content}
               </button>
             </li>
           ))}

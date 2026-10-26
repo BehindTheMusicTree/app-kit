@@ -1221,15 +1221,20 @@ describe("GenreTreeView", () => {
       expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].selectedNodeId).toBeNull();
     });
 
-    it("plays the selected genre from the search bar's Play button", () => {
+    function openBand(id: string) {
+      const output = treeWheelPropsMock.mock.calls.at(-1)?.[0].renderExtraDetails({ id });
+      render(<>{output}</>);
+    }
+
+    it("plays the selected genre from the action band's Play button", () => {
       const jazz = makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } });
       useListFullGenrePlaylistsMock.mockReturnValue({ data: [jazz], isPending: false });
       renderView();
       fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
-      expect(screen.queryByRole("button", { name: "Play" })).not.toBeInTheDocument();
 
       fireEvent.change(screen.getByRole("textbox", { name: "Search a genre" }), { target: { value: "Ja" } });
       fireEvent.click(screen.getByRole("button", { name: "Jazz" }));
+      openBand("gp1");
       fireEvent.click(screen.getByRole("button", { name: "Play" }));
 
       expect(playNewTrackListFromGenrePlaylistMock).toHaveBeenCalledWith(jazz, "me");
@@ -1244,6 +1249,7 @@ describe("GenreTreeView", () => {
 
       fireEvent.change(screen.getByRole("textbox", { name: "Search a genre" }), { target: { value: "Ja" } });
       fireEvent.click(screen.getByRole("button", { name: "Jazz" }));
+      openBand("gp1");
       fireEvent.click(screen.getByRole("button", { name: "Play" }));
 
       expect(setIsPlayingMock).toHaveBeenCalledWith(true);
@@ -1262,13 +1268,14 @@ describe("GenreTreeView", () => {
 
       fireEvent.change(screen.getByRole("textbox", { name: "Search a genre" }), { target: { value: "Ja" } });
       fireEvent.click(screen.getByRole("button", { name: "Jazz" }));
+      openBand("gp1");
       fireEvent.click(screen.getByRole("button", { name: "Play" }));
 
       await waitFor(() => expect(errorSpy).toHaveBeenCalledWith("Failed to load genre playlist tracks:", failure));
       errorSpy.mockRestore();
     });
 
-    it("zooms from the search bar in pop-core when the selected genre has children", () => {
+    it("zooms from the action band in pop-core when the selected genre has children", () => {
       const parent = makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" }, criteria: { uuid: "c1", name: "Mainstream Pop" } });
       const child = makePlaylist({
         uuid: "gp2",
@@ -1282,9 +1289,56 @@ describe("GenreTreeView", () => {
 
       fireEvent.change(screen.getByRole("textbox", { name: "Search a genre" }), { target: { value: "Main" } });
       fireEvent.click(screen.getByRole("button", { name: "Mainstream Pop" }));
-      fireEvent.click(screen.getByRole("button", { name: "Zoom in" }));
+      const output = treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0].renderExtraDetails({ id: "gp1" });
+      render(<>{output}</>);
+      fireEvent.click(screen.getByRole("button", { name: "Focus" }));
 
       expect(onFocusGenreChange).toHaveBeenCalledWith("gp1", "zoom-in");
+    });
+
+    it("wires the action band's Add, Rename and Parent actions to the host callbacks", () => {
+      const jazz = makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } });
+      useListFullGenrePlaylistsMock.mockReturnValue({ data: [jazz], isPending: false });
+      const props = renderView();
+      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+      openBand("gp1");
+
+      fireEvent.click(screen.getByRole("button", { name: "Add" }));
+      fireEvent.click(screen.getByRole("button", { name: "Rename" }));
+      fireEvent.click(screen.getByRole("button", { name: "Parent" }));
+
+      expect(props.handleGenreCreationAction).toHaveBeenCalledWith(jazz.criteria);
+      expect(props.handleGenreRenameAction).toHaveBeenCalledWith(jazz.criteria);
+    });
+
+    it("hides the mutating band actions when read-only", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist()], isPending: false });
+      renderView({ readOnly: true });
+      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+      openBand("gp1");
+
+      expect(screen.queryByRole("button", { name: "Add" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Rename" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Parent" })).not.toBeInTheDocument();
+    });
+
+    it("proxies the search field's Previous button to genre-tree-view's own previous button", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist()], isPending: false });
+      const { container } = render(
+        <GenreTreeView scope="me" handleGenreCreationAction={vi.fn()} handleGenreRenameAction={vi.fn()} getBackendBaseUrl={getBackendBaseUrl} />,
+      );
+      const libPrevious = document.createElement("button");
+      libPrevious.className = "gtv-info-panel-previous";
+      const onClick = vi.fn();
+      libPrevious.addEventListener("click", onClick);
+      const overlay = document.createElement("div");
+      overlay.className = "search-overlay";
+      overlay.appendChild(libPrevious);
+      container.querySelector(".genre-tree-view")?.appendChild(overlay);
+
+      fireEvent.click(screen.getByRole("button", { name: "Previous", hidden: true }));
+
+      expect(onClick).toHaveBeenCalledOnce();
     });
 
     it("follows a controlled selectedNodeId and reports user selections without owning them", () => {

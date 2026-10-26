@@ -11,6 +11,18 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [14.0.0] - 2026-10-26
+
+### Added
+
+- `GenreSearch` / `GenreTreeView`: optional `onQueryChange` / `onSearchQueryChange` and `extraResults` / `searchExtraResults` let the host add a second result group (e.g. artists) to the search dropdown, shown under "Genres" and the group's label. Unset, the dropdown is unchanged.
+- `GenreTreeView` (wheel, pop-core): genre-tree-view's "Previous" button now sits inside the search field, left of the genre name, and fades in sliding from the left; the field's left padding widens to make room.
+- `GenreActionBand`: Google Maps-style band under the detail panel header (icon over label) holding Play/Pause, Focus, Add, Rename, Parent and the `additionalActions`; genre-tree-view's own toolbar and its ⋮ menu are hidden.
+
+### Breaking
+
+- `GenreSearch`: `onZoomIn`, `onPlayPause` and `isPlaying` are removed; those actions moved to the detail panel's action band. The search icon now sits right of the field's text, left of the clear button.
+
 ## [13.5.0] - 2026-10-26
 
 ### Added
