@@ -138,6 +138,22 @@ describe("fetchWrapper", () => {
     expect(handleError).toHaveBeenCalledWith(appError);
   });
 
+  it.each(["POST", "PUT", "PATCH", "DELETE"])(
+    "calls handleError and still throws for a non-ok %s response",
+    async (method) => {
+      vi.mocked(fetch).mockResolvedValue({ ok: false } as unknown as Response);
+      const appError = new AppError(ErrorCode.BACKEND_AUTH_ERROR);
+      createAppErrorFromResultMock.mockResolvedValue(appError);
+      const handleError = vi.fn();
+
+      await expect(
+        fetchWrapper("things/", false, { method }, undefined, undefined, undefined, handleError),
+      ).rejects.toBe(appError);
+
+      expect(handleError).toHaveBeenCalledWith(appError);
+    },
+  );
+
   it("wraps a thrown non-AppError network failure via createNetworkOrBackendError and throws it", async () => {
     const networkFailure = new TypeError("Failed to fetch");
     vi.mocked(fetch).mockRejectedValue(networkFailure);
@@ -241,7 +257,9 @@ describe("fetchWrapper", () => {
     createNetworkOrBackendErrorMock.mockReturnValue(new AppError(ErrorCode.BACKEND_AUTH_ERROR));
     const handleError = vi.fn();
 
-    await fetchWrapper("things/", false, { method: "POST" }, undefined, undefined, undefined, handleError);
+    await expect(
+      fetchWrapper("things/", false, { method: "POST" }, undefined, undefined, undefined, handleError),
+    ).rejects.toBeInstanceOf(AppError);
 
     expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalled();

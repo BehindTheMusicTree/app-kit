@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- A failed non-GET/HEAD request now rejects with the `AppError` (after calling `handleError`) instead of resolving to `null`, so mutations reach `onError` rather than failing Zod output validation with "Expected object, received null". GET/HEAD keep resolving to `null` after `handleError`.
+
 ## [13.4.0] - 2026-10-22
 
 ### Added
