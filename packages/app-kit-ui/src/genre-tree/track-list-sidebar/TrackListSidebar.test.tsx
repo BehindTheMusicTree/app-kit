@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { screen, fireEvent } from "@testing-library/react";
+import { render } from "../../test-utils";
+import { TrackNounProvider } from "@behindthemusictree/app-kit/track-noun";
 
 const { useTrackListMock, useTrackListSidebarVisibilityMock } = vi.hoisted(() => ({
   useTrackListMock: vi.fn(),
@@ -82,6 +84,25 @@ describe("TrackListSidebar", () => {
 
     expect(screen.getByText(/track playlist/)).toBeInTheDocument();
     expect(screen.getByText(/1 track /)).toBeInTheDocument();
+  });
+
+  it("uses the noun supplied by the TrackNounProvider", () => {
+    useTrackListMock.mockReturnValue({
+      trackList: makeTrackList({
+        origin: { label: "Single Track", type: TrackListOriginType.TRACK },
+        tracks: [{ uuid: "t1", title: "Only Song" }],
+        total: 2,
+      }),
+    });
+
+    render(
+      <TrackNounProvider singular="song" plural="songs">
+        <TrackListSidebar />
+      </TrackNounProvider>,
+    );
+
+    expect(screen.getByText(/song playlist/)).toBeInTheDocument();
+    expect(screen.getByText(/2 songs /)).toBeInTheDocument();
   });
 
   it("labels an artist origin and passes renderArtistLink to each track", () => {

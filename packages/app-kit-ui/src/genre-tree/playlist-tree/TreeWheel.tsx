@@ -21,6 +21,7 @@ import { CriteriaPlaylistSimple } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaMinimum } from "@behindthemusictree/app-kit/genre-tree";
 import { Scope } from "@behindthemusictree/app-kit/transport";
 import type { InfoPanelCurationProps } from "./infoPanelCurationProps";
+import { capitalize, useTrackNoun } from "@behindthemusictree/app-kit/track-noun";
 
 export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
   scope: Scope;
@@ -80,6 +81,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
 }: GenrePlaylistTreeWheelProps<T>) {
   const { isPlaying, setIsPlaying } = usePlayer();
   const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList<T>();
+  const trackNoun = useTrackNoun();
   const { showPopup } = usePopup();
 
   const nodes: GenreTreeNode[] = useMemo(
@@ -168,6 +170,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
     <GenreTreeWheel
       className={className}
       nodes={nodes}
+      itemCountLabel={`${capitalize(trackNoun.singular)} count`}
       playingNodeId={playingNodeId}
       playState={isPlaying ? "playing" : "paused"}
       reparentingNodeId={reparentingGenreUuid}

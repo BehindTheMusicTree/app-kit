@@ -5,6 +5,7 @@ const entry = {
   "transport/index": "src/transport/index.ts",
   "auth/index": "src/auth/index.ts",
   "popup/index": "src/popup/index.ts",
+  "track-noun/index": "src/track-noun/index.ts",
   "player/index": "src/player/index.ts",
   "genre-tree/index": "src/genre-tree/index.ts",
 };
