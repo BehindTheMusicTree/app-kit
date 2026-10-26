@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [16.0.0] - 2026-10-26
+
 ### Added
 
 - `useArtistSearch(getBackendBaseUrl, text)` and `ArtistSearchResultSchema` / `ArtistSearchResultsSchema` (`@behindthemusictree/app-kit/genre-tree`): debounced `artists/search/` query (2+ characters, 8 results).
