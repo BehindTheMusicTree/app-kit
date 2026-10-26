@@ -14,6 +14,7 @@ import { usePlayer } from "@behindthemusictree/app-kit/player";
 import { PlayStates } from "@behindthemusictree/app-kit/player";
 import { usePopup } from "@behindthemusictree/app-kit/popup";
 import InternalErrorPopup from "../popup/InternalErrorPopup";
+import { UnplayableReason } from "./UnplayableReason";
 import { ErrorCode } from "@behindthemusictree/app-kit/transport";
 import { Scope } from "@behindthemusictree/app-kit/transport";
 import { genrePlaylistQueryKeys } from "@behindthemusictree/app-kit/genre-tree";
@@ -192,7 +193,9 @@ export function GenrePlaylistTracks({
                   </button>
                   {text}
                   {isSong(track) && <MusicBrainzRecordingLink song={track} />}
-                  <span className="shrink-0 text-xs">{unplayableReason}</span>
+                  <span className="shrink-0 text-xs">
+                    <UnplayableReason reason={unplayableReason} />
+                  </span>
                   {actions}
                 </li>
               );
