@@ -9,6 +9,7 @@ import {
   PlayerTrack,
   TrackListProvider,
   TrackListSidebarVisibilityProvider,
+  TrackNounProvider,
   useFetchWrapper,
   libraryEndpoints,
   libraryQueryKeys,
@@ -238,19 +239,21 @@ export function App() {
   const loadTrack = useLoadTrack();
 
   return (
-    <PlayerProvider loadTrack={loadTrack}>
-      <PopupProvider>
-        <TrackListSidebarVisibilityProvider>
-          <TrackListProvider
-            getBackendBaseUrl={getBackendBaseUrl}
-            schema={SongDetailedSchema}
-            listEndpoint={libraryEndpoints.reference.songs.list}
-            listQueryKey={libraryQueryKeys.reference.songs.list}
-          >
-            <AppContent />
-          </TrackListProvider>
-        </TrackListSidebarVisibilityProvider>
-      </PopupProvider>
-    </PlayerProvider>
+    <TrackNounProvider singular="song" plural="songs">
+      <PlayerProvider loadTrack={loadTrack}>
+        <PopupProvider>
+          <TrackListSidebarVisibilityProvider>
+            <TrackListProvider
+              getBackendBaseUrl={getBackendBaseUrl}
+              schema={SongDetailedSchema}
+              listEndpoint={libraryEndpoints.reference.songs.list}
+              listQueryKey={libraryQueryKeys.reference.songs.list}
+            >
+              <AppContent />
+            </TrackListProvider>
+          </TrackListSidebarVisibilityProvider>
+        </PopupProvider>
+      </PlayerProvider>
+    </TrackNounProvider>
   );
 }
