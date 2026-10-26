@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [17.0.0] - 2026-10-26
+
 ### Breaking
 
 - Song unification (grow-api >= 13.2.0 required: `library/songs`, `essentialSongs`). Renamed: `RecordingDetailed` -> `SongDetailed`, `RecordingDetailedSchema` -> `SongDetailedSchema`, `isRecording` -> `isSong`, `recordingUnplayableReason` -> `songUnplayableReason`, `ArtistRecordingsOrdering` -> `ArtistSongsOrdering`, `editGenreRecordingPages` -> `editGenreSongPages`, `startRecordingUuid` -> `startSongUuid` (`PlayGenrePlaylistOptions`, `PlayArtistOptions`), `renderRecordingLeading`/`renderRecordingActions` -> `renderSongLeading`/`renderSongActions` (`GenrePlaylistTracks`, `GenreDetailExtras`, `GenreTreeView`).
