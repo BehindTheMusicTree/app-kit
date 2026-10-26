@@ -45,7 +45,7 @@ export default function TrackListSidebar<T extends TrackBase>({
   const positionClasses =
     layout === "inline"
       ? "relative w-full flex h-full flex-col"
-      : "fixed right-0 w-144";
+      : "fixed right-0 w-[50rem]";
 
   return trackList ? (
     <div
@@ -55,11 +55,11 @@ export default function TrackListSidebar<T extends TrackBase>({
       <div className="header flex h-16 px-4 py-2 text-[var(--color-neutral-300)]">
         <div className="origin flex text-xl ">
           <div className="from h-auto flex flex-col justify-center items-center mr-2">From</div>
-          <div className="name-container flex flex-col justify-center items-center text-[var(--color-neutral-300)] font-bold pr-2 max-w-trackListName">
-            <div className="name text-overflow">{trackList.origin.label}</div>
+          <div className="name-container flex flex-col justify-center items-center text-[var(--color-neutral-300)] font-bold pr-2 max-w-[440px]">
+            <div className="name max-w-full truncate">{trackList.origin.label}</div>
           </div>
         </div>
-        <div className="info flex flex-col justify-center items-center text-m pt-1 mr-2">
+        <div className="info flex flex-col justify-center items-center pt-1 mr-2">
           {trackList.origin.type === TrackListOriginType.GENRE_PLAYLIST
             ? "• Genre playlist • "
             : trackList.origin.type === TrackListOriginType.ARTIST
@@ -67,12 +67,14 @@ export default function TrackListSidebar<T extends TrackBase>({
               : "• track playlist • "}
           {trackList.total + " track" + (trackList.total > 1 ? "s •" : " •")}
         </div>
-        <div
-          className="flex-grow flex flex-col items-end justify-center h-full cursor-pointer"
+        <button
+          type="button"
+          aria-label="Close track list"
+          className="flex-grow flex flex-col items-end justify-center h-full bg-transparent border-0 cursor-pointer text-inherit"
           onClick={hideTrackListSidebar}
         >
           &#10005;
-        </div>
+        </button>
       </div>
       <ul
         className={

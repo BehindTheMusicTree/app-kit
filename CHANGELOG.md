@@ -20,6 +20,13 @@ easy to spot when bumping.
 
 - `GenreSearch`: `onZoomIn`, `onPlayPause` and `isPlaying` are removed; those actions moved to the detail panel's action band. The search icon now sits right of the field's text, left of the clear button.
 
+### Changed
+
+- Genre detail panel: the description and the Summary / Essential tracks sections share the panel's 14px gutter and a 13px body text size; the Wikipedia source link sits inside the Summary section; Essential tracks render as a divided list instead of bullets. The action band uses the same gutter.
+- `GenrePlaylistTracks`: rows are at least 32px tall with a hover background, the current track is highlighted in the primary color, the play button is a 24px target and always visible on touch devices.
+- `TrackListSidebar` / `TrackItem` no longer rely on the consumer's Tailwind config (`trackListName`, `144` spacing, `.text-overflow`); the close control is a labelled `<button>`.
+- `MusicBrainzRecordingLink` inherits the surrounding text color (dimmed, full opacity on hover/focus), so it reads on both the light panel and the dark track list.
+
 ## [13.5.0] - 2026-10-26
 
 ### Added

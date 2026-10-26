@@ -87,6 +87,17 @@ describe("GenreDetailExtras", () => {
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
 
+  it("renders the Wikipedia source inside the default Summary section", () => {
+    useFetchGenreOverviewMock.mockReturnValue({
+      data: { ...overview, summarySourceUrl: "https://en.wikipedia.org/wiki/Jazz" },
+      isPending: false,
+    });
+    renderExtras();
+
+    const link = screen.getByRole("link", { name: /wikipedia/i });
+    expect(link.closest(".gtv-info-panel-children")).toContainElement(screen.getByText("Default summary text"));
+  });
+
   it("forwards the track slots to GenrePlaylistTracks", () => {
     const renderRecordingLeading = vi.fn();
     const renderRecordingActions = vi.fn();

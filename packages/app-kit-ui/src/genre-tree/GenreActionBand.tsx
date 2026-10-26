@@ -83,7 +83,7 @@ export default function GenreActionBand({
   if (items.length === 0) return null;
 
   return (
-    <div className="genre-action-band flex gap-1 px-2 py-3 overflow-x-auto border-b border-[var(--color-neutral-200)]">
+    <div className="genre-action-band flex gap-1 px-[14px] py-3 overflow-x-auto border-b border-[var(--color-neutral-200)]">
       {items.map((item) => (
         <button
           key={item.key}
