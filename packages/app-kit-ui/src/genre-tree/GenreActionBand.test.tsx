@@ -29,6 +29,17 @@ describe("GenreActionBand", () => {
     for (const handler of Object.values(handlers)) expect(handler).toHaveBeenCalledOnce();
   });
 
+  it("shows a focus ring on the icon circle when the button is keyboard-focused", () => {
+    render(<GenreActionBand node={node} onZoomIn={vi.fn()} />);
+
+    const button = screen.getByRole("button", { name: "Focus" });
+    expect(button).toHaveClass("focus-visible:outline-none");
+    expect(button.querySelector("span")).toHaveClass(
+      "group-focus-visible:ring-2",
+      "group-focus-visible:ring-[var(--color-focus-ring)]",
+    );
+  });
+
   it("labels the play action Pause while playing", () => {
     render(<GenreActionBand node={node} onPlayPause={vi.fn()} isPlaying />);
 
