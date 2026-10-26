@@ -148,14 +148,14 @@ export function GenrePlaylistTracks({
       ) : isError && tracks.length === 0 ? (
         <p role="alert">
           Couldn&apos;t load {trackNoun.plural}.{" "}
-          <button type="button" onClick={() => void refetch()}>
+          <button type="button" className="underline" onClick={() => void refetch()}>
             Retry
           </button>
         </p>
       ) : tracks.length === 0 ? (
         <p>—</p>
       ) : (
-        <ul className="max-h-64 overflow-y-auto [container-type:inline-size]" aria-label={`${genrePlaylist.name} ${trackNoun.plural}`}>
+        <ul className="mt-1 max-h-64 overflow-y-auto text-[13px] leading-[1.45] [container-type:inline-size]" aria-label={`${genrePlaylist.name} ${trackNoun.plural}`}>
           {tracks.map((track, index) => {
             const label = track.artists?.length
               ? `${track.title} — ${track.artists.map((artist) => artist.name).join(", ")}`
@@ -179,14 +179,14 @@ export function GenrePlaylistTracks({
             const unplayableReason = isRecording(track) ? recordingUnplayableReason(track) : null;
             if (unplayableReason) {
               return (
-                <li key={track.uuid} className="flex items-center gap-1 py-0.5 opacity-50" title={unplayableReason}>
+                <li key={track.uuid} className="flex min-h-8 items-center gap-1 px-1 opacity-50" title={unplayableReason}>
                   {leading}
                   <button
                     type="button"
                     disabled
                     aria-disabled="true"
                     aria-label={`${label} — ${unplayableReason}`}
-                    className="flex w-4 shrink-0 items-center justify-center p-0 [font-size:inherit] bg-transparent rounded-none border-0 opacity-0 cursor-not-allowed"
+                    className="flex h-6 w-6 shrink-0 items-center justify-center p-0 [font-size:inherit] bg-transparent rounded-full border-0 opacity-0 cursor-not-allowed"
                   >
                     <FaPlay size={10} />
                   </button>
@@ -198,12 +198,15 @@ export function GenrePlaylistTracks({
               );
             }
             return (
-              <li key={track.uuid} className="group flex items-center gap-1 py-0.5">
+              <li
+                key={track.uuid}
+                className={`group flex min-h-8 items-center gap-1 rounded px-1 hover:bg-[var(--color-neutral-100)] ${isCurrent ? "font-medium text-[var(--color-primary)]" : ""}`}
+              >
                 {leading}
                 <button
                   type="button"
                   aria-label={`${isPlaying ? "Pause" : "Play"} ${label}`}
-                  className={`flex w-4 shrink-0 items-center justify-center p-0 [font-size:inherit] bg-transparent rounded-none border-0 cursor-pointer group-hover:opacity-100 focus-visible:opacity-100 ${isCurrent && playState !== PlayStates.STOPPED ? "opacity-100" : "opacity-0"}`}
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center p-0 [font-size:inherit] bg-transparent rounded-full border-0 cursor-pointer group-hover:opacity-100 focus-visible:opacity-100 ${isCurrent && playState !== PlayStates.STOPPED ? "opacity-100" : "opacity-0 [@media(pointer:coarse)]:opacity-100"}`}
                   onClick={() => (isCurrent ? handlePlayPauseAction() : play(track.uuid))}
                 >
                   {isCurrent && playState === PlayStates.LOADING ? (

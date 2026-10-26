@@ -59,11 +59,11 @@ export default function TrackItem<T extends TrackBase>({
       )}
       <div className="title-artist-container flex flex-col items-start justify-center w-1/2">
         <div className="flex max-w-full items-center gap-2">
-          <div className="title text-lg font-bold text-[var(--color-neutral-300)] text-overflow">{track.title}</div>
+          <div className="title text-lg font-bold text-[var(--color-neutral-300)] max-w-full truncate">{track.title}</div>
           {isRecording(track) && <MusicBrainzRecordingLink recording={track} />}
         </div>
         {track.artists && track.artists.length > 0 ? (
-          <div className="artist text-base text-overflow">
+          <div className="artist text-base max-w-full truncate">
             <ArtistNames artists={track.artists} renderArtistLink={renderArtistLink} />
           </div>
         ) : (
@@ -71,12 +71,12 @@ export default function TrackItem<T extends TrackBase>({
         )}
         {unplayableReason && <div className="text-xs">{unplayableReason}</div>}
       </div>
-      <div className="album-name items-start justify-center w-1/3 ml-2 text-overflow ">
+      <div className="album-name items-start justify-center w-1/3 ml-2 max-w-full truncate">
         {track.album ? track.album.name : ""}
       </div>
       <div className="genre-name-container flex items-center justify-end w-1/6">
         {track.genre ? (
-          <div className="genre-name font-bold p-1 border border-[var(--color-neutral-300)] text-xs text-overflow">{track.genre.name}</div>
+          <div className="genre-name font-bold p-1 border border-[var(--color-neutral-300)] text-xs max-w-full truncate">{track.genre.name}</div>
         ) : (
           ""
         )}

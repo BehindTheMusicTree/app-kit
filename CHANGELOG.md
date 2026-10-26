@@ -11,6 +11,13 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- Genre detail panel: the description and the Summary / Essential tracks sections share the panel's 14px gutter and a 13px body text size; the Wikipedia source link sits inside the Summary section; Essential tracks render as a divided list instead of bullets. The action band uses the same gutter.
+- `GenrePlaylistTracks`: rows are at least 32px tall with a hover background, the current track is highlighted in the primary color, the play button is a 24px target and always visible on touch devices.
+- `TrackListSidebar` / `TrackItem` no longer rely on the consumer's Tailwind config (`trackListName`, `144` spacing, `.text-overflow`); the close control is a labelled `<button>`.
+- `MusicBrainzRecordingLink` inherits the surrounding text color (dimmed, full opacity on hover/focus), so it reads on both the light panel and the dark track list.
+
 ## [15.0.0] - 2026-10-26
 
 ### Added

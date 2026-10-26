@@ -64,21 +64,33 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
 
   return (
     <>
-      {description && <p className="text-sm text-[var(--color-neutral-500)]">{description}</p>}
+      {description && (
+        <p className="px-[14px] py-2.5 text-[13px] leading-[1.45] text-[var(--color-neutral-500)]">{description}</p>
+      )}
       {renderSummary ? (
         renderSummary(overview)
       ) : (
-        <div className="gtv-info-panel-children">
+        <div className="gtv-info-panel-children text-[13px] leading-[1.45] text-[var(--color-text)]">
           <span className="gtv-info-panel-children-title">Summary</span>
-          <p>{summary ?? "—"}</p>
+          <p className="mt-1">{summary ?? "—"}</p>
+          {summarySourceUrl && (
+            <a
+              href={summarySourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1 inline-block text-xs text-[var(--color-neutral-500)] underline hover:text-[var(--color-text)]"
+            >
+              Source: Wikipedia
+            </a>
+          )}
         </div>
       )}
-      {summarySourceUrl && (
+      {renderSummary && summarySourceUrl && (
         <a
           href={summarySourceUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm text-[var(--color-neutral-500)] underline hover:text-[var(--color-neutral-700)]"
+          className="mx-[14px] mb-2.5 inline-block text-xs text-[var(--color-neutral-500)] underline hover:text-[var(--color-text)]"
         >
           Source: Wikipedia
         </a>
@@ -88,16 +100,18 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
         renderEssentialTracks(overview)
       ) : (
         essentialTracks && (
-        <div className="gtv-info-panel-children">
+        <div className="gtv-info-panel-children text-[13px] leading-[1.45] text-[var(--color-text)]">
           <span className="gtv-info-panel-children-title">Essential {trackNoun.plural}</span>
           {essentialTracks.length > 0 ? (
-            <ul className="list-disc pl-5">
+            <ul className="mt-1 divide-y divide-[var(--color-neutral-200)]">
               {essentialTracks.map((track) => (
-                <li key={track.uuid}>{track.title}</li>
+                <li key={track.uuid} className="py-1">
+                  {track.title}
+                </li>
               ))}
             </ul>
           ) : (
-            <p>—</p>
+            <p className="mt-1">—</p>
           )}
         </div>
         )
