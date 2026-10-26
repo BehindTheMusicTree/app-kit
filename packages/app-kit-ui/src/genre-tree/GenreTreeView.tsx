@@ -30,7 +30,7 @@ import GenrePlaylistTreePerRoot from "./playlist-tree/TreePerRoot";
 import GenrePlaylistTreeWheel from "./playlist-tree/TreeWheel";
 import GenrePlaylistTreeWheelRadialPopCore, { type GenreFocusProps } from "./playlist-tree/TreeWheelRadialPopCore";
 import { GenreTreeWheelHandoff } from "./GenreTreeWheelHandoff";
-import GenreSearch from "./GenreSearch";
+import GenreSearch, { type GenreSearchProps } from "./GenreSearch";
 import GenreActionBand from "./GenreActionBand";
 
 // genre-tree-view's "previous" button (back to the last selected genre) renders inside the info panel, which sits
@@ -115,6 +115,10 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   controlsOrientation?: ControlsOrientation;
   /** When set, artist names in the info panel's track list render through it (e.g. a router `Link`). */
   renderArtistLink?: RenderArtistLink;
+  /** Forwarded to the search bar: what the user types, so the host can resolve `searchExtraResults`. */
+  onSearchQueryChange?: GenreSearchProps["onQueryChange"];
+  /** A second result group in the search dropdown, e.g. artists. */
+  searchExtraResults?: GenreSearchProps["extraResults"];
 } & GenreDetailSlots<O> &
   GenrePlaylistTracksSlots &
   InfoPanelCurationProps &
@@ -138,6 +142,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   renderGenreDetailExtras,
   controlsOrientation,
   renderArtistLink,
+  onSearchQueryChange,
+  searchExtraResults,
   renderSummary,
   renderEssentialTracks,
   renderRecordingLeading,
@@ -282,6 +288,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           selectedName={selectedGenrePlaylist?.name ?? null}
           onClear={handleGenreSearchClear}
           onPrevious={handlePrevious}
+          onQueryChange={onSearchQueryChange}
+          extraResults={searchExtraResults}
         />
       )}
       {!isLoading && !isControlled && (
