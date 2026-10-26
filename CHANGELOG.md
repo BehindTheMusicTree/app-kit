@@ -11,6 +11,13 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Breaking
+
+- Song unification (grow-api >= 13.2.0 required: `library/songs`, `essentialSongs`). Renamed: `RecordingDetailed` -> `SongDetailed`, `RecordingDetailedSchema` -> `SongDetailedSchema`, `isRecording` -> `isSong`, `recordingUnplayableReason` -> `songUnplayableReason`, `ArtistRecordingsOrdering` -> `ArtistSongsOrdering`, `editGenreRecordingPages` -> `editGenreSongPages`, `startRecordingUuid` -> `startSongUuid` (`PlayGenrePlaylistOptions`, `PlayArtistOptions`), `renderRecordingLeading`/`renderRecordingActions` -> `renderSongLeading`/`renderSongActions` (`GenrePlaylistTracks`, `GenreDetailExtras`, `GenreTreeView`).
+- `libraryEndpoints.reference.recordings` -> `.songs` (calls `library/songs/`), `libraryQueryKeys.reference.recordings` -> `.songs` (keys `referenceSongs`), `makeRecordingEndpoints`/`makeRecordingQueryKeys` -> `makeSongEndpoints`/`makeSongQueryKeys`.
+- Criteria `essentialTracks` -> `essentialSongs` in `CriteriaDetailed`, `CriteriaOverview`, `CriteriaCreation` and `CriteriaUpdate` payloads.
+- MusicBrainz names are unchanged: `MbRecording*`, `musicBrainzRecordingUrl`, `musicbrainzRecordingId`.
+
 ## [16.1.0] - 2026-10-26
 
 ### Changed

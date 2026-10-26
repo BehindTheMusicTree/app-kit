@@ -21,7 +21,7 @@ vi.mock("./GenrePlaylistTracks", () => ({
 import { GenreDetailExtras, type GenreDetailExtrasProps } from "./GenreDetailExtras";
 import type { CriteriaOverview } from "@behindthemusictree/app-kit/genre-tree";
 
-const overview = { summary: "Default summary text", essentialTracks: [] } as unknown as CriteriaOverview;
+const overview = { summary: "Default summary text", essentialSongs: [] } as unknown as CriteriaOverview;
 
 const renderExtras = (overrides: Partial<GenreDetailExtrasProps<CriteriaOverview>> = {}) =>
   render(
@@ -100,14 +100,14 @@ describe("GenreDetailExtras", () => {
   });
 
   it("forwards the track slots to GenrePlaylistTracks", () => {
-    const renderRecordingLeading = vi.fn();
-    const renderRecordingActions = vi.fn();
+    const renderSongLeading = vi.fn();
+    const renderSongActions = vi.fn();
     const renderTracksToolbar = vi.fn();
-    renderExtras({ renderRecordingLeading, renderRecordingActions, renderTracksToolbar });
+    renderExtras({ renderSongLeading, renderSongActions, renderTracksToolbar });
 
     expect(tracksPropsMock.mock.calls[0][0]).toMatchObject({
-      renderRecordingLeading,
-      renderRecordingActions,
+      renderSongLeading,
+      renderSongActions,
       renderTracksToolbar,
     });
   });

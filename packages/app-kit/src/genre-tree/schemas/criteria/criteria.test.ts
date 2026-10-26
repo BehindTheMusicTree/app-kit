@@ -44,22 +44,22 @@ describe("CriteriaDetailedSchema", () => {
     children: [],
     criteriaPlaylist: minimumCriteria,
     tracks: [],
-    essentialTracks: [track],
+    essentialSongs: [track],
     tracksCount: 3,
     updatedOn: null,
   };
 
-  it("parses a valid shape with essentialTracks", () => {
+  it("parses a valid shape with essentialSongs", () => {
     expect(() => CriteriaDetailedSchema.parse(valid)).not.toThrow();
   });
 
-  it("rejects a shape missing essentialTracks", () => {
-    const { essentialTracks: _essentialTracks, ...invalid } = valid;
+  it("rejects a shape missing essentialSongs", () => {
+    const { essentialSongs: _essentialSongs, ...invalid } = valid;
     expect(() => CriteriaDetailedSchema.parse(invalid)).toThrow();
   });
 
-  it("rejects an invalid essentialTracks entry", () => {
-    expect(() => CriteriaDetailedSchema.parse({ ...valid, essentialTracks: [{ uuid: "not-a-uuid" }] })).toThrow();
+  it("rejects an invalid essentialSongs entry", () => {
+    expect(() => CriteriaDetailedSchema.parse({ ...valid, essentialSongs: [{ uuid: "not-a-uuid" }] })).toThrow();
   });
 
   it("accepts a null summary", () => {
@@ -73,32 +73,32 @@ describe("CriteriaDetailedSchema", () => {
 });
 
 describe("CriteriaCreationSchema", () => {
-  it("parses a valid shape without essentialTracks", () => {
+  it("parses a valid shape without essentialSongs", () => {
     expect(() => CriteriaCreationSchema.parse({ name: "Rock" })).not.toThrow();
   });
 
-  it("parses a valid shape with essentialTracks", () => {
-    expect(() => CriteriaCreationSchema.parse({ name: "Rock", essentialTracks: [uuid] })).not.toThrow();
+  it("parses a valid shape with essentialSongs", () => {
+    expect(() => CriteriaCreationSchema.parse({ name: "Rock", essentialSongs: [uuid] })).not.toThrow();
   });
 
-  it("rejects an invalid essentialTracks entry", () => {
+  it("rejects an invalid essentialSongs entry", () => {
     expect(() =>
-      CriteriaCreationSchema.parse({ name: "Rock", essentialTracks: ["not-a-uuid"] }),
+      CriteriaCreationSchema.parse({ name: "Rock", essentialSongs: ["not-a-uuid"] }),
     ).toThrow();
   });
 });
 
 describe("CriteriaUpdateSchema", () => {
-  it("parses a valid shape without essentialTracks", () => {
+  it("parses a valid shape without essentialSongs", () => {
     expect(() => CriteriaUpdateSchema.parse({ name: "Rock" })).not.toThrow();
   });
 
-  it("parses a valid shape with essentialTracks", () => {
-    expect(() => CriteriaUpdateSchema.parse({ essentialTracks: [uuid] })).not.toThrow();
+  it("parses a valid shape with essentialSongs", () => {
+    expect(() => CriteriaUpdateSchema.parse({ essentialSongs: [uuid] })).not.toThrow();
   });
 
-  it("rejects an invalid essentialTracks entry", () => {
-    expect(() => CriteriaUpdateSchema.parse({ essentialTracks: ["not-a-uuid"] })).toThrow();
+  it("rejects an invalid essentialSongs entry", () => {
+    expect(() => CriteriaUpdateSchema.parse({ essentialSongs: ["not-a-uuid"] })).toThrow();
   });
 
   it("parses a null parent (make root)", () => {

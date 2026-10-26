@@ -26,7 +26,7 @@ import {
   TrackListOriginFromCriteriaPlaylist,
   TrackListOriginFromArtist,
   ArtistTrackListOriginInput,
-  ArtistRecordingsOrdering,
+  ArtistSongsOrdering,
 } from "./models/TrackListOrigin";
 import { TrackListOriginType } from "./models/TrackListOriginType";
 import { Scope } from "../transport/lib/scope";
@@ -64,9 +64,9 @@ export function useListTracks<T>(
 
 export type GenrePlaylistTracksPage<T> = { tracks: T[]; total: number; nextPage: number | null };
 
-export type PlayGenrePlaylistOptions = { startRecordingUuid?: string };
+export type PlayGenrePlaylistOptions = { startSongUuid?: string };
 
-export type PlayArtistOptions = { ordering: ArtistRecordingsOrdering; startRecordingUuid?: string };
+export type PlayArtistOptions = { ordering: ArtistSongsOrdering; startSongUuid?: string };
 
 interface TrackListContextType<T extends TrackBase> {
   trackList: TrackList<T> | null;
@@ -76,7 +76,7 @@ interface TrackListContextType<T extends TrackBase> {
   playNewTrackListFromTrackUuid: (track: T, scope: Scope) => void;
   /**
    * Fetches the playlist's first tracks page and plays its first track. Rejects on fetch/parse failure.
-   * With `startRecordingUuid`, the list starts at that track (`?from=`), so earlier tracks aren't
+   * With `startSongUuid`, the list starts at that track (`?from=`), so earlier tracks aren't
    * queued; rejects when the playlist doesn't contain it.
    */
   playNewTrackListFromGenrePlaylist: (
@@ -85,9 +85,9 @@ interface TrackListContextType<T extends TrackBase> {
     options?: PlayGenrePlaylistOptions,
   ) => Promise<void>;
   /**
-   * Fetches the artist's first page of playable recordings in `ordering` and plays the first one;
-   * later pages load lazily. With `startRecordingUuid`, the list starts at that recording (`?from=`).
-   * Rejects on fetch/parse failure, or when the artist's playable recordings don't contain it.
+   * Fetches the artist's first page of playable songs in `ordering` and plays the first one;
+   * later pages load lazily. With `startSongUuid`, the list starts at that song (`?from=`).
+   * Rejects on fetch/parse failure, or when the artist's playable songs don't contain it.
    */
   playNewTrackListFromArtist: (
     artist: ArtistTrackListOriginInput,
@@ -163,13 +163,13 @@ export function TrackListProvider<T extends TrackBase>({
         ...(origin.from && { from: origin.from }),
       };
       const response = await fetch(
-        libraryEndpoints.reference.recordings.list(),
+        libraryEndpoints.reference.songs.list(),
         true,
         false,
         {},
         params,
         false,
-        // A start recording that isn't playable 404s; surface it as a rejection, not the global error.
+        // A start song that isn't playable 404s; surface it as a rejection, not the global error.
         page === 1 && !!origin.from,
       );
       const parsed = parseWithLog(artistPageSchema, response, "fetchArtistTracksPage");
@@ -213,7 +213,7 @@ export function TrackListProvider<T extends TrackBase>({
   const playNewTrackListFromGenrePlaylist = useCallback(
     async (genrePlaylist: CriteriaPlaylistMinimum, scope: Scope, options?: PlayGenrePlaylistOptions) => {
       const request = ++latestPlayRequestRef.current;
-      const from = options?.startRecordingUuid;
+      const from = options?.startSongUuid;
       let page: GenrePlaylistTracksPage<T>;
       try {
         page = await fetchTracksPage(genrePlaylist.uuid, scope, 1, from);
@@ -245,7 +245,7 @@ export function TrackListProvider<T extends TrackBase>({
     async (artist: ArtistTrackListOriginInput, scope: Scope, options: PlayArtistOptions) => {
       if (scope !== "reference") throw new Error("Artist track lists only support the reference scope");
       const request = ++latestPlayRequestRef.current;
-      const from = options.startRecordingUuid;
+      const from = options.startSongUuid;
       const origin = new TrackListOriginFromArtist(artist, scope, options.ordering, from);
       let page: GenrePlaylistTracksPage<T>;
       try {
@@ -258,10 +258,10 @@ export function TrackListProvider<T extends TrackBase>({
 
       const startTrack = page.tracks[0];
       if (from && startTrack?.uuid !== from) {
-        throw new Error(`Artist ${artist.uuid} did not start at recording ${from}`);
+        throw new Error(`Artist ${artist.uuid} did not start at song ${from}`);
       }
       if (!startTrack) {
-        console.warn("No playable recordings found for artist");
+        console.warn("No playable songs found for artist");
         return;
       }
 

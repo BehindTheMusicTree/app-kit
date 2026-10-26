@@ -75,7 +75,7 @@ function makePage(tracks: TrackBase[], { page = 1, next = false, total = tracks.
 function makeArtistPage(tracks: TrackBase[], { page = 1, next = false, total = tracks.length } = {}) {
   return {
     overallTotal: total,
-    next: next ? `https://backend.example.com/library/recordings/?page=${page + 1}` : null,
+    next: next ? `https://backend.example.com/library/songs/?page=${page + 1}` : null,
     previous: null,
     results: tracks,
     page,
@@ -171,7 +171,7 @@ describe("TrackListContext", () => {
       });
 
       expect(fetchMock).toHaveBeenCalledWith(
-        "library/recordings/",
+        "library/songs/",
         true,
         false,
         {},
@@ -194,14 +194,14 @@ describe("TrackListContext", () => {
       expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t0");
     });
 
-    it("starts at the requested recording with ?from= and keeps it for later pages", async () => {
+    it("starts at the requested song with ?from= and keeps it for later pages", async () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
       fetchMock.mockResolvedValueOnce(makeArtistPage(makeTracks(2).slice(1), { next: true }));
 
       await act(async () => {
         await result.current.playNewTrackListFromArtist(artist, "reference", {
           ordering: "title",
-          startRecordingUuid: "t1",
+          startSongUuid: "t1",
         });
       });
       fetchMock.mockResolvedValueOnce(makeArtistPage(makeTracks(1, "u"), { page: 2 }));
@@ -233,26 +233,26 @@ describe("TrackListContext", () => {
       expect(result.current.trackList?.origin.type).toBe(TrackListOriginType.ARTIST);
     });
 
-    it("rejects when the list does not start at the requested recording", async () => {
+    it("rejects when the list does not start at the requested song", async () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
       fetchMock.mockResolvedValueOnce(makeArtistPage(makeTracks(2)));
 
       await act(async () => {
         await expect(
-          result.current.playNewTrackListFromArtist(artist, "reference", { ordering: "title", startRecordingUuid: "t1" }),
-        ).rejects.toThrow("Artist a1 did not start at recording t1");
+          result.current.playNewTrackListFromArtist(artist, "reference", { ordering: "title", startSongUuid: "t1" }),
+        ).rejects.toThrow("Artist a1 did not start at song t1");
       });
       expect(loadTrackForPlayerMock).not.toHaveBeenCalled();
     });
 
-    it("skips the global error for the first page when a start recording is given", async () => {
+    it("skips the global error for the first page when a start song is given", async () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
       fetchMock.mockResolvedValueOnce(makeArtistPage(makeTracks(1)));
 
       await act(async () => {
         await result.current.playNewTrackListFromArtist(artist, "reference", {
           ordering: "title",
-          startRecordingUuid: "t0",
+          startSongUuid: "t0",
         });
       });
 
@@ -305,7 +305,7 @@ describe("TrackListContext", () => {
       });
     });
 
-    it("warns and does nothing when the artist has no playable recordings", async () => {
+    it("warns and does nothing when the artist has no playable songs", async () => {
       const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
       const { result } = renderHook(() => useTrackList(), { wrapper });
       fetchMock.mockResolvedValueOnce(makeArtistPage([]));
@@ -314,7 +314,7 @@ describe("TrackListContext", () => {
         await result.current.playNewTrackListFromArtist(artist, "reference", { ordering: "-albumYear" });
       });
 
-      expect(warnSpy).toHaveBeenCalledWith("No playable recordings found for artist");
+      expect(warnSpy).toHaveBeenCalledWith("No playable songs found for artist");
       expect(result.current.trackList).toBeNull();
 
       warnSpy.mockRestore();
@@ -357,7 +357,7 @@ describe("TrackListContext", () => {
       expect(result.current.trackList?.nextPage).toBeNull();
     });
 
-    it("starts the list at startRecordingUuid in one request and keeps `from` for later pages", async () => {
+    it("starts the list at startSongUuid in one request and keeps `from` for later pages", async () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
       const first = makeTracks(3, "b");
       fetchMock
@@ -365,7 +365,7 @@ describe("TrackListContext", () => {
         .mockResolvedValueOnce(makePage(makeTracks(1, "u"), { page: 2, total: 250 }));
 
       await act(async () => {
-        await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", { startRecordingUuid: "b0" });
+        await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", { startSongUuid: "b0" });
       });
 
       expect(fetchMock).toHaveBeenNthCalledWith(1, "me/genre-playlists/p1/tracks/", true, true, {}, {
@@ -385,13 +385,13 @@ describe("TrackListContext", () => {
       expect(result.current.trackList?.tracks.map((track) => track.uuid)).toEqual(["b0", "b1", "b2", "u0"]);
     });
 
-    it("rejects when the first returned track is not startRecordingUuid", async () => {
+    it("rejects when the first returned track is not startSongUuid", async () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
       fetchMock.mockResolvedValueOnce(makePage(makeTracks(2, "a")));
 
       await expect(
         act(async () => {
-          await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", { startRecordingUuid: "b0" });
+          await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", { startSongUuid: "b0" });
         }),
       ).rejects.toThrow("did not start at track b0");
 
@@ -399,14 +399,14 @@ describe("TrackListContext", () => {
       expect(loadTrackForPlayerMock).not.toHaveBeenCalled();
     });
 
-    it("rejects when the playlist doesn't contain startRecordingUuid (404)", async () => {
+    it("rejects when the playlist doesn't contain startSongUuid (404)", async () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
       // The fetch wrapper reports a backend 404 as a connectivity error and resolves null.
       fetchMock.mockResolvedValueOnce(null);
 
       await expect(
         act(async () => {
-          await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", { startRecordingUuid: "b0" });
+          await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", { startSongUuid: "b0" });
         }),
       ).rejects.toThrow("received null response");
 

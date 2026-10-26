@@ -161,8 +161,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   artistSearchBaseUrl,
   renderSummary,
   renderEssentialTracks,
-  renderRecordingLeading,
-  renderRecordingActions,
+  renderSongLeading,
+  renderSongActions,
   renderTracksToolbar,
   editMode,
   onEditModeChange,
@@ -303,8 +303,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           renderArtistLink={renderArtistLink}
           renderSummary={renderSummary}
           renderEssentialTracks={renderEssentialTracks}
-          renderRecordingLeading={renderRecordingLeading}
-          renderRecordingActions={renderRecordingActions}
+          renderSongLeading={renderSongLeading}
+          renderSongActions={renderSongActions}
           renderTracksToolbar={renderTracksToolbar}
         />
         </>
@@ -316,8 +316,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       renderArtistLink,
       renderSummary,
       renderEssentialTracks,
-      renderRecordingLeading,
-      renderRecordingActions,
+      renderSongLeading,
+      renderSongActions,
       renderTracksToolbar,
     ],
   );

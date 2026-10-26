@@ -983,7 +983,7 @@ describe("GenreTreeView", () => {
       mockOverview({
         c1: {
           name: "Jazz",
-          essentialTracks: [
+          essentialSongs: [
             { uuid: "t1", title: "Track One", artists: null },
             { uuid: "t2", title: "Track Two", artists: null },
           ],
@@ -1053,7 +1053,7 @@ describe("GenreTreeView", () => {
     });
 
     it("renders blank summary and essential tracks placeholders when there is no summary, and no essential tracks", () => {
-      mockOverview({ c1: { essentialTracks: [] } });
+      mockOverview({ c1: { essentialSongs: [] } });
       renderView();
       selectGenre();
 
@@ -1177,7 +1177,7 @@ describe("GenreTreeView", () => {
       useFetchGenreOverviewMock.mockImplementation((id: string | null) =>
         id === "c1"
           ? {
-              data: { uuid: "c1", name: "Jazz", summary: "Improvised music with swung rhythms.", essentialTracks: [] },
+              data: { uuid: "c1", name: "Jazz", summary: "Improvised music with swung rhythms.", essentialSongs: [] },
               isPending: false,
             }
           : { data: undefined, isPending: false },
