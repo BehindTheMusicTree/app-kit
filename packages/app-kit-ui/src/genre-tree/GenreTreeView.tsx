@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState, type ComponentProps, type ReactNode } from "react";
 import { z } from "zod";
 import { Plus } from "lucide-react";
-import { IconTextButton, Button } from "@behindthemusictree/ui";
+import { IconTextButton, Button, SegmentedControl } from "@behindthemusictree/ui";
 
 import {
   GenreTreeWheelSkeleton,
@@ -97,6 +97,8 @@ export type ArtistSearchProps =
       /** Backend that serves `artists/search/`. Defaults to `getBackendBaseUrl`. */
       artistSearchBaseUrl?: () => string;
     };
+
+const NO_POP_ROOT_TITLE = "This genre tree has no 'Mainstream Pop' root yet";
 
 export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = {
   scope: Scope;
@@ -337,52 +339,17 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
         />
       )}
       {!isLoading && !isControlled && (
-        <div
-          className="flex items-center gap-1"
-          role="group"
+        <SegmentedControl
           aria-label="Tree view mode"
-        >
-          <Button
-            variant={viewMode === "pop-core" ? "default" : "outline"}
-            size="sm"
-            disabled={!canShowPopCore}
-            title={
-              canShowPopCore
-                ? undefined
-                : "This genre tree has no 'Mainstream Pop' root yet"
-            }
-            onClick={() => setViewMode("pop-core")}
-          >
-            Pop/Core
-          </Button>
-          <Button
-            variant={viewMode === "wheel" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setViewMode("wheel")}
-          >
-            Wheel
-          </Button>
-          <Button
-            variant={viewMode === "stacked" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setViewMode("stacked")}
-          >
-            Stacked
-          </Button>
-          <Button
-            variant={viewMode === "outline" ? "default" : "outline"}
-            size="sm"
-            disabled={!canShowPopCore}
-            title={
-              canShowPopCore
-                ? undefined
-                : "This genre tree has no 'Mainstream Pop' root yet"
-            }
-            onClick={() => setViewMode("outline")}
-          >
-            Outline
-          </Button>
-        </div>
+          value={viewMode}
+          onChange={setViewMode}
+          options={[
+            { value: "pop-core", label: "Pop/Core", disabled: !canShowPopCore, title: canShowPopCore ? undefined : NO_POP_ROOT_TITLE },
+            { value: "wheel", label: "Wheel" },
+            { value: "stacked", label: "Stacked" },
+            { value: "outline", label: "Outline", disabled: !canShowPopCore, title: canShowPopCore ? undefined : NO_POP_ROOT_TITLE },
+          ]}
+        />
       )}
       {!isLoading && showDisplayOptions && (
         <div

@@ -13,8 +13,8 @@ catalogs:
       specifier: 3.1.0
       version: 3.1.0
     '@behindthemusictree/ui':
-      specifier: ^0.3.0
-      version: 0.3.0
+      specifier: ^0.4.0
+      version: 0.4.0
 
 overrides:
   sharp: ^0.35.4
@@ -48,7 +48,7 @@ importers:
         version: 3.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@behindthemusictree/ui':
         specifier: 'catalog:'
-        version: 0.3.0(@behindthemusictree/brand@12.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 0.4.0(@behindthemusictree/brand@12.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@tanstack/react-query':
         specifier: ^5.72.2
         version: 5.101.4(react@18.3.1)
@@ -174,7 +174,7 @@ importers:
         version: link:../app-kit
       '@behindthemusictree/ui':
         specifier: 'catalog:'
-        version: 0.3.0(@behindthemusictree/brand@12.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 0.4.0(@behindthemusictree/brand@12.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@tanstack/react-query':
         specifier: ^5.72.2
         version: 5.101.4(react@18.3.1)
@@ -347,8 +347,8 @@ packages:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
 
-  '@behindthemusictree/ui@0.3.0':
-    resolution: {integrity: sha512-vlTndEq3Kn/QOiur05gH+eywQ8OcQe58fYxtyRuw2pXWr0r5W8ycvuHfKNNMC/p9iOz0C8itbB2DGb4vlAuaPw==, tarball: https://npm.pkg.github.com/download/@behindthemusictree/ui/0.3.0/6dbd8472a9fa5b2544d6ec94f8c0eaf0e9e5703c}
+  '@behindthemusictree/ui@0.4.0':
+    resolution: {integrity: sha512-RO4JnD3G9EqNvjfjWBerMu5Ey/X5IYg2hDLLirjqr7akj4nRoiXawXTiqGKb/KulzHWZTpyv7KoVXiy1MJivoA==, tarball: https://npm.pkg.github.com/download/@behindthemusictree/ui/0.4.0/eca08fa32cdd8144eeceb2aa609d5215ab493a81}
     peerDependencies:
       '@behindthemusictree/brand': ^12.0.0
       react: '>=18.0.0'
@@ -2312,7 +2312,7 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
       react-icons: 5.7.0(react@18.3.1)
 
-  '@behindthemusictree/ui@0.3.0(@behindthemusictree/brand@12.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@behindthemusictree/ui@0.4.0(@behindthemusictree/brand@12.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@behindthemusictree/brand': 12.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       class-variance-authority: 0.7.1
