@@ -114,9 +114,28 @@ export function usePrefetchGenreOverview<O extends CriteriaOverview = CriteriaOv
   return useCallback((id: string) => queryClient.prefetchQuery(queryOptions(id)), [queryClient, queryOptions]);
 }
 
-export function useCreateGenre(scope: Scope, getBackendBaseUrl: () => string) {
+function useRefreshGenreTree(scope: Scope) {
   const queryClient = useQueryClient();
   const invalidateAllGenrePlaylistQueries = useInvalidateAllGenrePlaylistQueries();
+
+  // Returned so the mutation stays pending until the tree has refetched.
+  return ({ changedUuid, deletedUuid }: { changedUuid?: string; deletedUuid?: string } = {}) => {
+    const queryKeys = scope === "reference" ? genreQueryKeys.reference : genreQueryKeys.me;
+    if (deletedUuid) {
+      // Evicted rather than invalidated: refetching a deleted genre 404s and would hold the delete pending.
+      queryClient.removeQueries({ queryKey: queryKeys.detail(deletedUuid) });
+      queryClient.removeQueries({ queryKey: queryKeys.overview(deletedUuid) });
+    }
+    return Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.all }),
+      ...(changedUuid ? [queryClient.invalidateQueries({ queryKey: queryKeys.detail(changedUuid) })] : []),
+      invalidateAllGenrePlaylistQueries(),
+    ]);
+  };
+}
+
+export function useCreateGenre(scope: Scope, getBackendBaseUrl: () => string) {
+  const refreshGenreTree = useRefreshGenreTree(scope);
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
 
   return useValidatedMutation({
@@ -130,20 +149,15 @@ export function useCreateGenre(scope: Scope, getBackendBaseUrl: () => string) {
       });
       return response;
     },
-    onSuccess: () => {
-      const queryKey = scope === "reference" ? genreQueryKeys.reference.all : genreQueryKeys.me.all;
-      queryClient.invalidateQueries({ queryKey });
-      invalidateAllGenrePlaylistQueries();
-    },
+    onSuccess: () => refreshGenreTree(),
   });
 }
 
 export function useUpdateGenre(scope: Scope, getBackendBaseUrl: () => string) {
-  const queryClient = useQueryClient();
+  const refreshGenreTree = useRefreshGenreTree(scope);
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
-  const invalidateAllGenrePlaylistQueries = useInvalidateAllGenrePlaylistQueries();
 
-  const { mutate, formErrors } = useValidatedMutation({
+  const { mutate, mutateAsync, isPending, formErrors } = useValidatedMutation({
     inputSchema: z.object({
       uuid: z.string(),
       data: CriteriaUpdateSchema,
@@ -157,13 +171,7 @@ export function useUpdateGenre(scope: Scope, getBackendBaseUrl: () => string) {
       });
       return response;
     },
-    onSuccess: (_, { uuid }) => {
-      const queryKey = scope === "reference" ? genreQueryKeys.reference.all : genreQueryKeys.me.all;
-      const detailKey = scope === "reference" ? genreQueryKeys.reference.detail(uuid) : genreQueryKeys.me.detail(uuid);
-      queryClient.invalidateQueries({ queryKey });
-      queryClient.invalidateQueries({ queryKey: detailKey });
-      invalidateAllGenrePlaylistQueries();
-    },
+    onSuccess: (_, { uuid }) => refreshGenreTree({ changedUuid: uuid }),
   });
 
   const renameGenre = (uuid: string, name: string) => {
@@ -171,19 +179,15 @@ export function useUpdateGenre(scope: Scope, getBackendBaseUrl: () => string) {
   };
 
   const updateGenreParent = async (uuid: string, parentUuid: string | null) => {
-    return new Promise<void>((resolve) => {
-      mutate({ uuid, data: { parent: parentUuid } });
-      resolve();
-    });
+    await mutateAsync({ uuid, data: { parent: parentUuid } });
   };
 
-  return { mutate, renameGenre, updateGenreParent, formErrors };
+  return { mutate, renameGenre, updateGenreParent, isPending, formErrors };
 }
 
 export function useDeleteGenre(scope: Scope, getBackendBaseUrl: () => string) {
-  const queryClient = useQueryClient();
+  const refreshGenreTree = useRefreshGenreTree(scope);
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
-  const invalidateAllGenrePlaylistQueries = useInvalidateAllGenrePlaylistQueries();
 
   return useValidatedMutation({
     inputSchema: z.object({ uuid: z.string() }),
@@ -193,12 +197,6 @@ export function useDeleteGenre(scope: Scope, getBackendBaseUrl: () => string) {
       // Global error handling makes the wrapper return null too, indistinguishable from a 204.
       return fetch(endpoint, true, scope === "me", { method: "DELETE" }, undefined, false, true);
     },
-    onSuccess: (_, { uuid }) => {
-      const queryKey = scope === "reference" ? genreQueryKeys.reference.all : genreQueryKeys.me.all;
-      const detailKey = scope === "reference" ? genreQueryKeys.reference.detail(uuid) : genreQueryKeys.me.detail(uuid);
-      queryClient.invalidateQueries({ queryKey });
-      queryClient.invalidateQueries({ queryKey: detailKey });
-      invalidateAllGenrePlaylistQueries();
-    },
+    onSuccess: (_, { uuid }) => refreshGenreTree({ deletedUuid: uuid }),
   });
 }

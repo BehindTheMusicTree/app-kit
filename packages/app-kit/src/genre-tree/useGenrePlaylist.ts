@@ -127,10 +127,11 @@ export const useFetchGenrePlaylist = <S extends z.ZodTypeAny>(
 
 export const useInvalidateAllGenrePlaylistQueries = () => {
   const queryClient = useQueryClient();
-  return () => {
-    queryClient.invalidateQueries({ queryKey: genrePlaylistQueryKeys.me.all });
-    queryClient.invalidateQueries({ queryKey: genrePlaylistQueryKeys.me.full });
-    queryClient.invalidateQueries({ queryKey: genrePlaylistQueryKeys.reference.all });
-    queryClient.invalidateQueries({ queryKey: libraryQueryKeys.reference.recordings.all });
-  };
+  return () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: genrePlaylistQueryKeys.me.all }),
+      queryClient.invalidateQueries({ queryKey: genrePlaylistQueryKeys.me.full }),
+      queryClient.invalidateQueries({ queryKey: genrePlaylistQueryKeys.reference.all }),
+      queryClient.invalidateQueries({ queryKey: libraryQueryKeys.reference.recordings.all }),
+    ]);
 };

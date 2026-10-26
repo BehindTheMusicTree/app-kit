@@ -11,6 +11,26 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [13.5.0] - 2026-10-26
+
+### Added
+
+- `useUpdateGenre` returns `isPending`.
+
+### Breaking
+
+- `useGenreTreeViewState` returns `requestReparent`, `reparent` and `isReparenting` in place of `setReparentingGenreUuid`. The exported tree components (`GenrePlaylistTreePerRoot` and the wheel trees) take `onReparentRequest` / `onReparent` instead of `setReparentingGenreUuid`, and no longer take `getBackendBaseUrl`. `GenreTreeView` consumers are unaffected.
+
+### Changed
+
+- `updateGenreParent` now resolves after the update and the tree refetch, and rejects when the update fails (it used to resolve at once).
+- `useCreateGenre`, `useUpdateGenre` and `useDeleteGenre` stay pending until their genre and genre-playlist invalidations have refetched, so consumers don't see the stale tree as settled. `useInvalidateAllGenrePlaylistQueries` now returns a promise of those invalidations.
+
+### Fixed
+
+- Tree drag-to-reparent leaves reparent mode when the mutation fails, not only on success, and keeps doing so after a view-mode switch mid-update. A second drop is ignored while an update is running.
+- Deleting a genre no longer refetches the deleted genre's detail and overview (which 404ed and held the delete pending).
+
 ## [13.4.1] - 2026-10-26
 
 ### Fixed
