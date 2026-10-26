@@ -11,6 +11,17 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [15.0.0] - 2026-10-26
+
+### Added
+
+- `TrackNounProvider` / `useTrackNoun()` (`@behindthemusictree/app-kit/track-noun`) and a `capitalize` helper: the app supplies the noun its UI uses for tracks (`{ singular, plural }`).
+
+### Breaking
+
+- App-kit-ui components no longer hardcode "track(s)": `TrackListSidebar`, `GenreDetailExtras` (the "Essential …" heading), `GenrePlaylistTracks`, `TrackUploadPopup` and the genre tree components read the noun from `useTrackNoun()`, which throws outside a `TrackNounProvider`. Wrap the app in `<TrackNounProvider singular="song" plural="songs">` (grow) or `singular="track" plural="tracks"` (hear).
+- Requires `@behindthemusictree/genre-tree-view` 3.0.0; the tree components pass it `itemCountLabel` (e.g. "Song count").
+
 ## [14.0.0] - 2026-10-26
 
 ### Added
@@ -18,13 +29,10 @@ easy to spot when bumping.
 - `GenreSearch` / `GenreTreeView`: optional `onQueryChange` / `onSearchQueryChange` and `extraResults` / `searchExtraResults` let the host add a second result group (e.g. artists) to the search dropdown, shown under "Genres" and the group's label. Unset, the dropdown is unchanged.
 - `GenreTreeView` (wheel, pop-core): genre-tree-view's "Previous" button now sits inside the search field, left of the genre name, and fades in sliding from the left; the field's left padding widens to make room.
 - `GenreActionBand`: Google Maps-style band under the detail panel header (icon over label) holding Play/Pause, Focus, Add, Rename, Parent and the `additionalActions`; genre-tree-view's own toolbar and its ⋮ menu are hidden.
-- `TrackNounProvider` / `useTrackNoun()` (`@behindthemusictree/app-kit/track-noun`) and a `capitalize` helper: the app supplies the noun its UI uses for tracks (`{ singular, plural }`).
 
 ### Breaking
 
 - `GenreSearch`: `onZoomIn`, `onPlayPause` and `isPlaying` are removed; those actions moved to the detail panel's action band. The search icon now sits right of the field's text, left of the clear button.
-- App-kit-ui components no longer hardcode "track(s)": `TrackListSidebar`, `GenreDetailExtras` (the "Essential …" heading), `GenrePlaylistTracks`, `TrackUploadPopup` and the genre tree components read the noun from `useTrackNoun()`, which throws outside a `TrackNounProvider`. Wrap the app in `<TrackNounProvider singular="song" plural="songs">` (grow) or `singular="track" plural="tracks"` (hear).
-- Requires `@behindthemusictree/genre-tree-view` 3.0.0; the tree components pass it `itemCountLabel` (e.g. "Song count").
 
 ## [13.5.0] - 2026-10-26
 
