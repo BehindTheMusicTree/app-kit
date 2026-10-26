@@ -1,9 +1,18 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { ArrowLeft, Search, X } from "lucide-react";
 import { Input } from "@behindthemusictree/ui";
 
 import { CriteriaPlaylistSimple, useGenreSearch } from "@behindthemusictree/app-kit/genre-tree";
+
+export type GenreSearchExtraResults = {
+  /** Heading of this group; genre matches then get a "Genres" heading above it. */
+  label: string;
+  items: { key: string; content: ReactNode; onSelect: () => void }[];
+  /** Announced politely, e.g. "No artists found". */
+  status?: string;
+};
 
 export type GenreSearchProps = {
   genrePlaylists: CriteriaPlaylistSimple[];
@@ -15,6 +24,10 @@ export type GenreSearchProps = {
   /** Called by the clear button, after it empties the input. */
   onClear?: () => void;
   placeholder?: string;
+  /** Called with what the user types, and with "" on clear or pick; never when `selectedName` refills the input. */
+  onQueryChange?: (query: string) => void;
+  /** A second result group (e.g. artists) the host resolves from `onQueryChange`. */
+  extraResults?: GenreSearchExtraResults;
 };
 
 export default function GenreSearch({
@@ -24,6 +37,8 @@ export default function GenreSearch({
   onClear,
   onPrevious,
   placeholder = "Search a genre…",
+  onQueryChange,
+  extraResults,
 }: GenreSearchProps) {
   const { query, setQuery, results, canClear, clear, select } = useGenreSearch({
     genrePlaylists,
@@ -31,6 +46,10 @@ export default function GenreSearch({
     selectedName,
     onClear,
   });
+
+  const extraItems = query !== "" && query !== selectedName ? (extraResults?.items ?? []) : [];
+  const showList = results.length > 0 || extraItems.length > 0;
+  const heading = "px-3 pt-2 pb-1 text-xs font-medium uppercase text-[var(--color-neutral-500)]";
 
   return (
     <div className="genre-search relative w-[264px] shrink-0">
@@ -48,7 +67,10 @@ export default function GenreSearch({
       <Input
         type="text"
         value={query}
-        onChange={(event) => setQuery(event.target.value)}
+        onChange={(event) => {
+          setQuery(event.target.value);
+          onQueryChange?.(event.target.value);
+        }}
         placeholder={placeholder}
         aria-label="Search a genre"
         className="pl-4 pr-16 transition-[padding] duration-200 ease-out motion-reduce:transition-none bg-white border-[var(--color-neutral-200)] rounded-full shadow-md"
@@ -62,23 +84,51 @@ export default function GenreSearch({
               type="button"
               aria-label="Clear search"
               className="p-1 text-[var(--color-neutral-500)] bg-transparent rounded-full hover:bg-[var(--color-neutral-100)] hover:text-[var(--color-text)]"
-              onClick={clear}
+              onClick={() => {
+                clear();
+                onQueryChange?.("");
+              }}
             >
               <X aria-hidden="true" className="w-4 h-4" />
             </button>
           )}
       </div>
-      {results.length > 0 && (
+      {extraResults?.status && (
+        <p role="status" aria-live="polite" className="sr-only">
+          {extraResults.status}
+        </p>
+      )}
+      {showList && (
         <ul className="genre-search-results absolute z-40 w-full max-h-64 mt-1 overflow-y-auto bg-white border border-[var(--color-neutral-200)] rounded-xl shadow-md">
+          {extraResults && results.length > 0 && <li className={heading}>Genres</li>}
           {results.map((genrePlaylist) => (
             <li key={genrePlaylist.uuid}>
               <button
                 type="button"
                 className="w-full px-3 py-1.5 text-left bg-transparent rounded-none hover:bg-[var(--color-neutral-100)]"
-                onClick={() => select(genrePlaylist)}
+                onClick={() => {
+                  select(genrePlaylist);
+                  onQueryChange?.("");
+                }}
               >
                 {genrePlaylist.name}
                 {genrePlaylist.isUmbrella && <span className="ml-2 text-xs italic text-[var(--color-neutral-500)]">umbrella</span>}
+              </button>
+            </li>
+          ))}
+          {extraResults && extraItems.length > 0 && <li className={heading}>{extraResults.label}</li>}
+          {extraItems.map((item) => (
+            <li key={item.key}>
+              <button
+                type="button"
+                className="w-full px-3 py-1.5 text-left bg-transparent rounded-none hover:bg-[var(--color-neutral-100)]"
+                onClick={() => {
+                  setQuery("");
+                  onQueryChange?.("");
+                  item.onSelect();
+                }}
+              >
+                {item.content}
               </button>
             </li>
           ))}
