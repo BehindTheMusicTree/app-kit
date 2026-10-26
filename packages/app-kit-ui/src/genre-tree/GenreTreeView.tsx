@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, type ReactNode } from "react";
+import { useCallback, useRef, type ComponentProps, type ReactNode } from "react";
 import { z } from "zod";
 import { Plus } from "lucide-react";
 import { IconTextButton, Button } from "@behindthemusictree/ui";
@@ -16,7 +16,7 @@ import type {
   GenreTreeViewMode,
 } from "@behindthemusictree/genre-tree-view";
 
-import { CriteriaMinimum } from "@behindthemusictree/app-kit/genre-tree";
+import { CriteriaMinimum, CriteriaPlaylistSimple } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaOverview } from "@behindthemusictree/app-kit/genre-tree";
 import { Scope } from "@behindthemusictree/app-kit/transport";
 import { useGenreTreeViewState, useTrackList, TrackListOriginType } from "@behindthemusictree/app-kit/genre-tree";
@@ -37,6 +37,8 @@ import GenreActionBand from "./GenreActionBand";
 // under the floating search bar. It is hidden and its click is proxied by the search field's own button, which
 // appears (fading in, sliding from the left) whenever the original exists; the field makes room for it.
 const PREVIOUS_BUTTON_CSS = `
+.genre-tree-view .gtv-info-panel-body { display: flex; flex-direction: column; }
+.genre-tree-view .gtv-info-panel-extra { order: -1; }
 .genre-tree-view .search-overlay .gtv-info-panel-previous { display: none; }
 .genre-tree-view:has(.search-overlay .gtv-info-panel-previous) .genre-search input { padding-left: 44px; }
 .genre-tree-view:has(.search-overlay .gtv-info-panel-previous) .genre-search-previous { display: flex; }
@@ -45,6 +47,34 @@ const PREVIOUS_BUTTON_CSS = `
   .genre-search-previous { animation: genre-tree-view-previous-in 200ms ease-out; }
 }
 `;
+
+type GenreNodeActionBandProps = Omit<ComponentProps<typeof GenreActionBand>, "onPlayPause" | "isPlaying"> & {
+  genrePlaylist: CriteriaPlaylistSimple;
+  scope: Scope;
+};
+
+function GenreNodeActionBand({ genrePlaylist, scope, ...bandProps }: GenreNodeActionBandProps) {
+  const { isPlaying, setIsPlaying } = usePlayer();
+  const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList();
+  const isCurrentTrackList =
+    trackList?.origin.type === TrackListOriginType.GENRE_PLAYLIST && trackList.origin.uuid === genrePlaylist.uuid;
+  const handlePlayPause = () => {
+    if (isCurrentTrackList) {
+      setIsPlaying(!isPlaying);
+      return;
+    }
+    playNewTrackListFromGenrePlaylist(genrePlaylist, scope).catch((error) => {
+      console.error("Failed to load genre playlist tracks:", error);
+    });
+  };
+  return (
+    <GenreActionBand
+      {...bandProps}
+      onPlayPause={genrePlaylist.tracksCount > 0 ? handlePlayPause : undefined}
+      isPlaying={isCurrentTrackList && isPlaying}
+    />
+  );
+}
 
 export type {
   ControlsOrientation,
@@ -172,27 +202,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const handleGenreSearchClear = clearSelection;
   const handleGenreSearchSelect = selectGenrePlaylist;
 
-  const { isPlaying, setIsPlaying } = usePlayer();
-  const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList();
-  const isSelectedPlaying =
-    trackList?.origin.type === TrackListOriginType.GENRE_PLAYLIST &&
-    trackList.origin.uuid === selectedGenrePlaylist?.uuid &&
-    isPlaying;
-  const canPlay =
-    selectedGenrePlaylist !== undefined &&
-    selectedGenrePlaylist !== null &&
-    selectedGenrePlaylist.tracksCount > 0;
-  const handleGenreSearchPlayPause = () => {
-    if (!selectedGenrePlaylist) return;
-    if (trackList?.origin.type === TrackListOriginType.GENRE_PLAYLIST && trackList.origin.uuid === selectedGenrePlaylist.uuid) {
-      setIsPlaying(!isPlaying);
-      return;
-    }
-    playNewTrackListFromGenrePlaylist(selectedGenrePlaylist, scope).catch((error) => {
-      console.error("Failed to load genre playlist tracks:", error);
-    });
-  };
-
   // Mirrors genre-tree-view's isZoomableNode: a node zooms when it has children and at most one pop-side child.
   const selectedUuid = selectedGenrePlaylist?.uuid;
   const selectedChildren = selectedUuid
@@ -208,22 +217,27 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const handleGenreSearchZoomIn = () => {
     if (selectedUuid) focus.onFocusGenreChange?.(selectedUuid, "zoom-in");
   };
+  const zoomInRef = useRef<(() => void) | undefined>(undefined);
+  zoomInRef.current = canZoomIn ? handleGenreSearchZoomIn : undefined;
 
   // Stable across selections: the overview fetch lives in GenreDetailExtras, so its loading
   // states re-render only the info panel, never the tree.
   const renderExtraDetails = useCallback(
     (node: GenreTreeNode): ReactNode => {
       const genrePlaylist = genrePlaylistByNodeId.get(node.id);
-      const genreUuid = genrePlaylist?.criteria?.uuid;
-      if (!genrePlaylist || !genreUuid) return null;
+      const criteria = genrePlaylist?.criteria;
+      if (!genrePlaylist || !criteria) return null;
+      const genreUuid = criteria.uuid;
       return (
         <>
-          <GenreActionBand
+          <GenreNodeActionBand
             node={node}
-            onPlayPause={canPlay ? handleGenreSearchPlayPause : undefined}
-            isPlaying={isSelectedPlaying}
-            onZoomIn={canZoomIn ? handleGenreSearchZoomIn : undefined}
-            onAddChild={readOnly ? undefined : () => handleGenreCreationAction(genrePlaylist.criteria ?? null)}
+            genrePlaylist={genrePlaylist}
+            scope={scope}
+            onZoomIn={zoomInRef.current}
+            onAddChild={readOnly ? undefined : () => handleGenreCreationAction(criteria)}
+            onRename={readOnly ? undefined : () => handleGenreRenameAction(criteria)}
+            onChangeParent={readOnly ? undefined : () => requestReparent(genrePlaylist.uuid)}
             additionalActions={additionalActions}
           />
         <GenreDetailExtras<O>
@@ -244,8 +258,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
         </>
       );
     },
-    [genrePlaylistByNodeId, canPlay, isSelectedPlaying, canZoomIn, additionalActions, readOnly, handleGenreCreationAction,
-      handleGenreSearchPlayPause, handleGenreSearchZoomIn, scope, getBackendBaseUrl, criteriaOverviewSchema,
+    [genrePlaylistByNodeId, additionalActions, readOnly, handleGenreCreationAction, handleGenreRenameAction, requestReparent,
+      scope, getBackendBaseUrl, criteriaOverviewSchema,
       renderGenreDetailExtras,
       renderArtistLink,
       renderSummary,
@@ -360,7 +374,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             // the header inset (10px padding + 38px = the search bar's bottom edge) extends its fill behind the search bar,
             // Google Maps style; the 8px bottom padding mirrors the 8px above the bar, and the hidden title's height is zeroed.
             // The panel's own Zoom in button is hidden: the search bar carries it.
-            <div className="tree-container search-overlay relative flex-1 w-full min-h-0 [--gtv-info-panel-top:12px] [--gtv-info-panel-header-inset:38px] [&_.gtv-info-panel-header]:pb-2 [&_.gtv-info-panel-title--hidden]:h-0 [&_.gtv-toolbar>.gtv-toolbar-btn]:hidden">
+            <div className="tree-container search-overlay relative flex-1 w-full min-h-0 [--gtv-info-panel-top:12px] [--gtv-info-panel-header-inset:38px] [&_.gtv-info-panel-header]:pb-2 [&_.gtv-info-panel-title--hidden]:h-0 [&_.gtv-toolbar]:hidden">
               <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
                 <GenrePlaylistTreeWheel
                   scope={scope}
@@ -387,7 +401,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           ) : viewMode === "pop-core" ? (
             // The info panel's top edge aligns with the tree's, 8px above the h-10 search bar at top-5;
             // the header inset (8px + 40px + 4px) extends its fill behind the search bar, Google Maps style.
-            <div className="tree-container search-overlay relative flex-1 w-full min-h-0 [--gtv-info-panel-top:12px] [--gtv-info-panel-header-inset:38px] [&_.gtv-info-panel-header]:pb-2 [&_.gtv-info-panel-title--hidden]:h-0 [&_.gtv-toolbar>.gtv-toolbar-btn]:hidden [&_.gtv-info-panel-zoom-in]:hidden">
+            <div className="tree-container search-overlay relative flex-1 w-full min-h-0 [--gtv-info-panel-top:12px] [--gtv-info-panel-header-inset:38px] [&_.gtv-info-panel-header]:pb-2 [&_.gtv-info-panel-title--hidden]:h-0 [&_.gtv-toolbar]:hidden [&_.gtv-info-panel-zoom-in]:hidden">
               <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
                 <GenrePlaylistTreeWheelRadialPopCore
                   scope={scope}
@@ -413,7 +427,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
               </GenreTreeWheelHandoff>
             </div>
           ) : viewMode === "outline" ? (
-            <div className="tree-container flex-1 min-h-0 w-full overflow-y-auto relative [--gtv-info-panel-top:12px] [--gtv-info-panel-header-inset:52px] [&_.gtv-toolbar>.gtv-toolbar-btn]:hidden">
+            <div className="tree-container flex-1 min-h-0 w-full overflow-y-auto relative [--gtv-info-panel-top:12px] [--gtv-info-panel-header-inset:52px] [&_.gtv-toolbar]:hidden">
               <GenrePlaylistTreeWheelRadialPopCore
                 outline
                 scope={scope}
@@ -435,7 +449,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
               />
             </div>
           ) : (
-            <div className="tree-container relative flex flex-col gap-4 w-full pt-14 overflow-x-auto overflow-y-auto text-[var(--color-text)] [&_.gtv-toolbar>.gtv-toolbar-btn]:hidden">
+            <div className="tree-container relative flex flex-col gap-4 w-full pt-14 overflow-x-auto overflow-y-auto text-[var(--color-text)] [&_.gtv-toolbar]:hidden">
               {Object.entries(groupedGenrePlaylistsByRoot).map(
                 ([uuid, genrePlaylistTreePerRoot], rootIndex) => {
                   return (

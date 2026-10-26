@@ -14,7 +14,7 @@ easy to spot when bumping.
 ### Added
 
 - `GenreTreeView` (wheel, pop-core): genre-tree-view's "Previous" button now sits inside the search field, left of the genre name, and fades in sliding from the left; the field's left padding widens to make room.
-- `GenreActionBand`: Google Maps-style band under the detail panel header (icon over label) holding Play/Pause, Focus and the `additionalActions`.
+- `GenreActionBand`: Google Maps-style band under the detail panel header (icon over label) holding Play/Pause, Focus, Add, Rename, Parent and the `additionalActions`; genre-tree-view's own toolbar and its ⋮ menu are hidden.
 
 ### Breaking
 

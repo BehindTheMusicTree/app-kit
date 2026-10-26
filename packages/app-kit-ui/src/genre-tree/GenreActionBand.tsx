@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Pause, Play, Plus, ZoomIn } from "lucide-react";
+import { MoveUpRight, Pause, Pencil, Play, Plus, ZoomIn } from "lucide-react";
 import type {
   GenreTreeAction,
   GenreTreeNode,
@@ -16,7 +16,10 @@ export type GenreActionBandProps = {
   onZoomIn?: () => void;
   /** When set, shows the "Add" (sub-genre) action. */
   onAddChild?: () => void;
-  /** Only `placement: "primary"` actions show here; the rest stay in the panel's overflow menu. */
+  /** When set, shows the "Rename" action. */
+  onRename?: () => void;
+  /** When set, shows the "Parent" (change parent) action. */
+  onChangeParent?: () => void;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
 };
 
@@ -34,6 +37,8 @@ export default function GenreActionBand({
   isPlaying = false,
   onZoomIn,
   onAddChild,
+  onRename,
+  onChangeParent,
   additionalActions,
 }: GenreActionBandProps) {
   const items: BandItem[] = [];
@@ -60,7 +65,13 @@ export default function GenreActionBand({
   if (onAddChild) {
     items.push({ key: "add-child", label: "Add", icon: <Plus aria-hidden="true" className="w-5 h-5" />, onClick: onAddChild });
   }
-  for (const action of (additionalActions?.(node) ?? []).filter((action) => action.placement === "primary")) {
+  if (onRename) {
+    items.push({ key: "rename", label: "Rename", icon: <Pencil aria-hidden="true" className="w-5 h-5" />, onClick: onRename });
+  }
+  if (onChangeParent) {
+    items.push({ key: "change-parent", label: "Parent", icon: <MoveUpRight aria-hidden="true" className="w-5 h-5" />, onClick: onChangeParent });
+  }
+  for (const action of additionalActions?.(node) ?? []) {
     items.push({
       key: action.key,
       label: action.label(node),
