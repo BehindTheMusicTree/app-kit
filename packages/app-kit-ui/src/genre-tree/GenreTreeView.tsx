@@ -136,7 +136,9 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     allowWheelRotation: internalAllowWheelRotation,
     toggleWheelRotation,
     reparentingGenreUuid,
-    setReparentingGenreUuid,
+    requestReparent,
+    reparent,
+    isReparenting,
     onNodeHover: handleNodeHover,
   } = useGenreTreeViewState<O>({
     scope,
@@ -335,10 +337,10 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   scope={scope}
                   genrePlaylists={visibleGenrePlaylists}
                   reparentingGenreUuid={reparentingGenreUuid}
-                  setReparentingGenreUuid={setReparentingGenreUuid}
+                  onReparentRequest={requestReparent}
+                  onReparent={isReparenting ? undefined : reparent}
                   handleGenreCreationAction={handleGenreCreationAction}
                   handleGenreRenameAction={handleGenreRenameAction}
-                  getBackendBaseUrl={getBackendBaseUrl}
                   additionalActions={additionalActions}
                   onSelectedNodeChange={handleSelectedNodeChange}
                   hideInfoPanelClose
@@ -362,10 +364,10 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   scope={scope}
                   genrePlaylists={visibleGenrePlaylists}
                   reparentingGenreUuid={reparentingGenreUuid}
-                  setReparentingGenreUuid={setReparentingGenreUuid}
+                  onReparentRequest={requestReparent}
+                  onReparent={isReparenting ? undefined : reparent}
                   handleGenreCreationAction={handleGenreCreationAction}
                   handleGenreRenameAction={handleGenreRenameAction}
-                  getBackendBaseUrl={getBackendBaseUrl}
                   additionalActions={additionalActions}
                   onSelectedNodeChange={handleSelectedNodeChange}
                   hideInfoPanelClose
@@ -388,10 +390,10 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                 scope={scope}
                 genrePlaylists={visibleGenrePlaylists}
                 reparentingGenreUuid={reparentingGenreUuid}
-                setReparentingGenreUuid={setReparentingGenreUuid}
+                onReparentRequest={requestReparent}
+                onReparent={isReparenting ? undefined : reparent}
                 handleGenreCreationAction={handleGenreCreationAction}
                 handleGenreRenameAction={handleGenreRenameAction}
-                getBackendBaseUrl={getBackendBaseUrl}
                 additionalActions={additionalActions}
                 onSelectedNodeChange={handleSelectedNodeChange}
                 hideInfoPanelClose
@@ -418,10 +420,10 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                           rootUuid={uuid}
                           genrePlaylistTreePerRoot={genrePlaylistTreePerRoot}
                           reparentingGenreUuid={reparentingGenreUuid}
-                          setReparentingGenreUuid={setReparentingGenreUuid}
+                          onReparentRequest={requestReparent}
+                          onReparent={isReparenting ? undefined : reparent}
                           handleGenreCreationAction={handleGenreCreationAction}
                           handleGenreRenameAction={handleGenreRenameAction}
-                          getBackendBaseUrl={getBackendBaseUrl}
                           additionalActions={additionalActions}
                           onSelectedNodeChange={handleSelectedNodeChange}
                           hideInfoPanelClose

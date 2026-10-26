@@ -12,6 +12,7 @@ const {
   setIsPlayingMock,
   trackListState,
   playNewTrackListFromGenrePlaylistMock,
+  useUpdateGenreMock,
 } = vi.hoisted(() => ({
   useListFullGenrePlaylistsMock: vi.fn(),
   useFetchGenreOverviewMock: vi.fn(),
@@ -22,6 +23,7 @@ const {
   setIsPlayingMock: vi.fn(),
   trackListState: { value: null as unknown },
   playNewTrackListFromGenrePlaylistMock: vi.fn(() => Promise.resolve()),
+  useUpdateGenreMock: vi.fn(),
 }));
 
 vi.mock("../../../app-kit/src/player/PlayerContext", async (importOriginal) => ({
@@ -45,6 +47,7 @@ vi.mock("../../../app-kit/src/genre-tree/useGenre", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useFetchGenreOverview: (id: string | null) => useFetchGenreOverviewMock(id),
   usePrefetchGenreOverview: () => prefetchGenreOverviewMock,
+  useUpdateGenre: () => useUpdateGenreMock(),
 }));
 
 vi.mock("./GenrePlaylistTracks", () => ({
@@ -146,6 +149,7 @@ describe("GenreTreeView", () => {
       isPending: false,
     });
     useFetchGenreOverviewMock.mockReturnValue({ data: undefined, isPending: false });
+    useUpdateGenreMock.mockReturnValue({ mutate: vi.fn(), isPending: false });
   });
 
   it("shows the wheel skeleton while the genre playlists are loading", () => {
@@ -345,12 +349,22 @@ describe("GenreTreeView", () => {
     ).toBeNull();
 
     act(() => {
-      treePerRootPropsMock.mock.calls[0][0].setReparentingGenreUuid("gp1");
+      treePerRootPropsMock.mock.calls[0][0].onReparentRequest("gp1");
     });
 
     expect(
       treePerRootPropsMock.mock.calls.at(-1)?.[0].reparentingGenreUuid,
     ).toBe("gp1");
+  });
+
+  it("withholds onReparent from the tree components while a reparent is in flight", () => {
+    useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist()], isPending: false });
+    useUpdateGenreMock.mockReturnValue({ mutate: vi.fn(), isPending: true });
+    renderView();
+
+    fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
+
+    expect(treePerRootPropsMock.mock.calls.at(-1)?.[0].onReparent).toBeUndefined();
   });
 
   describe("layout props", () => {

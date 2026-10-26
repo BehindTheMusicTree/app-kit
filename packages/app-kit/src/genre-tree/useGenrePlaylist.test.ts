@@ -232,5 +232,20 @@ describe("useGenrePlaylist", () => {
       expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["referenceGenrePlaylists"] });
       expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["referenceRecordings"] });
     });
+
+    it("returns a promise that resolves only once every invalidation has resolved", async () => {
+      let finishRefetch!: () => void;
+      invalidateQueriesMock.mockReturnValueOnce(new Promise<void>((resolve) => (finishRefetch = resolve)));
+      const { result } = renderHook(() => useInvalidateAllGenrePlaylistQueries());
+
+      let resolved = false;
+      const settled = result.current().then(() => (resolved = true));
+      await Promise.resolve();
+
+      expect(resolved).toBe(false);
+      finishRefetch();
+      await settled;
+      expect(resolved).toBe(true);
+    });
   });
 });

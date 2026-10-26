@@ -10,14 +10,16 @@ import type { GenreTreeProps } from "@behindthemusictree/genre-tree-view";
 const {
   setIsPlaying,
   playNewTrackListFromGenrePlaylist,
-  updateGenreMutate,
+  onReparentRequest,
+  onReparent,
   handleGenreCreationAction,
   handleGenreRenameAction,
   showPopup,
 } = vi.hoisted(() => ({
   setIsPlaying: vi.fn(),
   playNewTrackListFromGenrePlaylist: vi.fn(),
-  updateGenreMutate: vi.fn(),
+  onReparentRequest: vi.fn(),
+  onReparent: vi.fn(),
   handleGenreCreationAction: vi.fn(),
   handleGenreRenameAction: vi.fn(),
   showPopup: vi.fn(),
@@ -36,10 +38,7 @@ let trackList: { origin: { type: TrackListOriginType; uuid: string } } | null = 
 vi.mock("@behindthemusictree/app-kit/genre-tree", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useTrackList: () => ({ trackList, playNewTrackListFromGenrePlaylist }),
-  useUpdateGenre: () => ({ mutate: updateGenreMutate }),
 }));
-
-
 
 vi.mock("@behindthemusictree/app-kit/player", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
@@ -82,10 +81,10 @@ function renderTree(nodes: CriteriaPlaylistSimple[] = [genrePlaylist]) {
       rootUuid={playlistUuid}
       genrePlaylistTreePerRoot={nodes}
       reparentingGenreUuid={null}
-      setReparentingGenreUuid={vi.fn()}
+      onReparentRequest={onReparentRequest}
+      onReparent={onReparent}
       handleGenreCreationAction={handleGenreCreationAction}
       handleGenreRenameAction={handleGenreRenameAction}
-      getBackendBaseUrl={() => "https://api.example.com"}
     />,
   );
 }
@@ -105,10 +104,10 @@ describe("GenrePlaylistTreePerRoot", () => {
         rootUuid={playlistUuid}
         genrePlaylistTreePerRoot={[genrePlaylist]}
         reparentingGenreUuid={null}
-        setReparentingGenreUuid={vi.fn()}
+        onReparentRequest={onReparentRequest}
+        onReparent={onReparent}
         handleGenreCreationAction={handleGenreCreationAction}
         handleGenreRenameAction={handleGenreRenameAction}
-        getBackendBaseUrl={() => "https://api.example.com"}
         wheelZoom="modifier"
       />,
     );
@@ -123,10 +122,10 @@ describe("GenrePlaylistTreePerRoot", () => {
         rootUuid={playlistUuid}
         genrePlaylistTreePerRoot={[genrePlaylist]}
         reparentingGenreUuid={null}
-        setReparentingGenreUuid={vi.fn()}
+        onReparentRequest={onReparentRequest}
+        onReparent={onReparent}
         handleGenreCreationAction={handleGenreCreationAction}
         handleGenreRenameAction={handleGenreRenameAction}
-        getBackendBaseUrl={() => "https://api.example.com"}
         controlsOrientation="horizontal"
       />,
     );
@@ -260,10 +259,10 @@ describe("GenrePlaylistTreePerRoot", () => {
           rootUuid={playlistUuid}
           genrePlaylistTreePerRoot={[genrePlaylist]}
           reparentingGenreUuid={null}
-          setReparentingGenreUuid={vi.fn()}
+          onReparentRequest={onReparentRequest}
+          onReparent={onReparent}
           handleGenreCreationAction={handleGenreCreationAction}
           handleGenreRenameAction={handleGenreRenameAction}
-          getBackendBaseUrl={() => "https://api.example.com"}
           readOnly
         />,
       );
@@ -286,53 +285,35 @@ describe("GenrePlaylistTreePerRoot", () => {
     });
   });
 
-  describe("handleReparentRequest / handleReparent", () => {
-    it("sets the reparenting genre uuid on request", () => {
-      const setReparentingGenreUuid = vi.fn();
-      render(
-        <GenrePlaylistTreePerRoot
-          scope="reference"
-          rootUuid={playlistUuid}
-          genrePlaylistTreePerRoot={[genrePlaylist]}
-          reparentingGenreUuid={null}
-          setReparentingGenreUuid={setReparentingGenreUuid}
-          handleGenreCreationAction={handleGenreCreationAction}
-          handleGenreRenameAction={handleGenreRenameAction}
-          getBackendBaseUrl={() => "https://api.example.com"}
-        />,
-      );
+  describe("reparent", () => {
+    it("forwards a reparent request with the node id", () => {
+      renderTree();
 
       capturedProps!.onReparentRequest!({ id: playlistUuid, parentId: null, name: "Electronic", itemCount: 3, actionable: true });
 
-      expect(setReparentingGenreUuid).toHaveBeenCalledWith(playlistUuid);
+      expect(onReparentRequest).toHaveBeenCalledWith(playlistUuid);
     });
 
-    it("submits the reparent mutation and clears reparenting state on success", () => {
-      const newParentUuid = "9c1e6c1a-1111-4a2a-8c2a-111111111111";
-      const setReparentingGenreUuid = vi.fn();
+    it("forwards onReparent as is", () => {
+      renderTree();
+
+      expect(capturedProps!.onReparent).toBe(onReparent);
+    });
+
+    it("leaves onReparent unset when the parent withholds it", () => {
       render(
         <GenrePlaylistTreePerRoot
           scope="reference"
           rootUuid={playlistUuid}
           genrePlaylistTreePerRoot={[genrePlaylist]}
           reparentingGenreUuid={playlistUuid}
-          setReparentingGenreUuid={setReparentingGenreUuid}
+          onReparentRequest={onReparentRequest}
           handleGenreCreationAction={handleGenreCreationAction}
           handleGenreRenameAction={handleGenreRenameAction}
-          getBackendBaseUrl={() => "https://api.example.com"}
         />,
       );
 
-      capturedProps!.onReparent!(playlistUuid, newParentUuid);
-
-      expect(updateGenreMutate).toHaveBeenCalledWith(
-        { uuid: playlistUuid, data: { parent: newParentUuid } },
-        expect.objectContaining({ onSuccess: expect.any(Function) }),
-      );
-
-      const { onSuccess } = updateGenreMutate.mock.calls[0][1];
-      onSuccess();
-      expect(setReparentingGenreUuid).toHaveBeenCalledWith(null);
+      expect(capturedProps!.onReparent).toBeUndefined();
     });
   });
 });

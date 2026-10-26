@@ -5,14 +5,12 @@ const {
   genreTreeWheelPropsMock,
   usePlayerMock,
   useTrackListMock,
-  updateGenreMutateMock,
   playGenreMock,
   showPopupMock,
 } = vi.hoisted(() => ({
   genreTreeWheelPropsMock: vi.fn(),
   usePlayerMock: vi.fn(),
   useTrackListMock: vi.fn(),
-  updateGenreMutateMock: vi.fn(),
   playGenreMock: vi.fn(),
   showPopupMock: vi.fn(),
 }));
@@ -33,10 +31,7 @@ vi.mock("@behindthemusictree/genre-tree-view", () => ({
 vi.mock("@behindthemusictree/app-kit/genre-tree", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useTrackList: () => useTrackListMock(),
-  useUpdateGenre: () => ({ mutate: updateGenreMutateMock }),
 }));
-
-
 
 vi.mock("@behindthemusictree/app-kit/player", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
@@ -46,8 +41,6 @@ vi.mock("@behindthemusictree/app-kit/player", async (importOriginal) => ({
 import GenrePlaylistTreeWheel, { type GenrePlaylistTreeWheelProps } from "./TreeWheel";
 import type { TrackBase } from "@behindthemusictree/app-kit/genre-tree";
 import { ErrorCode } from "@behindthemusictree/app-kit/transport";
-
-const getBackendBaseUrl = () => "https://backend.example.com";
 
 function makeGenrePlaylist(overrides: Record<string, unknown> = {}) {
   return {
@@ -69,10 +62,10 @@ function renderWheel(overrides: Partial<GenrePlaylistTreeWheelProps<TrackBase>> 
     scope: "me",
     genrePlaylists: [makeGenrePlaylist()] as GenrePlaylistTreeWheelProps<TrackBase>["genrePlaylists"],
     reparentingGenreUuid: null,
-    setReparentingGenreUuid: vi.fn(),
+    onReparentRequest: vi.fn(),
+    onReparent: vi.fn(),
     handleGenreCreationAction: vi.fn(),
     handleGenreRenameAction: vi.fn(),
-    getBackendBaseUrl,
     ...overrides,
   };
   render(<GenrePlaylistTreeWheel {...props} />);
@@ -251,30 +244,22 @@ describe("GenrePlaylistTreeWheel", () => {
     confirmSpy.mockRestore();
   });
 
-  it("onReparentRequest sets the reparenting genre uuid", () => {
-    const setReparentingGenreUuid = vi.fn();
-    renderWheel({ setReparentingGenreUuid });
+  it("onReparentRequest forwards the node id", () => {
+    const onReparentRequest = vi.fn();
+    renderWheel({ onReparentRequest });
 
     genreTreeWheelPropsMock.mock.calls[0][0].onReparentRequest({ id: "gp1", name: "Jazz" });
 
-    expect(setReparentingGenreUuid).toHaveBeenCalledWith("gp1");
+    expect(onReparentRequest).toHaveBeenCalledWith("gp1");
   });
 
-  it("onReparent mutates the genre parent and clears reparenting state on success", () => {
-    const setReparentingGenreUuid = vi.fn();
-    renderWheel({ setReparentingGenreUuid });
+  it("forwards onReparent as is, and leaves it unset when the parent withholds it", () => {
+    const onReparent = vi.fn();
+    renderWheel({ onReparent });
+    renderWheel({ onReparent: undefined });
 
-    genreTreeWheelPropsMock.mock.calls[0][0].onReparent("gp1", "gp2");
-
-    expect(updateGenreMutateMock).toHaveBeenCalledWith(
-      { uuid: "gp1", data: { parent: "gp2" } },
-      expect.objectContaining({ onSuccess: expect.any(Function) }),
-    );
-
-    const { onSuccess } = updateGenreMutateMock.mock.calls[0][1];
-    onSuccess();
-
-    expect(setReparentingGenreUuid).toHaveBeenCalledWith(null);
+    expect(genreTreeWheelPropsMock.mock.calls[0][0].onReparent).toBe(onReparent);
+    expect(genreTreeWheelPropsMock.mock.calls.at(-1)![0].onReparent).toBeUndefined();
   });
 
   it("passes reparentingGenreUuid and additionalActions through", () => {
