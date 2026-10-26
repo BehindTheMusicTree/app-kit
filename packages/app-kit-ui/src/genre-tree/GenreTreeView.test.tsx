@@ -206,6 +206,8 @@ describe("GenreTreeView", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
 
+    expect(screen.getByRole("button", { name: "Stacked" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Wheel" })).toHaveAttribute("aria-pressed", "false");
     expect(screen.getAllByTestId("tree-per-root")).toHaveLength(2);
     expect(screen.queryByTestId("tree-wheel")).not.toBeInTheDocument();
   });

@@ -207,6 +207,14 @@ describe("TrackListSidebar", () => {
     expect(root).toHaveStyle({ bottom: "79px" });
   });
 
+  it("switches its subtree to the dark brand theme", () => {
+    useTrackListMock.mockReturnValue({ trackList: makeTrackList() });
+
+    const { container } = render(<TrackListSidebar />);
+
+    expect(container.querySelector(".track-list-sidebar")).toHaveAttribute("data-theme", "dark");
+  });
+
   it("drops fixed positioning and fills the parent box when layout is inline", () => {
     useTrackListMock.mockReturnValue({ trackList: makeTrackList() });
 
