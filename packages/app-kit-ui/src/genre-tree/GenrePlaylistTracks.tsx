@@ -24,6 +24,7 @@ import { isRecording, recordingUnplayableReason, RecordingDetailedSchema } from 
 import { GenrePlaylistTracksPage, useTrackList } from "@behindthemusictree/app-kit/genre-tree";
 import { MusicBrainzRecordingLink } from "./MusicBrainzRecordingLink";
 import { ArtistNames, RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
+import { capitalize, useTrackNoun } from "@behindthemusictree/app-kit/track-noun";
 
 const CATALOGUE_PAGE_SIZE = 100;
 // withTotal=false: the backend skips COUNT(*) and pages by keyset cursor, so huge genre subtrees
@@ -87,6 +88,7 @@ export function GenrePlaylistTracks({
   const { session, sessionRestored } = useSession();
   const { playerTrackObject, playState, handlePlayPauseAction } = usePlayer();
   const { showPopup } = usePopup();
+  const trackNoun = useTrackNoun();
   const { uuid } = genrePlaylist;
 
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
@@ -139,13 +141,13 @@ export function GenrePlaylistTracks({
 
   return (
     <div className="gtv-info-panel-children">
-      <span className="gtv-info-panel-children-title">Tracks{total !== undefined && ` (${total})`}</span>
+      <span className="gtv-info-panel-children-title">{capitalize(trackNoun.plural)}{total !== undefined && ` (${total})`}</span>
       {renderTracksToolbar?.()}
       {isPending ? (
         <div className="h-4 w-3/4 animate-pulse rounded bg-[var(--color-neutral-200)]" aria-busy="true" />
       ) : isError && tracks.length === 0 ? (
         <p role="alert">
-          Couldn&apos;t load tracks.{" "}
+          Couldn&apos;t load {trackNoun.plural}.{" "}
           <button type="button" className="underline" onClick={() => void refetch()}>
             Retry
           </button>
@@ -153,7 +155,7 @@ export function GenrePlaylistTracks({
       ) : tracks.length === 0 ? (
         <p>—</p>
       ) : (
-        <ul className="mt-1 max-h-64 overflow-y-auto text-[13px] leading-[1.45] [container-type:inline-size]" aria-label={`${genrePlaylist.name} tracks`}>
+        <ul className="mt-1 max-h-64 overflow-y-auto text-[13px] leading-[1.45] [container-type:inline-size]" aria-label={`${genrePlaylist.name} ${trackNoun.plural}`}>
           {tracks.map((track, index) => {
             const label = track.artists?.length
               ? `${track.title} — ${track.artists.map((artist) => artist.name).join(", ")}`

@@ -95,4 +95,65 @@ describe("GenreSearch", () => {
     expect(onClear).toHaveBeenCalledTimes(1);
     expect(screen.getByLabelText("Search a genre")).toHaveValue("");
   });
+
+  describe("extraResults", () => {
+    const extra = (onSelect = vi.fn()) => ({
+      label: "Artists",
+      items: [{ key: "a", content: "Taylor Swift", onSelect }],
+      status: "1 artist found",
+    });
+
+    it("groups genres and extra results under headings", () => {
+      render(<GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} extraResults={extra()} />);
+
+      fireEvent.change(screen.getByRole("textbox"), { target: { value: "amb" } });
+
+      expect(screen.getByText("Genres")).toBeInTheDocument();
+      expect(screen.getByText("Artists")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Taylor Swift" })).toBeInTheDocument();
+      expect(screen.getByRole("status")).toHaveTextContent("1 artist found");
+    });
+
+    it("shows no headings without extra results", () => {
+      render(<GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} />);
+
+      fireEvent.change(screen.getByRole("textbox"), { target: { value: "amb" } });
+
+      expect(screen.queryByText("Genres")).not.toBeInTheDocument();
+    });
+
+    it("reports typing, and clears the query when an extra result is picked", () => {
+      const onQueryChange = vi.fn();
+      const onSelect = vi.fn();
+      render(
+        <GenreSearch
+          genrePlaylists={genrePlaylists}
+          onSelect={vi.fn()}
+          onQueryChange={onQueryChange}
+          extraResults={extra(onSelect)}
+        />,
+      );
+
+      fireEvent.change(screen.getByRole("textbox"), { target: { value: "tay" } });
+      expect(onQueryChange).toHaveBeenLastCalledWith("tay");
+      fireEvent.click(screen.getByRole("button", { name: "Taylor Swift" }));
+
+      expect(onSelect).toHaveBeenCalledOnce();
+      expect(onQueryChange).toHaveBeenLastCalledWith("");
+      expect(screen.getByRole("textbox")).toHaveValue("");
+    });
+
+    it("does not report the query when the selected name refills the input", () => {
+      const onQueryChange = vi.fn();
+      const { rerender } = render(
+        <GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} onQueryChange={onQueryChange} />,
+      );
+
+      rerender(
+        <GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} onQueryChange={onQueryChange} selectedName="Ambient" />,
+      );
+
+      expect(onQueryChange).not.toHaveBeenCalled();
+    });
+  });
 });

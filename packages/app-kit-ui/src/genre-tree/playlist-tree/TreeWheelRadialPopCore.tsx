@@ -20,6 +20,7 @@ import { CriteriaPlaylistSimple } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaMinimum } from "@behindthemusictree/app-kit/genre-tree";
 import { Scope } from "@behindthemusictree/app-kit/transport";
 import type { InfoPanelCurationProps } from "./infoPanelCurationProps";
+import { capitalize, useTrackNoun } from "@behindthemusictree/app-kit/track-noun";
 
 /** Pop-core focus is controlled-only: pass both props or neither. Ignored in outline mode. */
 export type GenreFocusProps =
@@ -112,6 +113,7 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
   };
   const { isPlaying, setIsPlaying } = usePlayer();
   const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList<T>();
+  const trackNoun = useTrackNoun();
 
   const nodes: GenreTreeNode[] = useMemo(
     () =>
@@ -191,6 +193,7 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
   const treeProps = {
     className,
     nodes,
+    itemCountLabel: `${capitalize(trackNoun.singular)} count`,
     playingNodeId,
     playState: isPlaying ? ("playing" as const) : ("paused" as const),
     reparentingNodeId: reparentingGenreUuid,

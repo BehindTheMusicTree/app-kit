@@ -3,6 +3,7 @@
 import { MdError, MdCheckCircle, MdUpload } from "react-icons/md";
 import { useTrackUpload, type UploadStatus, type UseTrackUploadOptions } from "@behindthemusictree/app-kit/popup";
 import { BasePopup, BasePopupProps } from "./BasePopup";
+import { capitalize, useTrackNoun } from "@behindthemusictree/app-kit/track-noun";
 
 type TrackUploadPopupProps = Omit<BasePopupProps, "title" | "children" | "icon" | "isDismissable"> &
   UseTrackUploadOptions & {
@@ -53,12 +54,13 @@ export default function TrackUploadPopup({
   });
 
   const displayTotal = items.length > 0 ? items.length : files.length;
+  const trackNoun = useTrackNoun();
 
   return (
     <BasePopup
       {...rest}
       onClose={onClose}
-      title={`Upload Tracks (${successfulCount}/${displayTotal})`}
+      title={`Upload ${capitalize(trackNoun.plural)} (${successfulCount}/${displayTotal})`}
       isDismissable
       showOkButton
       okButtonText="OK"
