@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [13.5.0] - 2026-10-26
+
 ### Added
 
 - `useUpdateGenre` returns `isPending`.
