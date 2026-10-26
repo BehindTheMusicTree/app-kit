@@ -6,7 +6,7 @@ import { usePlayer } from "@behindthemusictree/app-kit/player";
 import { useTrackList } from "@behindthemusictree/app-kit/genre-tree";
 import TrackPositionPlayPause from "../TrackPositionPlayPause";
 import { TrackBase } from "@behindthemusictree/app-kit/genre-tree";
-import { isRecording, recordingUnplayableReason } from "@behindthemusictree/app-kit/genre-tree";
+import { isSong, songUnplayableReason } from "@behindthemusictree/app-kit/genre-tree";
 import { MusicBrainzRecordingLink } from "../MusicBrainzRecordingLink";
 import { ArtistNames, RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
 
@@ -29,7 +29,7 @@ export default function TrackItem<T extends TrackBase>({
   const { handlePlayPauseAction, playerTrackObject, loadTrackForPlayer } = usePlayer();
   const { trackList, toTrackAtPosition } = useTrackList<T>();
   const scope = trackList?.origin?.scope ?? null;
-  const unplayableReason = isRecording(track) ? recordingUnplayableReason(track) : null;
+  const unplayableReason = isSong(track) ? songUnplayableReason(track) : null;
 
   const handlePlayPauseClick = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -60,7 +60,7 @@ export default function TrackItem<T extends TrackBase>({
       <div className="title-artist-container flex flex-col items-start justify-center w-1/2">
         <div className="flex max-w-full items-center gap-2">
           <div className="title text-lg font-bold text-[var(--color-text)] max-w-full truncate">{track.title}</div>
-          {isRecording(track) && <MusicBrainzRecordingLink recording={track} />}
+          {isSong(track) && <MusicBrainzRecordingLink song={track} />}
         </div>
         {track.artists && track.artists.length > 0 ? (
           <div className="artist text-base max-w-full truncate text-[var(--color-text-muted)]">

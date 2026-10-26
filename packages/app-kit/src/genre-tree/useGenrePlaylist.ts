@@ -132,6 +132,6 @@ export const useInvalidateAllGenrePlaylistQueries = () => {
       queryClient.invalidateQueries({ queryKey: genrePlaylistQueryKeys.me.all }),
       queryClient.invalidateQueries({ queryKey: genrePlaylistQueryKeys.me.full }),
       queryClient.invalidateQueries({ queryKey: genrePlaylistQueryKeys.reference.all }),
-      queryClient.invalidateQueries({ queryKey: libraryQueryKeys.reference.recordings.all }),
+      queryClient.invalidateQueries({ queryKey: libraryQueryKeys.reference.songs.all }),
     ]);
 };

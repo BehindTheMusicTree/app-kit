@@ -5,7 +5,7 @@ import { AlbumMinimumSchema } from "../album-minimum";
 import { CriteriaMinimumSchema } from "../criteria/minimum";
 import { UuidResourceSchema } from "../uuid-resource";
 
-// Fields shared by every track kind (uploaded track, recording). Playback-specific fields
+// Fields shared by every track kind (uploaded track, song). Playback-specific fields
 // (file/relativeUrl vs youtubeVideo) live on each kind's own schema instead.
 export const TrackBaseSchema = UuidResourceSchema.extend({
   title: z.string(),

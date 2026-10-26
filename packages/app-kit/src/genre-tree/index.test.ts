@@ -40,7 +40,7 @@ describe("genre-tree barrel", () => {
     expect(genreTree.CriteriaMinimumSchema).toBeTypeOf("object");
     expect(genreTree.CriteriaPlaylistDetailedSchema).toBeTypeOf("object");
     expect(genreTree.CriteriaPlaylistSimpleSchema).toBeTypeOf("object");
-    expect(genreTree.RecordingDetailedSchema).toBeTypeOf("object");
+    expect(genreTree.SongDetailedSchema).toBeTypeOf("object");
     expect(genreTree.TrackBaseSchema).toBeTypeOf("object");
     expect(genreTree.makeTrackPlaylistRelSchema).toBeTypeOf("function");
   });

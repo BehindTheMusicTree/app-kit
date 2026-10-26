@@ -222,7 +222,7 @@ describe("useGenrePlaylist", () => {
   });
 
   describe("useInvalidateAllGenrePlaylistQueries", () => {
-    it("returns a function that invalidates the genre playlist and reference recordings query keys", () => {
+    it("returns a function that invalidates the genre playlist and reference songs query keys", () => {
       const { result } = renderHook(() => useInvalidateAllGenrePlaylistQueries());
 
       result.current();
@@ -230,7 +230,7 @@ describe("useGenrePlaylist", () => {
       expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["meGenrePlaylists"] });
       expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["meGenrePlaylists", "full"] });
       expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["referenceGenrePlaylists"] });
-      expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["referenceRecordings"] });
+      expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["referenceSongs"] });
     });
 
     it("returns a promise that resolves only once every invalidation has resolved", async () => {

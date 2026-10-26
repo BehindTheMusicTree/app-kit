@@ -12,8 +12,8 @@ import {
   useFetchWrapper,
   libraryEndpoints,
   libraryQueryKeys,
-  RecordingDetailed,
-  RecordingDetailedSchema,
+  SongDetailed,
+  SongDetailedSchema,
 } from "@behindthemusictree/app-kit";
 import { BasePopup } from "@behindthemusictree/app-kit-ui/popup";
 import { GenreTreeView } from "@behindthemusictree/app-kit-ui/genre-tree";
@@ -28,8 +28,8 @@ function useLoadTrack(): (trackId: string) => Promise<PlayerTrack> {
 
   return useCallback(
     async (trackId: string): Promise<PlayerTrack> => {
-      const track = await fetch<RecordingDetailed>(
-        libraryEndpoints.reference.recordings.detail(trackId),
+      const track = await fetch<SongDetailed>(
+        libraryEndpoints.reference.songs.detail(trackId),
         true,
         false,
       );
@@ -37,7 +37,7 @@ function useLoadTrack(): (trackId: string) => Promise<PlayerTrack> {
         throw new Error(`Failed to load track ${trackId}`);
       }
       if (!track.youtubeVideo) {
-        throw new Error(`Recording ${trackId} has no YouTube video`);
+        throw new Error(`Song ${trackId} has no YouTube video`);
       }
       return {
         id: trackId,
@@ -243,9 +243,9 @@ export function App() {
         <TrackListSidebarVisibilityProvider>
           <TrackListProvider
             getBackendBaseUrl={getBackendBaseUrl}
-            schema={RecordingDetailedSchema}
-            listEndpoint={libraryEndpoints.reference.recordings.list}
-            listQueryKey={libraryQueryKeys.reference.recordings.list}
+            schema={SongDetailedSchema}
+            listEndpoint={libraryEndpoints.reference.songs.list}
+            listQueryKey={libraryQueryKeys.reference.songs.list}
           >
             <AppContent />
           </TrackListProvider>
