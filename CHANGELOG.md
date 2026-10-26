@@ -11,6 +11,14 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [16.1.0] - 2026-10-26
+
+### Changed
+
+- Requires `@behindthemusictree/ui` ^0.3.0, `@behindthemusictree/brand` ^12.1.0 and `@behindthemusictree/genre-tree-view` 3.1.0 (panel colors and text size follow brand tokens). Loading placeholders in the genre panel use `ui`'s `Skeleton`, the action band border uses `--color-border`, and `Rating` stars use `--color-accent-rating`.
+- `GenreTreeView`'s view-mode toggle is a `SegmentedControl` (one group, `aria-pressed`); Pop/Core and Outline stay disabled with an explanatory tooltip when the tree has no Mainstream Pop root. Requires `@behindthemusictree/ui` ^0.4.0.
+- `TrackListSidebar` sets `data-theme="dark"` and reads brand surface/text tokens instead of writing gray colors directly.
+
 ## [16.0.0] - 2026-10-26
 
 ### Added

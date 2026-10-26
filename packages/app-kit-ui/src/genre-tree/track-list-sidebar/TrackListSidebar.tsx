@@ -51,17 +51,18 @@ export default function TrackListSidebar<T extends TrackBase>({
 
   return trackList ? (
     <div
-      className={`track-list-sidebar ${positionClasses} rounded-2xl bg-gray-950 pb-1 ${className}`}
+      data-theme="dark"
+      className={`track-list-sidebar ${positionClasses} rounded-2xl bg-[var(--color-surface)] pb-1 ${className}`}
       style={layout === "fixed" ? { bottom: "79px" /* Match player height exactly */ } : undefined}
     >
-      <div className="header flex h-16 px-4 py-2 text-[var(--color-neutral-300)]">
+      <div className="header flex h-16 px-4 py-2 text-[var(--color-text)]">
         <div className="origin flex text-xl ">
           <div className="from h-auto flex flex-col justify-center items-center mr-2">From</div>
-          <div className="name-container flex flex-col justify-center items-center text-[var(--color-neutral-300)] font-bold pr-2 max-w-[440px]">
+          <div className="name-container flex flex-col justify-center items-center text-[var(--color-text)] font-bold pr-2 max-w-[440px]">
             <div className="name max-w-full truncate">{trackList.origin.label}</div>
           </div>
         </div>
-        <div className="info flex flex-col justify-center items-center pt-1 mr-2">
+        <div className="info flex flex-col justify-center items-center pt-1 mr-2 text-[var(--color-text-muted)]">
           {trackList.origin.type === TrackListOriginType.GENRE_PLAYLIST
             ? "• Genre playlist • "
             : trackList.origin.type === TrackListOriginType.ARTIST
