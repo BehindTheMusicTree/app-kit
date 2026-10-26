@@ -59,7 +59,7 @@ export default function GenreSearch({
           type="button"
           aria-label="Previous"
           title="Previous"
-          className="genre-search-previous absolute left-2 top-1/2 z-10 hidden p-1.5 text-[var(--color-text-muted)] bg-transparent rounded-full -translate-y-1/2 hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
+          className="genre-search-previous absolute left-2 top-1/2 z-10 hidden p-1.5 text-[var(--color-text-muted)] rounded-full -translate-y-1/2 hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
           onClick={onPrevious}
         >
           <ArrowLeft aria-hidden="true" className="w-4 h-4" />
@@ -84,7 +84,7 @@ export default function GenreSearch({
             <button
               type="button"
               aria-label="Clear search"
-              className="p-1 text-[var(--color-text-muted)] bg-transparent rounded-full hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
+              className="p-1 text-[var(--color-text-muted)] rounded-full hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
               onClick={() => {
                 clear();
                 onQueryChange?.("");
@@ -106,7 +106,7 @@ export default function GenreSearch({
             <li key={genrePlaylist.uuid}>
               <button
                 type="button"
-                className="w-full px-3 py-1.5 text-left bg-transparent rounded-none hover:bg-[var(--color-surface-muted)]"
+                className="w-full px-3 py-1.5 text-left hover:bg-[var(--color-surface-muted)]"
                 onClick={() => {
                   select(genrePlaylist);
                   onQueryChange?.("");
@@ -122,7 +122,7 @@ export default function GenreSearch({
             <li key={item.key}>
               <button
                 type="button"
-                className="w-full px-3 py-1.5 text-left bg-transparent rounded-none hover:bg-[var(--color-surface-muted)]"
+                className="w-full px-3 py-1.5 text-left hover:bg-[var(--color-surface-muted)]"
                 onClick={() => {
                   setQuery("");
                   onQueryChange?.("");
