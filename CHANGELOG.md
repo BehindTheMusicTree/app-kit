@@ -27,6 +27,7 @@ easy to spot when bumping.
 - `GenrePlaylistTracks`: rows are at least 32px tall with a hover background, the current track is highlighted in the primary color, the play button is a 24px target and always visible on touch devices.
 - `TrackListSidebar` / `TrackItem` no longer rely on the consumer's Tailwind config (`trackListName`, `144` spacing, `.text-overflow`); the close control is a labelled `<button>`.
 - `MusicBrainzRecordingLink` inherits the surrounding text color (dimmed, full opacity on hover/focus), so it reads on both the light panel and the dark track list.
+- Requires `@behindthemusictree/ui` ^0.3.0, `@behindthemusictree/brand` ^12.1.0 and `@behindthemusictree/genre-tree-view` 3.1.0 (panel colors and text size follow brand tokens). Loading placeholders in the genre panel use `ui`'s `Skeleton`, the action band border uses `--color-border`, and `Rating` stars use `--color-accent-rating`.
 
 ## [15.0.0] - 2026-10-26
 

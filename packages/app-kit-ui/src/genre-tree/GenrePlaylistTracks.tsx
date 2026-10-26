@@ -4,7 +4,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { FaPlay, FaPause } from "react-icons/fa";
-import { RingLoader } from "@behindthemusictree/ui";
+import { RingLoader, Skeleton } from "@behindthemusictree/ui";
 
 import { useSession } from "@behindthemusictree/app-kit/auth";
 import { useFetchWrapper } from "@behindthemusictree/app-kit/transport";
@@ -144,7 +144,7 @@ export function GenrePlaylistTracks({
       <span className="gtv-info-panel-children-title">{capitalize(trackNoun.plural)}{total !== undefined && ` (${total})`}</span>
       {renderTracksToolbar?.()}
       {isPending ? (
-        <div className="h-4 w-3/4 animate-pulse rounded bg-[var(--color-neutral-200)]" aria-busy="true" />
+        <Skeleton className="h-4 w-3/4" aria-busy="true" />
       ) : isError && tracks.length === 0 ? (
         <p role="alert">
           Couldn&apos;t load {trackNoun.plural}.{" "}
