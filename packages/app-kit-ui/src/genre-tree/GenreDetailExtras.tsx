@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { Skeleton } from "@behindthemusictree/ui";
 import { z } from "zod";
 
 import { CriteriaOverview } from "@behindthemusictree/app-kit/genre-tree";
@@ -54,7 +55,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
     return (
       <div className="gtv-info-panel-children" aria-busy="true" data-testid="genre-detail-extras-skeleton">
         <span className="gtv-info-panel-children-title">Summary</span>
-        <div className="h-4 w-3/4 animate-pulse rounded bg-[var(--color-neutral-200)]" />
+        <Skeleton className="h-4 w-3/4" />
       </div>
     );
   }
