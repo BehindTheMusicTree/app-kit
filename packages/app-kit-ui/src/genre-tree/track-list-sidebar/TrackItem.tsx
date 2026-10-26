@@ -8,6 +8,7 @@ import TrackPositionPlayPause from "../TrackPositionPlayPause";
 import { TrackBase } from "@behindthemusictree/app-kit/genre-tree";
 import { isSong, songUnplayableReason } from "@behindthemusictree/app-kit/genre-tree";
 import { MusicBrainzRecordingLink } from "../MusicBrainzRecordingLink";
+import { UnplayableReason } from "../UnplayableReason";
 import { ArtistNames, RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
 
 export interface TrackItemProps<T extends TrackBase> {
@@ -69,7 +70,11 @@ export default function TrackItem<T extends TrackBase>({
         ) : (
           ""
         )}
-        {unplayableReason && <div className="text-xs">{unplayableReason}</div>}
+        {unplayableReason && (
+          <div className="text-xs">
+            <UnplayableReason reason={unplayableReason} />
+          </div>
+        )}
       </div>
       <div className="album-name items-start justify-center w-1/3 ml-2 max-w-full truncate text-[var(--color-text-muted)]">
         {track.album ? track.album.name : ""}
