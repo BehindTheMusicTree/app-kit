@@ -11,7 +11,6 @@ import {
 } from "@behindthemusictree/genre-tree-view";
 
 import { useTrackList } from "@behindthemusictree/app-kit/genre-tree";
-import { useUpdateGenre } from "@behindthemusictree/app-kit/genre-tree";
 import { usePlayer } from "@behindthemusictree/app-kit/player";
 import { usePopup } from "@behindthemusictree/app-kit/popup";
 import InternalErrorPopup from "../../popup/InternalErrorPopup";
@@ -31,10 +30,11 @@ export type GenrePlaylistTreePerRootProps<T extends TrackBase> = {
   rootUuid: string;
   genrePlaylistTreePerRoot: CriteriaPlaylistSimple[];
   reparentingGenreUuid: string | null;
-  setReparentingGenreUuid: (uuid: string | null) => void;
+  onReparentRequest: (genreUuid: string) => void;
+  /** Omitted while a reparent is in flight, so a second drop can't start a concurrent update. */
+  onReparent?: (genreUuid: string, newParentUuid: string) => void;
   handleGenreCreationAction: (parent: CriteriaMinimum | null) => void;
   handleGenreRenameAction: (genre: CriteriaMinimum) => void;
-  getBackendBaseUrl: () => string;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   onNodeClick?: (node: GenreTreeNode) => void;
   onNodeHover?: (node: GenreTreeNode) => void;
@@ -62,10 +62,10 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
   rootUuid,
   genrePlaylistTreePerRoot,
   reparentingGenreUuid,
-  setReparentingGenreUuid,
+  onReparentRequest,
+  onReparent,
   handleGenreCreationAction,
   handleGenreRenameAction,
-  getBackendBaseUrl,
   additionalActions,
   onNodeClick,
   onNodeHover,
@@ -82,7 +82,6 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
 }: GenrePlaylistTreePerRootProps<T>) {
   const { isPlaying, setIsPlaying } = usePlayer();
   const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList<T>();
-  const { mutate: updateGenreMutate } = useUpdateGenre(scope, getBackendBaseUrl);
   const { showPopup } = usePopup();
 
   const nodes: GenreTreeNode[] = useMemo(
@@ -163,23 +162,9 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
 
   const handleReparentRequest = useCallback(
     (node: GenreTreeNode) => {
-      setReparentingGenreUuid(node.id);
+      onReparentRequest(node.id);
     },
-    [setReparentingGenreUuid],
-  );
-
-  const handleReparent = useCallback(
-    (nodeId: string, newParentId: string) => {
-      updateGenreMutate(
-        { uuid: nodeId, data: { parent: newParentId } },
-        {
-          onSettled: () => {
-            setReparentingGenreUuid(null);
-          },
-        },
-      );
-    },
-    [updateGenreMutate, setReparentingGenreUuid],
+    [onReparentRequest],
   );
 
   return (
@@ -195,7 +180,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
       onRenameRequest={readOnly ? undefined : handleRenameRequest}
       onDeleteRequest={readOnly ? undefined : handleDeleteRequest}
       onReparentRequest={readOnly ? undefined : handleReparentRequest}
-      onReparent={readOnly ? undefined : handleReparent}
+      onReparent={readOnly ? undefined : onReparent}
       additionalActions={additionalActions}
       onNodeClick={onNodeClick}
       onNodeHover={onNodeHover}

@@ -4,10 +4,7 @@ import { render } from "@testing-library/react";
 vi.mock("@behindthemusictree/app-kit/genre-tree", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useTrackList: () => ({ trackList: null, playNewTrackListFromGenrePlaylist: vi.fn() }),
-  useUpdateGenre: () => ({ mutate: vi.fn() }),
 }));
-
-
 
 vi.mock("@behindthemusictree/app-kit/player", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
@@ -51,10 +48,9 @@ describe("GenrePlaylistTreeWheelRadialPopCore focus (real genre-tree-view)", () 
           scope="me"
           genrePlaylists={genrePlaylists}
           reparentingGenreUuid={null}
-          setReparentingGenreUuid={vi.fn()}
+          onReparentRequest={vi.fn()}
           handleGenreCreationAction={vi.fn()}
           handleGenreRenameAction={vi.fn()}
-          getBackendBaseUrl={() => "https://backend.example.com"}
           focusGenreUuid="unknown-uuid"
           onFocusGenreChange={onFocusGenreChange}
         />,

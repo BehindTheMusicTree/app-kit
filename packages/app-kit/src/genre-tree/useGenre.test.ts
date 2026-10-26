@@ -8,6 +8,7 @@ const {
   useValidatedMutationMock,
   invalidateAllGenrePlaylistQueriesMock,
   invalidateQueriesMock,
+  removeQueriesMock,
   parseWithLogMock,
   useQueryMock,
   prefetchQueryMock,
@@ -18,6 +19,7 @@ const {
   useValidatedMutationMock: vi.fn(),
   invalidateAllGenrePlaylistQueriesMock: vi.fn(),
   invalidateQueriesMock: vi.fn(),
+  removeQueriesMock: vi.fn(),
   parseWithLogMock: vi.fn(),
   useQueryMock: vi.fn(),
   prefetchQueryMock: vi.fn(),
@@ -28,7 +30,11 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
   return {
     ...actual,
     useQuery: (options: unknown) => useQueryMock(options),
-    useQueryClient: () => ({ invalidateQueries: invalidateQueriesMock, prefetchQuery: prefetchQueryMock }),
+    useQueryClient: () => ({
+      invalidateQueries: invalidateQueriesMock,
+      removeQueries: removeQueriesMock,
+      prefetchQuery: prefetchQueryMock,
+    }),
   };
 });
 
@@ -394,25 +400,33 @@ describe("useGenre", () => {
       expect(fetchMock).toHaveBeenCalledWith("me/genres/g1/", true, true, { method: "DELETE" }, undefined, false, true);
     });
 
-    it("onSuccess invalidates the reference list and detail query keys plus genre playlist queries", () => {
+    it("onSuccess evicts the deleted reference genre before invalidating the list and genre playlist queries", () => {
       renderHook(() => useDeleteGenre("reference", getBackendBaseUrl));
       const { onSuccess } = useValidatedMutationMock.mock.calls[0][0];
 
       onSuccess(undefined, { uuid: "g1" });
 
-      expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["referenceGenres"] });
-      expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["referenceGenres", "detail", "g1"] });
+      expect(removeQueriesMock).toHaveBeenCalledWith({ queryKey: ["referenceGenres", "detail", "g1"] });
+      expect(removeQueriesMock).toHaveBeenCalledWith({ queryKey: ["referenceGenres", "overview", "g1"] });
+      expect(invalidateQueriesMock.mock.calls).toEqual([[{ queryKey: ["referenceGenres"] }]]);
+      expect(removeQueriesMock.mock.invocationCallOrder.at(-1)).toBeLessThan(
+        invalidateQueriesMock.mock.invocationCallOrder[0],
+      );
       expect(invalidateAllGenrePlaylistQueriesMock).toHaveBeenCalled();
     });
 
-    it("onSuccess invalidates the me list and detail query keys plus genre playlist queries", () => {
+    it("onSuccess evicts the deleted me genre before invalidating the list and genre playlist queries", () => {
       renderHook(() => useDeleteGenre("me", getBackendBaseUrl));
       const { onSuccess } = useValidatedMutationMock.mock.calls[0][0];
 
       onSuccess(undefined, { uuid: "g1" });
 
-      expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["genres"] });
-      expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["genres", "detail", "g1"] });
+      expect(removeQueriesMock).toHaveBeenCalledWith({ queryKey: ["genres", "detail", "g1"] });
+      expect(removeQueriesMock).toHaveBeenCalledWith({ queryKey: ["genres", "overview", "g1"] });
+      expect(invalidateQueriesMock.mock.calls).toEqual([[{ queryKey: ["genres"] }]]);
+      expect(removeQueriesMock.mock.invocationCallOrder.at(-1)).toBeLessThan(
+        invalidateQueriesMock.mock.invocationCallOrder[0],
+      );
       expect(invalidateAllGenrePlaylistQueriesMock).toHaveBeenCalled();
     });
 
