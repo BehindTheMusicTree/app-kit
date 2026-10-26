@@ -50,7 +50,7 @@ export default function GenreSearch({
   const extraItems = query !== "" && query !== selectedName ? (extraResults?.items ?? []) : [];
   const label = extraResults ? "Search" : "Search a genre";
   const showList = results.length > 0 || extraItems.length > 0;
-  const heading = "px-3 pt-2 pb-1 text-xs font-medium uppercase text-[var(--color-neutral-500)]";
+  const heading = "px-3 pt-2 pb-1 text-xs font-medium uppercase text-[var(--color-text-muted)]";
 
   return (
     <div className="genre-search relative w-[264px] shrink-0">
@@ -59,7 +59,7 @@ export default function GenreSearch({
           type="button"
           aria-label="Previous"
           title="Previous"
-          className="genre-search-previous absolute left-2 top-1/2 z-10 hidden p-1.5 text-[var(--color-neutral-500)] bg-transparent rounded-full -translate-y-1/2 hover:bg-[var(--color-neutral-100)] hover:text-[var(--color-text)]"
+          className="genre-search-previous absolute left-2 top-1/2 z-10 hidden p-1.5 text-[var(--color-text-muted)] bg-transparent rounded-full -translate-y-1/2 hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
           onClick={onPrevious}
         >
           <ArrowLeft aria-hidden="true" className="w-4 h-4" />
@@ -74,17 +74,17 @@ export default function GenreSearch({
         }}
         placeholder={placeholder ?? `${label}…`}
         aria-label={label}
-        className="pl-4 pr-16 transition-[padding] duration-200 ease-out motion-reduce:transition-none bg-white border-[var(--color-neutral-200)] rounded-full shadow-md"
+        className="pl-4 pr-16 transition-[padding] duration-200 ease-out motion-reduce:transition-none bg-[var(--color-surface)] border-[var(--color-border)] rounded-full shadow-md"
       />
       <div className="absolute right-2 top-1/2 flex items-center -translate-y-1/2">
-          <span className="p-1 text-[var(--color-neutral-500)] pointer-events-none">
+          <span className="p-1 text-[var(--color-text-muted)] pointer-events-none">
             <Search aria-hidden="true" className="w-4 h-4" />
           </span>
           {canClear && (
             <button
               type="button"
               aria-label="Clear search"
-              className="p-1 text-[var(--color-neutral-500)] bg-transparent rounded-full hover:bg-[var(--color-neutral-100)] hover:text-[var(--color-text)]"
+              className="p-1 text-[var(--color-text-muted)] bg-transparent rounded-full hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
               onClick={() => {
                 clear();
                 onQueryChange?.("");
@@ -100,20 +100,20 @@ export default function GenreSearch({
         </p>
       )}
       {showList && (
-        <ul className="genre-search-results absolute z-40 w-full max-h-64 mt-1 overflow-y-auto bg-white border border-[var(--color-neutral-200)] rounded-xl shadow-md">
+        <ul className="genre-search-results absolute z-40 w-full max-h-64 mt-1 overflow-y-auto bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-md">
           {extraResults && results.length > 0 && <li className={heading}>Genres</li>}
           {results.map((genrePlaylist) => (
             <li key={genrePlaylist.uuid}>
               <button
                 type="button"
-                className="w-full px-3 py-1.5 text-left bg-transparent rounded-none hover:bg-[var(--color-neutral-100)]"
+                className="w-full px-3 py-1.5 text-left bg-transparent rounded-none hover:bg-[var(--color-surface-muted)]"
                 onClick={() => {
                   select(genrePlaylist);
                   onQueryChange?.("");
                 }}
               >
                 {genrePlaylist.name}
-                {genrePlaylist.isUmbrella && <span className="ml-2 text-xs italic text-[var(--color-neutral-500)]">umbrella</span>}
+                {genrePlaylist.isUmbrella && <span className="ml-2 text-xs italic text-[var(--color-text-muted)]">umbrella</span>}
               </button>
             </li>
           ))}
@@ -122,7 +122,7 @@ export default function GenreSearch({
             <li key={item.key}>
               <button
                 type="button"
-                className="w-full px-3 py-1.5 text-left bg-transparent rounded-none hover:bg-[var(--color-neutral-100)]"
+                className="w-full px-3 py-1.5 text-left bg-transparent rounded-none hover:bg-[var(--color-surface-muted)]"
                 onClick={() => {
                   setQuery("");
                   onQueryChange?.("");

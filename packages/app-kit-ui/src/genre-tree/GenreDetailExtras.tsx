@@ -8,6 +8,7 @@ import { CriteriaOverview } from "@behindthemusictree/app-kit/genre-tree";
 import { Scope } from "@behindthemusictree/app-kit/transport";
 import { useFetchGenreOverview } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaPlaylistMinimum } from "@behindthemusictree/app-kit/genre-tree";
+import { ClampedText } from "./ClampedText";
 import { GenrePlaylistTracks, type GenrePlaylistTracksSlots } from "./GenrePlaylistTracks";
 import { RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
 import { useTrackNoun } from "@behindthemusictree/app-kit/track-noun";
@@ -66,20 +67,22 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
   return (
     <>
       {description && (
-        <p className="px-[14px] py-2.5 text-[13px] leading-[1.45] text-[var(--color-neutral-500)]">{description}</p>
+        <div className="px-[14px] py-2.5">
+          <ClampedText key={genreUuid} className="text-[13px] leading-[1.45] text-[var(--color-text-muted)]">{description}</ClampedText>
+        </div>
       )}
       {renderSummary ? (
         renderSummary(overview)
       ) : (
         <div className="gtv-info-panel-children text-[13px] leading-[1.45] text-[var(--color-text)]">
           <span className="gtv-info-panel-children-title">Summary</span>
-          <p className="mt-1">{summary ?? "—"}</p>
+          <ClampedText key={genreUuid} className="mt-1">{summary ?? "—"}</ClampedText>
           {summarySourceUrl && (
             <a
               href={summarySourceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-1 inline-block text-xs text-[var(--color-neutral-500)] underline hover:text-[var(--color-text)]"
+              className="mt-1 inline-block text-xs text-[var(--color-text-muted)] underline hover:text-[var(--color-text)]"
             >
               Source: Wikipedia
             </a>
@@ -91,7 +94,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
           href={summarySourceUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="mx-[14px] mb-2.5 inline-block text-xs text-[var(--color-neutral-500)] underline hover:text-[var(--color-text)]"
+          className="mx-[14px] mb-2.5 inline-block text-xs text-[var(--color-text-muted)] underline hover:text-[var(--color-text)]"
         >
           Source: Wikipedia
         </a>
@@ -104,7 +107,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
         <div className="gtv-info-panel-children text-[13px] leading-[1.45] text-[var(--color-text)]">
           <span className="gtv-info-panel-children-title">Essential {trackNoun.plural}</span>
           {essentialSongs.length > 0 ? (
-            <ul className="mt-1 divide-y divide-[var(--color-neutral-200)]">
+            <ul className="mt-1 divide-y divide-[var(--color-border)]">
               {essentialSongs.map((track) => (
                 <li key={track.uuid} className="py-1">
                   {track.title}

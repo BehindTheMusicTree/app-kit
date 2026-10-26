@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { screen, fireEvent } from "@testing-library/react";
 import { render } from "../test-utils";
 
 const { useFetchGenreOverviewMock, tracksPropsMock } = vi.hoisted(() => ({
@@ -45,6 +45,47 @@ describe("GenreDetailExtras", () => {
 
     expect(screen.getByText("Default summary text")).toBeInTheDocument();
     expect(screen.getByText("Essential tracks")).toBeInTheDocument();
+  });
+
+  describe("text clamp", () => {
+    const setOverflow = (overflows: boolean) => {
+      vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(overflows ? 100 : 40);
+      vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(40);
+    };
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("clamps the summary and description to three lines", () => {
+      useFetchGenreOverviewMock.mockReturnValue({ data: { ...overview, description: "A description" }, isPending: false });
+      renderExtras();
+
+      expect(screen.getByText("Default summary text")).toHaveClass("line-clamp-3");
+      expect(screen.getByText("A description")).toHaveClass("line-clamp-3");
+    });
+
+    it("shows no toggle when the text fits", () => {
+      setOverflow(false);
+      renderExtras();
+
+      expect(screen.queryByRole("button", { name: "Show more" })).not.toBeInTheDocument();
+    });
+
+    it("expands and collapses an overflowing summary", () => {
+      setOverflow(true);
+      renderExtras();
+
+      const toggle = screen.getByRole("button", { name: "Show more" });
+      expect(toggle).toHaveAttribute("aria-expanded", "false");
+
+      fireEvent.click(toggle);
+      expect(screen.getByText("Default summary text")).not.toHaveClass("line-clamp-3");
+      expect(screen.getByRole("button", { name: "Show less" })).toHaveAttribute("aria-expanded", "true");
+
+      fireEvent.click(screen.getByRole("button", { name: "Show less" }));
+      expect(screen.getByText("Default summary text")).toHaveClass("line-clamp-3");
+    });
   });
 
   it("replaces both default sections with the slots, passing the overview", () => {
