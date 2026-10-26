@@ -11,6 +11,16 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- `useArtistSearch(getBackendBaseUrl, text)` and `ArtistSearchResultSchema` / `ArtistSearchResultsSchema` (`@behindthemusictree/app-kit/genre-tree`): debounced `artists/search/` query (2+ characters, 8 results).
+- `GenreTreeView` searches artists by default: matches show under an "Artists" group in the search dropdown (name, disambiguation, matched alias), and the field is labelled "Search" instead of "Search a genre". `artistSearchBaseUrl` points the artist query at another backend; `artistSearch={false}` turns it off.
+
+### Breaking
+
+- `GenreTreeView`: `onArtistSelect` is required unless `artistSearch={false}`.
+- `GenreTreeView`: the `onSearchQueryChange` and `searchExtraResults` props from 14.0.0 are removed; artists are built in. `GenreSearch` keeps `onQueryChange` / `extraResults`, and labels its field "Search" when `extraResults` is set.
+
 ### Changed
 
 - Genre detail panel: the description and the Summary / Essential tracks sections share the panel's 14px gutter and a 13px body text size; the Wikipedia source link sits inside the Summary section; Essential tracks render as a divided list instead of bullets. The action band uses the same gutter.

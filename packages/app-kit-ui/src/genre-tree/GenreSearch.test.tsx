@@ -114,6 +114,17 @@ describe("GenreSearch", () => {
       expect(screen.getByRole("status")).toHaveTextContent("1 artist found");
     });
 
+    it("labels the input Search with extras and Search a genre without", () => {
+      const { unmount } = render(
+        <GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} extraResults={extra()} />,
+      );
+      expect(screen.getByRole("textbox", { name: "Search" })).toHaveAttribute("placeholder", "Search…");
+      unmount();
+
+      render(<GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} />);
+      expect(screen.getByRole("textbox", { name: "Search a genre" })).toHaveAttribute("placeholder", "Search a genre…");
+    });
+
     it("shows no headings without extra results", () => {
       render(<GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} />);
 
