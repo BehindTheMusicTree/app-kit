@@ -124,6 +124,9 @@ function ReferenceGenreTree() {
         handleGenreRenameAction={showGenreRenamePopup}
         getBackendBaseUrl={getBackendBaseUrl}
         renderArtistLink={(artist) => <a href={`#artist-${artist.uuid}`}>{artist.name}</a>}
+        onArtistSelect={(artist) => {
+          window.location.hash = `artist-${artist.uuid}`;
+        }}
       />
     </>
   );

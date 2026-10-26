@@ -36,7 +36,7 @@ export default function GenreSearch({
   selectedName = null,
   onClear,
   onPrevious,
-  placeholder = "Search a genre…",
+  placeholder,
   onQueryChange,
   extraResults,
 }: GenreSearchProps) {
@@ -48,6 +48,7 @@ export default function GenreSearch({
   });
 
   const extraItems = query !== "" && query !== selectedName ? (extraResults?.items ?? []) : [];
+  const label = extraResults ? "Search" : "Search a genre";
   const showList = results.length > 0 || extraItems.length > 0;
   const heading = "px-3 pt-2 pb-1 text-xs font-medium uppercase text-[var(--color-neutral-500)]";
 
@@ -71,8 +72,8 @@ export default function GenreSearch({
           setQuery(event.target.value);
           onQueryChange?.(event.target.value);
         }}
-        placeholder={placeholder}
-        aria-label="Search a genre"
+        placeholder={placeholder ?? `${label}…`}
+        aria-label={label}
         className="pl-4 pr-16 transition-[padding] duration-200 ease-out motion-reduce:transition-none bg-white border-[var(--color-neutral-200)] rounded-full shadow-md"
       />
       <div className="absolute right-2 top-1/2 flex items-center -translate-y-1/2">

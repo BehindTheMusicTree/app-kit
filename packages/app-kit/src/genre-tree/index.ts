@@ -1,6 +1,7 @@
 // Data hooks + view state
 export * from "./useGenre";
 export * from "./useGenrePlaylist";
+export * from "./useArtistSearch";
 export * from "./useGenreSearch";
 export * from "./useGenreTreeViewState";
 
@@ -29,6 +30,7 @@ export * from "./models/TrackListOriginType";
 // Schemas / domain types
 export * from "./schemas/uuid-resource";
 export * from "./schemas/artist-minimum";
+export * from "./schemas/artist-search";
 export * from "./schemas/album-minimum";
 export * from "./schemas/mb-artist";
 export * from "./schemas/mb-recording";
@@ -50,6 +52,7 @@ export * from "./schemas/track-playlist-rel/without-playlist";
 
 // API domain contracts
 export { genreEndpoints, genreQueryKeys } from "./api/genres";
+export { artistEndpoints, artistQueryKeys } from "./api/artists";
 export { genrePlaylistEndpoints, genrePlaylistQueryKeys } from "./api/genre-playlists";
 export { libraryEndpoints, libraryQueryKeys } from "./api/library";
 
