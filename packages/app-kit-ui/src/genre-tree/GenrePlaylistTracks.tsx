@@ -20,7 +20,7 @@ import { genrePlaylistQueryKeys } from "@behindthemusictree/app-kit/genre-tree";
 import { libraryEndpoints, libraryQueryKeys } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaPlaylistMinimum } from "@behindthemusictree/app-kit/genre-tree";
 import { TrackBase } from "@behindthemusictree/app-kit/genre-tree";
-import { isRecording, recordingUnplayableReason, RecordingDetailedSchema } from "@behindthemusictree/app-kit/genre-tree";
+import { isSong, songUnplayableReason, SongDetailedSchema } from "@behindthemusictree/app-kit/genre-tree";
 import { GenrePlaylistTracksPage, useTrackList } from "@behindthemusictree/app-kit/genre-tree";
 import { MusicBrainzRecordingLink } from "./MusicBrainzRecordingLink";
 import { ArtistNames, RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
@@ -29,7 +29,7 @@ import { capitalize, useTrackNoun } from "@behindthemusictree/app-kit/track-noun
 const CATALOGUE_PAGE_SIZE = 100;
 // withTotal=false: the backend skips COUNT(*) and pages by keyset cursor, so huge genre subtrees
 // stay O(page) at any depth; page numbers and totals are then null.
-const RecordingPageSchema = PaginatedResponseSchema(RecordingDetailedSchema).extend({
+const SongPageSchema = PaginatedResponseSchema(SongDetailedSchema).extend({
   overallTotal: z.number().nullable(),
   page: z.number().nullable(),
   totalPages: z.number().nullable(),
@@ -46,16 +46,16 @@ const SEPARATOR = "[@container(min-width:40rem)]:hidden";
 
 const nextCursor = (next: string): string => {
   const cursor = new URL(next).searchParams.get("cursor");
-  if (!cursor) throw new Error(`Recordings next link has no cursor: ${next}`);
+  if (!cursor) throw new Error(`Songs next link has no cursor: ${next}`);
   return cursor;
 };
 
-// Recordings are not narrowed to RecordingDetailed here: "me" scope lists uploaded tracks too.
+// Songs are not narrowed to SongDetailed here: "me" scope lists uploaded tracks too.
 export type GenrePlaylistTracksSlots = {
   /** Rendered first in each row, e.g. a selection checkbox. `index` is the row's position in the loaded list. */
-  renderRecordingLeading?: (recording: TrackBase, index: number) => ReactNode;
-  /** Rendered last in each row. The recording's own genre is `recording.genre`. */
-  renderRecordingActions?: (recording: TrackBase) => ReactNode;
+  renderSongLeading?: (song: TrackBase, index: number) => ReactNode;
+  /** Rendered last in each row. The song's own genre is `song.genre`. */
+  renderSongActions?: (song: TrackBase) => ReactNode;
   /** Rendered between the title and the list, e.g. a "+ Link" button or a selection bar. */
   renderTracksToolbar?: () => ReactNode;
 };
@@ -70,7 +70,7 @@ export type GenrePlaylistTracksProps = GenrePlaylistTracksSlots & {
 };
 
 /**
- * "reference" lists the genre's whole recordings catalogue (genre subtree), playable or not, while
+ * "reference" lists the genre's whole songs catalogue (genre subtree), playable or not, while
  * playing goes through the playable-only playlist. Other scopes have no catalogue endpoint; their
  * playlist is the catalogue (e.g. hear's uploaded tracks are always playable).
  */
@@ -80,8 +80,8 @@ export function GenrePlaylistTracks({
   scope,
   getBackendBaseUrl,
   renderArtistLink,
-  renderRecordingLeading,
-  renderRecordingActions,
+  renderSongLeading,
+  renderSongActions,
   renderTracksToolbar,
 }: GenrePlaylistTracksProps) {
   const { fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist } = useTrackList();
@@ -97,17 +97,17 @@ export function GenrePlaylistTracks({
     queryKey:
       scope === "me"
         ? genrePlaylistQueryKeys.me.tracks(uuid)
-        : libraryQueryKeys.reference.recordings.byGenre(getBackendBaseUrl(), genreUuid),
+        : libraryQueryKeys.reference.songs.byGenre(getBackendBaseUrl(), genreUuid),
     queryFn: async ({ pageParam }): Promise<Omit<GenrePlaylistTracksPage<TrackBase>, "total" | "nextPage"> & { total: number | null; nextPage: number | string | null }> => {
       if (scope === "me") return fetchGenrePlaylistTracksPage(uuid, scope, Number(pageParam));
       const response = await fetch(
-        libraryEndpoints.reference.recordings.list(),
+        libraryEndpoints.reference.songs.list(),
         true,
         false,
         {},
         { genre: genreUuid, pageSize: CATALOGUE_PAGE_SIZE, withTotal: false, ...(pageParam && { cursor: pageParam }) },
       );
-      const parsed = parseWithLog(RecordingPageSchema, response, "GenrePlaylistTracks");
+      const parsed = parseWithLog(SongPageSchema, response, "GenrePlaylistTracks");
       return { tracks: parsed.results, total: parsed.overallTotal, nextPage: parsed.next ? nextCursor(parsed.next) : null };
     },
     initialPageParam: scope === "me" ? 1 : "",
@@ -132,8 +132,8 @@ export function GenrePlaylistTracks({
   const tracks = pages.flatMap((page) => page.tracks);
   const total = pages[0]?.total ?? undefined;
 
-  const play = (startRecordingUuid: string) => {
-    playNewTrackListFromGenrePlaylist(genrePlaylist, scope, { startRecordingUuid }).catch((error) => {
+  const play = (startSongUuid: string) => {
+    playNewTrackListFromGenrePlaylist(genrePlaylist, scope, { startSongUuid }).catch((error) => {
       console.error("Failed to play genre playlist:", error);
       showPopup(<InternalErrorPopup errorCode={ErrorCode.CLIENT_UNKNOWN} />);
     });
@@ -174,9 +174,9 @@ export function GenrePlaylistTracks({
                 {track.album && <span className={ALBUM_CELL}>{track.album.name}</span>}
               </span>
             );
-            const leading = renderRecordingLeading?.(track, index);
-            const actions = renderRecordingActions?.(track);
-            const unplayableReason = isRecording(track) ? recordingUnplayableReason(track) : null;
+            const leading = renderSongLeading?.(track, index);
+            const actions = renderSongActions?.(track);
+            const unplayableReason = isSong(track) ? songUnplayableReason(track) : null;
             if (unplayableReason) {
               return (
                 <li key={track.uuid} className="flex min-h-8 items-center gap-1 px-1 opacity-50" title={unplayableReason}>
@@ -191,7 +191,7 @@ export function GenrePlaylistTracks({
                     <FaPlay size={10} />
                   </button>
                   {text}
-                  {isRecording(track) && <MusicBrainzRecordingLink recording={track} />}
+                  {isSong(track) && <MusicBrainzRecordingLink song={track} />}
                   <span className="shrink-0 text-xs">{unplayableReason}</span>
                   {actions}
                 </li>
@@ -218,7 +218,7 @@ export function GenrePlaylistTracks({
                   )}
                 </button>
                 {text}
-                {isRecording(track) && <MusicBrainzRecordingLink recording={track} />}
+                {isSong(track) && <MusicBrainzRecordingLink song={track} />}
                 {actions}
               </li>
             );

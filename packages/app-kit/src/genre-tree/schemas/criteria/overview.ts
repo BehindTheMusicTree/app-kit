@@ -8,7 +8,7 @@ export const CriteriaOverviewSchema = UuidResourceSchema.extend({
   summary: z.string().nullable(),
   description: z.string().nullable(),
   summarySourceUrl: z.string().url().nullable(),
-  essentialTracks: z.array(TrackMinimumSchema).optional(),
+  essentialSongs: z.array(TrackMinimumSchema).optional(),
 });
 
 export type CriteriaOverview = z.infer<typeof CriteriaOverviewSchema>;

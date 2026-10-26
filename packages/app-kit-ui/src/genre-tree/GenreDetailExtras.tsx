@@ -61,7 +61,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
   }
   if (!overview) return null;
 
-  const { summary, description, summarySourceUrl, essentialTracks } = overview;
+  const { summary, description, summarySourceUrl, essentialSongs } = overview;
 
   return (
     <>
@@ -100,12 +100,12 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
       {renderEssentialTracks ? (
         renderEssentialTracks(overview)
       ) : (
-        essentialTracks && (
+        essentialSongs && (
         <div className="gtv-info-panel-children text-[13px] leading-[1.45] text-[var(--color-text)]">
           <span className="gtv-info-panel-children-title">Essential {trackNoun.plural}</span>
-          {essentialTracks.length > 0 ? (
+          {essentialSongs.length > 0 ? (
             <ul className="mt-1 divide-y divide-[var(--color-neutral-200)]">
-              {essentialTracks.map((track) => (
+              {essentialSongs.map((track) => (
                 <li key={track.uuid} className="py-1">
                   {track.title}
                 </li>

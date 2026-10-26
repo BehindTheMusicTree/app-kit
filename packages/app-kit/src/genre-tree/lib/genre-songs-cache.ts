@@ -1,14 +1,14 @@
 import type { InfiniteData } from "@tanstack/react-query";
 
-type RecordingsPage = { tracks: unknown[]; total: number | null };
+type SongsPage = { tracks: unknown[]; total: number | null };
 
 /**
  * Applies an optimistic edit to the cached infinite query
- * `libraryQueryKeys.reference.recordings.byGenre(baseUrl, genreUuid)`: pages are `{ tracks, total, nextPage }`.
+ * `libraryQueryKeys.reference.songs.byGenre(baseUrl, genreUuid)`: pages are `{ tracks, total, nextPage }`.
  * `edit` maps a page's tracks (return fewer to remove, changed copies to update); every page's `total` (a list-wide count) follows the
- * overall removed/added count. Use as `queryClient.setQueryData(key, (data) => editGenreRecordingPages(data, edit))`.
+ * overall removed/added count. Use as `queryClient.setQueryData(key, (data) => editGenreSongPages(data, edit))`.
  */
-export function editGenreRecordingPages<P extends RecordingsPage>(
+export function editGenreSongPages<P extends SongsPage>(
   data: InfiniteData<P> | undefined,
   edit: (tracks: P["tracks"]) => P["tracks"],
 ): InfiniteData<P> | undefined {

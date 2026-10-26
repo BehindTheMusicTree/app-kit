@@ -185,7 +185,7 @@ describe("TrackItem", () => {
     expect(loadTrackForPlayer).not.toHaveBeenCalled();
   });
 
-  it("greys out a recording without a video as unplayable", () => {
+  it("greys out a song without a video as unplayable", () => {
     render(<TrackItem track={makeTrack({ youtubeVideo: null, musicbrainzRecordingId: null })} position={2} />);
 
     expect(screen.getByTitle("No video available")).toHaveClass("opacity-50");

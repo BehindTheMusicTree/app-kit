@@ -60,7 +60,7 @@ re-exported from the root barrel `src/index.ts`.
 `TrackListSidebar`, the genre detail panel via `GenreTreeView`, all in `app-kit-ui`) become links only when the
 consumer passes `renderArtistLink(artist)`, which returns its own router link so navigation stays
 client-side and playback keeps running. `useTrackList().playNewTrackListFromArtist(artist, scope,
-{ ordering, startRecordingUuid? })` queues an artist's playable recordings (`library/recordings/?artist=&playable=true`),
+{ ordering, startSongUuid? })` queues an artist's playable songs (`library/songs/?artist=&playable=true`),
 paging lazily through `loadMore` like the genre-playlist origin.
 
 Adding a module: export it from the module's own barrel **and** `src/index.ts`, then add a

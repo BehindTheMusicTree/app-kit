@@ -41,9 +41,9 @@ import type { RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
 const genrePlaylist = { uuid: "p1", name: "Jazz" };
 const makeTracks = (count: number, prefix: string) =>
   Array.from({ length: count }, (_, i) => ({ uuid: `${prefix}${i}`, title: `Song ${prefix}${i}`, artists: null }));
-const recordingsPage = (results: unknown[], { next = false, total = results.length as number | null } = {}) => ({
+const songsPage = (results: unknown[], { next = false, total = results.length as number | null } = {}) => ({
   overallTotal: total,
-  next: next ? "https://b/library/recordings/?genre=g1&pageSize=100&cursor=CUR2" : null,
+  next: next ? "https://b/library/songs/?genre=g1&pageSize=100&cursor=CUR2" : null,
   previous: null,
   results,
   page: null,
@@ -87,31 +87,31 @@ describe("GenrePlaylistTracks", () => {
       </QueryClientProvider>,
     );
 
-  it("lists the genre catalogue page by page and plays from the clicked recording", async () => {
+  it("lists the genre catalogue page by page and plays from the clicked song", async () => {
     const page1 = makeTracks(2, "a");
     const page2 = makeTracks(2, "b");
     fetchMock
-      .mockResolvedValueOnce(recordingsPage(page1, { next: true, total: 250 }))
-      .mockResolvedValueOnce(recordingsPage(page2, { next: true, total: 250 }));
+      .mockResolvedValueOnce(songsPage(page1, { next: true, total: 250 }))
+      .mockResolvedValueOnce(songsPage(page2, { next: true, total: 250 }));
 
     renderTracks();
 
     expect(await screen.findByRole("button", { name: "Play Song a1" })).toBeInTheDocument();
     expect(screen.getByText("Tracks (250)")).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith("library/recordings/", true, false, {}, { genre: "g1", pageSize: 100, withTotal: false });
+    expect(fetchMock).toHaveBeenCalledWith("library/songs/", true, false, {}, { genre: "g1", pageSize: 100, withTotal: false });
 
     await act(async () => {
       observerCallback([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver);
     });
     fireEvent.click(await screen.findByRole("button", { name: "Play Song b0" }));
 
-    expect(fetchMock).toHaveBeenLastCalledWith("library/recordings/", true, false, {}, { genre: "g1", pageSize: 100, withTotal: false, cursor: "CUR2" });
+    expect(fetchMock).toHaveBeenLastCalledWith("library/songs/", true, false, {}, { genre: "g1", pageSize: 100, withTotal: false, cursor: "CUR2" });
     expect(fetchGenrePlaylistTracksPage).not.toHaveBeenCalled();
-    expect(playNewTrackListFromGenrePlaylist).toHaveBeenCalledWith(genrePlaylist, "reference", { startRecordingUuid: "b0" });
+    expect(playNewTrackListFromGenrePlaylist).toHaveBeenCalledWith(genrePlaylist, "reference", { startSongUuid: "b0" });
   });
 
   it("shows a dash for an empty catalogue and no count when the total is null", async () => {
-    fetchMock.mockResolvedValueOnce(recordingsPage([], { total: null }));
+    fetchMock.mockResolvedValueOnce(songsPage([], { total: null }));
 
     renderTracks();
 
@@ -120,7 +120,7 @@ describe("GenrePlaylistTracks", () => {
   });
 
   it("shows an error with a retry instead of a dash when the request fails", async () => {
-    fetchMock.mockRejectedValueOnce(new Error("boom")).mockResolvedValueOnce(recordingsPage(makeTracks(1, "a")));
+    fetchMock.mockRejectedValueOnce(new Error("boom")).mockResolvedValueOnce(songsPage(makeTracks(1, "a")));
 
     renderTracks();
 
@@ -132,7 +132,7 @@ describe("GenrePlaylistTracks", () => {
   });
 
   it("shows the error state when the next link carries no cursor", async () => {
-    fetchMock.mockResolvedValueOnce({ ...recordingsPage(makeTracks(1, "a")), next: "https://b/library/recordings/?genre=g1" });
+    fetchMock.mockResolvedValueOnce({ ...songsPage(makeTracks(1, "a")), next: "https://b/library/songs/?genre=g1" });
 
     renderTracks();
 
@@ -143,7 +143,7 @@ describe("GenrePlaylistTracks", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const failure = new Error("boom");
     playNewTrackListFromGenrePlaylist.mockRejectedValueOnce(failure);
-    fetchMock.mockResolvedValueOnce(recordingsPage([{ uuid: "t1", title: "Song", artists: [{ uuid: "x", name: "A" }, { uuid: "y", name: "B" }] }]));
+    fetchMock.mockResolvedValueOnce(songsPage([{ uuid: "t1", title: "Song", artists: [{ uuid: "x", name: "A" }, { uuid: "y", name: "B" }] }]));
 
     renderTracks();
     const button = await screen.findByRole("button", { name: "Play Song — A, B" });
@@ -157,7 +157,7 @@ describe("GenrePlaylistTracks", () => {
   });
 
   it("links artist names when renderArtistLink is set", async () => {
-    fetchMock.mockResolvedValueOnce(recordingsPage([{ uuid: "t1", title: "Song", artists: [{ uuid: "x", name: "A" }] }]));
+    fetchMock.mockResolvedValueOnce(songsPage([{ uuid: "t1", title: "Song", artists: [{ uuid: "x", name: "A" }] }]));
 
     renderTracks("reference", (artist) => <a href={`/artists/${artist.uuid}`}>{artist.name}</a>);
 
@@ -165,7 +165,7 @@ describe("GenrePlaylistTracks", () => {
   });
 
   it("does not play when the row text is clicked", async () => {
-    fetchMock.mockResolvedValueOnce(recordingsPage(makeTracks(1, "a")));
+    fetchMock.mockResolvedValueOnce(songsPage(makeTracks(1, "a")));
 
     renderTracks();
     fireEvent.click(await screen.findByText("Song a0"));
@@ -179,7 +179,7 @@ describe("GenrePlaylistTracks", () => {
       playState: PlayStates.PLAYING,
       handlePlayPauseAction,
     });
-    fetchMock.mockResolvedValueOnce(recordingsPage(makeTracks(2, "a")));
+    fetchMock.mockResolvedValueOnce(songsPage(makeTracks(2, "a")));
 
     renderTracks();
     fireEvent.click(await screen.findByRole("button", { name: "Pause Song a0" }));
@@ -199,7 +199,7 @@ describe("GenrePlaylistTracks", () => {
   });
 
   it("greys out an unplayable track with its reason and a disabled play button", async () => {
-    fetchMock.mockResolvedValueOnce(recordingsPage([{ uuid: "x", title: "Blocked", artists: null, youtubeVideo: { id: "v1", unplayableReason: "private" }, musicbrainzRecordingId: null }]));
+    fetchMock.mockResolvedValueOnce(songsPage([{ uuid: "x", title: "Blocked", artists: null, youtubeVideo: { id: "v1", unplayableReason: "private" }, musicbrainzRecordingId: null }]));
 
     renderTracks();
 
@@ -212,8 +212,8 @@ describe("GenrePlaylistTracks", () => {
     expect(playNewTrackListFromGenrePlaylist).not.toHaveBeenCalled();
   });
 
-  it("shows a recording without a video as unplayable", async () => {
-    fetchMock.mockResolvedValueOnce(recordingsPage([{ uuid: "x", title: "Lucky", artists: null, youtubeVideo: null, musicbrainzRecordingId: null }]));
+  it("shows a song without a video as unplayable", async () => {
+    fetchMock.mockResolvedValueOnce(songsPage([{ uuid: "x", title: "Lucky", artists: null, youtubeVideo: null, musicbrainzRecordingId: null }]));
 
     renderTracks();
 
@@ -221,7 +221,7 @@ describe("GenrePlaylistTracks", () => {
   });
 
   it("links tracks with an MBID to MusicBrainz without starting playback", async () => {
-    fetchMock.mockResolvedValueOnce(recordingsPage([
+    fetchMock.mockResolvedValueOnce(songsPage([
         { uuid: "m", title: "Linked", artists: null, youtubeVideo: { id: "v1", unplayableReason: null }, musicbrainzRecordingId: "b1e6a1c8-0e3d-4d3d-9d2e-2f6c1a2b3c4d" },
         { uuid: "n", title: "Unlinked", artists: null, youtubeVideo: { id: "v1", unplayableReason: null }, musicbrainzRecordingId: null },
       ]));
@@ -236,8 +236,8 @@ describe("GenrePlaylistTracks", () => {
     expect(playNewTrackListFromGenrePlaylist).not.toHaveBeenCalled();
   });
 
-  it("renders the leading, actions and toolbar slots around each recording", async () => {
-    fetchMock.mockResolvedValueOnce(recordingsPage(makeTracks(2, "a")));
+  it("renders the leading, actions and toolbar slots around each song", async () => {
+    fetchMock.mockResolvedValueOnce(songsPage(makeTracks(2, "a")));
 
     render(
       <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -247,8 +247,8 @@ describe("GenrePlaylistTracks", () => {
           scope="reference"
           getBackendBaseUrl={() => "https://b"}
           renderTracksToolbar={() => <button type="button">Link tracks</button>}
-          renderRecordingLeading={(recording, index) => <input type="checkbox" aria-label={`Select ${recording.title} #${index}`} />}
-          renderRecordingActions={(recording) => <button type="button">Unlink {recording.title}</button>}
+          renderSongLeading={(song, index) => <input type="checkbox" aria-label={`Select ${song.title} #${index}`} />}
+          renderSongActions={(song) => <button type="button">Unlink {song.title}</button>}
         />
       </QueryClientProvider>,
     );
@@ -261,7 +261,7 @@ describe("GenrePlaylistTracks", () => {
   });
 
   it("renders no slot content by default", async () => {
-    fetchMock.mockResolvedValueOnce(recordingsPage(makeTracks(1, "a")));
+    fetchMock.mockResolvedValueOnce(songsPage(makeTracks(1, "a")));
 
     renderTracks();
 

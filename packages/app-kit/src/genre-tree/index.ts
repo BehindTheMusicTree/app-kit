@@ -24,7 +24,7 @@ export {
   TrackListOriginFromCriteriaPlaylist,
   TrackListOriginFromArtist,
 } from "./models/TrackListOrigin";
-export type { ArtistTrackListOriginInput, ArtistRecordingsOrdering } from "./models/TrackListOrigin";
+export type { ArtistTrackListOriginInput, ArtistSongsOrdering } from "./models/TrackListOrigin";
 export * from "./models/TrackListOriginType";
 
 // Schemas / domain types
@@ -45,7 +45,7 @@ export * from "./schemas/criteria/lineage-rel/without-descendant";
 export * from "./schemas/criteria-playlist/minimum";
 export * from "./schemas/criteria-playlist/simple";
 export * from "./schemas/criteria-playlist/detailed";
-export * from "./schemas/recording/detailed";
+export * from "./schemas/song/detailed";
 export * from "./schemas/track/base";
 export * from "./schemas/track/minimum";
 export * from "./schemas/track-playlist-rel/without-playlist";
@@ -61,4 +61,4 @@ export * from "./lib/rating";
 export * from "./lib/formatting";
 export * from "./lib/genre-playlist-helpers";
 export * from "./lib/genre-search";
-export * from "./lib/genre-recordings-cache";
+export * from "./lib/genre-songs-cache";
