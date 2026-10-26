@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [17.1.0] - 2026-10-26
+
 ### Changed
 
 - Genre panel (`GenreDetailExtras`, `GenreSearch`, `GenreActionBand`, `Rating`) reads the semantic brand tokens (`--color-surface`, `--color-surface-muted`, `--color-border`, `--color-text-muted`), so it follows `data-theme="dark"`; light mode is unchanged.
