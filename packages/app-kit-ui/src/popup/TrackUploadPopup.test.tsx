@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
+import { screen, waitFor, fireEvent, act } from "@testing-library/react";
+import { render } from "../test-utils";
 import TrackUploadPopup from "./TrackUploadPopup";
 
 type Settle = { resolve: (value: unknown) => void; reject: (reason: Error) => void };

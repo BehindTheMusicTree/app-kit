@@ -34,6 +34,11 @@
       "import": "./dist/popup/index.js",
       "require": "./dist/popup/index.cjs"
     },
+    "./track-noun": {
+      "types": "./dist/track-noun/index.d.ts",
+      "import": "./dist/track-noun/index.js",
+      "require": "./dist/track-noun/index.cjs"
+    },
     "./player": {
       "types": "./dist/player/index.d.ts",
       "import": "./dist/player/index.js",

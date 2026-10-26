@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react";
+import { render } from "../../test-utils";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import GenrePlaylistTreePerRoot from "./TreePerRoot";

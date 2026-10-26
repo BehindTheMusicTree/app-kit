@@ -11,6 +11,15 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- `TrackNounProvider` / `useTrackNoun()` (`@behindthemusictree/app-kit/track-noun`) and a `capitalize` helper: the app supplies the noun its UI uses for tracks (`{ singular, plural }`).
+
+### Breaking
+
+- App-kit-ui components no longer hardcode "track(s)": `TrackListSidebar`, `GenreDetailExtras` (the "Essential …" heading), `GenrePlaylistTracks`, `TrackUploadPopup` and the genre tree components read the noun from `useTrackNoun()`, which throws outside a `TrackNounProvider`. Wrap the app in `<TrackNounProvider singular="song" plural="songs">` (grow) or `singular="track" plural="tracks"` (hear).
+- Requires `@behindthemusictree/genre-tree-view` 3.0.0; the tree components pass it `itemCountLabel` (e.g. "Song count").
+
 ## [13.5.0] - 2026-10-26
 
 ### Added
