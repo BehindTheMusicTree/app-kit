@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [14.0.0] - 2026-10-26
+
 ### Added
 
 - `GenreSearch` / `GenreTreeView`: optional `onQueryChange` / `onSearchQueryChange` and `extraResults` / `searchExtraResults` let the host add a second result group (e.g. artists) to the search dropdown, shown under "Genres" and the group's label. Unset, the dropdown is unchanged.
