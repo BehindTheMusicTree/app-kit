@@ -14,7 +14,7 @@ export function MusicBrainzRecordingLink({ recording }: { recording: RecordingDe
       rel="noopener noreferrer"
       aria-label={`View ${recording.title} on MusicBrainz`}
       title="View on MusicBrainz"
-      className="inline-flex shrink-0 items-center text-[var(--color-neutral-300)] hover:text-[var(--color-neutral-200)]"
+      className="inline-flex shrink-0 items-center opacity-50 hover:opacity-100 focus-visible:opacity-100"
       onClick={(event) => event.stopPropagation()}
     >
       <FaExternalLinkAlt size={10} />

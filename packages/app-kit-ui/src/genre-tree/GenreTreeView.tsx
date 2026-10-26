@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, type ComponentProps, type ReactNode } from "react";
+import { useCallback, useRef, useState, type ComponentProps, type ReactNode } from "react";
 import { z } from "zod";
 import { Plus } from "lucide-react";
 import { IconTextButton, Button } from "@behindthemusictree/ui";
@@ -16,7 +16,12 @@ import type {
   GenreTreeViewMode,
 } from "@behindthemusictree/genre-tree-view";
 
-import { CriteriaMinimum, CriteriaPlaylistSimple } from "@behindthemusictree/app-kit/genre-tree";
+import {
+  CriteriaMinimum,
+  CriteriaPlaylistSimple,
+  useArtistSearch,
+  type ArtistSearchResult,
+} from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaOverview } from "@behindthemusictree/app-kit/genre-tree";
 import { Scope } from "@behindthemusictree/app-kit/transport";
 import { useGenreTreeViewState, useTrackList, TrackListOriginType } from "@behindthemusictree/app-kit/genre-tree";
@@ -83,6 +88,16 @@ export type {
 } from "@behindthemusictree/genre-tree-view";
 export type { GenreFocusProps } from "./playlist-tree/TreeWheelRadialPopCore";
 
+/** Artists are searched by default, so a host must say what picking one does, or opt out. */
+export type ArtistSearchProps =
+  | { artistSearch: false; onArtistSelect?: never; artistSearchBaseUrl?: never }
+  | {
+      artistSearch?: true;
+      onArtistSelect: (artist: ArtistSearchResult) => void;
+      /** Backend that serves `artists/search/`. Defaults to `getBackendBaseUrl`. */
+      artistSearchBaseUrl?: () => string;
+    };
+
 export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = {
   scope: Scope;
   handleGenreCreationAction: (parent: CriteriaMinimum | null) => void;
@@ -115,11 +130,8 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   controlsOrientation?: ControlsOrientation;
   /** When set, artist names in the info panel's track list render through it (e.g. a router `Link`). */
   renderArtistLink?: RenderArtistLink;
-  /** Forwarded to the search bar: what the user types, so the host can resolve `searchExtraResults`. */
-  onSearchQueryChange?: GenreSearchProps["onQueryChange"];
-  /** A second result group in the search dropdown, e.g. artists. */
-  searchExtraResults?: GenreSearchProps["extraResults"];
-} & GenreDetailSlots<O> &
+} & ArtistSearchProps &
+  GenreDetailSlots<O> &
   GenrePlaylistTracksSlots &
   InfoPanelCurationProps &
   GenreFocusProps;
@@ -142,8 +154,9 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   renderGenreDetailExtras,
   controlsOrientation,
   renderArtistLink,
-  onSearchQueryChange,
-  searchExtraResults,
+  artistSearch = true,
+  onArtistSelect,
+  artistSearchBaseUrl,
   renderSummary,
   renderEssentialTracks,
   renderRecordingLeading,
@@ -204,6 +217,37 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     rootRef.current?.querySelector<HTMLButtonElement>(".search-overlay .gtv-info-panel-previous")?.click();
   };
 
+  const [searchText, setSearchText] = useState("");
+  const artistSearchResult = useArtistSearch(artistSearchBaseUrl ?? getBackendBaseUrl, artistSearch ? searchText : "");
+  const artistExtraResults: GenreSearchProps["extraResults"] = artistSearch
+    ? {
+        label: "Artists",
+        items: artistSearchResult.artists.map((artist) => ({
+          key: artist.uuid,
+          content: (
+            <>
+              <span className="block truncate font-medium">
+                {artist.name}
+                {artist.disambiguation && (
+                  <span className="font-normal text-[var(--color-neutral-500)]"> · {artist.disambiguation}</span>
+                )}
+              </span>
+              {artist.matchedAlias && (
+                <span className="block truncate text-xs text-[var(--color-neutral-500)]">
+                  also known as {artist.matchedAlias}
+                </span>
+              )}
+            </>
+          ),
+          onSelect: () => onArtistSelect?.(artist),
+        })),
+        status: artistSearchResult.isError
+          ? "Search failed"
+          : artistSearchResult.settled && artistSearchResult.artists.length === 0
+            ? "No artists found"
+            : "",
+      }
+    : undefined;
   const handleSelectedNodeChange = selectNode;
   const handleGenreSearchClear = clearSelection;
   const handleGenreSearchSelect = selectGenrePlaylist;
@@ -288,8 +332,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           selectedName={selectedGenrePlaylist?.name ?? null}
           onClear={handleGenreSearchClear}
           onPrevious={handlePrevious}
-          onQueryChange={onSearchQueryChange}
-          extraResults={searchExtraResults}
+          onQueryChange={artistSearch ? setSearchText : undefined}
+          extraResults={artistExtraResults}
         />
       )}
       {!isLoading && !isControlled && (

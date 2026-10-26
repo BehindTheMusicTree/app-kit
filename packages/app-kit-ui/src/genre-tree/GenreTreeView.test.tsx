@@ -14,6 +14,7 @@ const {
   trackListState,
   playNewTrackListFromGenrePlaylistMock,
   useUpdateGenreMock,
+  useArtistSearchMock,
 } = vi.hoisted(() => ({
   useListFullGenrePlaylistsMock: vi.fn(),
   useFetchGenreOverviewMock: vi.fn(),
@@ -25,6 +26,7 @@ const {
   trackListState: { value: null as unknown },
   playNewTrackListFromGenrePlaylistMock: vi.fn(() => Promise.resolve()),
   useUpdateGenreMock: vi.fn(),
+  useArtistSearchMock: vi.fn(),
 }));
 
 vi.mock("../../../app-kit/src/player/PlayerContext", async (importOriginal) => ({
@@ -42,6 +44,10 @@ vi.mock("../../../app-kit/src/genre-tree/TrackListContext", async (importOrigina
 vi.mock("../../../app-kit/src/genre-tree/useGenrePlaylist", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useListFullGenrePlaylists: () => useListFullGenrePlaylistsMock(),
+}));
+
+vi.mock("../../../app-kit/src/genre-tree/useArtistSearch", () => ({
+  useArtistSearch: (getBaseUrl: () => string, text: string) => useArtistSearchMock(getBaseUrl, text),
 }));
 
 vi.mock("../../../app-kit/src/genre-tree/useGenre", async (importOriginal) => ({
@@ -93,7 +99,7 @@ vi.mock("@behindthemusictree/genre-tree-view", async (importOriginal) => ({
     ),
 }));
 
-import { GenreTreeView, type GenreFocusProps, type GenreTreeViewProps } from "./GenreTreeView";
+import { GenreTreeView, type ArtistSearchProps, type GenreFocusProps, type GenreTreeViewProps } from "./GenreTreeView";
 
 const getBackendBaseUrl = () => "https://backend.example.com";
 
@@ -130,12 +136,13 @@ function makePlaylist(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function renderView(overrides: Partial<Omit<GenreTreeViewProps, keyof GenreFocusProps>> & GenreFocusProps = {}) {
+function renderView(overrides: Partial<Omit<GenreTreeViewProps, keyof GenreFocusProps | keyof ArtistSearchProps>> & GenreFocusProps = {}) {
   const props: GenreTreeViewProps = {
     scope: "me",
     handleGenreCreationAction: vi.fn(),
     handleGenreRenameAction: vi.fn(),
     getBackendBaseUrl,
+    artistSearch: false,
     ...overrides,
   };
   render(<GenreTreeView {...props} />);
@@ -151,6 +158,7 @@ describe("GenreTreeView", () => {
     });
     useFetchGenreOverviewMock.mockReturnValue({ data: undefined, isPending: false });
     useUpdateGenreMock.mockReturnValue({ mutate: vi.fn(), isPending: false });
+    useArtistSearchMock.mockReturnValue({ artists: [], isError: false, settled: false });
   });
 
   it("shows the wheel skeleton while the genre playlists are loading", () => {
@@ -380,6 +388,7 @@ describe("GenreTreeView", () => {
           handleGenreCreationAction={vi.fn()}
           handleGenreRenameAction={vi.fn()}
           getBackendBaseUrl={getBackendBaseUrl}
+          artistSearch={false}
           className="my-root"
         />,
       );
@@ -524,6 +533,7 @@ describe("GenreTreeView", () => {
       handleGenreCreationAction: vi.fn(),
       handleGenreRenameAction: vi.fn(),
       getBackendBaseUrl,
+      artistSearch: false,
     } as const;
     // @ts-expect-error focusGenreUuid without onFocusGenreChange
     const focusOnly: GenreTreeViewProps = { ...base, focusGenreUuid: "gp1" };
@@ -783,6 +793,7 @@ describe("GenreTreeView", () => {
         handleGenreCreationAction: vi.fn(),
         handleGenreRenameAction: vi.fn(),
         getBackendBaseUrl,
+        artistSearch: false,
       };
       const { rerender } = render(<GenreTreeView {...props} />);
 
@@ -826,6 +837,7 @@ describe("GenreTreeView", () => {
         handleGenreCreationAction: vi.fn(),
         handleGenreRenameAction: vi.fn(),
         getBackendBaseUrl,
+        artistSearch: false,
       };
       const { rerender } = render(<GenreTreeView {...props} />);
 
@@ -1326,7 +1338,7 @@ describe("GenreTreeView", () => {
     it("proxies the search field's Previous button to genre-tree-view's own previous button", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist()], isPending: false });
       const { container } = render(
-        <GenreTreeView scope="me" handleGenreCreationAction={vi.fn()} handleGenreRenameAction={vi.fn()} getBackendBaseUrl={getBackendBaseUrl} />,
+        <GenreTreeView scope="me" handleGenreCreationAction={vi.fn()} handleGenreRenameAction={vi.fn()} getBackendBaseUrl={getBackendBaseUrl} artistSearch={false} />,
       );
       const libPrevious = document.createElement("button");
       libPrevious.className = "gtv-info-panel-previous";
@@ -1356,6 +1368,7 @@ describe("GenreTreeView", () => {
         handleGenreCreationAction: vi.fn(),
         handleGenreRenameAction: vi.fn(),
         getBackendBaseUrl,
+        artistSearch: false,
         viewMode: "wheel",
         selectedNodeId: "gp1",
         onSelectedNodeIdChange,
@@ -1393,6 +1406,82 @@ describe("GenreTreeView", () => {
 
       expect(screen.getByRole("textbox", { name: "Search a genre" })).toHaveValue("Jazz");
       expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].selectedNodeId).toBe("gp1");
+    });
+  });
+  describe("artist search", () => {
+    const artist = {
+      uuid: "ar1",
+      name: "Taylor Swift",
+      disambiguation: "US singer",
+      type: "person",
+      country: "US",
+      beginYear: 1989,
+      endYear: null,
+      matchedAlias: "T-Swizzle",
+      recordingCount: 120,
+    };
+
+    function renderWithArtists(extra: { onArtistSelect?: (a: unknown) => void; artistSearchBaseUrl?: () => string } = {}) {
+      const onArtistSelect = extra.onArtistSelect ?? vi.fn();
+      render(
+        <GenreTreeView
+          scope="me"
+          handleGenreCreationAction={vi.fn()}
+          handleGenreRenameAction={vi.fn()}
+          getBackendBaseUrl={getBackendBaseUrl}
+          onArtistSelect={onArtistSelect}
+          artistSearchBaseUrl={extra.artistSearchBaseUrl}
+        />,
+      );
+      return onArtistSelect;
+    }
+
+    it("lists matching artists under an Artists heading and reports the picked one", () => {
+      useArtistSearchMock.mockReturnValue({ artists: [artist], isError: false, settled: true });
+      const onArtistSelect = renderWithArtists();
+
+      fireEvent.change(screen.getByRole("textbox", { name: "Search" }), { target: { value: "taylor" } });
+
+      expect(screen.getByText("Artists")).toBeInTheDocument();
+      expect(screen.getByText(/also known as T-Swizzle/)).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: /Taylor Swift/ }));
+      expect(onArtistSelect).toHaveBeenCalledWith(artist);
+    });
+
+    it.each([
+      ["a failed search", { artists: [], isError: true, settled: true }, "Search failed"],
+      ["an empty settled search", { artists: [], isError: false, settled: true }, "No artists found"],
+    ])("reports %s in the status line", (_name, result, status) => {
+      useArtistSearchMock.mockReturnValue(result);
+      renderWithArtists();
+
+      fireEvent.change(screen.getByRole("textbox", { name: "Search" }), { target: { value: "zzz" } });
+
+      expect(screen.getByRole("status")).toHaveTextContent(status);
+    });
+
+    it("queries the artist backend given by artistSearchBaseUrl", () => {
+      const artistBaseUrl = () => "https://grow.example.com";
+      renderWithArtists({ artistSearchBaseUrl: artistBaseUrl });
+
+      fireEvent.change(screen.getByRole("textbox", { name: "Search" }), { target: { value: "taylor" } });
+
+      expect(useArtistSearchMock).toHaveBeenLastCalledWith(artistBaseUrl, "taylor");
+    });
+
+    it("falls back to getBackendBaseUrl when no artist base url is given", () => {
+      renderWithArtists();
+
+      expect(useArtistSearchMock).toHaveBeenLastCalledWith(getBackendBaseUrl, "");
+    });
+
+    it("shows no Artists group and keeps the genre-only label when artistSearch is false", () => {
+      renderView();
+
+      fireEvent.change(screen.getByRole("textbox", { name: "Search a genre" }), { target: { value: "taylor" } });
+
+      expect(screen.queryByText("Artists")).not.toBeInTheDocument();
+      expect(useArtistSearchMock).toHaveBeenLastCalledWith(getBackendBaseUrl, "");
     });
   });
 });
