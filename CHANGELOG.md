@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [16.1.0] - 2026-10-26
+
 ### Changed
 
 - Requires `@behindthemusictree/ui` ^0.3.0, `@behindthemusictree/brand` ^12.1.0 and `@behindthemusictree/genre-tree-view` 3.1.0 (panel colors and text size follow brand tokens). Loading placeholders in the genre panel use `ui`'s `Skeleton`, the action band border uses `--color-border`, and `Rating` stars use `--color-accent-rating`.
