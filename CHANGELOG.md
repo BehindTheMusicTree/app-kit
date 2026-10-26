@@ -11,6 +11,14 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [17.1.0] - 2026-10-26
+
+### Changed
+
+- Genre panel (`GenreDetailExtras`, `GenreSearch`, `GenreActionBand`, `Rating`) reads the semantic brand tokens (`--color-surface`, `--color-surface-muted`, `--color-border`, `--color-text-muted`), so it follows `data-theme="dark"`; light mode is unchanged.
+- Genre action band buttons show a focus ring on keyboard focus.
+- Genre description and default summary clamp to three lines with a "Show more" / "Show less" toggle when they overflow.
+
 ## [17.0.0] - 2026-10-26
 
 ### Breaking

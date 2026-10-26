@@ -66,6 +66,14 @@ describe("TrackItem", () => {
     expect(screen.getByText("Rock")).toBeInTheDocument();
   });
 
+  it("truncates long title, artist, album and genre instead of wrapping", () => {
+    render(<TrackItem track={makeTrack()} position={1} />);
+
+    for (const text of ["My Song", "Artist One, Artist Two", "My Album", "Rock"]) {
+      expect(screen.getByText(text).closest(".truncate")).not.toBeNull();
+    }
+  });
+
   it("renders each artist through renderArtistLink for client-side navigation", () => {
     const navigate = vi.fn();
     const RouterLink = ({ href, children }: { href: string; children: React.ReactNode }) => (

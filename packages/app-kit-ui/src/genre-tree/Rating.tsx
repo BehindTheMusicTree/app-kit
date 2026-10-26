@@ -30,14 +30,14 @@ export default function Rating({ rating, handleChange }: RatingProps) {
               <div className="flex">
                 <AiOutlineStar
                   className={`w-7 h-7 absolute top-0 left-0 ${
-                    rating === FORM_RATING_NULL_VALUE ? "text-[var(--color-accent-rating)]" : "text-[var(--color-neutral-500)]"
+                    rating === FORM_RATING_NULL_VALUE ? "text-[var(--color-accent-rating)]" : "text-[var(--color-text-muted)]"
                   }`}
                 />
                 <span className="flex-grow w-8"></span>{" "}
               </div>
             ) : (
               <AiFillStar
-                className={`w-7 h-7 absolute top-0 left-0 ${(rating ?? -1) >= i ? "text-[var(--color-accent-rating)]" : "text-[var(--color-neutral-500)]"}`}
+                className={`w-7 h-7 absolute top-0 left-0 ${(rating ?? -1) >= i ? "text-[var(--color-accent-rating)]" : "text-[var(--color-text-muted)]"}`}
               />
             )}
           </label>
