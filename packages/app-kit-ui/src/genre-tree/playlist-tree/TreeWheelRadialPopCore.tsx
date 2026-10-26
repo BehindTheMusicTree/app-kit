@@ -194,7 +194,7 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
       updateGenreMutate(
         { uuid: nodeId, data: { parent: newParentId } },
         {
-          onSuccess: () => {
+          onSettled: () => {
             setReparentingGenreUuid(null);
           },
         },

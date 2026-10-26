@@ -307,7 +307,7 @@ describe("GenrePlaylistTreePerRoot", () => {
       expect(setReparentingGenreUuid).toHaveBeenCalledWith(playlistUuid);
     });
 
-    it("submits the reparent mutation and clears reparenting state on success", () => {
+    it("submits the reparent mutation and clears reparenting state once settled", () => {
       const newParentUuid = "9c1e6c1a-1111-4a2a-8c2a-111111111111";
       const setReparentingGenreUuid = vi.fn();
       render(
@@ -327,11 +327,11 @@ describe("GenrePlaylistTreePerRoot", () => {
 
       expect(updateGenreMutate).toHaveBeenCalledWith(
         { uuid: playlistUuid, data: { parent: newParentUuid } },
-        expect.objectContaining({ onSuccess: expect.any(Function) }),
+        expect.objectContaining({ onSettled: expect.any(Function) }),
       );
 
-      const { onSuccess } = updateGenreMutate.mock.calls[0][1];
-      onSuccess();
+      const { onSettled } = updateGenreMutate.mock.calls[0][1];
+      onSettled();
       expect(setReparentingGenreUuid).toHaveBeenCalledWith(null);
     });
   });

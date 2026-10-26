@@ -314,13 +314,37 @@ describe("useGenre", () => {
       expect(mutate).toHaveBeenCalledWith({ uuid: "g1", data: { name: "New Name" } });
     });
 
-    it("updateGenreParent calls mutate with a parent patch and resolves", async () => {
-      const mutate = vi.fn();
-      useValidatedMutationMock.mockReturnValue({ mutate, formErrors: [] });
+    it("updateGenreParent resolves only once the parent patch mutation settles", async () => {
+      let settle!: () => void;
+      const mutateAsync = vi.fn(() => new Promise<void>((resolve) => (settle = resolve)));
+      useValidatedMutationMock.mockReturnValue({ mutate: vi.fn(), mutateAsync, formErrors: [] });
       const { result } = renderHook(() => useUpdateGenre("me", getBackendBaseUrl));
 
-      await expect(result.current.updateGenreParent("g1", "parent-1")).resolves.toBeUndefined();
-      expect(mutate).toHaveBeenCalledWith({ uuid: "g1", data: { parent: "parent-1" } });
+      let resolved = false;
+      const pending = result.current.updateGenreParent("g1", "parent-1").then(() => (resolved = true));
+      await Promise.resolve();
+
+      expect(mutateAsync).toHaveBeenCalledWith({ uuid: "g1", data: { parent: "parent-1" } });
+      expect(resolved).toBe(false);
+      settle();
+      await pending;
+      expect(resolved).toBe(true);
+    });
+
+    it("onSuccess resolves only once every invalidation has resolved", async () => {
+      let finishRefetch!: () => void;
+      invalidateQueriesMock.mockReturnValueOnce(new Promise<void>((resolve) => (finishRefetch = resolve)));
+      renderHook(() => useUpdateGenre("me", getBackendBaseUrl));
+      const { onSuccess } = useValidatedMutationMock.mock.calls[0][0];
+
+      let resolved = false;
+      const settled = onSuccess(undefined, { uuid: "g1", data: {} }).then(() => (resolved = true));
+      await Promise.resolve();
+
+      expect(resolved).toBe(false);
+      finishRefetch();
+      await settled;
+      expect(resolved).toBe(true);
     });
   });
 

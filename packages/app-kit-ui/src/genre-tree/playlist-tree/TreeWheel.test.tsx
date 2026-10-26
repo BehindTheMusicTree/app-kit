@@ -260,7 +260,7 @@ describe("GenrePlaylistTreeWheel", () => {
     expect(setReparentingGenreUuid).toHaveBeenCalledWith("gp1");
   });
 
-  it("onReparent mutates the genre parent and clears reparenting state on success", () => {
+  it("onReparent mutates the genre parent and clears reparenting state once settled", () => {
     const setReparentingGenreUuid = vi.fn();
     renderWheel({ setReparentingGenreUuid });
 
@@ -268,11 +268,11 @@ describe("GenrePlaylistTreeWheel", () => {
 
     expect(updateGenreMutateMock).toHaveBeenCalledWith(
       { uuid: "gp1", data: { parent: "gp2" } },
-      expect.objectContaining({ onSuccess: expect.any(Function) }),
+      expect.objectContaining({ onSettled: expect.any(Function) }),
     );
 
-    const { onSuccess } = updateGenreMutateMock.mock.calls[0][1];
-    onSuccess();
+    const { onSettled } = updateGenreMutateMock.mock.calls[0][1];
+    onSettled();
 
     expect(setReparentingGenreUuid).toHaveBeenCalledWith(null);
   });

@@ -11,6 +11,19 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- `useUpdateGenre` returns `isPending`.
+
+### Changed
+
+- `useCreateGenre`, `useUpdateGenre` and `useDeleteGenre` stay pending until their genre and genre-playlist invalidations have refetched, so consumers don't see the stale tree as settled. `useInvalidateAllGenrePlaylistQueries` now returns a promise of those invalidations.
+
+### Fixed
+
+- `useUpdateGenre().updateGenreParent` resolves only once the reparent mutation succeeds (and rejects on failure) instead of resolving immediately.
+- Tree drag-to-reparent (`TreePerRoot`, `TreeWheel`, `TreeWheelRadialPopCore`) leaves reparent mode when the mutation fails, not only on success.
+
 ## [13.4.1] - 2026-10-26
 
 ### Fixed

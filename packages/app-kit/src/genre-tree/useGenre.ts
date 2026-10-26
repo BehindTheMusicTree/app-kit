@@ -130,10 +130,10 @@ export function useCreateGenre(scope: Scope, getBackendBaseUrl: () => string) {
       });
       return response;
     },
+    // Returned so the mutation stays pending until the tree has refetched.
     onSuccess: () => {
       const queryKey = scope === "reference" ? genreQueryKeys.reference.all : genreQueryKeys.me.all;
-      queryClient.invalidateQueries({ queryKey });
-      invalidateAllGenrePlaylistQueries();
+      return Promise.all([queryClient.invalidateQueries({ queryKey }), invalidateAllGenrePlaylistQueries()]);
     },
   });
 }
@@ -143,7 +143,7 @@ export function useUpdateGenre(scope: Scope, getBackendBaseUrl: () => string) {
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
   const invalidateAllGenrePlaylistQueries = useInvalidateAllGenrePlaylistQueries();
 
-  const { mutate, formErrors } = useValidatedMutation({
+  const { mutate, mutateAsync, isPending, formErrors } = useValidatedMutation({
     inputSchema: z.object({
       uuid: z.string(),
       data: CriteriaUpdateSchema,
@@ -160,9 +160,11 @@ export function useUpdateGenre(scope: Scope, getBackendBaseUrl: () => string) {
     onSuccess: (_, { uuid }) => {
       const queryKey = scope === "reference" ? genreQueryKeys.reference.all : genreQueryKeys.me.all;
       const detailKey = scope === "reference" ? genreQueryKeys.reference.detail(uuid) : genreQueryKeys.me.detail(uuid);
-      queryClient.invalidateQueries({ queryKey });
-      queryClient.invalidateQueries({ queryKey: detailKey });
-      invalidateAllGenrePlaylistQueries();
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey }),
+        queryClient.invalidateQueries({ queryKey: detailKey }),
+        invalidateAllGenrePlaylistQueries(),
+      ]);
     },
   });
 
@@ -171,13 +173,10 @@ export function useUpdateGenre(scope: Scope, getBackendBaseUrl: () => string) {
   };
 
   const updateGenreParent = async (uuid: string, parentUuid: string | null) => {
-    return new Promise<void>((resolve) => {
-      mutate({ uuid, data: { parent: parentUuid } });
-      resolve();
-    });
+    await mutateAsync({ uuid, data: { parent: parentUuid } });
   };
 
-  return { mutate, renameGenre, updateGenreParent, formErrors };
+  return { mutate, renameGenre, updateGenreParent, isPending, formErrors };
 }
 
 export function useDeleteGenre(scope: Scope, getBackendBaseUrl: () => string) {
@@ -196,9 +195,11 @@ export function useDeleteGenre(scope: Scope, getBackendBaseUrl: () => string) {
     onSuccess: (_, { uuid }) => {
       const queryKey = scope === "reference" ? genreQueryKeys.reference.all : genreQueryKeys.me.all;
       const detailKey = scope === "reference" ? genreQueryKeys.reference.detail(uuid) : genreQueryKeys.me.detail(uuid);
-      queryClient.invalidateQueries({ queryKey });
-      queryClient.invalidateQueries({ queryKey: detailKey });
-      invalidateAllGenrePlaylistQueries();
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey }),
+        queryClient.invalidateQueries({ queryKey: detailKey }),
+        invalidateAllGenrePlaylistQueries(),
+      ]);
     },
   });
 }

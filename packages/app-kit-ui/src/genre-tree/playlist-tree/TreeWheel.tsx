@@ -170,7 +170,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
       updateGenreMutate(
         { uuid: nodeId, data: { parent: newParentId } },
         {
-          onSuccess: () => {
+          onSettled: () => {
             setReparentingGenreUuid(null);
           },
         },
