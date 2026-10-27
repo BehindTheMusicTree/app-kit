@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [18.2.0] - 2026-10-27
+
 ### Changed
 
 - Bump `@behindthemusictree/genre-tree-view` to 4.1.0: the wheel / pop-core loading skeleton now draws round node dots and radial links like the loaded wheel.
