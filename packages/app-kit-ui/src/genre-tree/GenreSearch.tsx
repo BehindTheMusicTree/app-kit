@@ -53,7 +53,7 @@ export default function GenreSearch({
   const heading = "px-3 pt-2 pb-1 text-xs font-medium uppercase text-[var(--color-text-muted)]";
 
   return (
-    <div className="genre-search relative w-[264px] shrink-0">
+    <div className="genre-search relative w-[16.5rem] shrink-0">
       {onPrevious && (
         <button
           type="button"
