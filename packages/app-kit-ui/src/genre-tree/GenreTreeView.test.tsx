@@ -492,12 +492,12 @@ describe("GenreTreeView", () => {
     });
   });
 
-  it("passes controlsOrientation through to the pop-core, wheel and stacked views", () => {
+  it("defaults controlsOrientation to horizontal on the pop-core, wheel and stacked views", () => {
     useListFullGenrePlaylistsMock.mockReturnValue({
       data: [makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" }, parent: null })],
       isPending: false,
     });
-    renderView({ controlsOrientation: "horizontal" });
+    renderView();
 
     fireEvent.click(screen.getByRole("button", { name: "Pop/Core" }));
     expect(treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0].controlsOrientation).toBe("horizontal");
@@ -507,6 +507,23 @@ describe("GenreTreeView", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
     expect(treePerRootPropsMock.mock.calls.at(-1)?.[0].controlsOrientation).toBe("horizontal");
+  });
+
+  it("passes controlsOrientation through to the pop-core, wheel and stacked views", () => {
+    useListFullGenrePlaylistsMock.mockReturnValue({
+      data: [makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" }, parent: null })],
+      isPending: false,
+    });
+    renderView({ controlsOrientation: "vertical" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Pop/Core" }));
+    expect(treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0].controlsOrientation).toBe("vertical");
+
+    fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+    expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].controlsOrientation).toBe("vertical");
+
+    fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
+    expect(treePerRootPropsMock.mock.calls.at(-1)?.[0].controlsOrientation).toBe("vertical");
   });
 
   it("passes focus props to the pop-core view only, not to outline", () => {

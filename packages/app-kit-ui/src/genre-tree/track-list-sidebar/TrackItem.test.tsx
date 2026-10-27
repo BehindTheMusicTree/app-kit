@@ -127,10 +127,10 @@ describe("TrackItem", () => {
     expect(screen.getByText("3:45")).toBeInTheDocument();
   });
 
-  it("renders nothing for duration when renderDuration is not provided", () => {
+  it("reserves no duration column when renderDuration is not provided, so the genre badge sits flush right", () => {
     const { container } = render(<TrackItem track={makeTrack()} position={1} />);
 
-    expect(container.querySelector(".duration")?.textContent).toBe("");
+    expect(container.querySelector(".duration")).toBeNull();
   });
 
   it("renders actions via renderActions prop", () => {
