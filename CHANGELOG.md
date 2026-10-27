@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- `PlayerPanel` takes its position and widths from brand's layout tokens (`--layout-gutter`, `--layout-header-h`, `--layout-player-panel-w`, `--layout-detail-panel-w`) instead of px, so it is back to 22.5rem wide and scales with the root font size.
+
 ## [18.4.0] - 2026-10-27
 
 ### Added
