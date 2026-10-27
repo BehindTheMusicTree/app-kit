@@ -58,7 +58,7 @@ export default function TrackItem<T extends TrackBase>({
       ) : (
         <TrackPositionPlayPause position={position} uuid={track.uuid} handlePlayPauseClick={handlePlayPauseClick} />
       )}
-      <div className="title-artist-container flex flex-col items-start justify-center w-1/2">
+      <div className="title-artist-container flex flex-col items-start justify-center min-w-0 flex-1">
         <div className="flex max-w-full items-center gap-2">
           <div className="title text-lg font-bold text-[var(--color-text)] max-w-full truncate">{track.title}</div>
           {isSong(track) && <MusicBrainzRecordingLink song={track} />}
@@ -76,10 +76,10 @@ export default function TrackItem<T extends TrackBase>({
           </div>
         )}
       </div>
-      <div className="album-name items-start justify-center w-1/3 ml-2 max-w-full truncate text-[var(--color-text-muted)]">
+      <div className="album-name items-start justify-center w-1/3 min-w-0 ml-2 max-w-full truncate text-[var(--color-text-muted)]">
         {track.album ? track.album.name : ""}
       </div>
-      <div className="genre-name-container flex items-center justify-end w-1/6">
+      <div className="genre-name-container flex items-center justify-end w-1/6 min-w-0 shrink-0">
         {track.genre ? (
           <div className="genre-name font-bold p-1 border border-[var(--color-text-muted)] text-xs max-w-full truncate">{track.genre.name}</div>
         ) : (
