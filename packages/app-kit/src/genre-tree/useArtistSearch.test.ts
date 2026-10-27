@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
+import { keepPreviousData } from "@tanstack/react-query";
 
 const { fetchMock, useQueryWithParseMock } = vi.hoisted(() => ({
   fetchMock: vi.fn(),
@@ -53,7 +54,6 @@ describe("useArtistSearch", () => {
     const { result } = renderHook(() => useArtistSearch(getBackendBaseUrl, " taylor "));
 
     expect(useQueryWithParseMock.mock.calls.at(-1)?.[0].enabled).toBe(false);
-    expect(result.current.artists).toEqual([]);
 
     act(() => {
       vi.advanceTimersByTime(250);
@@ -67,6 +67,26 @@ describe("useArtistSearch", () => {
     expect(fetchMock).toHaveBeenCalledWith("artists/search/", true, false, {}, { q: "taylor", limit: 8 });
     expect(result.current.artists).toEqual([swift]);
     expect(result.current.settled).toBe(true);
+  });
+
+  it("keeps the previous results while the next query loads, and clears them below two characters", () => {
+    const { result, rerender } = renderHook(({ text }) => useArtistSearch(getBackendBaseUrl, text), {
+      initialProps: { text: "taylor" },
+    });
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    useQueryWithParseMock.mockReturnValue({ data: [swift], isFetching: true, isError: false });
+
+    rerender({ text: "taylor s" });
+
+    expect(useQueryWithParseMock.mock.calls.at(-1)?.[0].placeholderData).toBe(keepPreviousData);
+    expect(result.current.artists).toEqual([swift]);
+    expect(result.current.settled).toBe(false);
+
+    rerender({ text: "t" });
+
+    expect(result.current.artists).toEqual([]);
   });
 
   it("reports errors and is not settled while fetching", () => {
