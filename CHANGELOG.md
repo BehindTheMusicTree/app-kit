@@ -11,6 +11,15 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- `GenreTreeView` takes `placement="regions"`: the info panel and its expanded/overlay modes sit in brand's left/center/right columns, and the overlay starts below the header band.
+- `PlayerPanel` takes controlled `expanded` / `onExpandedChange`; extended, it spans the center and right columns.
+
+### Changed
+
+- Bumped `@behindthemusictree/brand` to 12.3.0 and `@behindthemusictree/genre-tree-view` to 4.3.0.
+
 ## [18.4.1] - 2026-10-27
 
 ### Fixed
