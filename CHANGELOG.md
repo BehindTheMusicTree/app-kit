@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- `TrackItem`: render the duration column only when `renderDuration` is passed, so the genre badge sits flush right instead of leaving a 64px empty gap.
+
 ## [18.2.1] - 2026-10-27
 
 ## [18.2.0] - 2026-10-27
