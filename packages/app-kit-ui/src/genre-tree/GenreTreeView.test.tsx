@@ -398,6 +398,21 @@ describe("GenreTreeView", () => {
       expect(container.firstElementChild).not.toHaveClass("mt-4");
     });
 
+    it("sets the region custom properties on the root only with placement=regions", () => {
+      const props = {
+        scope: "me" as const,
+        handleGenreCreationAction: vi.fn(),
+        handleGenreRenameAction: vi.fn(),
+        getBackendBaseUrl,
+        artistSearch: false,
+      };
+      const { container, rerender } = render(<GenreTreeView {...props} />);
+      expect(container.firstElementChild?.className).not.toContain("--gtv-center-left");
+
+      rerender(<GenreTreeView {...props} placement="regions" />);
+      expect(container.firstElementChild?.className).toContain("--gtv-center-left:var(--layout-center-left)");
+    });
+
     it("shows the display options group by default", () => {
       renderView();
       expect(screen.getByRole("group", { name: "Tree display options" })).toBeInTheDocument();
