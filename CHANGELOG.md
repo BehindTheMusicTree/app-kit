@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [18.2.1] - 2026-10-27
+
 ## [18.2.0] - 2026-10-27
 
 ### Changed
