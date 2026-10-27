@@ -1,11 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 
-const { useListFullGenrePlaylistsMock, prefetchMock, useUpdateGenreMock, updateGenreMock } = vi.hoisted(() => ({
+const { useListFullGenrePlaylistsMock, prefetchMock } = vi.hoisted(() => ({
   useListFullGenrePlaylistsMock: vi.fn(),
   prefetchMock: vi.fn(),
-  useUpdateGenreMock: vi.fn(),
-  updateGenreMock: vi.fn(),
 }));
 
 vi.mock("./useGenrePlaylist", () => ({
@@ -14,7 +12,6 @@ vi.mock("./useGenrePlaylist", () => ({
 
 vi.mock("./useGenre", () => ({
   usePrefetchGenreOverview: () => prefetchMock,
-  useUpdateGenre: (...args: unknown[]) => useUpdateGenreMock(...args),
 }));
 
 import { useGenreTreeViewState } from "./useGenreTreeViewState";
@@ -50,7 +47,6 @@ describe("useGenreTreeViewState", () => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     mockData([pop, rock, genreless, unaccepted, unacceptedChild]);
-    useUpdateGenreMock.mockReturnValue({ mutate: updateGenreMock, isPending: false });
   });
 
   afterEach(() => {
@@ -143,40 +139,11 @@ describe("useGenreTreeViewState", () => {
     expect(onSelectedNodeIdChange).toHaveBeenCalledWith("rock");
   });
 
-  it("toggles wheel rotation and tracks the reparenting genre", () => {
+  it("toggles wheel rotation", () => {
     const { result } = renderHook(() => useGenreTreeViewState(options));
 
     act(() => result.current.toggleWheelRotation());
     expect(result.current.allowWheelRotation).toBe(true);
-
-    act(() => result.current.requestReparent("rock"));
-    expect(result.current.reparentingGenreUuid).toBe("rock");
-  });
-
-  it("patches the parent and leaves reparent mode once the update settles, even after a view-mode switch", () => {
-    const { result, rerender } = renderHook(({ viewMode }) => useGenreTreeViewState({ ...options, viewMode }), {
-      initialProps: { viewMode: "wheel" as const } as { viewMode: "wheel" | "stacked" },
-    });
-    act(() => result.current.requestReparent("rock"));
-
-    act(() => result.current.reparent("rock", "un"));
-    expect(updateGenreMock).toHaveBeenCalledWith(
-      { uuid: "rock", data: { parent: "un" } },
-      expect.objectContaining({ onSettled: expect.any(Function) }),
-    );
-    rerender({ viewMode: "stacked" });
-    expect(result.current.reparentingGenreUuid).toBe("rock");
-
-    act(() => updateGenreMock.mock.calls[0][1].onSettled());
-    expect(result.current.reparentingGenreUuid).toBeNull();
-  });
-
-  it("exposes the update's pending state as isReparenting", () => {
-    useUpdateGenreMock.mockReturnValue({ mutate: updateGenreMock, isPending: true });
-    const { result } = renderHook(() => useGenreTreeViewState(options));
-
-    expect(result.current.isReparenting).toBe(true);
-    expect(useUpdateGenreMock).toHaveBeenCalledWith(options.scope, options.getBackendBaseUrl);
   });
 
   it("prefetches the hovered genre once the pointer rests, restarting on each hover", () => {

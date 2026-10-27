@@ -10,16 +10,12 @@ import type { GenreTreeProps } from "@behindthemusictree/genre-tree-view";
 const {
   setIsPlaying,
   playNewTrackListFromGenrePlaylist,
-  onReparentRequest,
-  onReparent,
   handleGenreCreationAction,
   handleGenreRenameAction,
   showPopup,
 } = vi.hoisted(() => ({
   setIsPlaying: vi.fn(),
   playNewTrackListFromGenrePlaylist: vi.fn(),
-  onReparentRequest: vi.fn(),
-  onReparent: vi.fn(),
   handleGenreCreationAction: vi.fn(),
   handleGenreRenameAction: vi.fn(),
   showPopup: vi.fn(),
@@ -80,9 +76,6 @@ function renderTree(nodes: CriteriaPlaylistSimple[] = [genrePlaylist]) {
       scope="reference"
       rootUuid={playlistUuid}
       genrePlaylistTreePerRoot={nodes}
-      reparentingGenreUuid={null}
-      onReparentRequest={onReparentRequest}
-      onReparent={onReparent}
       handleGenreCreationAction={handleGenreCreationAction}
       handleGenreRenameAction={handleGenreRenameAction}
     />,
@@ -103,9 +96,6 @@ describe("GenrePlaylistTreePerRoot", () => {
         scope="reference"
         rootUuid={playlistUuid}
         genrePlaylistTreePerRoot={[genrePlaylist]}
-        reparentingGenreUuid={null}
-        onReparentRequest={onReparentRequest}
-        onReparent={onReparent}
         handleGenreCreationAction={handleGenreCreationAction}
         handleGenreRenameAction={handleGenreRenameAction}
         wheelZoom="modifier"
@@ -121,9 +111,6 @@ describe("GenrePlaylistTreePerRoot", () => {
         scope="reference"
         rootUuid={playlistUuid}
         genrePlaylistTreePerRoot={[genrePlaylist]}
-        reparentingGenreUuid={null}
-        onReparentRequest={onReparentRequest}
-        onReparent={onReparent}
         handleGenreCreationAction={handleGenreCreationAction}
         handleGenreRenameAction={handleGenreRenameAction}
         controlsOrientation="horizontal"
@@ -252,15 +239,12 @@ describe("GenrePlaylistTreePerRoot", () => {
   });
 
   describe("readOnly", () => {
-    it("omits create/rename/reparent/delete handlers when readOnly is true", () => {
+    it("omits create/rename/delete handlers when readOnly is true", () => {
       render(
         <GenrePlaylistTreePerRoot
           scope="reference"
           rootUuid={playlistUuid}
           genrePlaylistTreePerRoot={[genrePlaylist]}
-          reparentingGenreUuid={null}
-          onReparentRequest={onReparentRequest}
-          onReparent={onReparent}
           handleGenreCreationAction={handleGenreCreationAction}
           handleGenreRenameAction={handleGenreRenameAction}
           readOnly
@@ -269,51 +253,16 @@ describe("GenrePlaylistTreePerRoot", () => {
 
       expect(capturedProps!.onAddChild).toBeUndefined();
       expect(capturedProps!.onRenameRequest).toBeUndefined();
-      expect(capturedProps!.onReparentRequest).toBeUndefined();
-      expect(capturedProps!.onReparent).toBeUndefined();
       expect(capturedProps!.onDeleteRequest).toBeUndefined();
     });
 
-    it("keeps create/rename/reparent/delete handlers when readOnly is omitted", () => {
+    it("keeps create/rename/delete handlers when readOnly is omitted", () => {
       renderTree();
 
       expect(capturedProps!.onAddChild).toBeInstanceOf(Function);
       expect(capturedProps!.onRenameRequest).toBeInstanceOf(Function);
-      expect(capturedProps!.onReparentRequest).toBeInstanceOf(Function);
-      expect(capturedProps!.onReparent).toBeInstanceOf(Function);
       expect(capturedProps!.onDeleteRequest).toBeInstanceOf(Function);
     });
   });
 
-  describe("reparent", () => {
-    it("forwards a reparent request with the node id", () => {
-      renderTree();
-
-      capturedProps!.onReparentRequest!({ id: playlistUuid, parentId: null, name: "Electronic", itemCount: 3, actionable: true });
-
-      expect(onReparentRequest).toHaveBeenCalledWith(playlistUuid);
-    });
-
-    it("forwards onReparent as is", () => {
-      renderTree();
-
-      expect(capturedProps!.onReparent).toBe(onReparent);
-    });
-
-    it("leaves onReparent unset when the parent withholds it", () => {
-      render(
-        <GenrePlaylistTreePerRoot
-          scope="reference"
-          rootUuid={playlistUuid}
-          genrePlaylistTreePerRoot={[genrePlaylist]}
-          reparentingGenreUuid={playlistUuid}
-          onReparentRequest={onReparentRequest}
-          handleGenreCreationAction={handleGenreCreationAction}
-          handleGenreRenameAction={handleGenreRenameAction}
-        />,
-      );
-
-      expect(capturedProps!.onReparent).toBeUndefined();
-    });
-  });
 });

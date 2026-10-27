@@ -30,10 +30,6 @@ export type GenrePlaylistTreePerRootProps<T extends TrackBase> = {
   className?: string;
   rootUuid: string;
   genrePlaylistTreePerRoot: CriteriaPlaylistSimple[];
-  reparentingGenreUuid: string | null;
-  onReparentRequest: (genreUuid: string) => void;
-  /** Omitted while a reparent is in flight, so a second drop can't start a concurrent update. */
-  onReparent?: (genreUuid: string, newParentUuid: string) => void;
   handleGenreCreationAction: (parent: CriteriaMinimum | null) => void;
   handleGenreRenameAction: (genre: CriteriaMinimum) => void;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
@@ -48,7 +44,7 @@ export type GenrePlaylistTreePerRootProps<T extends TrackBase> = {
   hideInfoPanelClose?: boolean;
   /** Hides the info panel header's node name. */
   hideInfoPanelTitle?: boolean;
-  /** When true, suppresses per-node create/rename/reparent affordances. Defaults to false. */
+  /** When true, suppresses per-node create/rename affordances. Defaults to false. */
   readOnly?: boolean;
   /** When false, suppresses the hover toolbar on every node. Defaults to true. */
   showToolbar?: boolean;
@@ -62,9 +58,6 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
   className,
   rootUuid,
   genrePlaylistTreePerRoot,
-  reparentingGenreUuid,
-  onReparentRequest,
-  onReparent,
   handleGenreCreationAction,
   handleGenreRenameAction,
   additionalActions,
@@ -162,13 +155,6 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
     }
   }, []);
 
-  const handleReparentRequest = useCallback(
-    (node: GenreTreeNode) => {
-      onReparentRequest(node.id);
-    },
-    [onReparentRequest],
-  );
-
   return (
     <GenreTree
       className={className}
@@ -177,13 +163,10 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
       rootColor={getGenreTreeColor(rootUuid)}
       playingNodeId={playingNodeId}
       playState={isPlaying ? "playing" : "paused"}
-      reparentingNodeId={reparentingGenreUuid}
       onPlayPause={handlePlayPause}
       onAddChild={readOnly ? undefined : handleAddChild}
       onRenameRequest={readOnly ? undefined : handleRenameRequest}
       onDeleteRequest={readOnly ? undefined : handleDeleteRequest}
-      onReparentRequest={readOnly ? undefined : handleReparentRequest}
-      onReparent={readOnly ? undefined : onReparent}
       additionalActions={additionalActions}
       onNodeClick={onNodeClick}
       onNodeHover={onNodeHover}
