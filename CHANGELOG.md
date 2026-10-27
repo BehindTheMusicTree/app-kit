@@ -11,6 +11,12 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- Arbitrary px/em spacing in `app-kit-ui` is replaced by Tailwind scale steps or rem (`px-[14px]` → `px-3.5`, `p-[0.8em]` → `p-3`, 13px text → `text-[0.8125rem]`, the search width, track-column widths and header insets), so the components render the same under any host root font size.
+- The tree containers no longer set `--gtv-info-panel-top`; the info panel takes its offset from brand's `--layout-gutter`.
+- Bump `@behindthemusictree/genre-tree-view` to 4.2.0 (rem spacing, brand layout tokens) and `@behindthemusictree/brand` to ^12.2.0.
+
 ## [18.2.1] - 2026-10-27
 
 ## [18.2.0] - 2026-10-27

@@ -58,7 +58,7 @@ export default function TrackListSidebar<T extends TrackBase>({
       <div className="header flex h-16 px-4 py-2 text-[var(--color-text)]">
         <div className="origin flex text-xl ">
           <div className="from h-auto flex flex-col justify-center items-center mr-2">From</div>
-          <div className="name-container flex flex-col justify-center items-center text-[var(--color-text)] font-bold pr-2 max-w-[440px]">
+          <div className="name-container flex flex-col justify-center items-center text-[var(--color-text)] font-bold pr-2 max-w-[27.5rem]">
             <div className="name max-w-full truncate">{trackList.origin.label}</div>
           </div>
         </div>
@@ -73,7 +73,7 @@ export default function TrackListSidebar<T extends TrackBase>({
         <button
           type="button"
           aria-label="Close track list"
-          className="flex-grow flex flex-col items-end justify-center h-full p-[0.8em] cursor-pointer text-inherit"
+          className="flex-grow flex flex-col items-end justify-center h-full p-3 cursor-pointer text-inherit"
           onClick={hideTrackListSidebar}
         >
           &#10005;
