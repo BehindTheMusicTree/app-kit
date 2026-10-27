@@ -399,17 +399,27 @@ describe("GenreTreeView", () => {
     });
 
     it("sets the region custom properties on the root only with placement=regions", () => {
-      const props = {
-        scope: "me" as const,
-        handleGenreCreationAction: vi.fn(),
-        handleGenreRenameAction: vi.fn(),
-        getBackendBaseUrl,
-        artistSearch: false,
-      };
-      const { container, rerender } = render(<GenreTreeView {...props} />);
+      const { container, rerender } = render(
+        <GenreTreeView
+          scope="me"
+          handleGenreCreationAction={vi.fn()}
+          handleGenreRenameAction={vi.fn()}
+          getBackendBaseUrl={getBackendBaseUrl}
+          artistSearch={false}
+        />,
+      );
       expect(container.firstElementChild?.className).not.toContain("--gtv-center-left");
 
-      rerender(<GenreTreeView {...props} placement="regions" />);
+      rerender(
+        <GenreTreeView
+          scope="me"
+          handleGenreCreationAction={vi.fn()}
+          handleGenreRenameAction={vi.fn()}
+          getBackendBaseUrl={getBackendBaseUrl}
+          artistSearch={false}
+          placement="regions"
+        />,
+      );
       expect(container.firstElementChild?.className).toContain("--gtv-center-left:var(--layout-center-left)");
     });
 
