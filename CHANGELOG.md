@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [19.0.0] - 2026-10-27
+
 ### Breaking
 
 - `useGenreTreeViewState` no longer returns `requestReparent`, `cancelReparent`, `reparentingGenreUuid`, `reparent` or `isReparenting`.
