@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [18.3.0] - 2026-10-27
+
 ### Changed
 
 - Arbitrary px/em spacing in `app-kit-ui` is replaced by Tailwind scale steps or rem (`px-[14px]` → `px-3.5`, `p-[0.8em]` → `p-3`, 13px text → `text-[0.8125rem]`, the search width, track-column widths and header insets), so the components render the same under any host root font size.
