@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [18.0.0] - 2026-10-27
+
 ### Breaking
 
 - app-kit-ui buttons no longer carry overrides (`bg-transparent`, `p-0`, `border-0`, `rounded-none`, `[font-size:inherit]`) that existed to cancel a global `button { background; padding; border-radius }` rule. A consumer that still defines such a rule must remove it, or these buttons render with its fill and padding.
