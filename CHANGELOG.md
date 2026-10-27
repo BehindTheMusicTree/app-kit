@@ -18,10 +18,15 @@ easy to spot when bumping.
 
 ### Added
 
+- `PanelEdgeTab`: a Maps-style double edge tab (two stacked chevron buttons) for side panels.
+- `GenreTreeView` takes `collapsed` / `onCollapsedChange` (regions placement) and draws the detail panel's edge tab while a genre is selected: hide, extend, show and shrink.
 - `getReparentCandidates` lists the genres a genre can be moved under (excludes itself, its descendants and its current parent).
 
 ### Changed
 
+- `PlayerPanel` drops its header expand chevron and song-list toggle in favor of an edge tab on its inner edge (extend, hide the song list leaving only the video, show it again, shrink); the panel uses the `--radius-panel` radius and a shadow instead of a border.
+- `GenreSearch` is a 3rem pill sized from the detail panel width and panel inset tokens.
+- Bumped `@behindthemusictree/brand` to 12.5.0 and `@behindthemusictree/genre-tree-view` to 4.4.0.
 - `BasePopup` takes `fitContent` to size to its content instead of filling its max width; the "Change parent" popup uses it.
 - The Parent action in `GenreTreeView` opens a "Change parent" popup with a genre search instead of picking the target in the tree.
 - `GenreActionBand` wraps its action icons onto new lines instead of scrolling horizontally, and groups the Add / Rename / Parent actions in a separate "Admin" section.
