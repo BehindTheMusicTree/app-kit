@@ -28,7 +28,7 @@ export function ClampedText({ children, className = "" }: ClampedTextProps) {
           type="button"
           aria-expanded={expanded}
           onClick={() => setExpanded((value) => !value)}
-          className="mt-1 bg-transparent text-xs text-[var(--color-text-muted)] underline hover:text-[var(--color-text)]"
+          className="mt-1 text-xs text-[var(--color-text-muted)] underline hover:text-[var(--color-text)]"
         >
           {expanded ? "Show less" : "Show more"}
         </button>

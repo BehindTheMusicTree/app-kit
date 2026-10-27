@@ -73,7 +73,7 @@ export default function TrackListSidebar<T extends TrackBase>({
         <button
           type="button"
           aria-label="Close track list"
-          className="flex-grow flex flex-col items-end justify-center h-full bg-transparent border-0 cursor-pointer text-inherit"
+          className="flex-grow flex flex-col items-end justify-center h-full p-[0.8em] cursor-pointer text-inherit"
           onClick={hideTrackListSidebar}
         >
           &#10005;

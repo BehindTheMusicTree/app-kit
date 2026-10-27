@@ -187,7 +187,7 @@ export function GenrePlaylistTracks({
                     disabled
                     aria-disabled="true"
                     aria-label={`${label} — ${unplayableReason}`}
-                    className="flex h-6 w-6 shrink-0 items-center justify-center p-0 [font-size:inherit] bg-transparent rounded-full border-0 opacity-0 cursor-not-allowed"
+                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full opacity-0 cursor-not-allowed"
                   >
                     <FaPlay size={10} />
                   </button>
@@ -209,7 +209,7 @@ export function GenrePlaylistTracks({
                 <button
                   type="button"
                   aria-label={`${isPlaying ? "Pause" : "Play"} ${label}`}
-                  className={`flex h-6 w-6 shrink-0 items-center justify-center p-0 [font-size:inherit] bg-transparent rounded-full border-0 cursor-pointer group-hover:opacity-100 focus-visible:opacity-100 ${isCurrent && playState !== PlayStates.STOPPED ? "opacity-100" : "opacity-0 [@media(pointer:coarse)]:opacity-100"}`}
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full cursor-pointer group-hover:opacity-100 focus-visible:opacity-100 ${isCurrent && playState !== PlayStates.STOPPED ? "opacity-100" : "opacity-0 [@media(pointer:coarse)]:opacity-100"}`}
                   onClick={() => (isCurrent ? handlePlayPauseAction() : play(track.uuid))}
                 >
                   {isCurrent && playState === PlayStates.LOADING ? (
