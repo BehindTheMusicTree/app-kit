@@ -86,12 +86,14 @@ export default function TrackItem<T extends TrackBase>({
           ""
         )}
       </div>
-      <div
-        className="duration flex text-base w-16 items-center justify-center"
-        style={{ minWidth: "64px", maxWidth: "64px" }}
-      >
-        {renderDuration?.(track) ?? ""}
-      </div>
+      {renderDuration && (
+        <div
+          className="duration flex text-base w-16 items-center justify-center"
+          style={{ minWidth: "64px", maxWidth: "64px" }}
+        >
+          {renderDuration(track)}
+        </div>
+      )}
       {renderActions && (
         <div className="edit flex text-base w-6 items-center justify-center mr-2 cursor-pointer">
           {renderActions(track)}
