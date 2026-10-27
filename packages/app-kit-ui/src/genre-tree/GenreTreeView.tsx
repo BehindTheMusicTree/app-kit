@@ -14,6 +14,7 @@ import type {
   GenreTreeAction,
   GenreTreeNode,
   GenreTreeViewMode,
+  GenreTreeViewport,
 } from "@behindthemusictree/genre-tree-view";
 
 import {
@@ -118,6 +119,10 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   selectedNodeId?: string | null;
   /** Called on every user-driven selection change (tree click, search pick, search clear). */
   onSelectedNodeIdChange?: (nodeId: string | null) => void;
+  /** Mount-only seed for the pan/zoom (wheel, pop-core and stacked views), replacing the initial fit. */
+  defaultViewport?: GenreTreeViewport;
+  /** Fires after a user-driven pan/zoom settles. In stacked view, only the tree holding the selection reports. */
+  onViewportChange?: (viewport: GenreTreeViewport) => void;
   /** When true, hides the "Add root" button and suppresses per-node
    * create/rename affordances, for a read-only consumer. Defaults to false. */
   readOnly?: boolean;
@@ -159,6 +164,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   viewMode: controlledViewMode,
   selectedNodeId: controlledSelectedNodeId,
   onSelectedNodeIdChange,
+  defaultViewport,
+  onViewportChange,
   readOnly = false,
   className,
   showDisplayOptions = true,
@@ -485,6 +492,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   controlsOrientation={controlsOrientation}
+                  defaultViewport={defaultViewport}
+                  onViewportChange={onViewportChange}
                   {...infoPanelCuration}
                 />
               </GenreTreeWheelHandoff>
@@ -508,6 +517,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   controlsOrientation={controlsOrientation}
+                  defaultViewport={defaultViewport}
+                  onViewportChange={onViewportChange}
                   {...infoPanelCuration}
                   {...focus}
                 />
@@ -561,6 +572,12 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                           readOnly={readOnly}
                           wheelZoom="modifier"
                           controlsOrientation={controlsOrientation}
+                          defaultViewport={
+                            uuid === selectedGenrePlaylist?.root.uuid ? defaultViewport : undefined
+                          }
+                          onViewportChange={
+                            uuid === selectedGenrePlaylist?.root.uuid ? onViewportChange : undefined
+                          }
                           {...infoPanelCuration}
                           // Every tree draws its own overlay; render it once, not per root.
                           overlayPanel={rootIndex === 0 ? overlayPanel : undefined}

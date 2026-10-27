@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- `GenreTreeView` accepts `defaultViewport` and `onViewportChange` (and re-exports the `GenreTreeViewport` type) so a consumer can restore and persist the pan/zoom position, e.g. in the URL. Wheel, pop-core and stacked views forward them (stacked: only to the tree holding the selection); outline ignores them.
+
 ## [19.0.0] - 2026-10-27
 
 ### Breaking
