@@ -12,6 +12,9 @@ export interface PlayerPanelProps {
   /** Hidden via CSS, never unmounted, so the video keeps playing while the panel is closed. */
   isVisible?: boolean;
   onClose: () => void;
+  /** Controlled extended state; uncontrolled when omitted. */
+  expanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
   /** Width once extended, e.g. to stop short of a left-hand detail panel. */
   extendedWidth?: string;
   renderArtistLink?: RenderArtistLink;
@@ -19,27 +22,34 @@ export interface PlayerPanelProps {
 
 const iconButtonClassName = "flex h-6 w-6 shrink-0 items-center justify-center p-0 rounded-md hover:bg-white/10";
 
-// Right gutter + detail panel + left gutter + gap to this panel.
-const DEFAULT_EXTENDED_WIDTH = "calc(100vw - var(--layout-gutter) * 3 - var(--layout-detail-panel-w))";
+// Spans the center and right columns.
+const DEFAULT_EXTENDED_WIDTH = "calc(100vw - var(--layout-center-left) - var(--layout-gutter))";
 
 export default function PlayerPanel({
   className,
   isVisible = true,
   onClose,
+  expanded,
+  onExpandedChange,
   extendedWidth = DEFAULT_EXTENDED_WIDTH,
   renderArtistLink,
 }: PlayerPanelProps) {
   const { playerTrackObject } = usePlayer();
   const { toggleTrackListSidebar, isTrackListSidebarVisible } = useTrackListSidebarVisibility();
-  const [isExtendRequested, setIsExtendRequested] = useState(false);
+  const [uncontrolledExtended, setUncontrolledExtended] = useState(false);
+  const isExtendRequested = expanded ?? uncontrolledExtended;
+  const setIsExtendRequested = (next: boolean) => {
+    setUncontrolledExtended(next);
+    onExpandedChange?.(next);
+  };
   const isExtended = isExtendRequested && isTrackListSidebarVisible;
 
   return (
     <div
       className={twMerge(
-        "fixed right-[var(--layout-gutter)] top-[var(--layout-header-h)] z-40 flex max-h-[calc(100vh-var(--layout-header-h)-3.5rem)] overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-100 drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]",
+        "fixed right-[var(--layout-gutter)] top-[var(--layout-band-top)] z-40 flex max-h-[calc(100vh-var(--layout-band-top)-3.5rem)] overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-100 drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]",
         isExtended ? "flex-row" : "w-[var(--layout-player-panel-w)] flex-col",
-        isTrackListSidebarVisible && "h-[calc(100vh-var(--layout-header-h)-3.5rem)]",
+        isTrackListSidebarVisible && "h-[calc(100vh-var(--layout-band-top)-3.5rem)]",
         !isVisible && "hidden",
         className,
       )}
@@ -50,7 +60,7 @@ export default function PlayerPanel({
           {isTrackListSidebarVisible && (
             <button
               type="button"
-              onClick={() => setIsExtendRequested((value) => !value)}
+              onClick={() => setIsExtendRequested(!isExtendRequested)}
               className={iconButtonClassName}
               aria-label={isExtended ? "Shrink song list panel" : "Extend song list panel"}
             >
