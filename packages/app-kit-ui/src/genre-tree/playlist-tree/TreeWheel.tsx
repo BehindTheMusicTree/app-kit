@@ -4,6 +4,7 @@ import { useCallback, useMemo, type ReactNode } from "react";
 import {
   GenreTreeWheel,
   type ControlsOrientation,
+  type GenreTreeViewport,
   type GenreTreeAction,
   type GenreTreeNode,
 } from "@behindthemusictree/genre-tree-view";
@@ -50,6 +51,10 @@ export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
   showToolbar?: boolean;
   /** Layout of the floating zoom/pop/fit controls. Defaults to "vertical". */
   controlsOrientation?: ControlsOrientation;
+  /** Mount-only seed for the pan/zoom, replacing the initial fit. */
+  defaultViewport?: GenreTreeViewport;
+  /** Fires after a user-driven pan/zoom settles. */
+  onViewportChange?: (viewport: GenreTreeViewport) => void;
 } & InfoPanelCurationProps;
 
 export default function GenrePlaylistTreeWheel<T extends TrackBase>({
@@ -70,6 +75,8 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
   allowWheelRotation,
   showToolbar,
   controlsOrientation,
+  defaultViewport,
+  onViewportChange,
   ...infoPanelCuration
 }: GenrePlaylistTreeWheelProps<T>) {
   const { isPlaying, setIsPlaying } = usePlayer();
@@ -174,6 +181,8 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
       allowWheelRotation={allowWheelRotation}
       showToolbar={showToolbar}
       controlsOrientation={controlsOrientation}
+      defaultViewport={defaultViewport}
+      onViewportChange={onViewportChange}
       {...infoPanelCuration}
       readOnly={readOnly}
     />

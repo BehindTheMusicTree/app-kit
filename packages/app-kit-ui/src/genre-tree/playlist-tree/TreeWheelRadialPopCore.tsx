@@ -5,6 +5,7 @@ import {
   GenreTreeOutline,
   GenreTreeWheelRadialPopCore,
   type ControlsOrientation,
+  type GenreTreeViewport,
   type FocusChangeReason,
   type GenreTreeAction,
   type GenreTreeNode,
@@ -67,6 +68,10 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   /** When true, renders the same forest as GenreTreeOutline's nested-list text view instead of
    * the radial wheel. Defaults to false. */
   outline?: boolean;
+  /** Mount-only seed for the pan/zoom, replacing the initial fit. */
+  defaultViewport?: GenreTreeViewport;
+  /** Fires after a user-driven pan/zoom settles. */
+  onViewportChange?: (viewport: GenreTreeViewport) => void;
 } & GenreFocusProps &
   InfoPanelCurationProps;
 
@@ -92,6 +97,8 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     showToolbar,
     controlsOrientation,
     outline = false,
+    defaultViewport,
+    onViewportChange,
   } = props;
   const focus: GenreFocusProps = props;
   const infoPanelCuration: InfoPanelCurationProps = {
@@ -208,6 +215,8 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
       {...treeProps}
       allowWheelRotation={allowWheelRotation}
       controlsOrientation={controlsOrientation}
+      defaultViewport={defaultViewport}
+      onViewportChange={onViewportChange}
       {...(focus.onFocusGenreChange
         ? { focusNodeId: focus.focusGenreUuid, onFocusChange: focus.onFocusGenreChange }
         : { focusNodeId: undefined, onFocusChange: undefined })}
