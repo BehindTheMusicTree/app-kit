@@ -102,6 +102,8 @@ const NO_POP_ROOT_TITLE = "This genre tree has no 'Mainstream Pop' root yet";
 
 export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = {
   scope: Scope;
+  /** "regions" lays the info panel out in the brand's left/center/right columns (see brand `--layout-center-*`). */
+  placement?: "default" | "regions";
   handleGenreCreationAction: (parent: CriteriaMinimum | null) => void;
   handleGenreRenameAction: (genre: CriteriaMinimum) => void;
   getBackendBaseUrl: () => string;
@@ -138,6 +140,9 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   InfoPanelCurationProps &
   GenreFocusProps;
 
+const REGIONS_CLASS =
+  "[--gtv-center-left:var(--layout-center-left)] [--gtv-center-right:var(--layout-center-right)] [--gtv-center-top:var(--layout-band-top)] [&_.gtv-info-panel--overlay]:[--gtv-info-panel-header-inset:0px]";
+
 export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   scope,
   handleGenreCreationAction,
@@ -172,6 +177,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   expanded,
   onExpandedChange,
   overlayPanel,
+  placement = "default",
   ...focus
 }: GenreTreeViewProps<O>) {
   const infoPanelCuration: InfoPanelCurationProps = {
@@ -379,9 +385,18 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   );
 
   return (
-    <div ref={rootRef} className={["genre-tree-view relative flex flex-col h-full", className].filter(Boolean).join(" ")}>
+    <div
+      ref={rootRef}
+      className={["genre-tree-view relative flex flex-col h-full", placement === "regions" && REGIONS_CLASS, className]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <style>{PREVIOUS_BUTTON_CSS}</style>
-      <div className="actions-container absolute left-5 top-5 z-30 flex items-center gap-2">
+      <div
+        className={`actions-container absolute z-30 flex items-center gap-2 ${
+          placement === "regions" ? "left-[var(--layout-gutter)] top-[var(--layout-gutter)]" : "left-5 top-5"
+        }`}
+      >
         {actions}
       </div>
       <div className="content-container flex-1 min-h-0 flex flex-row gap-4">

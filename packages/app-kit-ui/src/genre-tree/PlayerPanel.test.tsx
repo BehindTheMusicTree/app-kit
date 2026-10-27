@@ -48,6 +48,18 @@ describe("PlayerPanel", () => {
     expect(container.firstChild).toHaveClass("w-[var(--layout-player-panel-w)]");
   });
 
+  it("follows a controlled expanded prop and reports toggles", () => {
+    setup(true);
+    const onExpandedChange = vi.fn();
+    const { container } = render(
+      <PlayerPanel onClose={vi.fn()} expanded onExpandedChange={onExpandedChange} extendedWidth="500px" />,
+    );
+    expect(container.firstChild).toHaveStyle({ width: "500px" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Shrink song list panel" }));
+    expect(onExpandedChange).toHaveBeenCalledWith(false);
+  });
+
   it("hides via CSS when not visible and calls onClose", () => {
     setup(false);
     const onClose = vi.fn();

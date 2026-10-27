@@ -3,8 +3,8 @@ packages:
   - "apps/*"
 
 catalog:
-  "@behindthemusictree/brand": ^12.2.0
-  "@behindthemusictree/genre-tree-view": "4.2.0"
+  "@behindthemusictree/brand": ^12.3.0
+  "@behindthemusictree/genre-tree-view": "4.3.0"
   "@behindthemusictree/ui": ^0.4.0
 
 allowBuilds:
