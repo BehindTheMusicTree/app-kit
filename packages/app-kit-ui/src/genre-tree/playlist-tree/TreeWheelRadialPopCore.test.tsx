@@ -66,9 +66,6 @@ function renderWheelRadialPopCore(
     genrePlaylists: [
       makeGenrePlaylist(),
     ] as GenrePlaylistTreeWheelRadialPopCoreProps<TrackBase>["genrePlaylists"],
-    reparentingGenreUuid: null,
-    onReparentRequest: vi.fn(),
-    onReparent: vi.fn(),
     handleGenreCreationAction: vi.fn(),
     handleGenreRenameAction: vi.fn(),
     ...overrides,
@@ -288,53 +285,30 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
     confirmSpy.mockRestore();
   });
 
-  it("onReparentRequest forwards the node id", () => {
-    const onReparentRequest = vi.fn();
-    renderWheelRadialPopCore({ onReparentRequest });
-
-    genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0].onReparentRequest({ id: "gp1", name: "Jazz" });
-
-    expect(onReparentRequest).toHaveBeenCalledWith("gp1");
-  });
-
-  it("forwards onReparent as is, and leaves it unset when the parent withholds it", () => {
-    const onReparent = vi.fn();
-    renderWheelRadialPopCore({ onReparent });
-    renderWheelRadialPopCore({ onReparent: undefined });
-
-    expect(genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0].onReparent).toBe(onReparent);
-    expect(genreTreeWheelRadialPopCorePropsMock.mock.calls.at(-1)![0].onReparent).toBeUndefined();
-  });
-
-  it("passes reparentingGenreUuid and additionalActions through", () => {
+  it("passes additionalActions through", () => {
     const additionalActions = vi.fn();
-    renderWheelRadialPopCore({ reparentingGenreUuid: "gp1", additionalActions });
+    renderWheelRadialPopCore({ additionalActions });
 
     const props = genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0];
-    expect(props.reparentingNodeId).toBe("gp1");
     expect(props.additionalActions).toBe(additionalActions);
   });
 
   describe("readOnly", () => {
-    it("omits create/rename/reparent/delete handlers when readOnly is true", () => {
+    it("omits create/rename/delete handlers when readOnly is true", () => {
       renderWheelRadialPopCore({ readOnly: true });
 
       const props = genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0];
       expect(props.onAddChild).toBeUndefined();
       expect(props.onRenameRequest).toBeUndefined();
-      expect(props.onReparentRequest).toBeUndefined();
-      expect(props.onReparent).toBeUndefined();
       expect(props.onDeleteRequest).toBeUndefined();
     });
 
-    it("keeps create/rename/reparent/delete handlers when readOnly is omitted", () => {
+    it("keeps create/rename/delete handlers when readOnly is omitted", () => {
       renderWheelRadialPopCore();
 
       const props = genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0];
       expect(props.onAddChild).toBeInstanceOf(Function);
       expect(props.onRenameRequest).toBeInstanceOf(Function);
-      expect(props.onReparentRequest).toBeInstanceOf(Function);
-      expect(props.onReparent).toBeInstanceOf(Function);
       expect(props.onDeleteRequest).toBeInstanceOf(Function);
     });
   });

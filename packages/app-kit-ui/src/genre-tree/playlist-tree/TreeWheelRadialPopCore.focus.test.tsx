@@ -47,8 +47,6 @@ describe("GenrePlaylistTreeWheelRadialPopCore focus (real genre-tree-view)", () 
         <GenrePlaylistTreeWheelRadialPopCore
           scope="me"
           genrePlaylists={genrePlaylists}
-          reparentingGenreUuid={null}
-          onReparentRequest={vi.fn()}
           handleGenreCreationAction={vi.fn()}
           handleGenreRenameAction={vi.fn()}
           focusGenreUuid="unknown-uuid"

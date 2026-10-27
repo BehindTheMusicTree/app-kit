@@ -61,4 +61,5 @@ export * from "./lib/rating";
 export * from "./lib/formatting";
 export * from "./lib/genre-playlist-helpers";
 export * from "./lib/genre-search";
+export * from "./lib/reparent-candidates";
 export * from "./lib/genre-songs-cache";

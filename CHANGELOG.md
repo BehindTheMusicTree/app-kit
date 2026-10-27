@@ -11,12 +11,25 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Breaking
+
+- `useGenreTreeViewState` no longer returns `requestReparent`, `cancelReparent`, `reparentingGenreUuid`, `reparent` or `isReparenting`.
+- `TreeWheel`, `TreePerRoot` and `TreeWheelRadialPopCore` no longer take `reparentingGenreUuid`, `onReparentRequest` or `onReparent`; genre-tree-view's node "Change parent" toolbar action is no longer wired.
+
+### Added
+
+- `getReparentCandidates` lists the genres a genre can be moved under (excludes itself, its descendants and its current parent).
+
 ### Changed
 
+- `BasePopup` takes `fitContent` to size to its content instead of filling its max width; the "Change parent" popup uses it.
+- The Parent action in `GenreTreeView` opens a "Change parent" popup with a genre search instead of picking the target in the tree.
 - `GenreActionBand` wraps its action icons onto new lines instead of scrolling horizontally, and groups the Add / Rename / Parent actions in a separate "Admin" section.
 
 ### Fixed
 
+- A failed parent change shows the app's error popup through the popup context instead of leaving the "Change parent" form open with no feedback; field errors render in the form.
+- `BasePopup` leaves a gap between its content and the separator above the OK/Cancel buttons, so the last field no longer touches the line.
 - `app-kit-ui/genre-tree/styles.css` now re-exports genre-tree-view's stylesheet instead of a copy frozen at build time, so the styles always match the installed genre-tree-view version.
 
 ## [18.5.0] - 2026-10-27
