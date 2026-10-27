@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- `GenreActionBand` wraps its action icons onto new lines instead of scrolling horizontally, and groups the Add / Rename / Parent actions in a separate "Admin" section.
+
 ### Fixed
 
 - `app-kit-ui/genre-tree/styles.css` now re-exports genre-tree-view's stylesheet instead of a copy frozen at build time, so the styles always match the installed genre-tree-view version.

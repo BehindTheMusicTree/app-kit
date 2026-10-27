@@ -42,6 +42,7 @@ export default function GenreActionBand({
   additionalActions,
 }: GenreActionBandProps) {
   const items: BandItem[] = [];
+  const adminItems: BandItem[] = [];
   if (onPlayPause) {
     items.push({
       key: "play-pause",
@@ -63,13 +64,13 @@ export default function GenreActionBand({
     });
   }
   if (onAddChild) {
-    items.push({ key: "add-child", label: "Add", icon: <Plus aria-hidden="true" className="w-5 h-5" />, onClick: onAddChild });
+    adminItems.push({ key: "add-child", label: "Add", icon: <Plus aria-hidden="true" className="w-5 h-5" />, onClick: onAddChild });
   }
   if (onRename) {
-    items.push({ key: "rename", label: "Rename", icon: <Pencil aria-hidden="true" className="w-5 h-5" />, onClick: onRename });
+    adminItems.push({ key: "rename", label: "Rename", icon: <Pencil aria-hidden="true" className="w-5 h-5" />, onClick: onRename });
   }
   if (onChangeParent) {
-    items.push({ key: "change-parent", label: "Parent", icon: <MoveUpRight aria-hidden="true" className="w-5 h-5" />, onClick: onChangeParent });
+    adminItems.push({ key: "change-parent", label: "Parent", icon: <MoveUpRight aria-hidden="true" className="w-5 h-5" />, onClick: onChangeParent });
   }
   for (const action of additionalActions?.(node) ?? []) {
     items.push({
@@ -80,24 +81,36 @@ export default function GenreActionBand({
       disabled: action.enabled ? !action.enabled(node) : false,
     });
   }
-  if (items.length === 0) return null;
+  if (items.length === 0 && adminItems.length === 0) return null;
+
+  const renderItems = (list: BandItem[]) =>
+    list.map((item) => (
+      <button
+        key={item.key}
+        type="button"
+        disabled={item.disabled}
+        onClick={item.onClick}
+        className="group flex flex-col items-center gap-1 w-16 text-xs text-center text-[var(--color-text)] focus-visible:outline-none disabled:opacity-50"
+      >
+        <span className="flex items-center justify-center w-10 h-10 rounded-full group-focus-visible:ring-2 group-focus-visible:ring-[var(--color-focus-ring)] bg-[var(--color-surface-muted)] transition-colors group-hover:bg-[var(--color-border)] group-disabled:group-hover:bg-[var(--color-surface-muted)]">
+          {item.icon}
+        </span>
+        {item.label}
+      </button>
+    ));
 
   return (
-    <div className="genre-action-band flex gap-1 px-3.5 py-3 overflow-x-auto border-b border-[var(--color-border)]">
-      {items.map((item) => (
-        <button
-          key={item.key}
-          type="button"
-          disabled={item.disabled}
-          onClick={item.onClick}
-          className="group flex flex-col items-center gap-1 w-16 shrink-0 text-xs text-center text-[var(--color-text)] focus-visible:outline-none disabled:opacity-50"
+    <div className="genre-action-band border-b border-[var(--color-border)]">
+      {items.length > 0 && <div className="flex flex-wrap gap-1 px-3.5 py-3">{renderItems(items)}</div>}
+      {adminItems.length > 0 && (
+        <section
+          aria-label="Admin actions"
+          className={`px-3.5 py-3 ${items.length > 0 ? "border-t border-[var(--color-border)]" : ""}`}
         >
-          <span className="flex items-center justify-center w-10 h-10 rounded-full group-focus-visible:ring-2 group-focus-visible:ring-[var(--color-focus-ring)] bg-[var(--color-surface-muted)] transition-colors group-hover:bg-[var(--color-border)] group-disabled:group-hover:bg-[var(--color-surface-muted)]">
-            {item.icon}
-          </span>
-          {item.label}
-        </button>
-      ))}
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Admin</h3>
+          <div className="flex flex-wrap gap-1">{renderItems(adminItems)}</div>
+        </section>
+      )}
     </div>
   );
 }
