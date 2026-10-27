@@ -9,6 +9,7 @@ import {
   PlayerTrack,
   TrackListProvider,
   TrackListSidebarVisibilityProvider,
+  useTrackListSidebarVisibility,
   TrackNounProvider,
   useFetchWrapper,
   libraryEndpoints,
@@ -17,7 +18,7 @@ import {
   SongDetailedSchema,
 } from "@behindthemusictree/app-kit";
 import { BasePopup } from "@behindthemusictree/app-kit-ui/popup";
-import { GenreTreeView } from "@behindthemusictree/app-kit-ui/genre-tree";
+import { GenreTreeView, TrackListSidebar } from "@behindthemusictree/app-kit-ui/genre-tree";
 import { Button, RingLoader, Skeleton } from "@behindthemusictree/ui";
 import GenreCreationPopup from "./GenreCreationPopup";
 import GenreRenamePopup from "./GenreRenamePopup";
@@ -162,6 +163,7 @@ function PopupHost() {
 // Mirrors grow's Player panel: the YouTube player needs a mounted PlayerVideoSurface.
 function PlayerPanel() {
   const { playerTrackObject } = usePlayer();
+  const { isTrackListSidebarVisible, toggleTrackListSidebar } = useTrackListSidebarVisibility();
   return (
     <div
       style={{
@@ -169,14 +171,22 @@ function PlayerPanel() {
         top: 12,
         right: 12,
         width: 280,
+        height: isTrackListSidebarVisible ? "calc(100vh - 24px)" : "auto",
         zIndex: 40,
         borderRadius: 8,
         overflow: "hidden",
         background: "#09090b",
-        display: playerTrackObject ? "block" : "none",
+        display: playerTrackObject ? "flex" : "none",
+        flexDirection: "column",
       }}
     >
+      <div style={{ padding: 8 }}>
+        <Button onClick={toggleTrackListSidebar}>
+          {isTrackListSidebarVisible ? "Hide song list" : "Show song list"}
+        </Button>
+      </div>
       <PlayerVideoSurface className="aspect-video w-full" />
+      {isTrackListSidebarVisible && <TrackListSidebar layout="inline" className="min-h-0 flex-1" />}
     </div>
   );
 }
