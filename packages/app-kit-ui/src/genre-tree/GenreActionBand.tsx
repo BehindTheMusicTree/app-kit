@@ -90,7 +90,7 @@ export default function GenreActionBand({
           type="button"
           disabled={item.disabled}
           onClick={item.onClick}
-          className="group flex flex-col items-center gap-1 w-16 shrink-0 p-[0.8em] text-xs text-center text-[var(--color-text)] focus-visible:outline-none disabled:opacity-50"
+          className="group flex flex-col items-center gap-1 w-16 shrink-0 text-xs text-center text-[var(--color-text)] focus-visible:outline-none disabled:opacity-50"
         >
           <span className="flex items-center justify-center w-10 h-10 rounded-full group-focus-visible:ring-2 group-focus-visible:ring-[var(--color-focus-ring)] bg-[var(--color-surface-muted)] transition-colors group-hover:bg-[var(--color-border)] group-disabled:group-hover:bg-[var(--color-surface-muted)]">
             {item.icon}
