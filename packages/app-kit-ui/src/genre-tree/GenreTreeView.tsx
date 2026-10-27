@@ -128,7 +128,7 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   criteriaOverviewSchema?: z.ZodType<O, z.ZodTypeDef, unknown>;
   /** Consumer-specific rows rendered in the info panel after Summary. */
   renderGenreDetailExtras?: (overview: O) => ReactNode;
-  /** Layout of the wheel/tree floating zoom/pop/fit controls. Defaults to "vertical". */
+  /** Layout of the wheel/tree floating zoom/pop/fit controls. Defaults to "horizontal". */
   controlsOrientation?: ControlsOrientation;
   /** When set, artist names in the info panel's track list render through it (e.g. a router `Link`). */
   renderArtistLink?: RenderArtistLink;
@@ -154,7 +154,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   allowWheelRotation: controlledAllowWheelRotation,
   criteriaOverviewSchema,
   renderGenreDetailExtras,
-  controlsOrientation,
+  controlsOrientation = "horizontal",
   renderArtistLink,
   artistSearch = true,
   onArtistSelect,

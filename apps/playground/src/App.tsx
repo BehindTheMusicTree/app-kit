@@ -4,7 +4,6 @@ import {
   usePopup,
   CriteriaMinimum,
   PlayerProvider,
-  PlayerVideoSurface,
   usePlayer,
   PlayerTrack,
   TrackListProvider,
@@ -17,7 +16,7 @@ import {
   SongDetailedSchema,
 } from "@behindthemusictree/app-kit";
 import { BasePopup } from "@behindthemusictree/app-kit-ui/popup";
-import { GenreTreeView } from "@behindthemusictree/app-kit-ui/genre-tree";
+import { GenreTreeView, PlayerPanel } from "@behindthemusictree/app-kit-ui/genre-tree";
 import { Button, RingLoader, Skeleton } from "@behindthemusictree/ui";
 import GenreCreationPopup from "./GenreCreationPopup";
 import GenreRenamePopup from "./GenreRenamePopup";
@@ -160,29 +159,11 @@ function PopupHost() {
 }
 
 // Mirrors grow's Player panel: the YouTube player needs a mounted PlayerVideoSurface.
-function PlayerPanel() {
-  const { playerTrackObject } = usePlayer();
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: 12,
-        right: 12,
-        width: 280,
-        zIndex: 40,
-        borderRadius: 8,
-        overflow: "hidden",
-        background: "#09090b",
-        display: playerTrackObject ? "block" : "none",
-      }}
-    >
-      <PlayerVideoSurface className="aspect-video w-full" />
-    </div>
-  );
-}
-
 function AppContent() {
   const [loading, setLoading] = useState(false);
+  const { playerTrackObject } = usePlayer();
+  const [dismissedTrackId, setDismissedTrackId] = useState<string | null>(null);
+  const playerTrackId = playerTrackObject?.track.id ?? null;
 
   return (
     <>
@@ -229,7 +210,11 @@ function AppContent() {
           </div>
         )}
       </div>
-      <PlayerPanel />
+      <PlayerPanel
+        isVisible={playerTrackId !== null && playerTrackId !== dismissedTrackId}
+        onClose={() => setDismissedTrackId(playerTrackId)}
+        className="top-3"
+      />
       <PopupHost />
     </>
   );

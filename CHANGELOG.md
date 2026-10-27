@@ -11,6 +11,20 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [18.4.0] - 2026-10-27
+
+### Added
+
+- `PlayerPanel` (`app-kit-ui/genre-tree`): player panel with video, song list and a toggle that extends the panel leftwards (`extendedWidth` to stop short of a detail panel).
+
+### Changed
+
+- `GenreTreeView`: `controlsOrientation` now defaults to `"horizontal"` (was the library default, vertical), so consumers no longer need to pass it.
+
+### Fixed
+
+- `TrackItem`: render the duration column only when `renderDuration` is passed, so the genre badge sits flush right instead of leaving a 64px empty gap.
+
 ## [18.3.0] - 2026-10-27
 
 ### Changed
