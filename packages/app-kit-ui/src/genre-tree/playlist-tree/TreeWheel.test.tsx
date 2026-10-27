@@ -115,6 +115,15 @@ describe("GenrePlaylistTreeWheel", () => {
     expect(genreTreeWheelPropsMock.mock.calls[0][0].playingNodeId).toBe("gp1");
   });
 
+  it("passes defaultViewport and onViewportChange through to GenreTreeWheel", () => {
+    const viewport = { x: 10, y: 20, zoom: 1.5 };
+    const onViewportChange = vi.fn();
+    renderWheel({ defaultViewport: viewport, onViewportChange });
+    const props = genreTreeWheelPropsMock.mock.calls[0][0];
+    expect(props.defaultViewport).toBe(viewport);
+    expect(props.onViewportChange).toBe(onViewportChange);
+  });
+
   it("passes controlsOrientation through to GenreTreeWheel", () => {
     renderWheel({ controlsOrientation: "horizontal" });
     expect(genreTreeWheelPropsMock.mock.calls[0][0].controlsOrientation).toBe("horizontal");

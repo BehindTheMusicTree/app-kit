@@ -237,6 +237,37 @@ describe("GenreTreeView", () => {
     expect(lastTwo).toEqual([null, "gp2"]);
   });
 
+  it("passes defaultViewport and onViewportChange only to the stacked tree whose root holds the selection", () => {
+    useListFullGenrePlaylistsMock.mockReturnValue({
+      data: [
+        makePlaylist({ uuid: "gp1", root: { uuid: "root1" } }),
+        makePlaylist({ uuid: "gp2", name: "Rock", root: { uuid: "root2" } }),
+      ],
+      isPending: false,
+    });
+    const defaultViewport = { x: 10, y: 20, zoom: 1.5 };
+    const onViewportChange = vi.fn();
+    renderView({ selectedNodeId: "gp2", defaultViewport, onViewportChange });
+    fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
+
+    const [first, second] = treePerRootPropsMock.mock.calls.slice(-2).map(([p]) => p);
+    expect(first.defaultViewport).toBeUndefined();
+    expect(first.onViewportChange).toBeUndefined();
+    expect(second.defaultViewport).toBe(defaultViewport);
+    expect(second.onViewportChange).toBe(onViewportChange);
+  });
+
+  it("passes defaultViewport and onViewportChange to the wheel", () => {
+    useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist()], isPending: false });
+    const defaultViewport = { x: 10, y: 20, zoom: 1.5 };
+    const onViewportChange = vi.fn();
+    renderView({ viewMode: "wheel", defaultViewport, onViewportChange });
+
+    const props = treeWheelPropsMock.mock.calls.at(-1)?.[0];
+    expect(props.defaultViewport).toBe(defaultViewport);
+    expect(props.onViewportChange).toBe(onViewportChange);
+  });
+
   it("switches to wheel view and passes genre playlists through", () => {
     useListFullGenrePlaylistsMock.mockReturnValue({
       data: [makePlaylist()],
