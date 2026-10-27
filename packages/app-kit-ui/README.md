@@ -35,7 +35,7 @@ your own stylesheet:
 
 Third-party brand colors (Spotify, Google) stay literal.
 
-`PlayerPanel` also reads the layout tokens `--layout-gutter`, `--layout-header-h`, `--layout-player-panel-w` and `--layout-detail-panel-w` from the same stylesheet.
+`PlayerPanel` also reads the layout tokens `--layout-gutter`, `--layout-band-top`, `--layout-right-w` and `--layout-detail-panel-w` from the same stylesheet.
 
 ## Extension points
 

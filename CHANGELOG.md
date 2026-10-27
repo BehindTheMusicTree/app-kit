@@ -30,6 +30,18 @@ easy to spot when bumping.
 
 - A failed parent change shows the app's error popup through the popup context instead of leaving the "Change parent" form open with no feedback; field errors render in the form.
 - `BasePopup` leaves a gap between its content and the separator above the OK/Cancel buttons, so the last field no longer touches the line.
+
+## [18.5.2] - 2026-10-27
+
+### Changed
+
+- `PlayerPanel` width uses brand's `--layout-right-w` (the right column), shared with the app header row.
+- Bumped `@behindthemusictree/brand` to 12.4.0.
+
+## [18.5.1] - 2026-10-27
+
+### Fixed
+
 - `app-kit-ui/genre-tree/styles.css` now re-exports genre-tree-view's stylesheet instead of a copy frozen at build time, so the styles always match the installed genre-tree-view version.
 
 ## [18.5.0] - 2026-10-27

@@ -48,14 +48,14 @@ export default function PlayerPanel({
     <div
       className={twMerge(
         "fixed right-[var(--layout-gutter)] top-[var(--layout-band-top)] z-40 flex max-h-[calc(100vh-var(--layout-band-top)-3.5rem)] overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-100 drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]",
-        isExtended ? "flex-row" : "w-[var(--layout-player-panel-w)] flex-col",
+        isExtended ? "flex-row" : "w-[var(--layout-right-w)] flex-col",
         isTrackListSidebarVisible && "h-[calc(100vh-var(--layout-band-top)-3.5rem)]",
         !isVisible && "hidden",
         className,
       )}
       style={isExtended ? { width: extendedWidth } : undefined}
     >
-      <div className="flex w-[var(--layout-player-panel-w)] shrink-0 flex-col">
+      <div className="flex w-[var(--layout-right-w)] shrink-0 flex-col">
         <div className="flex shrink-0 items-center justify-between gap-2 border-b border-zinc-800 p-2">
           {isTrackListSidebarVisible && (
             <button
