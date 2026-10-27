@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [18.4.0] - 2026-10-27
+
 ### Added
 
 - `PlayerPanel` (`app-kit-ui/genre-tree`): player panel with video, song list and a toggle that extends the panel leftwards (`extendedWidth` to stop short of a detail panel).
