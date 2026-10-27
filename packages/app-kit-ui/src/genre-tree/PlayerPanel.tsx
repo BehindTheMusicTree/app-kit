@@ -19,8 +19,8 @@ export interface PlayerPanelProps {
 
 const iconButtonClassName = "flex h-6 w-6 shrink-0 items-center justify-center p-0 rounded-md hover:bg-white/10";
 
-// 12px right gutter + 280px detail panel + 12px left gutter + 12px gap to this panel.
-const DEFAULT_EXTENDED_WIDTH = "calc(100vw - 316px)";
+// Right gutter + detail panel + left gutter + gap to this panel.
+const DEFAULT_EXTENDED_WIDTH = "calc(100vw - var(--layout-gutter) * 3 - var(--layout-detail-panel-w))";
 
 export default function PlayerPanel({
   className,
@@ -37,15 +37,15 @@ export default function PlayerPanel({
   return (
     <div
       className={twMerge(
-        "fixed right-3 top-[60px] z-40 flex max-h-[calc(100vh-116px)] overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-100 drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]",
-        isExtended ? "flex-row" : "w-[280px] flex-col",
-        isTrackListSidebarVisible && "h-[calc(100vh-116px)]",
+        "fixed right-[var(--layout-gutter)] top-[var(--layout-header-h)] z-40 flex max-h-[calc(100vh-var(--layout-header-h)-3.5rem)] overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-100 drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]",
+        isExtended ? "flex-row" : "w-[var(--layout-player-panel-w)] flex-col",
+        isTrackListSidebarVisible && "h-[calc(100vh-var(--layout-header-h)-3.5rem)]",
         !isVisible && "hidden",
         className,
       )}
       style={isExtended ? { width: extendedWidth } : undefined}
     >
-      <div className="flex w-[280px] shrink-0 flex-col">
+      <div className="flex w-[var(--layout-player-panel-w)] shrink-0 flex-col">
         <div className="flex shrink-0 items-center justify-between gap-2 border-b border-zinc-800 p-2">
           {isTrackListSidebarVisible && (
             <button

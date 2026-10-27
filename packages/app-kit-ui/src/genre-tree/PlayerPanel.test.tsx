@@ -39,13 +39,13 @@ describe("PlayerPanel", () => {
 
     setup(true);
     rerender(<PlayerPanel onClose={vi.fn()} extendedWidth="500px" />);
-    expect(container.firstChild).toHaveClass("w-[280px]");
+    expect(container.firstChild).toHaveClass("w-[var(--layout-player-panel-w)]");
 
     fireEvent.click(screen.getByRole("button", { name: "Extend song list panel" }));
     expect(container.firstChild).toHaveStyle({ width: "500px" });
 
     fireEvent.click(screen.getByRole("button", { name: "Shrink song list panel" }));
-    expect(container.firstChild).toHaveClass("w-[280px]");
+    expect(container.firstChild).toHaveClass("w-[var(--layout-player-panel-w)]");
   });
 
   it("hides via CSS when not visible and calls onClose", () => {
