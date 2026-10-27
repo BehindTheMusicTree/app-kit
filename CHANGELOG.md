@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [18.5.0] - 2026-10-27
+
 ### Added
 
 - `GenreTreeView` takes `placement="regions"`: the info panel and its expanded/overlay modes sit in brand's left/center/right columns, and the overlay starts below the header band.
