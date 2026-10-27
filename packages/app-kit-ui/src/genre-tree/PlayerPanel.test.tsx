@@ -21,9 +21,11 @@ vi.mock("./track-list-sidebar/TrackListSidebar", () => ({
 
 import PlayerPanel from "./PlayerPanel";
 
+const toggleTrackListSidebar = vi.fn();
+
 const setup = (isTrackListSidebarVisible: boolean) => {
   usePlayerMock.mockReturnValue({ playerTrackObject: { track: { title: "Song A" } } });
-  useVisibilityMock.mockReturnValue({ isTrackListSidebarVisible, toggleTrackListSidebar: vi.fn() });
+  useVisibilityMock.mockReturnValue({ isTrackListSidebarVisible, toggleTrackListSidebar });
 };
 
 describe("PlayerPanel", () => {
@@ -32,7 +34,7 @@ describe("PlayerPanel", () => {
     vi.clearAllMocks();
   });
 
-  it("offers the extend toggle only while the song list is visible, and widens the panel when used", () => {
+  it("offers the extend tab only while the song list is visible, and widens the panel when used", () => {
     setup(false);
     const { container, rerender } = render(<PlayerPanel onClose={vi.fn()} />);
     expect(screen.queryByRole("button", { name: "Extend song list panel" })).not.toBeInTheDocument();
@@ -46,6 +48,21 @@ describe("PlayerPanel", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Shrink song list panel" }));
     expect(container.firstChild).toHaveClass("w-[var(--layout-right-w)]");
+  });
+
+  it("hides the song list from the edge tab, leaving only the video", () => {
+    setup(true);
+    render(<PlayerPanel onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Hide song list" }));
+    expect(toggleTrackListSidebar).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the song list again from the only tab button when it is hidden", () => {
+    setup(false);
+    render(<PlayerPanel onClose={vi.fn()} />);
+    expect(screen.queryByRole("button", { name: "Hide song list" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show song list" }));
+    expect(toggleTrackListSidebar).toHaveBeenCalledTimes(1);
   });
 
   it("follows a controlled expanded prop and reports toggles", () => {

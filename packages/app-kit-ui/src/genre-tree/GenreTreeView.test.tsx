@@ -397,6 +397,48 @@ describe("GenreTreeView", () => {
       expect(container.firstElementChild?.className).toContain("--gtv-center-left:var(--layout-center-left)");
     });
 
+    describe("detail edge tab", () => {
+      const tabProps = { placement: "regions", selectedNodeId: "gp1" } as const;
+
+      it("is absent without a selection, outside regions placement, or without onCollapsedChange", () => {
+        renderView({ placement: "regions", onCollapsedChange: vi.fn() });
+        expect(screen.queryByRole("button", { name: "Hide panel" })).not.toBeInTheDocument();
+        cleanup();
+        renderView({ selectedNodeId: "gp1", onCollapsedChange: vi.fn() });
+        expect(screen.queryByRole("button", { name: "Hide panel" })).not.toBeInTheDocument();
+        cleanup();
+        renderView(tabProps);
+        expect(screen.queryByRole("button", { name: "Hide panel" })).not.toBeInTheDocument();
+      });
+
+      it("hides or extends the panel from the default state", () => {
+        const onCollapsedChange = vi.fn();
+        const onExpandedChange = vi.fn();
+        renderView({ ...tabProps, onCollapsedChange, onExpandedChange });
+        fireEvent.click(screen.getByRole("button", { name: "Hide panel" }));
+        expect(onCollapsedChange).toHaveBeenCalledWith(true);
+        fireEvent.click(screen.getByRole("button", { name: "Extend panel" }));
+        expect(onExpandedChange).toHaveBeenCalledWith(true);
+      });
+
+      it("offers only Show panel while collapsed", () => {
+        const onCollapsedChange = vi.fn();
+        renderView({ ...tabProps, collapsed: true, onCollapsedChange, onExpandedChange: vi.fn() });
+        expect(screen.queryByRole("button", { name: "Hide panel" })).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Extend panel" })).not.toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button", { name: "Show panel" }));
+        expect(onCollapsedChange).toHaveBeenCalledWith(false);
+      });
+
+      it("offers only Shrink panel while expanded", () => {
+        const onExpandedChange = vi.fn();
+        renderView({ ...tabProps, expanded: true, onCollapsedChange: vi.fn(), onExpandedChange });
+        expect(screen.queryByRole("button", { name: "Hide panel" })).not.toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button", { name: "Shrink panel" }));
+        expect(onExpandedChange).toHaveBeenCalledWith(false);
+      });
+    });
+
     it("shows the display options group by default", () => {
       renderView();
       expect(screen.getByRole("group", { name: "Tree display options" })).toBeInTheDocument();

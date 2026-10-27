@@ -38,6 +38,7 @@ import GenrePlaylistTreeWheelRadialPopCore, { type GenreFocusProps } from "./pla
 import { GenreTreeWheelHandoff } from "./GenreTreeWheelHandoff";
 import GenreSearch, { type GenreSearchProps } from "./GenreSearch";
 import GenreActionBand from "./GenreActionBand";
+import PanelEdgeTab from "./PanelEdgeTab";
 import ChangeParentPopup from "./ChangeParentPopup";
 
 // genre-tree-view's "previous" button (back to the last selected genre) renders inside the info panel, which sits
@@ -140,7 +141,11 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   GenreDetailSlots<O> &
   GenrePlaylistTracksSlots &
   InfoPanelCurationProps &
-  GenreFocusProps;
+  GenreFocusProps & {
+    /** Hides the info panel behind its edge tab (controlled); only applies with `placement="regions"`. */
+    collapsed?: boolean;
+    onCollapsedChange?: (collapsed: boolean) => void;
+  };
 
 const REGIONS_CLASS =
   "[--gtv-center-left:var(--layout-center-left)] [--gtv-center-right:var(--layout-center-right)] [--gtv-center-top:var(--layout-band-top)] [&_.gtv-info-panel--overlay]:[--gtv-info-panel-header-inset:0px]";
@@ -178,6 +183,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   renderDangerZone,
   expanded,
   onExpandedChange,
+  collapsed,
+  onCollapsedChange,
   overlayPanel,
   placement = "default",
   ...focus
@@ -190,6 +197,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     renderDangerZone,
     expanded,
     onExpandedChange,
+    collapsed: placement === "regions" ? collapsed : undefined,
+    hideExpandButton: placement === "regions" ? true : undefined,
     overlayPanel,
   };
   const {
@@ -344,6 +353,29 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const isRotationControlled = controlledAllowWheelRotation !== undefined;
   const allowWheelRotation = controlledAllowWheelRotation ?? internalAllowWheelRotation;
 
+  const detailTab =
+    placement === "regions" && selectedNodeId && onCollapsedChange ? (
+      <PanelEdgeTab
+        side="left"
+        edge={
+          expanded
+            ? { label: "Shrink panel", onClick: () => onExpandedChange?.(false) }
+            : collapsed
+              ? null
+              : { label: "Hide panel", onClick: () => onCollapsedChange(true) }
+        }
+        center={
+          expanded
+            ? null
+            : collapsed
+              ? { label: "Show panel", onClick: () => onCollapsedChange(false) }
+              : onExpandedChange
+                ? { label: "Extend panel", onClick: () => onExpandedChange(true) }
+                : null
+        }
+      />
+    ) : null;
+
   const actions = (
     <>
       {!isLoading && (
@@ -407,21 +439,36 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       <style>{PREVIOUS_BUTTON_CSS}</style>
       <div
         className={`actions-container absolute z-30 flex items-center gap-2 ${
-          placement === "regions" ? "left-[var(--layout-gutter)] top-[var(--layout-gutter)]" : "left-5 top-5"
+          placement === "regions"
+            ? "left-[calc(var(--layout-gutter)+var(--layout-panel-inset))] top-[calc(var(--layout-gutter)+var(--layout-panel-inset))]"
+            : "left-5 top-5"
         }`}
       >
         {actions}
       </div>
+      {detailTab && (
+        <div
+          className={`absolute top-1/2 z-30 -translate-y-1/2 ${
+            expanded
+              ? "right-[calc(var(--layout-center-right)-var(--layout-edge-tab-w))]"
+              : collapsed
+                ? "left-0"
+                : "left-[calc(var(--layout-gutter)+var(--layout-left-w))]"
+          }`}
+        >
+          {detailTab}
+        </div>
+      )}
       <div className="content-container flex-1 min-h-0 flex flex-row gap-4">
         <div className="tree-view-container flex-1 min-w-0 flex flex-col h-full">
           {isLoading ? (
             <GenreTreeViewSkeleton viewMode={viewMode} />
           ) : viewMode === "wheel" ? (
-            // The info panel's top edge aligns with the tree's, 8px above the h-10 search bar at top-5;
-            // the header inset (10px padding + 38px = the search bar's bottom edge) extends its fill behind the search bar,
-            // Google Maps style; the 8px bottom padding mirrors the 8px above the bar, and the hidden title's height is zeroed.
+            // The info panel's top edge aligns with the tree's; the search bar floats `--layout-panel-inset` below it,
+            // and the header inset (the bar's height plus that inset) extends the header's fill behind the bar,
+            // Google Maps style; the 8px bottom padding mirrors the inset above the bar, and the hidden title's height is zeroed.
             // The panel's own Zoom in button is hidden: the search bar carries it.
-            <div className="tree-container search-overlay relative flex-1 w-full min-h-0 [--gtv-info-panel-header-inset:2.375rem] [&_.gtv-info-panel-header]:pb-2 [&_.gtv-info-panel-title--hidden]:h-0 [&_.gtv-toolbar]:hidden">
+            <div className="tree-container search-overlay relative flex-1 w-full min-h-0 [--gtv-info-panel-header-inset:calc(var(--layout-search-h,2.5rem)+var(--layout-panel-inset,0.5rem))] [&_.gtv-info-panel-header]:pb-2 [&_.gtv-info-panel-title--hidden]:h-0 [&_.gtv-toolbar]:hidden">
               <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
                 <GenrePlaylistTreeWheel
                   scope={scope}
@@ -443,9 +490,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
               </GenreTreeWheelHandoff>
             </div>
           ) : viewMode === "pop-core" ? (
-            // The info panel's top edge aligns with the tree's, 8px above the h-10 search bar at top-5;
-            // the header inset (8px + 40px + 4px) extends its fill behind the search bar, Google Maps style.
-            <div className="tree-container search-overlay relative flex-1 w-full min-h-0 [--gtv-info-panel-header-inset:2.375rem] [&_.gtv-info-panel-header]:pb-2 [&_.gtv-info-panel-title--hidden]:h-0 [&_.gtv-toolbar]:hidden [&_.gtv-info-panel-zoom-in]:hidden">
+            // Same as the wheel: the header inset extends its fill behind the floating search bar, Google Maps style.
+            <div className="tree-container search-overlay relative flex-1 w-full min-h-0 [--gtv-info-panel-header-inset:calc(var(--layout-search-h,2.5rem)+var(--layout-panel-inset,0.5rem))] [&_.gtv-info-panel-header]:pb-2 [&_.gtv-info-panel-title--hidden]:h-0 [&_.gtv-toolbar]:hidden [&_.gtv-info-panel-zoom-in]:hidden">
               <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
                 <GenrePlaylistTreeWheelRadialPopCore
                   scope={scope}
@@ -468,7 +514,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
               </GenreTreeWheelHandoff>
             </div>
           ) : viewMode === "outline" ? (
-            <div className="tree-container flex-1 min-h-0 w-full overflow-y-auto relative [--gtv-info-panel-header-inset:3.25rem] [&_.gtv-toolbar]:hidden">
+            <div className="tree-container flex-1 min-h-0 w-full overflow-y-auto relative [--gtv-info-panel-header-inset:calc(var(--layout-search-h,2.5rem)+var(--layout-panel-inset,0.5rem)+0.75rem)] [&_.gtv-toolbar]:hidden">
               <GenrePlaylistTreeWheelRadialPopCore
                 outline
                 scope={scope}

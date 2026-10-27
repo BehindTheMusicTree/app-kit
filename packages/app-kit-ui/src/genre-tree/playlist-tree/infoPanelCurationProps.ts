@@ -11,6 +11,8 @@ export type InfoPanelCurationProps = Partial<
     | "renderDangerZone"
     | "expanded"
     | "onExpandedChange"
+    | "collapsed"
+    | "hideExpandButton"
     | "overlayPanel"
   >
 >;
