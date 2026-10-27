@@ -23,3 +23,5 @@ export { default as TrackPositionPlayPause } from "./TrackPositionPlayPause";
 export type { TrackPositionPlayPauseProps } from "./TrackPositionPlayPause";
 export { default as Rating } from "./Rating";
 export type { RatingProps } from "./Rating";
+export { default as PanelEdgeTab } from "./PanelEdgeTab";
+export type { PanelEdgeTabProps, PanelEdgeTabAction } from "./PanelEdgeTab";

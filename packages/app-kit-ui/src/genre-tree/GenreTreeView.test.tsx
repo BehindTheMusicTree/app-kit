@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { screen, fireEvent, act, cleanup, waitFor } from "@testing-library/react";
 import { render } from "../test-utils";
 import { z } from "zod";
+import ChangeParentPopup from "./ChangeParentPopup";
 
 const {
   useListFullGenrePlaylistsMock,
@@ -13,7 +14,8 @@ const {
   setIsPlayingMock,
   trackListState,
   playNewTrackListFromGenrePlaylistMock,
-  useUpdateGenreMock,
+  showPopupMock,
+  hidePopupMock,
   useArtistSearchMock,
 } = vi.hoisted(() => ({
   useListFullGenrePlaylistsMock: vi.fn(),
@@ -25,8 +27,14 @@ const {
   setIsPlayingMock: vi.fn(),
   trackListState: { value: null as unknown },
   playNewTrackListFromGenrePlaylistMock: vi.fn(() => Promise.resolve()),
-  useUpdateGenreMock: vi.fn(),
+  showPopupMock: vi.fn(),
+  hidePopupMock: vi.fn(),
   useArtistSearchMock: vi.fn(),
+}));
+
+vi.mock("@behindthemusictree/app-kit/popup", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  usePopup: () => ({ showPopup: showPopupMock, hidePopup: hidePopupMock, activePopup: null }),
 }));
 
 vi.mock("../../../app-kit/src/player/PlayerContext", async (importOriginal) => ({
@@ -54,7 +62,6 @@ vi.mock("../../../app-kit/src/genre-tree/useGenre", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useFetchGenreOverview: (id: string | null) => useFetchGenreOverviewMock(id),
   usePrefetchGenreOverview: () => prefetchGenreOverviewMock,
-  useUpdateGenre: () => useUpdateGenreMock(),
 }));
 
 vi.mock("./GenrePlaylistTracks", () => ({
@@ -157,7 +164,6 @@ describe("GenreTreeView", () => {
       isPending: false,
     });
     useFetchGenreOverviewMock.mockReturnValue({ data: undefined, isPending: false });
-    useUpdateGenreMock.mockReturnValue({ mutate: vi.fn(), isPending: false });
     useArtistSearchMock.mockReturnValue({ artists: [], isError: false, settled: false });
   });
 
@@ -346,38 +352,6 @@ describe("GenreTreeView", () => {
     expect(new Set(withOverlay.map(([props]) => props.rootUuid)).size).toBe(1);
   });
 
-  it("passes reparentingGenreUuid updates through to the tree components", () => {
-    useListFullGenrePlaylistsMock.mockReturnValue({
-      data: [makePlaylist()],
-      isPending: false,
-    });
-    renderView();
-
-    fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
-
-    expect(
-      treePerRootPropsMock.mock.calls[0][0].reparentingGenreUuid,
-    ).toBeNull();
-
-    act(() => {
-      treePerRootPropsMock.mock.calls[0][0].onReparentRequest("gp1");
-    });
-
-    expect(
-      treePerRootPropsMock.mock.calls.at(-1)?.[0].reparentingGenreUuid,
-    ).toBe("gp1");
-  });
-
-  it("withholds onReparent from the tree components while a reparent is in flight", () => {
-    useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist()], isPending: false });
-    useUpdateGenreMock.mockReturnValue({ mutate: vi.fn(), isPending: true });
-    renderView();
-
-    fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
-
-    expect(treePerRootPropsMock.mock.calls.at(-1)?.[0].onReparent).toBeUndefined();
-  });
-
   describe("layout props", () => {
     beforeEach(() => {
       useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist()], isPending: false });
@@ -421,6 +395,48 @@ describe("GenreTreeView", () => {
         />,
       );
       expect(container.firstElementChild?.className).toContain("--gtv-center-left:var(--layout-center-left)");
+    });
+
+    describe("detail edge tab", () => {
+      const tabProps = { placement: "regions", selectedNodeId: "gp1" } as const;
+
+      it("is absent without a selection, outside regions placement, or without onCollapsedChange", () => {
+        renderView({ placement: "regions", onCollapsedChange: vi.fn() });
+        expect(screen.queryByRole("button", { name: "Hide panel" })).not.toBeInTheDocument();
+        cleanup();
+        renderView({ selectedNodeId: "gp1", onCollapsedChange: vi.fn() });
+        expect(screen.queryByRole("button", { name: "Hide panel" })).not.toBeInTheDocument();
+        cleanup();
+        renderView(tabProps);
+        expect(screen.queryByRole("button", { name: "Hide panel" })).not.toBeInTheDocument();
+      });
+
+      it("hides or extends the panel from the default state", () => {
+        const onCollapsedChange = vi.fn();
+        const onExpandedChange = vi.fn();
+        renderView({ ...tabProps, onCollapsedChange, onExpandedChange });
+        fireEvent.click(screen.getByRole("button", { name: "Hide panel" }));
+        expect(onCollapsedChange).toHaveBeenCalledWith(true);
+        fireEvent.click(screen.getByRole("button", { name: "Extend panel" }));
+        expect(onExpandedChange).toHaveBeenCalledWith(true);
+      });
+
+      it("offers only Show panel while collapsed", () => {
+        const onCollapsedChange = vi.fn();
+        renderView({ ...tabProps, collapsed: true, onCollapsedChange, onExpandedChange: vi.fn() });
+        expect(screen.queryByRole("button", { name: "Hide panel" })).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Extend panel" })).not.toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button", { name: "Show panel" }));
+        expect(onCollapsedChange).toHaveBeenCalledWith(false);
+      });
+
+      it("offers only Shrink panel while expanded", () => {
+        const onExpandedChange = vi.fn();
+        renderView({ ...tabProps, expanded: true, onCollapsedChange: vi.fn(), onExpandedChange });
+        expect(screen.queryByRole("button", { name: "Hide panel" })).not.toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button", { name: "Shrink panel" }));
+        expect(onExpandedChange).toHaveBeenCalledWith(false);
+      });
     });
 
     it("shows the display options group by default", () => {
@@ -1366,6 +1382,40 @@ describe("GenreTreeView", () => {
 
       expect(props.handleGenreCreationAction).toHaveBeenCalledWith(jazz.criteria);
       expect(props.handleGenreRenameAction).toHaveBeenCalledWith(jazz.criteria);
+      expect(showPopupMock).toHaveBeenCalledOnce();
+    });
+
+    describe("change parent popup", () => {
+      const jazz = makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } });
+      const rock = makePlaylist({ uuid: "gp3", name: "Rock", criteria: { uuid: "c3", name: "Rock" } });
+
+      it("shows the popup through the popup context", () => {
+        useListFullGenrePlaylistsMock.mockReturnValue({ data: [jazz, rock], isPending: false });
+        renderView();
+        fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+        openBand("gp1");
+        fireEvent.click(screen.getByRole("button", { name: "Parent" }));
+
+        const popup = showPopupMock.mock.calls[0][0];
+        expect(popup.type).toBe(ChangeParentPopup);
+        expect(popup.props).toMatchObject({
+          genrePlaylist: jazz,
+          genrePlaylists: [jazz, rock],
+          scope: "me",
+          getBackendBaseUrl,
+          onClose: hidePopupMock,
+        });
+      });
+
+      it("does not hand a reparent mode to the tree components", () => {
+        useListFullGenrePlaylistsMock.mockReturnValue({ data: [jazz, rock], isPending: false });
+        renderView();
+        fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+
+        const props = treeWheelPropsMock.mock.calls.at(-1)?.[0];
+        expect(props.reparentingGenreUuid).toBeUndefined();
+        expect(props.onReparentRequest).toBeUndefined();
+      });
     });
 
     it("hides the mutating band actions when read-only", () => {

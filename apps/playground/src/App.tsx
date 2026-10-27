@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import {
   PopupProvider,
   usePopup,
+  useConnectivityErrorPopup,
   CriteriaMinimum,
   PlayerProvider,
   usePlayer,
@@ -15,7 +16,7 @@ import {
   SongDetailed,
   SongDetailedSchema,
 } from "@behindthemusictree/app-kit";
-import { BasePopup } from "@behindthemusictree/app-kit-ui/popup";
+import { BasePopup, InternalErrorPopup, NetworkErrorPopup } from "@behindthemusictree/app-kit-ui/popup";
 import { GenreTreeView, PlayerPanel } from "@behindthemusictree/app-kit-ui/genre-tree";
 import { Button, RingLoader, Skeleton } from "@behindthemusictree/ui";
 import GenreCreationPopup from "./GenreCreationPopup";
@@ -160,6 +161,19 @@ function PopupHost() {
 
 // Mirrors grow's Player panel: the YouTube player needs a mounted PlayerVideoSurface.
 function AppContent() {
+  useConnectivityErrorPopup({
+    isAccountPage: false,
+    routeRequiresAuth: false,
+    routeRequiresSpotify: false,
+    renderers: {
+      renderAuthPopup: () => null,
+      renderSpotifyOnlyAuthPopup: () => null,
+      renderInternalErrorPopup: (errorCode) => <InternalErrorPopup errorCode={errorCode} />,
+      renderSpotifyAuthErrorPopup: () => null,
+      renderGoogleAuthErrorPopup: () => null,
+      renderNetworkErrorPopup: () => <NetworkErrorPopup />,
+    },
+  });
   const [loading, setLoading] = useState(false);
   const { playerTrackObject } = usePlayer();
   const [dismissedTrackId, setDismissedTrackId] = useState<string | null>(null);

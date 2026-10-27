@@ -53,7 +53,7 @@ export default function GenreSearch({
   const heading = "px-3 pt-2 pb-1 text-xs font-medium uppercase text-[var(--color-text-muted)]";
 
   return (
-    <div className="genre-search relative w-[16.5rem] shrink-0">
+    <div className="genre-search relative w-[calc(var(--layout-detail-panel-w,25.5rem)-2*var(--layout-panel-inset,1rem))] shrink-0">
       {onPrevious && (
         <button
           type="button"
@@ -74,23 +74,23 @@ export default function GenreSearch({
         }}
         placeholder={placeholder ?? `${label}…`}
         aria-label={label}
-        className="pl-4 pr-16 transition-[padding] duration-200 ease-out motion-reduce:transition-none bg-[var(--color-surface)] border-[var(--color-border)] rounded-full shadow-md"
+        className="h-[var(--layout-search-h,3rem)] pl-6 pr-20 text-base transition-[padding] duration-200 ease-out motion-reduce:transition-none bg-[var(--color-surface)] border-[var(--color-border)] rounded-full shadow-md"
       />
-      <div className="absolute right-2 top-1/2 flex items-center -translate-y-1/2">
-          <span className="p-1 text-[var(--color-text-muted)] pointer-events-none">
-            <Search aria-hidden="true" className="w-4 h-4" />
+      <div className="absolute right-3 top-1/2 flex items-center -translate-y-1/2">
+          <span className="p-2 text-[var(--color-text-muted)] pointer-events-none">
+            <Search aria-hidden="true" className="w-6 h-6" />
           </span>
           {canClear && (
             <button
               type="button"
               aria-label="Clear search"
-              className="p-1 text-[var(--color-text-muted)] rounded-full hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
+              className="p-2 text-[var(--color-text-muted)] rounded-full hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
               onClick={() => {
                 clear();
                 onQueryChange?.("");
               }}
             >
-              <X aria-hidden="true" className="w-4 h-4" />
+              <X aria-hidden="true" className="w-6 h-6" />
             </button>
           )}
       </div>

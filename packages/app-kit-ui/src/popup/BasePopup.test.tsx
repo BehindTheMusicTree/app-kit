@@ -22,6 +22,24 @@ describe("BasePopup", () => {
     expect(screen.queryByRole("button", { name: "Cancel" })).not.toBeInTheDocument();
   });
 
+  it("separates the content from the button footer with a gap above the border", () => {
+    render(
+      <BasePopup title="Title" showCancelButton>
+        content
+      </BasePopup>,
+    );
+
+    expect(screen.getByRole("button", { name: "Cancel" }).closest(".border-t")).toHaveClass("mt-4");
+  });
+
+  it("sizes to its content instead of filling the width when fitContent is set", () => {
+    render(<BasePopup title="Title" fitContent>content</BasePopup>);
+
+    const panel = screen.getByText("content").closest(".popup-content")?.parentElement;
+    expect(panel).toHaveClass("w-fit", "max-w-lg");
+    expect(panel).not.toHaveClass("w-full");
+  });
+
   it("calls onCancel when the Cancel button is clicked and onCancel is provided", () => {
     const onCancel = vi.fn();
     const onClose = vi.fn();

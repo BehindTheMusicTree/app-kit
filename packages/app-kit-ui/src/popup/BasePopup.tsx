@@ -15,6 +15,8 @@ export interface BasePopupProps {
   icon?: LucideIcon;
   isDismissable?: boolean;
   className?: string;
+  /** Sizes the popup to its content (up to the type's max width) instead of filling it. */
+  fitContent?: boolean;
   contentClassName?: string;
   showOkButton?: boolean;
   showCancelButton?: boolean;
@@ -55,6 +57,7 @@ export function BasePopup(props: BasePopupProps) {
     icon,
     isDismissable = true,
     className,
+    fitContent = false,
     showOkButton = false,
     showCancelButton = false,
     okButtonText = "OK",
@@ -72,7 +75,7 @@ export function BasePopup(props: BasePopupProps) {
     if (!showOkButton && !showCancelButton) return null;
 
     return (
-      <div className="pt-4 border-t">
+      <div className="mt-4 pt-4 border-t">
         <PopupButtons alignment={buttonAlignment}>
           {showCancelButton && (
             <Button onClick={onCancel || onClose || (() => {})} variant="secondary">
@@ -103,7 +106,7 @@ export function BasePopup(props: BasePopupProps) {
       aria-labelledby="popup-title"
     >
       <div
-        className={`${baseClasses} ${typeClasses[type]} ${className || ""}`}
+        className={`${baseClasses} ${fitContent ? typeClasses[type].replace("w-full", "w-fit") : typeClasses[type]} ${className || ""}`}
         onClick={(e) => e.stopPropagation()}
       >
         <PopupTitle title={title} onClose={onClose ?? (() => {})} isDismissable={isDismissable} icon={icon} />

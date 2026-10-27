@@ -40,10 +40,6 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   scope: Scope;
   className?: string;
   genrePlaylists: CriteriaPlaylistSimple[];
-  reparentingGenreUuid: string | null;
-  onReparentRequest: (genreUuid: string) => void;
-  /** Omitted while a reparent is in flight, so a second drop can't start a concurrent update. */
-  onReparent?: (genreUuid: string, newParentUuid: string) => void;
   handleGenreCreationAction: (parent: CriteriaMinimum | null) => void;
   handleGenreRenameAction: (genre: CriteriaMinimum) => void;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
@@ -58,7 +54,7 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   hideInfoPanelClose?: boolean;
   /** Hides the info panel header's node name. */
   hideInfoPanelTitle?: boolean;
-  /** When true, suppresses per-node create/rename/reparent affordances. Defaults to false. */
+  /** When true, suppresses per-node create/rename affordances. Defaults to false. */
   readOnly?: boolean;
   /** When false, clicking a chip still selects its root, but the ring doesn't spin to the
    * landing angle. Defaults to true. */
@@ -81,9 +77,6 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     scope,
     className,
     genrePlaylists,
-    reparentingGenreUuid,
-    onReparentRequest,
-    onReparent,
     handleGenreCreationAction,
     handleGenreRenameAction,
     additionalActions,
@@ -109,6 +102,8 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     renderDangerZone: props.renderDangerZone,
     expanded: props.expanded,
     onExpandedChange: props.onExpandedChange,
+    collapsed: props.collapsed,
+    hideExpandButton: props.hideExpandButton,
     overlayPanel: props.overlayPanel,
   };
   const { isPlaying, setIsPlaying } = usePlayer();
@@ -183,26 +178,16 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     }
   }, []);
 
-  const handleReparentRequest = useCallback(
-    (node: GenreTreeNode) => {
-      onReparentRequest(node.id);
-    },
-    [onReparentRequest],
-  );
-
   const treeProps = {
     className,
     nodes,
     itemCountLabel: `${capitalize(trackNoun.singular)} count`,
     playingNodeId,
     playState: isPlaying ? ("playing" as const) : ("paused" as const),
-    reparentingNodeId: reparentingGenreUuid,
     onPlayPause: handlePlayPause,
     onAddChild: readOnly ? undefined : handleAddChild,
     onRenameRequest: readOnly ? undefined : handleRenameRequest,
     onDeleteRequest: readOnly ? undefined : handleDeleteRequest,
-    onReparentRequest: readOnly ? undefined : handleReparentRequest,
-    onReparent: readOnly ? undefined : onReparent,
     additionalActions,
     onNodeClick,
     onNodeHover,

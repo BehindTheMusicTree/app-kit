@@ -5,7 +5,7 @@ import { z } from "zod";
 import { Scope } from "../transport/lib/scope";
 import { CriteriaPlaylistSimple } from "./schemas/criteria-playlist/simple";
 import { CriteriaOverview } from "./schemas/criteria/overview";
-import { usePrefetchGenreOverview, useUpdateGenre } from "./useGenre";
+import { usePrefetchGenreOverview } from "./useGenre";
 import { useListFullGenrePlaylists } from "./useGenrePlaylist";
 import { getGenrePlaylistsGroupedByRoot, hasMainstreamPopRoot } from "./lib/genre-playlist-helpers";
 
@@ -46,11 +46,7 @@ export interface UseGenreTreeViewStateResult {
   canShowPopCore: boolean;
   allowWheelRotation: boolean;
   toggleWheelRotation: () => void;
-  reparentingGenreUuid: string | null;
-  requestReparent: (genreUuid: string) => void;
-  /** Moves the genre under a new parent; reparent mode ends once the update settles, success or failure. */
-  reparent: (genreUuid: string, newParentUuid: string) => void;
-  isReparenting: boolean;
+  /** Moves the genre under a new parent. */
   /** Prefetches the hovered genre's overview once the pointer has rested briefly. */
   onNodeHover: (node: { id: string }) => void;
 }
@@ -63,8 +59,6 @@ export function useGenreTreeViewState<O extends CriteriaOverview = CriteriaOverv
   onSelectedNodeIdChange,
   criteriaOverviewSchema,
 }: UseGenreTreeViewStateOptions<O>): UseGenreTreeViewStateResult {
-  const [reparentingGenreUuid, setReparentingGenreUuid] = useState<string | null>(null);
-  const { mutate: updateGenre, isPending: isReparenting } = useUpdateGenre(scope, getBackendBaseUrl);
   const [internalViewMode, setInternalViewMode] = useState<GenreViewMode>("pop-core");
   const [allowWheelRotation, setAllowWheelRotation] = useState(false);
   const [internalSelectedNodeId, setInternalSelectedNodeId] = useState<string | null>(null);
@@ -170,15 +164,6 @@ export function useGenreTreeViewState<O extends CriteriaOverview = CriteriaOverv
     canShowPopCore,
     allowWheelRotation,
     toggleWheelRotation: () => setAllowWheelRotation((prev) => !prev),
-    reparentingGenreUuid,
-    requestReparent: setReparentingGenreUuid,
-    // Owned here rather than by the tree components so the reset survives a view-mode switch mid-update.
-    reparent: (genreUuid, newParentUuid) =>
-      updateGenre(
-        { uuid: genreUuid, data: { parent: newParentUuid } },
-        { onSettled: () => setReparentingGenreUuid(null) },
-      ),
-    isReparenting,
     onNodeHover,
   };
 }
