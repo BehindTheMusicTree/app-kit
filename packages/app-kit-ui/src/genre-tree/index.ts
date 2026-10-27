@@ -15,6 +15,8 @@ export {
 export type { GenreTreeAction, GenreTreeViewSkeletonProps } from "@behindthemusictree/genre-tree-view";
 export { default as TrackListSidebar } from "./track-list-sidebar/TrackListSidebar";
 export type { TrackListSidebarProps } from "./track-list-sidebar/TrackListSidebar";
+export { default as PlayerPanel } from "./PlayerPanel";
+export type { PlayerPanelProps } from "./PlayerPanel";
 export { default as TrackItem } from "./track-list-sidebar/TrackItem";
 export type { TrackItemProps } from "./track-list-sidebar/TrackItem";
 export { default as TrackPositionPlayPause } from "./TrackPositionPlayPause";

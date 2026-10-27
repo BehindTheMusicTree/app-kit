@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- `PlayerPanel` (`app-kit-ui/genre-tree`): player panel with video, song list and a toggle that extends the panel leftwards (`extendedWidth` to stop short of a detail panel).
+
 ### Fixed
 
 - `TrackItem`: render the duration column only when `renderDuration` is passed, so the genre badge sits flush right instead of leaving a 64px empty gap.
