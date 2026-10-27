@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- `GenreActionBand`: drop the leftover `p-[0.8em]` button padding, which doubled the band's vertical space.
+
 ## [18.1.0] - 2026-10-27
 
 ### Changed
