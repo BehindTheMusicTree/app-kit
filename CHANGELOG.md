@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- `app-kit-ui/genre-tree/styles.css` now re-exports genre-tree-view's stylesheet instead of a copy frozen at build time, so the styles always match the installed genre-tree-view version.
+
 ## [18.5.0] - 2026-10-27
 
 ### Added
