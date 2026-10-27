@@ -50,7 +50,7 @@ export default function TrackItem<T extends TrackBase>({
       {unplayableReason ? (
         <div
           className="flex items-center justify-center text-lg w-16"
-          style={{ minWidth: "64px", maxWidth: "64px" }}
+          style={{ minWidth: "4rem", maxWidth: "4rem" }}
           aria-disabled="true"
         >
           {position}
@@ -89,7 +89,7 @@ export default function TrackItem<T extends TrackBase>({
       {renderDuration && (
         <div
           className="duration flex text-base w-16 items-center justify-center"
-          style={{ minWidth: "64px", maxWidth: "64px" }}
+          style={{ minWidth: "4rem", maxWidth: "4rem" }}
         >
           {renderDuration(track)}
         </div>

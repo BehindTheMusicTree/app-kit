@@ -45,9 +45,9 @@ const PREVIOUS_BUTTON_CSS = `
 .genre-tree-view .gtv-info-panel-body { display: flex; flex-direction: column; }
 .genre-tree-view .gtv-info-panel-extra { order: -1; }
 .genre-tree-view .search-overlay .gtv-info-panel-previous { display: none; }
-.genre-tree-view:has(.search-overlay .gtv-info-panel-previous) .genre-search input { padding-left: 44px; }
+.genre-tree-view:has(.search-overlay .gtv-info-panel-previous) .genre-search input { padding-left: 2.75rem; }
 .genre-tree-view:has(.search-overlay .gtv-info-panel-previous) .genre-search-previous { display: flex; }
-@keyframes genre-tree-view-previous-in { from { opacity: 0; transform: translate(-8px, -50%); } to { opacity: 1; transform: translate(0, -50%); } }
+@keyframes genre-tree-view-previous-in { from { opacity: 0; transform: translate(-0.5rem, -50%); } to { opacity: 1; transform: translate(0, -50%); } }
 @media (prefers-reduced-motion: no-preference) {
   .genre-search-previous { animation: genre-tree-view-previous-in 200ms ease-out; }
 }
@@ -393,7 +393,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             // the header inset (10px padding + 38px = the search bar's bottom edge) extends its fill behind the search bar,
             // Google Maps style; the 8px bottom padding mirrors the 8px above the bar, and the hidden title's height is zeroed.
             // The panel's own Zoom in button is hidden: the search bar carries it.
-            <div className="tree-container search-overlay relative flex-1 w-full min-h-0 [--gtv-info-panel-top:12px] [--gtv-info-panel-header-inset:38px] [&_.gtv-info-panel-header]:pb-2 [&_.gtv-info-panel-title--hidden]:h-0 [&_.gtv-toolbar]:hidden">
+            <div className="tree-container search-overlay relative flex-1 w-full min-h-0 [--gtv-info-panel-header-inset:2.375rem] [&_.gtv-info-panel-header]:pb-2 [&_.gtv-info-panel-title--hidden]:h-0 [&_.gtv-toolbar]:hidden">
               <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
                 <GenrePlaylistTreeWheel
                   scope={scope}
@@ -420,7 +420,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           ) : viewMode === "pop-core" ? (
             // The info panel's top edge aligns with the tree's, 8px above the h-10 search bar at top-5;
             // the header inset (8px + 40px + 4px) extends its fill behind the search bar, Google Maps style.
-            <div className="tree-container search-overlay relative flex-1 w-full min-h-0 [--gtv-info-panel-top:12px] [--gtv-info-panel-header-inset:38px] [&_.gtv-info-panel-header]:pb-2 [&_.gtv-info-panel-title--hidden]:h-0 [&_.gtv-toolbar]:hidden [&_.gtv-info-panel-zoom-in]:hidden">
+            <div className="tree-container search-overlay relative flex-1 w-full min-h-0 [--gtv-info-panel-header-inset:2.375rem] [&_.gtv-info-panel-header]:pb-2 [&_.gtv-info-panel-title--hidden]:h-0 [&_.gtv-toolbar]:hidden [&_.gtv-info-panel-zoom-in]:hidden">
               <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
                 <GenrePlaylistTreeWheelRadialPopCore
                   scope={scope}
@@ -446,7 +446,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
               </GenreTreeWheelHandoff>
             </div>
           ) : viewMode === "outline" ? (
-            <div className="tree-container flex-1 min-h-0 w-full overflow-y-auto relative [--gtv-info-panel-top:12px] [--gtv-info-panel-header-inset:52px] [&_.gtv-toolbar]:hidden">
+            <div className="tree-container flex-1 min-h-0 w-full overflow-y-auto relative [--gtv-info-panel-header-inset:3.25rem] [&_.gtv-toolbar]:hidden">
               <GenrePlaylistTreeWheelRadialPopCore
                 outline
                 scope={scope}

@@ -156,7 +156,7 @@ export function GenrePlaylistTracks({
       ) : tracks.length === 0 ? (
         <p>—</p>
       ) : (
-        <ul className="mt-1 max-h-64 overflow-y-auto text-[13px] leading-[1.45] [container-type:inline-size]" aria-label={`${genrePlaylist.name} ${trackNoun.plural}`}>
+        <ul className="mt-1 max-h-64 overflow-y-auto text-[0.8125rem] leading-[1.45] [container-type:inline-size]" aria-label={`${genrePlaylist.name} ${trackNoun.plural}`}>
           {tracks.map((track, index) => {
             const label = track.artists?.length
               ? `${track.title} — ${track.artists.map((artist) => artist.name).join(", ")}`

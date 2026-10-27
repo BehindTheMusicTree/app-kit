@@ -67,14 +67,14 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
   return (
     <>
       {description && (
-        <div className="px-[14px] py-2.5">
-          <ClampedText key={genreUuid} className="text-[13px] leading-[1.45] text-[var(--color-text-muted)]">{description}</ClampedText>
+        <div className="px-3.5 py-2.5">
+          <ClampedText key={genreUuid} className="text-[0.8125rem] leading-[1.45] text-[var(--color-text-muted)]">{description}</ClampedText>
         </div>
       )}
       {renderSummary ? (
         renderSummary(overview)
       ) : (
-        <div className="gtv-info-panel-children text-[13px] leading-[1.45] text-[var(--color-text)]">
+        <div className="gtv-info-panel-children text-[0.8125rem] leading-[1.45] text-[var(--color-text)]">
           <span className="gtv-info-panel-children-title">Summary</span>
           <ClampedText key={genreUuid} className="mt-1">{summary ?? "—"}</ClampedText>
           {summarySourceUrl && (
@@ -94,7 +94,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
           href={summarySourceUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="mx-[14px] mb-2.5 inline-block text-xs text-[var(--color-text-muted)] underline hover:text-[var(--color-text)]"
+          className="mx-3.5 mb-2.5 inline-block text-xs text-[var(--color-text-muted)] underline hover:text-[var(--color-text)]"
         >
           Source: Wikipedia
         </a>
@@ -104,7 +104,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
         renderEssentialTracks(overview)
       ) : (
         essentialSongs && (
-        <div className="gtv-info-panel-children text-[13px] leading-[1.45] text-[var(--color-text)]">
+        <div className="gtv-info-panel-children text-[0.8125rem] leading-[1.45] text-[var(--color-text)]">
           <span className="gtv-info-panel-children-title">Essential {trackNoun.plural}</span>
           {essentialSongs.length > 0 ? (
             <ul className="mt-1 divide-y divide-[var(--color-border)]">
