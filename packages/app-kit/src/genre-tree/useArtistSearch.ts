@@ -1,5 +1,6 @@
 "use client";
 
+import { keepPreviousData } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import { useFetchWrapper } from "../transport/useFetchWrapper";
@@ -34,10 +35,11 @@ export function useArtistSearch(getBackendBaseUrl: () => string, text: string): 
     schema: ArtistSearchResultsSchema,
     context: "useArtistSearch",
     enabled,
+    placeholderData: keepPreviousData,
   });
 
   return {
-    artists: enabled && query === trimmed ? (data ?? []) : [],
+    artists: trimmed.length >= MIN_QUERY_LENGTH ? (data ?? []) : [],
     isError: enabled && isError,
     settled: enabled && !isFetching && query === trimmed,
   };
