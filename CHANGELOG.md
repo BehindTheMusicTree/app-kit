@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- `useArtistSearch` keeps the previous results on screen while the next query is typed and loading, instead of blanking the list on every keystroke; they clear only when the text drops below two characters. Tested in `useArtistSearch.test.ts`.
+
 ## [18.0.0] - 2026-10-27
 
 ### Breaking
