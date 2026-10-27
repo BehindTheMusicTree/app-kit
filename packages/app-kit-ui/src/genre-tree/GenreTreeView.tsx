@@ -309,7 +309,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                 : () =>
                     showPopup(
                       <ChangeParentPopup
-                        genrePlaylist={genrePlaylist}
+                        genrePlaylist={{ ...genrePlaylist, criteria }}
                         genrePlaylists={visibleGenrePlaylists}
                         scope={scope}
                         getBackendBaseUrl={getBackendBaseUrl}

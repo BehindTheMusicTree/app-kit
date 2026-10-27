@@ -35,6 +35,7 @@ vi.mock("./TrackListSidebarVisibilityContext", () => ({
 import { TrackListProvider, useTrackList, useListTracks } from "./TrackListContext";
 import type { TrackBase } from "./schemas/track/base";
 import { TrackListOriginType } from "./models/TrackListOriginType";
+import { makeGenrePlaylistUuid } from "./testing";
 
 const getBackendBaseUrl = () => "https://backend.example.com";
 const listEndpoint = (page: number) => `tracks/?page=${page}`;
@@ -98,7 +99,7 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 
-const genrePlaylist = { uuid: "p1", name: "My Playlist" };
+const genrePlaylist = { uuid: makeGenrePlaylistUuid("p1"), name: "My Playlist" };
 
 async function playGenre(result: RenderedTrackList, page: ReturnType<typeof makePage>, scope: "me" | "reference" = "me") {
   fetchMock.mockResolvedValueOnce(page);
@@ -433,7 +434,7 @@ describe("TrackListContext", () => {
       fetchMock.mockReturnValueOnce(slow.promise);
       let first!: Promise<void>;
       act(() => {
-        first = result.current.playNewTrackListFromGenrePlaylist({ uuid: "old", name: "Old" }, "me");
+        first = result.current.playNewTrackListFromGenrePlaylist({ uuid: makeGenrePlaylistUuid("old"), name: "Old" }, "me");
       });
 
       await playGenre(result, makePage(makeTracks(1, "new")));
@@ -475,7 +476,7 @@ describe("TrackListContext", () => {
       fetchMock.mockReturnValueOnce(slow.promise);
       let first!: Promise<void>;
       act(() => {
-        first = result.current.playNewTrackListFromGenrePlaylist({ uuid: "old", name: "Old" }, "me");
+        first = result.current.playNewTrackListFromGenrePlaylist({ uuid: makeGenrePlaylistUuid("old"), name: "Old" }, "me");
       });
 
       await playGenre(result, makePage(makeTracks(1, "new")));

@@ -72,6 +72,7 @@ import {
   useUpdateGenre,
   useDeleteGenre,
 } from "./useGenre";
+import { makeGenrePlaylistUuid, makeGenreUuid } from "./testing";
 
 const getBackendBaseUrl = () => "https://backend.example.com";
 
@@ -132,7 +133,7 @@ describe("useGenre", () => {
       parseWithLogMock.mockReturnValue({ uuid: "g1" });
       const { result } = renderHook(() => useFetchGenre("reference", getBackendBaseUrl));
 
-      const genre = await result.current("g1");
+      const genre = await result.current(makeGenreUuid("g1"));
 
       expect(fetchMock).toHaveBeenCalledWith("genres/g1/", true, false);
       expect(parseWithLogMock).toHaveBeenCalledWith(expect.anything(), { uuid: "g1" }, "useFetchGenre");
@@ -143,7 +144,7 @@ describe("useGenre", () => {
       fetchMock.mockResolvedValue({ uuid: "g1" });
       const { result } = renderHook(() => useFetchGenre("me", getBackendBaseUrl));
 
-      await result.current("g1");
+      await result.current(makeGenreUuid("g1"));
 
       expect(fetchMock).toHaveBeenCalledWith("me/genres/g1/", true, true);
     });
@@ -151,7 +152,7 @@ describe("useGenre", () => {
 
   describe("useFetchGenreDetail", () => {
     it("queries the reference detail endpoint", () => {
-      renderHook(() => useFetchGenreDetail("g1", "reference", getBackendBaseUrl));
+      renderHook(() => useFetchGenreDetail(makeGenreUuid("g1"), "reference", getBackendBaseUrl));
       const { queryKey, enabled, queryFn } = useQueryWithParseMock.mock.calls[0][0];
 
       expect(queryKey).toEqual(["referenceGenres", "detail", "g1"]);
@@ -162,7 +163,7 @@ describe("useGenre", () => {
     });
 
     it("queries the me detail endpoint", () => {
-      renderHook(() => useFetchGenreDetail("g1", "me", getBackendBaseUrl));
+      renderHook(() => useFetchGenreDetail(makeGenreUuid("g1"), "me", getBackendBaseUrl));
       const { queryKey, enabled, queryFn } = useQueryWithParseMock.mock.calls[0][0];
 
       expect(queryKey).toEqual(["genres", "detail", "g1"]);
@@ -182,7 +183,7 @@ describe("useGenre", () => {
   describe("useFetchGenreOverview", () => {
     it("queries the reference overview endpoint with a stale time and validates the response", async () => {
       fetchMock.mockResolvedValue({ uuid: "g1" });
-      renderHook(() => useFetchGenreOverview("g1", "reference", getBackendBaseUrl));
+      renderHook(() => useFetchGenreOverview(makeGenreUuid("g1"), "reference", getBackendBaseUrl));
       const { queryKey, enabled, staleTime, queryFn } = useQueryMock.mock.calls[0][0];
 
       expect(queryKey).toEqual(["referenceGenres", "overview", "g1"]);
@@ -195,7 +196,7 @@ describe("useGenre", () => {
     });
 
     it("queries the me overview endpoint", async () => {
-      renderHook(() => useFetchGenreOverview("g1", "me", getBackendBaseUrl));
+      renderHook(() => useFetchGenreOverview(makeGenreUuid("g1"), "me", getBackendBaseUrl));
       const { queryKey, queryFn } = useQueryMock.mock.calls[0][0];
 
       expect(queryKey).toEqual(["genres", "overview", "g1"]);
@@ -212,10 +213,10 @@ describe("useGenre", () => {
 
   describe("usePrefetchGenreOverview", () => {
     it("prefetches with the same key and stale time as useFetchGenreOverview", () => {
-      renderHook(() => useFetchGenreOverview("g1", "me", getBackendBaseUrl));
+      renderHook(() => useFetchGenreOverview(makeGenreUuid("g1"), "me", getBackendBaseUrl));
       const { result } = renderHook(() => usePrefetchGenreOverview("me", getBackendBaseUrl));
 
-      result.current("g1");
+      result.current(makeGenreUuid("g1"));
 
       const fetched = useQueryMock.mock.calls[0][0];
       expect(prefetchQueryMock).toHaveBeenCalledWith(
@@ -334,7 +335,7 @@ describe("useGenre", () => {
       useValidatedMutationMock.mockReturnValue({ mutate, formErrors: [] });
       const { result } = renderHook(() => useUpdateGenre("me", getBackendBaseUrl));
 
-      result.current.renameGenre("g1", "New Name");
+      result.current.renameGenre(makeGenreUuid("g1"), "New Name");
 
       expect(mutate).toHaveBeenCalledWith({ uuid: "g1", data: { name: "New Name" } });
     });
@@ -346,7 +347,7 @@ describe("useGenre", () => {
       const { result } = renderHook(() => useUpdateGenre("me", getBackendBaseUrl));
 
       let resolved = false;
-      const pending = result.current.updateGenreParent("g1", "parent-1").then(() => (resolved = true));
+      const pending = result.current.updateGenreParent(makeGenreUuid("g1"), makeGenreUuid("parent-1")).then(() => (resolved = true));
       await Promise.resolve();
 
       expect(mutateAsync).toHaveBeenCalledWith({ uuid: "g1", data: { parent: "parent-1" } });
@@ -354,6 +355,19 @@ describe("useGenre", () => {
       settle();
       await pending;
       expect(resolved).toBe(true);
+    });
+
+    it("rejects genre-playlist UUIDs at compile time", () => {
+      useValidatedMutationMock.mockReturnValue({ mutate: vi.fn(), mutateAsync: vi.fn(), formErrors: [] });
+      const { result } = renderHook(() => useUpdateGenre("me", getBackendBaseUrl));
+      const genrePlaylistUuid = makeGenrePlaylistUuid("gp1");
+
+      // @ts-expect-error a genre-playlist UUID is not a genre UUID
+      result.current.mutate({ uuid: genrePlaylistUuid, data: { name: "Rock" } });
+      // @ts-expect-error a genre-playlist UUID is not a genre UUID
+      result.current.updateGenreParent(makeGenreUuid("g1"), genrePlaylistUuid);
+      // @ts-expect-error a genre-playlist UUID is not a genre UUID
+      result.current.renameGenre(genrePlaylistUuid, "Rock");
     });
 
     it("onSuccess resolves only once every invalidation has resolved", async () => {

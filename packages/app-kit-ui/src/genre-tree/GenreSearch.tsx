@@ -14,9 +14,9 @@ export type GenreSearchExtraResults = {
   status?: string;
 };
 
-export type GenreSearchProps = {
-  genrePlaylists: CriteriaPlaylistSimple[];
-  onSelect: (genrePlaylist: CriteriaPlaylistSimple) => void;
+export type GenreSearchProps<T extends CriteriaPlaylistSimple = CriteriaPlaylistSimple> = {
+  genrePlaylists: T[];
+  onSelect: (genrePlaylist: T) => void;
   /** Name of the currently selected genre; fills the input whenever it changes. */
   selectedName?: string | null;
   /** When set, renders a "Previous" button left of the text; shown only when the host's CSS reveals `.genre-search-previous`. */
@@ -30,7 +30,7 @@ export type GenreSearchProps = {
   extraResults?: GenreSearchExtraResults;
 };
 
-export default function GenreSearch({
+export default function GenreSearch<T extends CriteriaPlaylistSimple = CriteriaPlaylistSimple>({
   genrePlaylists,
   onSelect,
   selectedName = null,
@@ -39,7 +39,7 @@ export default function GenreSearch({
   placeholder,
   onQueryChange,
   extraResults,
-}: GenreSearchProps) {
+}: GenreSearchProps<T>) {
   const { query, setQuery, results, canClear, clear, select } = useGenreSearch({
     genrePlaylists,
     onSelect,

@@ -1,13 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { getReparentCandidates } from "./reparent-candidates";
 import { CriteriaPlaylistSimple } from "../schemas/criteria-playlist/simple";
+import { makeGenrePlaylistUuid, makeGenreUuid } from "../testing";
 
 const makeGenrePlaylist = (uuid: string, parentUuid: string | null): CriteriaPlaylistSimple => ({
-  uuid,
+  uuid: makeGenrePlaylistUuid(uuid),
   name: uuid,
-  criteria: null,
-  parent: parentUuid ? { uuid: parentUuid, name: parentUuid } : null,
-  root: { uuid: "root", name: "root" },
+  criteria: { uuid: makeGenreUuid(`c-${uuid}`), name: uuid },
+  parent: parentUuid ? { uuid: makeGenrePlaylistUuid(parentUuid), name: parentUuid } : null,
+  root: { uuid: makeGenrePlaylistUuid("root"), name: "root" },
   tracksCount: 0,
   createdOn: "2026-01-01T00:00:00Z",
   updatedOn: null,
@@ -24,15 +25,28 @@ describe("getReparentCandidates", () => {
   ];
 
   it("excludes the genre, its current parent and all its descendants", () => {
-    expect(getReparentCandidates(genrePlaylists, "rock").map((g) => g.uuid)).toEqual(["jazz"]);
+    expect(getReparentCandidates(genrePlaylists, makeGenrePlaylistUuid("rock")).map((g) => g.uuid)).toEqual(["jazz"]);
   });
 
   it("keeps siblings and ancestors other than the current parent", () => {
-    expect(getReparentCandidates(genrePlaylists, "hardcore").map((g) => g.uuid)).toEqual(["root", "rock", "jazz"]);
+    expect(getReparentCandidates(genrePlaylists, makeGenrePlaylistUuid("hardcore")).map((g) => g.uuid)).toEqual([
+      "root",
+      "rock",
+      "jazz",
+    ]);
   });
 
   it("does not loop on a parent cycle", () => {
     const cyclic = [makeGenrePlaylist("a", "b"), makeGenrePlaylist("b", "a"), makeGenrePlaylist("c", null)];
-    expect(getReparentCandidates(cyclic, "c").map((g) => g.uuid)).toEqual(["a", "b"]);
+    expect(getReparentCandidates(cyclic, makeGenrePlaylistUuid("c")).map((g) => g.uuid)).toEqual(["a", "b"]);
+  });
+
+  it("excludes the criteria-less Genreless root, which has no genre to reparent under", () => {
+    const genreless = { ...makeGenrePlaylist("genreless", null), criteria: null };
+    expect(getReparentCandidates([...genrePlaylists, genreless], makeGenrePlaylistUuid("jazz")).map((g) => g.uuid)).toEqual([
+      "rock",
+      "punk",
+      "hardcore",
+    ]);
   });
 });

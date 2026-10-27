@@ -2,13 +2,18 @@
 
 import { useEffect, useMemo } from "react";
 
-import { CriteriaPlaylistSimple, getReparentCandidates, useUpdateGenre } from "@behindthemusictree/app-kit/genre-tree";
+import {
+  CriteriaPlaylistSimple,
+  ReparentCandidate,
+  getReparentCandidates,
+  useUpdateGenre,
+} from "@behindthemusictree/app-kit/genre-tree";
 import type { Scope } from "@behindthemusictree/app-kit/transport";
 import BasePopup from "../popup/BasePopup";
 import GenreSearch from "./GenreSearch";
 
 type ChangeParentPopupProps = {
-  genrePlaylist: CriteriaPlaylistSimple;
+  genrePlaylist: ReparentCandidate;
   genrePlaylists: CriteriaPlaylistSimple[];
   scope: Scope;
   getBackendBaseUrl: () => string;
@@ -45,7 +50,7 @@ export default function ChangeParentPopup({
         <GenreSearch
           genrePlaylists={candidates}
           onSelect={(newParent) =>
-            mutate({ uuid: genrePlaylist.uuid, data: { parent: newParent.uuid } }, { onSuccess: onClose })
+            mutate({ uuid: genrePlaylist.criteria.uuid, data: { parent: newParent.criteria.uuid } }, { onSuccess: onClose })
           }
           placeholder="Search a new parent…"
         />

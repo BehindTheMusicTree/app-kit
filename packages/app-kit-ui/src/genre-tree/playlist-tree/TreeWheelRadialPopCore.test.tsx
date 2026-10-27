@@ -40,21 +40,22 @@ import GenrePlaylistTreeWheelRadialPopCore, {
   type GenreFocusProps,
   type GenrePlaylistTreeWheelRadialPopCoreProps,
 } from "./TreeWheelRadialPopCore";
-import type { TrackBase } from "@behindthemusictree/app-kit/genre-tree";
+import type { CriteriaPlaylistSimple, TrackBase } from "@behindthemusictree/app-kit/genre-tree";
+import { makeGenrePlaylistUuid, makeGenreUuid } from "@behindthemusictree/app-kit/genre-tree/testing";
 
 function makeGenrePlaylist(overrides: Record<string, unknown> = {}) {
   return {
-    uuid: "gp1",
+    uuid: makeGenrePlaylistUuid("gp1"),
     name: "Jazz",
     parent: null,
-    root: { uuid: "root1", name: "Root" },
+    root: { uuid: makeGenrePlaylistUuid("root1"), name: "Root" },
     tracksCount: 3,
-    criteria: { uuid: "c1", name: "Jazz" },
+    criteria: { uuid: makeGenreUuid("c1"), name: "Jazz" },
     createdOn: "2024-01-01T00:00:00.000Z",
     updatedOn: null,
     isUnacceptedRoot: false,
     ...overrides,
-  };
+  } as CriteriaPlaylistSimple;
 }
 
 function renderWheelRadialPopCore(

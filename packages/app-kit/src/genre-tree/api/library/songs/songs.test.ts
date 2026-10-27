@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 
+import { makeGenreUuid } from "../../../testing";
 import { makeSongEndpoints } from "./endpoints";
 import { makeSongQueryKeys } from "./queryKeys";
 import { makeSongEndpoints as barrelMakeEndpoints, makeSongQueryKeys as barrelMakeQueryKeys } from "./index";
@@ -21,7 +22,7 @@ describe("makeSongQueryKeys", () => {
     expect(keys.all).toEqual(["referenceSongs"]);
     expect(keys.list(3)).toEqual(["referenceSongs", "list", 3]);
     expect(keys.detail(uuid)).toEqual(["referenceSongs", "detail", uuid]);
-    expect(keys.byGenre("https://b", uuid)).toEqual(["referenceSongs", "https://b", "genre", uuid]);
+    expect(keys.byGenre("https://b", makeGenreUuid(uuid))).toEqual(["referenceSongs", "https://b", "genre", uuid]);
   });
 });
 

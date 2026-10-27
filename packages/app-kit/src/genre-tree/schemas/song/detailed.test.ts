@@ -84,7 +84,7 @@ describe("songUnplayableReason", () => {
 describe("isSong", () => {
   it("tells songs apart from other track kinds", () => {
     expect(isSong(SongDetailedSchema.parse(withoutVideo))).toBe(true);
-    const { youtubeVideo: _youtubeVideo, ...uploaded } = withVideo;
+    const { youtubeVideo: _youtubeVideo, ...uploaded } = SongDetailedSchema.parse(withVideo);
     expect(isSong(uploaded)).toBe(false);
   });
 });

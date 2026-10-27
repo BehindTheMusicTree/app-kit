@@ -29,6 +29,7 @@ export * from "./models/TrackListOriginType";
 
 // Schemas / domain types
 export * from "./schemas/uuid-resource";
+export * from "./schemas/ids";
 export * from "./schemas/artist-minimum";
 export * from "./schemas/artist-search";
 export * from "./schemas/album-minimum";

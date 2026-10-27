@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 
-import type { CriteriaPlaylistSimple } from "@behindthemusictree/app-kit/genre-tree";
+import type { ReparentCandidate } from "@behindthemusictree/app-kit/genre-tree";
 
 const { useUpdateGenreMock, mutateMock } = vi.hoisted(() => ({ useUpdateGenreMock: vi.fn(), mutateMock: vi.fn() }));
 
@@ -13,7 +13,7 @@ vi.mock("@behindthemusictree/app-kit/genre-tree", async (importOriginal) => ({
 import ChangeParentPopup from "./ChangeParentPopup";
 
 const makeGenre = (uuid: string, name: string, parent?: { uuid: string; name: string }) =>
-  ({ uuid, name, parent: parent ?? null, root: { uuid: "root" }, criteria: { uuid: `c-${uuid}` } }) as unknown as CriteriaPlaylistSimple;
+  ({ uuid, name, parent: parent ?? null, root: { uuid: "root" }, criteria: { uuid: `c-${uuid}` } }) as unknown as ReparentCandidate;
 
 const rock = makeGenre("rock", "Rock");
 const jazz = makeGenre("jazz", "Jazz", { uuid: "rock", name: "Rock" });
@@ -86,7 +86,7 @@ describe("ChangeParentPopup", () => {
     fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Blues" }));
 
     expect(useUpdateGenreMock).toHaveBeenCalledWith("reference", getBackendBaseUrl);
-    expect(mutateMock).toHaveBeenCalledWith({ uuid: "jazz", data: { parent: "blues" } }, { onSuccess: onClose });
+    expect(mutateMock).toHaveBeenCalledWith({ uuid: "c-jazz", data: { parent: "c-blues" } }, { onSuccess: onClose });
   });
 
   it("marks the search busy while the update is pending", () => {

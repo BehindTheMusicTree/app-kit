@@ -36,6 +36,7 @@ import {
   useInvalidateAllGenrePlaylistQueries,
 } from "./useGenrePlaylist";
 import { CriteriaPlaylistSimpleSchema } from "./schemas/criteria-playlist/simple";
+import { makeGenrePlaylistUuid } from "./testing";
 
 const getBackendBaseUrl = () => "https://backend.example.com";
 
@@ -197,7 +198,7 @@ describe("useGenrePlaylist", () => {
 
   describe("useFetchGenrePlaylist", () => {
     it("fetches the me detail endpoint and gates on a restored session with a token", () => {
-      renderHook(() => useFetchGenrePlaylist("gp1", getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
+      renderHook(() => useFetchGenrePlaylist(makeGenrePlaylistUuid("gp1"), getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
       const { queryKey, enabled, queryFn } = useQueryWithParseMock.mock.calls[0][0];
 
       expect(queryKey).toEqual(["meGenrePlaylists", "gp1"]);
@@ -208,14 +209,14 @@ describe("useGenrePlaylist", () => {
     });
 
     it("disables the query when uuid is empty", () => {
-      renderHook(() => useFetchGenrePlaylist("", getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
+      renderHook(() => useFetchGenrePlaylist(makeGenrePlaylistUuid(""), getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
 
       expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
     });
 
     it("disables the query until the session is restored", () => {
       useSessionMock.mockReturnValue({ session: null, sessionRestored: false });
-      renderHook(() => useFetchGenrePlaylist("gp1", getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
+      renderHook(() => useFetchGenrePlaylist(makeGenrePlaylistUuid("gp1"), getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
 
       expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
     });

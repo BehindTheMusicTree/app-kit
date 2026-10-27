@@ -21,6 +21,7 @@ vi.mock("../TrackPositionPlayPause", () => ({
 }));
 
 import TrackItem from "./TrackItem";
+import { makeGenreUuid } from "@behindthemusictree/app-kit/genre-tree/testing";
 
 function makeTrack(overrides: Record<string, unknown> = {}) {
   return {
@@ -31,7 +32,7 @@ function makeTrack(overrides: Record<string, unknown> = {}) {
       { name: "Artist Two", uuid: "artist-2" },
     ],
     album: { name: "My Album", uuid: "album-1" },
-    genre: { name: "Rock", uuid: "genre-1" },
+    genre: { name: "Rock", uuid: makeGenreUuid("genre-1") },
     createdOn: "2024-01-01T00:00:00.000Z",
     playlists: [],
     playCount: 0,

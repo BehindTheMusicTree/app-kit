@@ -19,7 +19,7 @@ import { ErrorCode } from "@behindthemusictree/app-kit/transport";
 import { Scope } from "@behindthemusictree/app-kit/transport";
 import { genrePlaylistQueryKeys } from "@behindthemusictree/app-kit/genre-tree";
 import { libraryEndpoints, libraryQueryKeys } from "@behindthemusictree/app-kit/genre-tree";
-import { CriteriaPlaylistMinimum } from "@behindthemusictree/app-kit/genre-tree";
+import { CriteriaPlaylistMinimum, type GenreUuid } from "@behindthemusictree/app-kit/genre-tree";
 import { TrackBase } from "@behindthemusictree/app-kit/genre-tree";
 import { isSong, songUnplayableReason, SongDetailedSchema } from "@behindthemusictree/app-kit/genre-tree";
 import { GenrePlaylistTracksPage, useTrackList } from "@behindthemusictree/app-kit/genre-tree";
@@ -62,7 +62,7 @@ export type GenrePlaylistTracksSlots = {
 };
 
 export type GenrePlaylistTracksProps = GenrePlaylistTracksSlots & {
-  genreUuid: string;
+  genreUuid: GenreUuid;
   genrePlaylist: CriteriaPlaylistMinimum;
   scope: Scope;
   getBackendBaseUrl: () => string;

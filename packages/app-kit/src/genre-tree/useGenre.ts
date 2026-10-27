@@ -15,6 +15,7 @@ import { CriteriaOverviewSchema, CriteriaOverview } from "./schemas/criteria/ove
 import { CriteriaSimpleSchema } from "./schemas/criteria/simple";
 import { CriteriaCreationSchema } from "./schemas/criteria/creation";
 import { CriteriaUpdateSchema } from "./schemas/criteria/update";
+import { GenreUuidSchema, type GenreUuid } from "./schemas/ids";
 import { genreEndpoints, genreQueryKeys } from "./api/genres";
 
 export function useListGenres(
@@ -40,7 +41,7 @@ export function useFetchGenre(scope: Scope, getBackendBaseUrl: () => string) {
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
 
   return useCallback(
-    async (id: string): Promise<CriteriaDetailed> => {
+    async (id: GenreUuid): Promise<CriteriaDetailed> => {
       const endpoint = scope === "reference" ? genreEndpoints.reference.detail(id) : genreEndpoints.me.detail(id);
       const response = await fetch(endpoint, true, scope === "me");
       return parseWithLog(CriteriaDetailedSchema, response, "useFetchGenre");
@@ -50,7 +51,7 @@ export function useFetchGenre(scope: Scope, getBackendBaseUrl: () => string) {
 }
 
 export function useFetchGenreDetail<D extends CriteriaDetailed = CriteriaDetailed>(
-  id: string | null,
+  id: GenreUuid | null,
   scope: Scope,
   getBackendBaseUrl: () => string,
   // The default only applies when D is left at its CriteriaDetailed default.
@@ -61,8 +62,8 @@ export function useFetchGenreDetail<D extends CriteriaDetailed = CriteriaDetaile
   const endpoints = scope === "reference" ? genreEndpoints.reference : genreEndpoints.me;
 
   return useQueryWithParse({
-    queryKey: queryKeys.detail(id ?? ""),
-    queryFn: () => fetch(endpoints.detail(id as string), true, scope === "me"),
+    queryKey: queryKeys.detail(id as GenreUuid),
+    queryFn: () => fetch(endpoints.detail(id as GenreUuid), true, scope === "me"),
     schema,
     context: "useFetchGenreDetail",
     enabled: id !== null,
@@ -79,7 +80,7 @@ function useGenreOverviewQueryOptions<O extends CriteriaOverview>(
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
 
   return useCallback(
-    (id: string) => {
+    (id: GenreUuid) => {
       const queryKeys = scope === "reference" ? genreQueryKeys.reference : genreQueryKeys.me;
       const endpoints = scope === "reference" ? genreEndpoints.reference : genreEndpoints.me;
       return {
@@ -94,14 +95,14 @@ function useGenreOverviewQueryOptions<O extends CriteriaOverview>(
 }
 
 export function useFetchGenreOverview<O extends CriteriaOverview = CriteriaOverview>(
-  id: string | null,
+  id: GenreUuid | null,
   scope: Scope,
   getBackendBaseUrl: () => string,
   // The default only applies when O is left at its CriteriaOverview default.
   schema: z.ZodType<O, z.ZodTypeDef, unknown> = CriteriaOverviewSchema as unknown as z.ZodType<O, z.ZodTypeDef, unknown>,
 ) {
   const queryOptions = useGenreOverviewQueryOptions(scope, getBackendBaseUrl, schema);
-  return useQuery({ ...queryOptions(id ?? ""), enabled: id !== null });
+  return useQuery({ ...queryOptions(id as GenreUuid), enabled: id !== null });
 }
 
 export function usePrefetchGenreOverview<O extends CriteriaOverview = CriteriaOverview>(
@@ -111,7 +112,7 @@ export function usePrefetchGenreOverview<O extends CriteriaOverview = CriteriaOv
 ) {
   const queryClient = useQueryClient();
   const queryOptions = useGenreOverviewQueryOptions(scope, getBackendBaseUrl, schema);
-  return useCallback((id: string) => queryClient.prefetchQuery(queryOptions(id)), [queryClient, queryOptions]);
+  return useCallback((id: GenreUuid) => queryClient.prefetchQuery(queryOptions(id)), [queryClient, queryOptions]);
 }
 
 function useRefreshGenreTree(scope: Scope) {
@@ -119,7 +120,7 @@ function useRefreshGenreTree(scope: Scope) {
   const invalidateAllGenrePlaylistQueries = useInvalidateAllGenrePlaylistQueries();
 
   // Returned so the mutation stays pending until the tree has refetched.
-  return ({ changedUuid, deletedUuid }: { changedUuid?: string; deletedUuid?: string } = {}) => {
+  return ({ changedUuid, deletedUuid }: { changedUuid?: GenreUuid; deletedUuid?: GenreUuid } = {}) => {
     const queryKeys = scope === "reference" ? genreQueryKeys.reference : genreQueryKeys.me;
     if (deletedUuid) {
       // Evicted rather than invalidated: refetching a deleted genre 404s and would hold the delete pending.
@@ -159,7 +160,7 @@ export function useUpdateGenre(scope: Scope, getBackendBaseUrl: () => string) {
 
   const { mutate, mutateAsync, isPending, formErrors } = useValidatedMutation({
     inputSchema: z.object({
-      uuid: z.string(),
+      uuid: GenreUuidSchema,
       data: CriteriaUpdateSchema,
     }),
     outputSchema: CriteriaDetailedSchema,
@@ -174,11 +175,11 @@ export function useUpdateGenre(scope: Scope, getBackendBaseUrl: () => string) {
     onSuccess: (_, { uuid }) => refreshGenreTree({ changedUuid: uuid }),
   });
 
-  const renameGenre = (uuid: string, name: string) => {
+  const renameGenre = (uuid: GenreUuid, name: string) => {
     mutate({ uuid, data: { name } });
   };
 
-  const updateGenreParent = async (uuid: string, parentUuid: string | null) => {
+  const updateGenreParent = async (uuid: GenreUuid, parentUuid: GenreUuid | null) => {
     await mutateAsync({ uuid, data: { parent: parentUuid } });
   };
 
@@ -190,7 +191,7 @@ export function useDeleteGenre(scope: Scope, getBackendBaseUrl: () => string) {
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
 
   return useValidatedMutation({
-    inputSchema: z.object({ uuid: z.string() }),
+    inputSchema: z.object({ uuid: GenreUuidSchema }),
     outputSchema: z.null(),
     mutationFn: async ({ uuid }) => {
       const endpoint = scope === "reference" ? genreEndpoints.reference.delete(uuid) : genreEndpoints.me.delete(uuid);

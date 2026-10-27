@@ -76,7 +76,7 @@ export function useGenreTreeViewState<O extends CriteriaOverview = CriteriaOverv
   const { data, isPending: isLoading } = useListFullGenrePlaylists(scope, getBackendBaseUrl);
   const genrePlaylists = useMemo(() => data ?? [], [data]);
 
-  const genrePlaylistByNodeId = useMemo(() => new Map(genrePlaylists.map((gp) => [gp.uuid, gp])), [genrePlaylists]);
+  const genrePlaylistByNodeId = useMemo(() => new Map<string, CriteriaPlaylistSimple>(genrePlaylists.map((gp) => [gp.uuid, gp])), [genrePlaylists]);
 
   const selectedGenrePlaylist = useMemo(
     () => genrePlaylists.find((gp) => gp.uuid === selectedNodeId),
