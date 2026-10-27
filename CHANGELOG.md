@@ -11,6 +11,13 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [18.5.2] - 2026-10-27
+
+### Changed
+
+- `PlayerPanel` width uses brand's `--layout-right-w` (the right column), shared with the app header row.
+- Bumped `@behindthemusictree/brand` to 12.4.0.
+
 ## [18.5.1] - 2026-10-27
 
 ### Fixed

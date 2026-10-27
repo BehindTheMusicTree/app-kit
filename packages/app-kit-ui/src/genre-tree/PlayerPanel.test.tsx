@@ -39,13 +39,13 @@ describe("PlayerPanel", () => {
 
     setup(true);
     rerender(<PlayerPanel onClose={vi.fn()} extendedWidth="500px" />);
-    expect(container.firstChild).toHaveClass("w-[var(--layout-player-panel-w)]");
+    expect(container.firstChild).toHaveClass("w-[var(--layout-right-w)]");
 
     fireEvent.click(screen.getByRole("button", { name: "Extend song list panel" }));
     expect(container.firstChild).toHaveStyle({ width: "500px" });
 
     fireEvent.click(screen.getByRole("button", { name: "Shrink song list panel" }));
-    expect(container.firstChild).toHaveClass("w-[var(--layout-player-panel-w)]");
+    expect(container.firstChild).toHaveClass("w-[var(--layout-right-w)]");
   });
 
   it("follows a controlled expanded prop and reports toggles", () => {
