@@ -137,7 +137,7 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   /** Controlled wheel rotation. When provided, the internal Rotation toggle is not rendered — the consumer owns that UI. */
   allowWheelRotation?: boolean;
   /** Parses the selected genre's overview; pass an extended schema to keep consumer-specific fields. */
-  criteriaOverviewSchema?: z.ZodType<O, z.ZodTypeDef, unknown>;
+  criteriaOverviewSchema?: z.ZodType<O, unknown>;
   /** Consumer-specific rows rendered in the info panel after Summary. */
   renderGenreDetailExtras?: (overview: O) => ReactNode;
   /** Layout of the wheel/tree floating zoom/pop/fit controls. Defaults to "horizontal". */
