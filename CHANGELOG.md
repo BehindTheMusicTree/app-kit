@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [22.0.0] - 2026-10-28
+
 ## [21.0.0] - 2026-10-28
 
 ### Breaking
