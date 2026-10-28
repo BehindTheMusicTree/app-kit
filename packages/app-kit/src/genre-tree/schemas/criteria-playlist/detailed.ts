@@ -1,11 +1,12 @@
 import { z } from "zod";
 
-import { UuidResourceSchema } from "../uuid-resource";
+import { GenrePlaylistUuidSchema } from "../ids";
 import { CriteriaMinimumSchema } from "../criteria/minimum";
 import { CriteriaPlaylistMinimumSchema } from "./minimum";
 
 // Metadata only — tracks are paged separately via `genrePlaylistEndpoints.*.tracks(uuid)`.
-export const CriteriaPlaylistDetailedSchema = UuidResourceSchema.extend({
+export const CriteriaPlaylistDetailedSchema = z.object({
+  uuid: GenrePlaylistUuidSchema,
   name: z.string(),
   tracksCount: z.number(),
   durationInSec: z.number().min(0).nullable().optional(),

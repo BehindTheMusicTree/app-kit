@@ -12,6 +12,7 @@ import { PaginatedResponseSchema } from "../transport/lib/paginated-response";
 import { genrePlaylistEndpoints, genrePlaylistQueryKeys } from "./api/genre-playlists";
 import { libraryQueryKeys } from "./api/library";
 import { Scope } from "../transport/lib/scope";
+import type { GenrePlaylistUuid } from "./schemas/ids";
 
 // grow-api clamps pageSize to PAGINATION_PAGE_SIZE_MAX (100); asking for more only hides the real page count.
 const FULL_LIST_PAGE_SIZE = 100;
@@ -110,7 +111,7 @@ export const useListFullGenrePlaylists = (scope: Scope, getBackendBaseUrl: () =>
 };
 
 export const useFetchGenrePlaylist = <S extends z.ZodTypeAny>(
-  uuid: string,
+  uuid: GenrePlaylistUuid,
   getBackendBaseUrl: () => string,
   criteriaPlaylistDetailedSchema: S,
 ) => {

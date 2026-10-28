@@ -1,10 +1,12 @@
+import type { GenreUuid } from "../../schemas/ids";
+
 const makeGenreEndpoints = (prefix: string) => ({
   list: () => `${prefix}genres/`,
-  detail: (id: string) => `${prefix}genres/${id}/`,
-  overview: (id: string) => `${prefix}genres/${id}/overview/`,
+  detail: (id: GenreUuid) => `${prefix}genres/${id}/`,
+  overview: (id: GenreUuid) => `${prefix}genres/${id}/overview/`,
   create: () => `${prefix}genres/`,
-  update: (id: string) => `${prefix}genres/${id}/`,
-  delete: (id: string) => `${prefix}genres/${id}/`,
+  update: (id: GenreUuid) => `${prefix}genres/${id}/`,
+  delete: (id: GenreUuid) => `${prefix}genres/${id}/`,
 });
 
 export const genreEndpoints = {

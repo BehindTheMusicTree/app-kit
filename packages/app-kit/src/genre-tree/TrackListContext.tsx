@@ -32,6 +32,7 @@ import { TrackListOriginType } from "./models/TrackListOriginType";
 import { Scope } from "../transport/lib/scope";
 import { usePlayer } from "../player/PlayerContext";
 import { useTrackListSidebarVisibility } from "./TrackListSidebarVisibilityContext";
+import type { GenrePlaylistUuid } from "./schemas/ids";
 
 const TRACKS_PAGE_SIZE = 100;
 // Load the next page once the selected track is this close to the end of what's loaded, so
@@ -41,7 +42,7 @@ const AUTO_LOAD_REMAINING_TRACKS = 10;
 export function useListTracks<T>(
   scope: Scope | null,
   getBackendBaseUrl: () => string,
-  schema: z.ZodType<T>,
+  schema: z.ZodType<T, z.ZodTypeDef, unknown>,
   listEndpoint: (page: number) => string,
   listQueryKey: (page: number) => readonly unknown[],
   page = 1,
@@ -96,7 +97,7 @@ interface TrackListContextType<T extends TrackBase> {
   ) => Promise<void>;
   /** One page of a genre playlist's tracks, parsed with the provider's track schema; `from` starts the list at that track. */
   fetchGenrePlaylistTracksPage: (
-    uuid: string,
+    uuid: GenrePlaylistUuid,
     scope: Scope,
     page: number,
     from?: string,
@@ -110,7 +111,7 @@ const TrackListContext = createContext<TrackListContextType<TrackBase> | undefin
 interface TrackListProviderProps<T extends TrackBase> {
   children: ReactNode;
   getBackendBaseUrl: () => string;
-  schema: z.ZodType<T>;
+  schema: z.ZodType<T, z.ZodTypeDef, unknown>;
   listEndpoint: (page: number) => string;
   listQueryKey: (page: number) => readonly unknown[];
 }
@@ -136,7 +137,7 @@ export function TrackListProvider<T extends TrackBase>({
   const loadingOriginRef = useRef<TrackListOriginFromCriteriaPlaylist | TrackListOriginFromArtist | null>(null);
 
   const fetchTracksPage = useCallback(
-    async (uuid: string, scope: Scope, page: number, from?: string): Promise<GenrePlaylistTracksPage<T>> => {
+    async (uuid: GenrePlaylistUuid, scope: Scope, page: number, from?: string): Promise<GenrePlaylistTracksPage<T>> => {
       const endpoint = genrePlaylistEndpoints[scope].tracks(uuid);
       const params = { page, pageSize: TRACKS_PAGE_SIZE, ...(from && { from }) };
       const response = await fetch(endpoint, true, scope === "me", {}, params);
@@ -285,7 +286,7 @@ export function TrackListProvider<T extends TrackBase>({
       const page =
         origin instanceof TrackListOriginFromArtist
           ? await fetchArtistTracksPage(origin, requestedPage)
-          : await fetchTracksPage(origin.uuid, origin.scope, requestedPage, origin.from);
+          : await fetchTracksPage(origin.criteriaPlaylist.uuid, origin.scope, requestedPage, origin.from);
       setTrackList((prev) => {
         // A stale loadMore closure can refetch a page that was already appended.
         if (prev?.origin !== origin || prev.nextPage !== requestedPage) return prev;

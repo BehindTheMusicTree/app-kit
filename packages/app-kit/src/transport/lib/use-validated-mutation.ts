@@ -23,7 +23,7 @@ type ValidatedMutationOptions<TData, TError, TVariables, TContext> = Omit<
   UseMutationOptions<TData, TError, TVariables, TContext>,
   "mutationFn"
 > & {
-  inputSchema: z.ZodType<TVariables>;
+  inputSchema: z.ZodType<TVariables, z.ZodTypeDef, unknown>;
   outputSchema: z.ZodType<TData, z.ZodTypeDef, unknown>;
   mutationFn: (data: TVariables) => Promise<unknown>;
 };

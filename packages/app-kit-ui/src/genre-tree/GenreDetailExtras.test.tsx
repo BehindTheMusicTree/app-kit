@@ -20,14 +20,15 @@ vi.mock("./GenrePlaylistTracks", () => ({
 
 import { GenreDetailExtras, type GenreDetailExtrasProps } from "./GenreDetailExtras";
 import type { CriteriaOverview } from "@behindthemusictree/app-kit/genre-tree";
+import { makeGenrePlaylistUuid, makeGenreUuid } from "@behindthemusictree/app-kit/genre-tree/testing";
 
 const overview = { summary: "Default summary text", essentialSongs: [] } as unknown as CriteriaOverview;
 
 const renderExtras = (overrides: Partial<GenreDetailExtrasProps<CriteriaOverview>> = {}) =>
   render(
     <GenreDetailExtras
-      genreUuid="g1"
-      genrePlaylist={{ uuid: "p1", name: "Jazz" } as GenreDetailExtrasProps<CriteriaOverview>["genrePlaylist"]}
+      genreUuid={makeGenreUuid("g1")}
+      genrePlaylist={{ uuid: makeGenrePlaylistUuid("p1"), name: "Jazz" } as GenreDetailExtrasProps<CriteriaOverview>["genrePlaylist"]}
       scope="reference"
       getBackendBaseUrl={() => "https://b"}
       {...overrides}

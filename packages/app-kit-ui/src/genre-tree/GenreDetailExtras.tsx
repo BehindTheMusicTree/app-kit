@@ -7,7 +7,7 @@ import { z } from "zod";
 import { CriteriaOverview } from "@behindthemusictree/app-kit/genre-tree";
 import { Scope } from "@behindthemusictree/app-kit/transport";
 import { useFetchGenreOverview } from "@behindthemusictree/app-kit/genre-tree";
-import { CriteriaPlaylistMinimum } from "@behindthemusictree/app-kit/genre-tree";
+import { CriteriaPlaylistMinimum, type GenreUuid } from "@behindthemusictree/app-kit/genre-tree";
 import { ClampedText } from "./ClampedText";
 import { GenrePlaylistTracks, type GenrePlaylistTracksSlots } from "./GenrePlaylistTracks";
 import { RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
@@ -21,7 +21,7 @@ export type GenreDetailSlots<O extends CriteriaOverview> = {
 };
 
 export type GenreDetailExtrasProps<O extends CriteriaOverview> = GenreDetailSlots<O> & GenrePlaylistTracksSlots & {
-  genreUuid: string;
+  genreUuid: GenreUuid;
   genrePlaylist: CriteriaPlaylistMinimum;
   scope: Scope;
   getBackendBaseUrl: () => string;

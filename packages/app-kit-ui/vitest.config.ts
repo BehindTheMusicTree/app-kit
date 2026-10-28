@@ -7,6 +7,10 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: /^@behindthemusictree\/app-kit\/(transport|auth|popup|player|genre-tree)$/, replacement: appKitSrc("$1") },
+      {
+        find: "@behindthemusictree/app-kit/genre-tree/testing",
+        replacement: fileURLToPath(new URL("../app-kit/src/genre-tree/testing.ts", import.meta.url)),
+      },
     ],
   },
   test: {

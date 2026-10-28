@@ -35,6 +35,7 @@ vi.mock("./TrackListSidebarVisibilityContext", () => ({
 import { TrackListProvider, useTrackList, useListTracks } from "./TrackListContext";
 import type { TrackBase } from "./schemas/track/base";
 import { TrackListOriginType } from "./models/TrackListOriginType";
+import { makeGenrePlaylistUuid } from "./testing";
 
 const getBackendBaseUrl = () => "https://backend.example.com";
 const listEndpoint = (page: number) => `tracks/?page=${page}`;
@@ -98,7 +99,7 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 
-const genrePlaylist = { uuid: "p1", name: "My Playlist" };
+const genrePlaylist = { uuid: makeGenrePlaylistUuid("p1"), name: "My Playlist" };
 
 async function playGenre(result: RenderedTrackList, page: ReturnType<typeof makePage>, scope: "me" | "reference" = "me") {
   fetchMock.mockResolvedValueOnce(page);
@@ -339,7 +340,7 @@ describe("TrackListContext", () => {
 
       await playGenre(result, makePage([trackA, trackB], { next: true, total: 250 }), "reference");
 
-      expect(fetchMock).toHaveBeenCalledWith("genre-playlists/p1/tracks/", true, false, {}, { page: 1, pageSize: 100 });
+      expect(fetchMock).toHaveBeenCalledWith(`genre-playlists/${makeGenrePlaylistUuid("p1")}/tracks/`, true, false, {}, { page: 1, pageSize: 100 });
       expect(result.current.trackList?.tracks).toEqual([trackA, trackB]);
       expect(result.current.trackList?.total).toBe(250);
       expect(result.current.trackList?.nextPage).toBe(2);
@@ -353,7 +354,7 @@ describe("TrackListContext", () => {
 
       await playGenre(result, makePage(makeTracks(1)), "me");
 
-      expect(fetchMock).toHaveBeenCalledWith("me/genre-playlists/p1/tracks/", true, true, {}, { page: 1, pageSize: 100 });
+      expect(fetchMock).toHaveBeenCalledWith(`me/genre-playlists/${makeGenrePlaylistUuid("p1")}/tracks/`, true, true, {}, { page: 1, pageSize: 100 });
       expect(result.current.trackList?.nextPage).toBeNull();
     });
 
@@ -368,7 +369,7 @@ describe("TrackListContext", () => {
         await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", { startSongUuid: "b0" });
       });
 
-      expect(fetchMock).toHaveBeenNthCalledWith(1, "me/genre-playlists/p1/tracks/", true, true, {}, {
+      expect(fetchMock).toHaveBeenNthCalledWith(1, `me/genre-playlists/${makeGenrePlaylistUuid("p1")}/tracks/`, true, true, {}, {
         page: 1,
         pageSize: 100,
         from: "b0",
@@ -377,7 +378,7 @@ describe("TrackListContext", () => {
       expect(loadTrackForPlayerMock).toHaveBeenCalledWith("b0");
       // The start track is near the end of the loaded page, so auto-load fetches page 2 with the same `from`.
       expect(fetchMock).toHaveBeenCalledTimes(2);
-      expect(fetchMock).toHaveBeenLastCalledWith("me/genre-playlists/p1/tracks/", true, true, {}, {
+      expect(fetchMock).toHaveBeenLastCalledWith(`me/genre-playlists/${makeGenrePlaylistUuid("p1")}/tracks/`, true, true, {}, {
         page: 2,
         pageSize: 100,
         from: "b0",
@@ -433,7 +434,7 @@ describe("TrackListContext", () => {
       fetchMock.mockReturnValueOnce(slow.promise);
       let first!: Promise<void>;
       act(() => {
-        first = result.current.playNewTrackListFromGenrePlaylist({ uuid: "old", name: "Old" }, "me");
+        first = result.current.playNewTrackListFromGenrePlaylist({ uuid: makeGenrePlaylistUuid("old"), name: "Old" }, "me");
       });
 
       await playGenre(result, makePage(makeTracks(1, "new")));
@@ -442,7 +443,7 @@ describe("TrackListContext", () => {
         await first;
       });
 
-      expect(result.current.trackList?.origin.uuid).toBe("p1");
+      expect(result.current.trackList?.origin.uuid).toBe(makeGenrePlaylistUuid("p1"));
       expect(result.current.selectedTrack?.uuid).toBe("new0");
       expect(loadTrackForPlayerMock).toHaveBeenCalledTimes(1);
     });
@@ -475,7 +476,7 @@ describe("TrackListContext", () => {
       fetchMock.mockReturnValueOnce(slow.promise);
       let first!: Promise<void>;
       act(() => {
-        first = result.current.playNewTrackListFromGenrePlaylist({ uuid: "old", name: "Old" }, "me");
+        first = result.current.playNewTrackListFromGenrePlaylist({ uuid: makeGenrePlaylistUuid("old"), name: "Old" }, "me");
       });
 
       await playGenre(result, makePage(makeTracks(1, "new")));
@@ -536,7 +537,7 @@ describe("TrackListContext", () => {
         await result.current.loadMore();
       });
 
-      expect(fetchMock).toHaveBeenLastCalledWith("me/genre-playlists/p1/tracks/", true, true, {}, { page: 2, pageSize: 100 });
+      expect(fetchMock).toHaveBeenLastCalledWith(`me/genre-playlists/${makeGenrePlaylistUuid("p1")}/tracks/`, true, true, {}, { page: 2, pageSize: 100 });
       expect(result.current.trackList?.tracks.map((track) => track.uuid)).toEqual([
         ...firstPage.map((track) => track.uuid),
         "u0",
