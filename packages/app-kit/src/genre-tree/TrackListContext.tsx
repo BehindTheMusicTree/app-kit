@@ -42,7 +42,7 @@ const AUTO_LOAD_REMAINING_TRACKS = 10;
 export function useListTracks<T>(
   scope: Scope | null,
   getBackendBaseUrl: () => string,
-  schema: z.ZodType<T>,
+  schema: z.ZodType<T, z.ZodTypeDef, unknown>,
   listEndpoint: (page: number) => string,
   listQueryKey: (page: number) => readonly unknown[],
   page = 1,
@@ -111,7 +111,7 @@ const TrackListContext = createContext<TrackListContextType<TrackBase> | undefin
 interface TrackListProviderProps<T extends TrackBase> {
   children: ReactNode;
   getBackendBaseUrl: () => string;
-  schema: z.ZodType<T>;
+  schema: z.ZodType<T, z.ZodTypeDef, unknown>;
   listEndpoint: (page: number) => string;
   listQueryKey: (page: number) => readonly unknown[];
 }
