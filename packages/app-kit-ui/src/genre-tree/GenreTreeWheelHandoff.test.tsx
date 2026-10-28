@@ -85,6 +85,28 @@ describe("GenreTreeWheelHandoff", () => {
     expect(graphWrapper.style.pointerEvents).toBe("auto");
   });
 
+  it("reports the reveal after the second frame and the reset on unmount", () => {
+    const onRevealedChange = vi.fn();
+    const { unmount } = render(
+      <GenreTreeWheelHandoff skeleton={<div />} onRevealedChange={onRevealedChange}>
+        <div />
+      </GenreTreeWheelHandoff>,
+    );
+
+    act(() => {
+      raf.flush();
+    });
+    expect(onRevealedChange).not.toHaveBeenCalled();
+
+    act(() => {
+      raf.flush();
+    });
+    expect(onRevealedChange).toHaveBeenLastCalledWith(true);
+
+    unmount();
+    expect(onRevealedChange).toHaveBeenLastCalledWith(false);
+  });
+
   it("restarts the handoff (skeleton back on top) when remounted", () => {
     const { unmount } = render(
       <GenreTreeWheelHandoff skeleton={<div data-testid="skeleton" />}>

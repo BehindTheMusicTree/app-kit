@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type GenreTreeWheelHandoffProps = {
   skeleton: React.ReactNode;
   children: React.ReactNode;
+  /** Called with `true` once `children` is revealed, and with `false` when the handoff unmounts. */
+  onRevealedChange?: (revealed: boolean) => void;
 };
 
 /**
@@ -24,15 +26,21 @@ export type GenreTreeWheelHandoffProps = {
  * branch that renders it) restarts the handoff, which is what's wanted any time `children` itself
  * is about to mount fresh and re-run its own fit-to-frame effect.
  */
-export function GenreTreeWheelHandoff({ skeleton, children }: GenreTreeWheelHandoffProps) {
+export function GenreTreeWheelHandoff({ skeleton, children, onRevealedChange }: GenreTreeWheelHandoffProps) {
   const [revealed, setRevealed] = useState(false);
+  const onRevealedChangeRef = useRef(onRevealedChange);
+  onRevealedChangeRef.current = onRevealedChange;
 
   useEffect(() => {
     let innerFrame = 0;
     const outerFrame = requestAnimationFrame(() => {
-      innerFrame = requestAnimationFrame(() => setRevealed(true));
+      innerFrame = requestAnimationFrame(() => {
+        setRevealed(true);
+        onRevealedChangeRef.current?.(true);
+      });
     });
     return () => {
+      onRevealedChangeRef.current?.(false);
       cancelAnimationFrame(outerFrame);
       cancelAnimationFrame(innerFrame);
     };
