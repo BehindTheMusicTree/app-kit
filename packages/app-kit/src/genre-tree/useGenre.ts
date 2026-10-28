@@ -61,9 +61,11 @@ export function useFetchGenreDetail<D extends CriteriaDetailed = CriteriaDetaile
   const queryKeys = scope === "reference" ? genreQueryKeys.reference : genreQueryKeys.me;
   const endpoints = scope === "reference" ? genreEndpoints.reference : genreEndpoints.me;
 
+  // Disabled queries never run queryFn, so the empty placeholder is only a stable cache key.
+  const genreUuid = id ?? ("" as GenreUuid);
   return useQueryWithParse({
-    queryKey: queryKeys.detail(id as GenreUuid),
-    queryFn: () => fetch(endpoints.detail(id as GenreUuid), true, scope === "me"),
+    queryKey: queryKeys.detail(genreUuid),
+    queryFn: () => fetch(endpoints.detail(genreUuid), true, scope === "me"),
     schema,
     context: "useFetchGenreDetail",
     enabled: id !== null,
@@ -102,7 +104,8 @@ export function useFetchGenreOverview<O extends CriteriaOverview = CriteriaOverv
   schema: z.ZodType<O, z.ZodTypeDef, unknown> = CriteriaOverviewSchema as unknown as z.ZodType<O, z.ZodTypeDef, unknown>,
 ) {
   const queryOptions = useGenreOverviewQueryOptions(scope, getBackendBaseUrl, schema);
-  return useQuery({ ...queryOptions(id as GenreUuid), enabled: id !== null });
+  // Disabled queries never run queryFn, so the empty placeholder is only a stable cache key.
+  return useQuery({ ...queryOptions(id ?? ("" as GenreUuid)), enabled: id !== null });
 }
 
 export function usePrefetchGenreOverview<O extends CriteriaOverview = CriteriaOverview>(

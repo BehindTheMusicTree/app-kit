@@ -135,7 +135,7 @@ describe("useGenre", () => {
 
       const genre = await result.current(makeGenreUuid("g1"));
 
-      expect(fetchMock).toHaveBeenCalledWith("genres/g1/", true, false);
+      expect(fetchMock).toHaveBeenCalledWith(`genres/${makeGenreUuid("g1")}/`, true, false);
       expect(parseWithLogMock).toHaveBeenCalledWith(expect.anything(), { uuid: "g1" }, "useFetchGenre");
       expect(genre).toEqual({ uuid: "g1" });
     });
@@ -146,7 +146,7 @@ describe("useGenre", () => {
 
       await result.current(makeGenreUuid("g1"));
 
-      expect(fetchMock).toHaveBeenCalledWith("me/genres/g1/", true, true);
+      expect(fetchMock).toHaveBeenCalledWith(`me/genres/${makeGenreUuid("g1")}/`, true, true);
     });
   });
 
@@ -155,22 +155,22 @@ describe("useGenre", () => {
       renderHook(() => useFetchGenreDetail(makeGenreUuid("g1"), "reference", getBackendBaseUrl));
       const { queryKey, enabled, queryFn } = useQueryWithParseMock.mock.calls[0][0];
 
-      expect(queryKey).toEqual(["referenceGenres", "detail", "g1"]);
+      expect(queryKey).toEqual(["referenceGenres", "detail", makeGenreUuid("g1")]);
       expect(enabled).toBe(true);
 
       queryFn();
-      expect(fetchMock).toHaveBeenCalledWith("genres/g1/", true, false);
+      expect(fetchMock).toHaveBeenCalledWith(`genres/${makeGenreUuid("g1")}/`, true, false);
     });
 
     it("queries the me detail endpoint", () => {
       renderHook(() => useFetchGenreDetail(makeGenreUuid("g1"), "me", getBackendBaseUrl));
       const { queryKey, enabled, queryFn } = useQueryWithParseMock.mock.calls[0][0];
 
-      expect(queryKey).toEqual(["genres", "detail", "g1"]);
+      expect(queryKey).toEqual(["genres", "detail", makeGenreUuid("g1")]);
       expect(enabled).toBe(true);
 
       queryFn();
-      expect(fetchMock).toHaveBeenCalledWith("me/genres/g1/", true, true);
+      expect(fetchMock).toHaveBeenCalledWith(`me/genres/${makeGenreUuid("g1")}/`, true, true);
     });
 
     it("disables the query when there is no selected id", () => {
@@ -186,12 +186,12 @@ describe("useGenre", () => {
       renderHook(() => useFetchGenreOverview(makeGenreUuid("g1"), "reference", getBackendBaseUrl));
       const { queryKey, enabled, staleTime, queryFn } = useQueryMock.mock.calls[0][0];
 
-      expect(queryKey).toEqual(["referenceGenres", "overview", "g1"]);
+      expect(queryKey).toEqual(["referenceGenres", "overview", makeGenreUuid("g1")]);
       expect(enabled).toBe(true);
       expect(staleTime).toBeGreaterThan(0);
 
       await queryFn();
-      expect(fetchMock).toHaveBeenCalledWith("genres/g1/overview/", true, false);
+      expect(fetchMock).toHaveBeenCalledWith(`genres/${makeGenreUuid("g1")}/overview/`, true, false);
       expect(parseWithLogMock).toHaveBeenCalledWith(expect.anything(), { uuid: "g1" }, "useFetchGenreOverview");
     });
 
@@ -199,9 +199,9 @@ describe("useGenre", () => {
       renderHook(() => useFetchGenreOverview(makeGenreUuid("g1"), "me", getBackendBaseUrl));
       const { queryKey, queryFn } = useQueryMock.mock.calls[0][0];
 
-      expect(queryKey).toEqual(["genres", "overview", "g1"]);
+      expect(queryKey).toEqual(["genres", "overview", makeGenreUuid("g1")]);
       await queryFn();
-      expect(fetchMock).toHaveBeenCalledWith("me/genres/g1/overview/", true, true);
+      expect(fetchMock).toHaveBeenCalledWith(`me/genres/${makeGenreUuid("g1")}/overview/`, true, true);
     });
 
     it("disables the query when there is no id", () => {
@@ -286,9 +286,9 @@ describe("useGenre", () => {
       renderHook(() => useUpdateGenre("me", getBackendBaseUrl));
       const { mutationFn } = useValidatedMutationMock.mock.calls[0][0];
 
-      const result = await mutationFn({ uuid: "g1", data: { name: "Rock" } });
+      const result = await mutationFn({ uuid: makeGenreUuid("g1"), data: { name: "Rock" } });
 
-      expect(fetchMock).toHaveBeenCalledWith("me/genres/g1/", true, true, {
+      expect(fetchMock).toHaveBeenCalledWith(`me/genres/${makeGenreUuid("g1")}/`, true, true, {
         method: "PUT",
         body: JSON.stringify({ name: "Rock" }),
       });
@@ -300,9 +300,9 @@ describe("useGenre", () => {
       renderHook(() => useUpdateGenre("reference", getBackendBaseUrl));
       const { mutationFn } = useValidatedMutationMock.mock.calls[0][0];
 
-      await mutationFn({ uuid: "g1", data: { name: "Rock" } });
+      await mutationFn({ uuid: makeGenreUuid("g1"), data: { name: "Rock" } });
 
-      expect(fetchMock).toHaveBeenCalledWith("genres/g1/", true, false, {
+      expect(fetchMock).toHaveBeenCalledWith(`genres/${makeGenreUuid("g1")}/`, true, false, {
         method: "PUT",
         body: JSON.stringify({ name: "Rock" }),
       });
@@ -312,10 +312,10 @@ describe("useGenre", () => {
       renderHook(() => useUpdateGenre("me", getBackendBaseUrl));
       const { onSuccess } = useValidatedMutationMock.mock.calls[0][0];
 
-      onSuccess(undefined, { uuid: "g1", data: {} });
+      onSuccess(undefined, { uuid: makeGenreUuid("g1"), data: {} });
 
       expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["genres"] });
-      expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["genres", "detail", "g1"] });
+      expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["genres", "detail", makeGenreUuid("g1")] });
       expect(invalidateAllGenrePlaylistQueriesMock).toHaveBeenCalled();
     });
 
@@ -323,10 +323,10 @@ describe("useGenre", () => {
       renderHook(() => useUpdateGenre("reference", getBackendBaseUrl));
       const { onSuccess } = useValidatedMutationMock.mock.calls[0][0];
 
-      onSuccess(undefined, { uuid: "g1", data: {} });
+      onSuccess(undefined, { uuid: makeGenreUuid("g1"), data: {} });
 
       expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["referenceGenres"] });
-      expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["referenceGenres", "detail", "g1"] });
+      expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["referenceGenres", "detail", makeGenreUuid("g1")] });
       expect(invalidateAllGenrePlaylistQueriesMock).toHaveBeenCalled();
     });
 
@@ -337,7 +337,7 @@ describe("useGenre", () => {
 
       result.current.renameGenre(makeGenreUuid("g1"), "New Name");
 
-      expect(mutate).toHaveBeenCalledWith({ uuid: "g1", data: { name: "New Name" } });
+      expect(mutate).toHaveBeenCalledWith({ uuid: makeGenreUuid("g1"), data: { name: "New Name" } });
     });
 
     it("updateGenreParent resolves only once the parent patch mutation settles", async () => {
@@ -350,7 +350,7 @@ describe("useGenre", () => {
       const pending = result.current.updateGenreParent(makeGenreUuid("g1"), makeGenreUuid("parent-1")).then(() => (resolved = true));
       await Promise.resolve();
 
-      expect(mutateAsync).toHaveBeenCalledWith({ uuid: "g1", data: { parent: "parent-1" } });
+      expect(mutateAsync).toHaveBeenCalledWith({ uuid: makeGenreUuid("g1"), data: { parent: makeGenreUuid("parent-1") } });
       expect(resolved).toBe(false);
       settle();
       await pending;
@@ -374,7 +374,7 @@ describe("useGenre", () => {
       renderHook(() => useUpdateGenre("me", getBackendBaseUrl));
       const { onSuccess } = useValidatedMutationMock.mock.calls[0][0];
 
-      await expectPendingUntilRefetched(() => onSuccess(undefined, { uuid: "g1", data: {} }));
+      await expectPendingUntilRefetched(() => onSuccess(undefined, { uuid: makeGenreUuid("g1"), data: {} }));
     });
 
     it("exposes the mutation's isPending", () => {
@@ -391,7 +391,7 @@ describe("useGenre", () => {
       renderHook(() => useDeleteGenre("reference", getBackendBaseUrl));
       const { mutationFn, outputSchema } = useValidatedMutationMock.mock.calls[0][0];
 
-      expect(outputSchema.safeParse(await mutationFn({ uuid: "g1" })).success).toBe(true);
+      expect(outputSchema.safeParse(await mutationFn({ uuid: makeGenreUuid("g1") })).success).toBe(true);
     });
 
     it("mutationFn DELETEs the scoped endpoint", async () => {
@@ -399,9 +399,9 @@ describe("useGenre", () => {
       renderHook(() => useDeleteGenre("reference", getBackendBaseUrl));
       const { mutationFn } = useValidatedMutationMock.mock.calls[0][0];
 
-      await mutationFn({ uuid: "g1" });
+      await mutationFn({ uuid: makeGenreUuid("g1") });
 
-      expect(fetchMock).toHaveBeenCalledWith("genres/g1/", true, false, { method: "DELETE" }, undefined, false, true);
+      expect(fetchMock).toHaveBeenCalledWith(`genres/${makeGenreUuid("g1")}/`, true, false, { method: "DELETE" }, undefined, false, true);
     });
 
     it("mutationFn DELETEs the me endpoint", async () => {
@@ -409,19 +409,19 @@ describe("useGenre", () => {
       renderHook(() => useDeleteGenre("me", getBackendBaseUrl));
       const { mutationFn } = useValidatedMutationMock.mock.calls[0][0];
 
-      await mutationFn({ uuid: "g1" });
+      await mutationFn({ uuid: makeGenreUuid("g1") });
 
-      expect(fetchMock).toHaveBeenCalledWith("me/genres/g1/", true, true, { method: "DELETE" }, undefined, false, true);
+      expect(fetchMock).toHaveBeenCalledWith(`me/genres/${makeGenreUuid("g1")}/`, true, true, { method: "DELETE" }, undefined, false, true);
     });
 
     it("onSuccess evicts the deleted reference genre before invalidating the list and genre playlist queries", () => {
       renderHook(() => useDeleteGenre("reference", getBackendBaseUrl));
       const { onSuccess } = useValidatedMutationMock.mock.calls[0][0];
 
-      onSuccess(undefined, { uuid: "g1" });
+      onSuccess(undefined, { uuid: makeGenreUuid("g1") });
 
-      expect(removeQueriesMock).toHaveBeenCalledWith({ queryKey: ["referenceGenres", "detail", "g1"] });
-      expect(removeQueriesMock).toHaveBeenCalledWith({ queryKey: ["referenceGenres", "overview", "g1"] });
+      expect(removeQueriesMock).toHaveBeenCalledWith({ queryKey: ["referenceGenres", "detail", makeGenreUuid("g1")] });
+      expect(removeQueriesMock).toHaveBeenCalledWith({ queryKey: ["referenceGenres", "overview", makeGenreUuid("g1")] });
       expect(invalidateQueriesMock.mock.calls).toEqual([[{ queryKey: ["referenceGenres"] }]]);
       expect(removeQueriesMock.mock.invocationCallOrder.at(-1)).toBeLessThan(
         invalidateQueriesMock.mock.invocationCallOrder[0],
@@ -433,10 +433,10 @@ describe("useGenre", () => {
       renderHook(() => useDeleteGenre("me", getBackendBaseUrl));
       const { onSuccess } = useValidatedMutationMock.mock.calls[0][0];
 
-      onSuccess(undefined, { uuid: "g1" });
+      onSuccess(undefined, { uuid: makeGenreUuid("g1") });
 
-      expect(removeQueriesMock).toHaveBeenCalledWith({ queryKey: ["genres", "detail", "g1"] });
-      expect(removeQueriesMock).toHaveBeenCalledWith({ queryKey: ["genres", "overview", "g1"] });
+      expect(removeQueriesMock).toHaveBeenCalledWith({ queryKey: ["genres", "detail", makeGenreUuid("g1")] });
+      expect(removeQueriesMock).toHaveBeenCalledWith({ queryKey: ["genres", "overview", makeGenreUuid("g1")] });
       expect(invalidateQueriesMock.mock.calls).toEqual([[{ queryKey: ["genres"] }]]);
       expect(removeQueriesMock.mock.invocationCallOrder.at(-1)).toBeLessThan(
         invalidateQueriesMock.mock.invocationCallOrder[0],
@@ -448,7 +448,7 @@ describe("useGenre", () => {
       renderHook(() => useDeleteGenre("me", getBackendBaseUrl));
       const { onSuccess } = useValidatedMutationMock.mock.calls[0][0];
 
-      await expectPendingUntilRefetched(() => onSuccess(undefined, { uuid: "g1" }));
+      await expectPendingUntilRefetched(() => onSuccess(undefined, { uuid: makeGenreUuid("g1") }));
     });
   });
 });

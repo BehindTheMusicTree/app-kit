@@ -99,14 +99,14 @@ describe("GenrePlaylistTracks", () => {
 
     expect(await screen.findByRole("button", { name: "Play Song a1" })).toBeInTheDocument();
     expect(screen.getByText("Tracks (250)")).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith("library/songs/", true, false, {}, { genre: "g1", pageSize: 100, withTotal: false });
+    expect(fetchMock).toHaveBeenCalledWith("library/songs/", true, false, {}, { genre: makeGenreUuid("g1"), pageSize: 100, withTotal: false });
 
     await act(async () => {
       observerCallback([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver);
     });
     fireEvent.click(await screen.findByRole("button", { name: "Play Song b0" }));
 
-    expect(fetchMock).toHaveBeenLastCalledWith("library/songs/", true, false, {}, { genre: "g1", pageSize: 100, withTotal: false, cursor: "CUR2" });
+    expect(fetchMock).toHaveBeenLastCalledWith("library/songs/", true, false, {}, { genre: makeGenreUuid("g1"), pageSize: 100, withTotal: false, cursor: "CUR2" });
     expect(fetchGenrePlaylistTracksPage).not.toHaveBeenCalled();
     expect(playNewTrackListFromGenrePlaylist).toHaveBeenCalledWith(genrePlaylist, "reference", { startSongUuid: "b0" });
   });
@@ -196,7 +196,7 @@ describe("GenrePlaylistTracks", () => {
     renderTracks("me");
 
     expect(await screen.findByText("—")).toBeInTheDocument();
-    expect(fetchGenrePlaylistTracksPage).toHaveBeenCalledWith("p1", "me", 1);
+    expect(fetchGenrePlaylistTracksPage).toHaveBeenCalledWith(makeGenrePlaylistUuid("p1"), "me", 1);
   });
 
   it("greys out an unplayable track with its reason and a disabled play button", async () => {

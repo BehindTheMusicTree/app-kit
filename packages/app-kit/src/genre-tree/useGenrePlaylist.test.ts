@@ -36,6 +36,7 @@ import {
   useInvalidateAllGenrePlaylistQueries,
 } from "./useGenrePlaylist";
 import { CriteriaPlaylistSimpleSchema } from "./schemas/criteria-playlist/simple";
+import type { GenrePlaylistUuid } from "./schemas/ids";
 import { makeGenrePlaylistUuid } from "./testing";
 
 const getBackendBaseUrl = () => "https://backend.example.com";
@@ -201,15 +202,16 @@ describe("useGenrePlaylist", () => {
       renderHook(() => useFetchGenrePlaylist(makeGenrePlaylistUuid("gp1"), getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
       const { queryKey, enabled, queryFn } = useQueryWithParseMock.mock.calls[0][0];
 
-      expect(queryKey).toEqual(["meGenrePlaylists", "gp1"]);
+      expect(queryKey).toEqual(["meGenrePlaylists", makeGenrePlaylistUuid("gp1")]);
       expect(enabled).toBe(true);
 
       queryFn();
-      expect(fetchMock).toHaveBeenCalledWith("me/genre-playlists/gp1/");
+      expect(fetchMock).toHaveBeenCalledWith(`me/genre-playlists/${makeGenrePlaylistUuid("gp1")}/`);
     });
 
     it("disables the query when uuid is empty", () => {
-      renderHook(() => useFetchGenrePlaylist(makeGenrePlaylistUuid(""), getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
+      // An empty id cannot be built through the validated helper, so the runtime guard is exercised with a cast.
+      renderHook(() => useFetchGenrePlaylist("" as GenrePlaylistUuid, getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
 
       expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
     });
