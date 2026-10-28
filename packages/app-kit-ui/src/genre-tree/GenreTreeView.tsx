@@ -196,6 +196,10 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   placement = "default",
   ...focus
 }: GenreTreeViewProps<O>) {
+  // An expandable overlay (e.g. an artist) takes the info panel's slot, so the edge tab drives it instead.
+  const detailOverlay = placement === "regions" && overlayPanel?.onExpandedChange ? overlayPanel : undefined;
+  const detailExpanded = detailOverlay ? !!detailOverlay.expanded : expanded;
+  const onDetailExpandedChange = detailOverlay ? detailOverlay.onExpandedChange : onExpandedChange;
   const infoPanelCuration: InfoPanelCurationProps = {
     editMode,
     onEditModeChange,
@@ -206,7 +210,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     onExpandedChange,
     collapsed: placement === "regions" ? collapsed : undefined,
     hideExpandButton: placement === "regions" ? true : undefined,
-    overlayPanel,
+    overlayPanel: detailOverlay ? { ...detailOverlay, collapsed, hideExpandButton: true } : overlayPanel,
   };
   const {
     isLoading,
@@ -361,23 +365,23 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const allowWheelRotation = controlledAllowWheelRotation ?? internalAllowWheelRotation;
 
   const detailTab =
-    placement === "regions" && selectedNodeId && onCollapsedChange ? (
+    placement === "regions" && (selectedNodeId || detailOverlay) && onCollapsedChange ? (
       <PanelEdgeTab
         side="left"
         edge={
-          expanded
-            ? { label: "Shrink panel", onClick: () => onExpandedChange?.(false) }
+          detailExpanded
+            ? { label: "Shrink panel", onClick: () => onDetailExpandedChange?.(false) }
             : collapsed
               ? null
               : { label: "Hide panel", onClick: () => onCollapsedChange(true) }
         }
         center={
-          expanded
+          detailExpanded
             ? null
             : collapsed
               ? { label: "Show panel", onClick: () => onCollapsedChange(false) }
-              : onExpandedChange
-                ? { label: "Extend panel", onClick: () => onExpandedChange(true) }
+              : onDetailExpandedChange
+                ? { label: "Extend panel", onClick: () => onDetailExpandedChange(true) }
                 : null
         }
       />
@@ -456,7 +460,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       {detailTab && (
         <div
           className={`absolute top-1/2 z-30 -translate-y-1/2 ${
-            expanded
+            detailExpanded
               ? "right-[calc(var(--layout-center-right)-var(--layout-edge-tab-w))]"
               : collapsed
                 ? "left-0"

@@ -21,6 +21,7 @@ easy to spot when bumping.
 
 ### Added
 
+- `GenreTreeView` with `placement="regions"`: an expandable `overlayPanel` (one with `onExpandedChange`, e.g. an artist) takes the info panel's slot. It is compact first, and the edge tab extends, shrinks, hides and shows it like the genre panel. Requires `genre-tree-view` 4.6.0.
 - `@behindthemusictree/app-kit/genre-tree/testing` exports `makeGenreUuid` and `makeGenrePlaylistUuid` for test fixtures.
 
 ### Fixed
