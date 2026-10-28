@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Security
+
+- `ArtistDetailedSchema` now rejects non-`http(s)` URLs (`javascript:`, `data:`, `ftp:` …) in `image.url`, `image.pageUrl`, `image.licenseUrl` and `links[].url` through a shared `HttpUrlSchema`, so a bad payload fails parsing instead of reaching the links `ArtistPhoto` and the artist panel render. grow-api already enforces this on import.
+
 ## [23.0.0] - 2026-10-28
 
 ### Fixed
