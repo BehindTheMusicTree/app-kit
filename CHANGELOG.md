@@ -19,6 +19,10 @@ easy to spot when bumping.
 
 - `GenreTreeView` with `placement="regions"`: the info panel's edge tab (hide / extend) works without `collapsed`, `onCollapsedChange` or `onExpandedChange`; they now only control the state. The view sets `--layout-left-w: 0px` on the document while the panel is hidden, so hosts no longer need to.
 
+### Removed
+
+- Vercel playground deployment: the `Sync playground env to Vercel` workflow, `scripts/sync-vercel-playground-env.mjs`, `apps/playground/vercel.json` and the `VITE_VERCEL_ENV` define. The playground is now run locally only.
+
 ## [22.0.0] - 2026-10-28
 
 ## [21.0.0] - 2026-10-28
