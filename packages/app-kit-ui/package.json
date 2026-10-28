@@ -1,6 +1,6 @@
 {
   "name": "@behindthemusictree/app-kit-ui",
-  "version": "23.0.1",
+  "version": "24.0.0",
   "description": "Styled BehindTheMusicTree React components (popups, auth callback, genre tree) built on the headless @behindthemusictree/app-kit",
   "repository": {
     "type": "git",
@@ -46,7 +46,7 @@
     "test": "vitest run --coverage"
   },
   "peerDependencies": {
-    "@behindthemusictree/app-kit": "^23.0.1",
+    "@behindthemusictree/app-kit": "^24.0.0",
     "@behindthemusictree/ui": "^0.7.0",
     "@tanstack/react-query": ">=5.0.0",
     "next": ">=14.0.0",
