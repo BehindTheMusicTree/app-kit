@@ -461,6 +461,38 @@ describe("GenreTreeView", () => {
         expect(screen.queryByRole("button", { name: "Hide panel" })).not.toBeInTheDocument();
       });
 
+      describe("readiness", () => {
+        const tabWrapper = () =>
+          screen.getByRole("button", { name: "Hide panel" }).closest(".panel-edge-tab")?.parentElement as HTMLElement;
+
+        afterEach(() => {
+          vi.unstubAllGlobals();
+        });
+
+        it("stays hidden while the genre playlists load", () => {
+          useListFullGenrePlaylistsMock.mockReturnValue({ data: undefined, isPending: true });
+          renderView({ ...tabProps, viewMode: "stacked" });
+          expect(tabWrapper()).toHaveClass("invisible", "opacity-0", "pointer-events-none");
+        });
+
+        it("fades in with the wheel only after its handoff reveals it", () => {
+          const raf = stubRaf();
+          renderView({ ...tabProps, viewMode: "wheel" });
+          expect(tabWrapper()).toHaveClass("invisible", "opacity-0");
+          act(() => {
+            raf.flush();
+            raf.flush();
+          });
+          expect(tabWrapper()).toHaveClass("opacity-100");
+          expect(tabWrapper()).not.toHaveClass("invisible");
+        });
+
+        it("shows right away in a view without a handoff", () => {
+          renderView({ ...tabProps, viewMode: "stacked" });
+          expect(tabWrapper()).toHaveClass("opacity-100");
+        });
+      });
+
       it("works uncontrolled when no callbacks are passed", () => {
         renderView(tabProps);
         fireEvent.click(screen.getByRole("button", { name: "Extend panel" }));

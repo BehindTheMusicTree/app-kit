@@ -332,6 +332,11 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     overlayPanel: detailOverlay ? { ...detailOverlay, collapsed: isCollapsed, hideExpandButton: true } : activeOverlayPanel,
   };
 
+  const [isWheelRevealed, setIsWheelRevealed] = useState(false);
+  const usesHandoff = viewMode === "wheel" || viewMode === "pop-core";
+  // The edge tab controls a panel drawn by the tree, so it shows only once the tree does.
+  const isTreeReady = !isLoading && (!usesHandoff || isWheelRevealed);
+
   const rootRef = useRef<HTMLDivElement>(null);
   const handlePrevious = () => {
     rootRef.current?.querySelector<HTMLButtonElement>(".search-overlay .gtv-info-panel-previous")?.click();
@@ -584,7 +589,9 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       </div>
       {detailTab && (
         <div
-          className={`absolute top-1/2 z-30 -translate-y-1/2 ${
+          className={`absolute top-1/2 z-30 -translate-y-1/2 transition-[opacity,visibility] duration-150 ease-out ${
+            isTreeReady ? "opacity-100" : "pointer-events-none invisible opacity-0"
+          } ${
             detailExpanded
               ? "right-[calc(var(--layout-center-right)-var(--layout-edge-tab-w))]"
               : isCollapsed
@@ -605,7 +612,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             // Google Maps style; the 8px bottom padding mirrors the inset above the bar, and the hidden title's height is zeroed.
             // The panel's own Zoom in button is hidden: the search bar carries it.
             <div className="tree-container search-overlay relative flex-1 w-full min-h-0 [--gtv-info-panel-header-inset:calc(var(--layout-search-h,2.5rem)+var(--layout-panel-inset,0.5rem))] [&_.gtv-info-panel-header]:pb-2 [&_.gtv-info-panel-title--hidden]:h-0 [&_.gtv-toolbar]:hidden">
-              <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
+              <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />} onRevealedChange={setIsWheelRevealed}>
                 <GenrePlaylistTreeWheel
                   scope={scope}
                   genrePlaylists={visibleGenrePlaylists}
@@ -631,7 +638,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           ) : viewMode === "pop-core" ? (
             // Same as the wheel: the header inset extends its fill behind the floating search bar, Google Maps style.
             <div className="tree-container search-overlay relative flex-1 w-full min-h-0 [--gtv-info-panel-header-inset:calc(var(--layout-search-h,2.5rem)+var(--layout-panel-inset,0.5rem))] [&_.gtv-info-panel-header]:pb-2 [&_.gtv-info-panel-title--hidden]:h-0 [&_.gtv-toolbar]:hidden [&_.gtv-info-panel-zoom-in]:hidden">
-              <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />}>
+              <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />} onRevealedChange={setIsWheelRevealed}>
                 <GenrePlaylistTreeWheelRadialPopCore
                   scope={scope}
                   genrePlaylists={visibleGenrePlaylists}
