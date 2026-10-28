@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { ArtistMinimumSchema } from "./artist-minimum";
+import { HttpUrlSchema } from "./http-url";
 
 const ArtistMembershipSchema = z.object({
   artist: ArtistMinimumSchema,
@@ -23,11 +24,11 @@ export const ARTIST_LINK_KINDS = [
 ] as const;
 
 export const ArtistImageSchema = z.object({
-  url: z.string().url(),
-  pageUrl: z.string().url(),
+  url: HttpUrlSchema,
+  pageUrl: HttpUrlSchema,
   author: z.string().nullable(),
   license: z.string(),
-  licenseUrl: z.string().url().nullable(),
+  licenseUrl: HttpUrlSchema.nullable(),
 });
 
 export const ArtistDetailedSchema = z.object({
@@ -39,7 +40,7 @@ export const ArtistDetailedSchema = z.object({
   beginYear: z.number().int().nullable(),
   endYear: z.number().int().nullable(),
   ended: z.boolean(),
-  links: z.array(z.object({ kind: z.enum(ARTIST_LINK_KINDS), url: z.string() })),
+  links: z.array(z.object({ kind: z.enum(ARTIST_LINK_KINDS), url: HttpUrlSchema })),
   members: z.array(ArtistMembershipSchema),
   memberOf: z.array(ArtistMembershipSchema),
   albums: z.array(
