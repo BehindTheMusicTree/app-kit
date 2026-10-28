@@ -1,6 +1,7 @@
 // Data hooks + view state
 export * from "./useGenre";
 export * from "./useGenrePlaylist";
+export * from "./useArtist";
 export * from "./useArtistSearch";
 export * from "./useGenreSearch";
 export * from "./useGenreTreeViewState";
@@ -32,6 +33,7 @@ export * from "./schemas/uuid-resource";
 export * from "./schemas/ids";
 export * from "./schemas/artist-minimum";
 export * from "./schemas/artist-search";
+export * from "./schemas/artist-detailed";
 export * from "./schemas/album-minimum";
 export * from "./schemas/mb-artist";
 export * from "./schemas/mb-recording";

@@ -41,6 +41,7 @@ import GenreSearch, { type GenreSearchProps } from "./GenreSearch";
 import GenreActionBand from "./GenreActionBand";
 import PanelEdgeTab from "./PanelEdgeTab";
 import ChangeParentPopup from "./ChangeParentPopup";
+import { useArtistPanel } from "./artist/useArtistPanel";
 
 // genre-tree-view's "previous" button (back to the last selected genre) renders inside the info panel, which sits
 // under the floating search bar. It is hidden and its click is proxied by the search field's own button, which
@@ -92,13 +93,14 @@ export type {
 } from "@behindthemusictree/genre-tree-view";
 export type { GenreFocusProps } from "./playlist-tree/TreeWheelRadialPopCore";
 
-/** Artists are searched by default, so a host must say what picking one does, or opt out. */
+/** Artists are searched by default; picking one opens its panel (see `artistUuid`). */
 export type ArtistSearchProps =
   | { artistSearch: false; onArtistSelect?: never; artistSearchBaseUrl?: never }
   | {
       artistSearch?: true;
-      onArtistSelect: (artist: ArtistSearchResult) => void;
-      /** Backend that serves `artists/search/`. Defaults to `getBackendBaseUrl`. */
+      /** Notified when a suggestion is picked, after the view opens its artist panel. */
+      onArtistSelect?: (artist: ArtistSearchResult) => void;
+      /** Backend that serves `artists/` (search and the artist panel). Defaults to `getBackendBaseUrl`. */
       artistSearchBaseUrl?: () => string;
     };
 
@@ -140,8 +142,17 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   renderGenreDetailExtras?: (overview: O) => ReactNode;
   /** Layout of the wheel/tree floating zoom/pop/fit controls. Defaults to "horizontal". */
   controlsOrientation?: ControlsOrientation;
-  /** When set, artist names in the info panel's track list render through it (e.g. a router `Link`). */
+  /** When set, artist names in the info panel's track list render through it (e.g. a router `Link`). In the artist
+   * panel, names otherwise render as buttons that switch the panel to that artist. */
   renderArtistLink?: RenderArtistLink;
+  /** Controlled artist panel (an artist uuid). It shares the info panel's slot: opening an artist clears the selected
+   * genre, and selecting a genre clears the artist. A host `overlayPanel` takes precedence over it. */
+  artistUuid?: string | null;
+  /** Called when the user opens an artist (search pick, member link) or closes its panel. */
+  onArtistUuidChange?: (uuid: string | null) => void;
+  /** Controlled expanded state of the artist panel. Uncontrolled, it resets to compact on each artist. */
+  artistExpanded?: boolean;
+  onArtistExpandedChange?: (expanded: boolean) => void;
 } & ArtistSearchProps &
   GenreDetailSlots<O> &
   GenrePlaylistTracksSlots &
@@ -175,6 +186,10 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   renderGenreDetailExtras,
   controlsOrientation = "horizontal",
   renderArtistLink,
+  artistUuid: controlledArtistUuid,
+  onArtistUuidChange,
+  artistExpanded: controlledArtistExpanded,
+  onArtistExpandedChange,
   artistSearch = true,
   onArtistSelect,
   artistSearchBaseUrl,
@@ -196,22 +211,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   placement = "default",
   ...focus
 }: GenreTreeViewProps<O>) {
-  // An expandable overlay (e.g. an artist) takes the info panel's slot, so the edge tab drives it instead.
-  const detailOverlay = placement === "regions" && overlayPanel?.onExpandedChange ? overlayPanel : undefined;
-  const detailExpanded = detailOverlay ? !!detailOverlay.expanded : expanded;
-  const onDetailExpandedChange = detailOverlay ? detailOverlay.onExpandedChange : onExpandedChange;
-  const infoPanelCuration: InfoPanelCurationProps = {
-    editMode,
-    onEditModeChange,
-    renderTitleEditor,
-    renderParentsEditor,
-    renderDangerZone,
-    expanded,
-    onExpandedChange,
-    collapsed: placement === "regions" ? collapsed : undefined,
-    hideExpandButton: placement === "regions" ? true : undefined,
-    overlayPanel: detailOverlay ? { ...detailOverlay, collapsed, hideExpandButton: true } : overlayPanel,
-  };
   const {
     isLoading,
     genrePlaylistByNodeId,
@@ -238,6 +237,63 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     criteriaOverviewSchema,
   });
 
+  const [internalArtistUuid, setInternalArtistUuid] = useState<string | null>(null);
+  const isArtistControlled = controlledArtistUuid !== undefined;
+  const artistUuid = isArtistControlled ? controlledArtistUuid : internalArtistUuid;
+  const changeArtist = (uuid: string | null) => {
+    if (!isArtistControlled) setInternalArtistUuid(uuid);
+    onArtistUuidChange?.(uuid);
+  };
+  const openArtist = (uuid: string) => {
+    if (selectedNodeId !== null) clearSelection();
+    changeArtist(uuid);
+  };
+  // Keyed by artist, so switching artists (including a host's back/forward) starts compact.
+  const [expandedArtistUuid, setExpandedArtistUuid] = useState<string | null>(null);
+  const artistBaseUrl = artistSearchBaseUrl ?? getBackendBaseUrl;
+  const artistPanel = useArtistPanel({
+    uuid: artistUuid,
+    getBackendBaseUrl: artistBaseUrl,
+    renderArtistLink:
+      renderArtistLink ??
+      ((artist) =>
+        artist.isSpecialPurpose ? (
+          artist.name
+        ) : (
+          <button type="button" onClick={() => openArtist(artist.uuid)} className="hover:underline">
+            {artist.name}
+          </button>
+        )),
+    expanded: controlledArtistExpanded ?? (artistUuid !== null && expandedArtistUuid === artistUuid),
+    onExpandedChange: (on) => {
+      if (controlledArtistExpanded === undefined) setExpandedArtistUuid(on ? artistUuid : null);
+      onArtistExpandedChange?.(on);
+    },
+    onClose: () => changeArtist(null),
+  });
+  // Like a genre, the built-in artist panel shows its name in the search field and closes from its clear button.
+  const builtInArtistPanel = overlayPanel ? undefined : artistPanel;
+  const activeOverlayPanel =
+    overlayPanel ?? (builtInArtistPanel && { ...builtInArtistPanel, hideTitle: true, hideClose: true });
+
+  // An expandable overlay (e.g. an artist) takes the info panel's slot, so the edge tab drives it instead.
+  const detailOverlay =
+    placement === "regions" && activeOverlayPanel?.onExpandedChange ? activeOverlayPanel : undefined;
+  const detailExpanded = detailOverlay ? !!detailOverlay.expanded : expanded;
+  const onDetailExpandedChange = detailOverlay ? detailOverlay.onExpandedChange : onExpandedChange;
+  const infoPanelCuration: InfoPanelCurationProps = {
+    editMode,
+    onEditModeChange,
+    renderTitleEditor,
+    renderParentsEditor,
+    renderDangerZone,
+    expanded,
+    onExpandedChange,
+    collapsed: placement === "regions" ? collapsed : undefined,
+    hideExpandButton: placement === "regions" ? true : undefined,
+    overlayPanel: detailOverlay ? { ...detailOverlay, collapsed, hideExpandButton: true } : activeOverlayPanel,
+  };
+
   const rootRef = useRef<HTMLDivElement>(null);
   const handlePrevious = () => {
     rootRef.current?.querySelector<HTMLButtonElement>(".search-overlay .gtv-info-panel-previous")?.click();
@@ -245,7 +301,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
 
   const { showPopup, hidePopup } = usePopup();
   const [searchText, setSearchText] = useState("");
-  const artistSearchResult = useArtistSearch(artistSearchBaseUrl ?? getBackendBaseUrl, artistSearch ? searchText : "");
+  const artistSearchResult = useArtistSearch(artistBaseUrl, artistSearch ? searchText : "");
   const artistExtraResults: GenreSearchProps["extraResults"] = artistSearch
     ? {
         label: "Artists",
@@ -266,7 +322,10 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
               )}
             </>
           ),
-          onSelect: () => onArtistSelect?.(artist),
+          onSelect: () => {
+            openArtist(artist.uuid);
+            onArtistSelect?.(artist);
+          },
         })),
         status: artistSearchResult.isError
           ? "Search failed"
@@ -275,9 +334,15 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             : "",
       }
     : undefined;
-  const handleSelectedNodeChange = selectNode;
+  const handleSelectedNodeChange = (node: { id: string } | null) => {
+    if (node && artistUuid !== null) changeArtist(null);
+    selectNode(node);
+  };
   const handleGenreSearchClear = clearSelection;
-  const handleGenreSearchSelect = selectGenrePlaylist;
+  const handleGenreSearchSelect = (genrePlaylist: CriteriaPlaylistSimple) => {
+    if (artistUuid !== null) changeArtist(null);
+    selectGenrePlaylist(genrePlaylist);
+  };
 
   // Mirrors genre-tree-view's isZoomableNode: a node zooms when it has children and at most one pop-side child.
   const selectedUuid = selectedGenrePlaylist?.uuid;
@@ -393,8 +458,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
         <GenreSearch
           genrePlaylists={visibleGenrePlaylists}
           onSelect={handleGenreSearchSelect}
-          selectedName={selectedGenrePlaylist?.name ?? null}
-          onClear={handleGenreSearchClear}
+          selectedName={selectedGenrePlaylist?.name ?? builtInArtistPanel?.title ?? null}
+          onClear={builtInArtistPanel ? () => changeArtist(null) : handleGenreSearchClear}
           onPrevious={handlePrevious}
           onQueryChange={artistSearch ? setSearchText : undefined}
           extraResults={artistExtraResults}
@@ -584,7 +649,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                           }
                           {...infoPanelCuration}
                           // Every tree draws its own overlay; render it once, not per root.
-                          overlayPanel={rootIndex === 0 ? overlayPanel : undefined}
+                          overlayPanel={rootIndex === 0 ? activeOverlayPanel : undefined}
                         />
                       </div>
                     </div>

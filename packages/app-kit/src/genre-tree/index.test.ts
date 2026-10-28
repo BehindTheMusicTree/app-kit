@@ -6,6 +6,7 @@ describe("genre-tree barrel", () => {
   it("re-exports data hooks and view-state hooks", () => {
     expect(genreTree.useGenreTreeViewState).toBeTypeOf("function");
     expect(genreTree.useGenreSearch).toBeTypeOf("function");
+    expect(genreTree.useArtist).toBeTypeOf("function");
     expect(genreTree.useArtistSearch).toBeTypeOf("function");
     expect(genreTree.useListGenres).toBeTypeOf("function");
     expect(genreTree.useFetchGenre).toBeTypeOf("function");

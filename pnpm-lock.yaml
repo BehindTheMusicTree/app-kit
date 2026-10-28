@@ -10,11 +10,11 @@ catalogs:
       specifier: ^12.5.0
       version: 12.5.0
     '@behindthemusictree/genre-tree-view':
-      specifier: 4.6.0
-      version: 4.6.0
+      specifier: 4.8.0
+      version: 4.8.0
     '@behindthemusictree/ui':
-      specifier: ^0.4.0
-      version: 0.4.0
+      specifier: ^0.7.0
+      version: 0.7.0
 
 overrides:
   sharp: ^0.35.4
@@ -45,10 +45,10 @@ importers:
         version: 12.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@behindthemusictree/genre-tree-view':
         specifier: 'catalog:'
-        version: 4.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 4.8.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@behindthemusictree/ui':
         specifier: 'catalog:'
-        version: 0.4.0(@behindthemusictree/brand@12.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 0.7.0(@behindthemusictree/brand@12.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@tanstack/react-query':
         specifier: ^5.72.2
         version: 5.101.4(react@18.3.1)
@@ -152,7 +152,7 @@ importers:
     dependencies:
       '@behindthemusictree/genre-tree-view':
         specifier: 'catalog:'
-        version: 4.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 4.8.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -177,7 +177,7 @@ importers:
         version: link:../app-kit
       '@behindthemusictree/ui':
         specifier: 'catalog:'
-        version: 0.4.0(@behindthemusictree/brand@12.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 0.7.0(@behindthemusictree/brand@12.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@tanstack/react-query':
         specifier: ^5.72.2
         version: 5.101.4(react@18.3.1)
@@ -344,14 +344,14 @@ packages:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
 
-  '@behindthemusictree/genre-tree-view@4.6.0':
-    resolution: {integrity: sha512-oTpdIzfgqaQcZBUm6DH0XWAGgPUlqcDvIFbvKAKsuC/TYk+cckNAIMMQCNIUpype1siVi8VINkYx6uOcw3w42w==, tarball: https://npm.pkg.github.com/download/@behindthemusictree/genre-tree-view/4.6.0/f5c125d16f6a64dbf6656dcdfabea7ea92788913}
+  '@behindthemusictree/genre-tree-view@4.8.0':
+    resolution: {integrity: sha512-euPWOXS8s1KT+PAqUN8Dy06Url7ZGSzzIBlB1aDImJDWJQRSmxOTAuvuRfmv+cjs6npSOSHd4mXN736soCvKfA==, tarball: https://npm.pkg.github.com/download/@behindthemusictree/genre-tree-view/4.8.0/1709cc9193fe7fc508b015a3cdca5579ab856e2c}
     peerDependencies:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
 
-  '@behindthemusictree/ui@0.4.0':
-    resolution: {integrity: sha512-RO4JnD3G9EqNvjfjWBerMu5Ey/X5IYg2hDLLirjqr7akj4nRoiXawXTiqGKb/KulzHWZTpyv7KoVXiy1MJivoA==, tarball: https://npm.pkg.github.com/download/@behindthemusictree/ui/0.4.0/eca08fa32cdd8144eeceb2aa609d5215ab493a81}
+  '@behindthemusictree/ui@0.7.0':
+    resolution: {integrity: sha512-6zViMCxFc5wwbQnAroUDxuvv8IsYMybaUDoyx10U9H6X0TWkZf5hOIcE2HS7DtiF0bPFrrVlAaEXQLAJSaTt8w==, tarball: https://npm.pkg.github.com/download/@behindthemusictree/ui/0.7.0/dc22d3791bcd276539c34c9cb2efcc9c12c75878}
     peerDependencies:
       '@behindthemusictree/brand': ^12.0.0
       react: '>=18.0.0'
@@ -2311,14 +2311,14 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  '@behindthemusictree/genre-tree-view@4.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@behindthemusictree/genre-tree-view@4.8.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       d3: 7.9.0
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
       react-icons: 5.7.0(react@18.3.1)
 
-  '@behindthemusictree/ui@0.4.0(@behindthemusictree/brand@12.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@behindthemusictree/ui@0.7.0(@behindthemusictree/brand@12.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       class-variance-authority: 0.7.1
       clsx: 2.1.1

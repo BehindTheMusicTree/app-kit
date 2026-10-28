@@ -17,6 +17,7 @@ const {
   showPopupMock,
   hidePopupMock,
   useArtistSearchMock,
+  useArtistMock,
 } = vi.hoisted(() => ({
   useListFullGenrePlaylistsMock: vi.fn(),
   useFetchGenreOverviewMock: vi.fn(),
@@ -30,6 +31,7 @@ const {
   showPopupMock: vi.fn(),
   hidePopupMock: vi.fn(),
   useArtistSearchMock: vi.fn(),
+  useArtistMock: vi.fn(),
 }));
 
 vi.mock("@behindthemusictree/app-kit/popup", async (importOriginal) => ({
@@ -57,6 +59,12 @@ vi.mock("../../../app-kit/src/genre-tree/useGenrePlaylist", async (importOrigina
 vi.mock("../../../app-kit/src/genre-tree/useArtistSearch", () => ({
   useArtistSearch: (getBaseUrl: () => string, text: string) => useArtistSearchMock(getBaseUrl, text),
 }));
+
+vi.mock("../../../app-kit/src/genre-tree/useArtist", () => ({
+  useArtist: (uuid: string | null, getBaseUrl: () => string) => useArtistMock(uuid, getBaseUrl),
+}));
+
+vi.mock("./artist/ArtistSongs", () => ({ default: () => <p>Songs list</p> }));
 
 vi.mock("../../../app-kit/src/genre-tree/useGenre", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
@@ -165,6 +173,7 @@ describe("GenreTreeView", () => {
     });
     useFetchGenreOverviewMock.mockReturnValue({ data: undefined, isPending: false });
     useArtistSearchMock.mockReturnValue({ artists: [], isError: false, settled: false });
+    useArtistMock.mockImplementation((uuid: string | null) => (uuid === null ? { status: "idle" } : { status: "loading" }));
   });
 
   it("shows the wheel skeleton while the genre playlists are loading", () => {
@@ -1631,6 +1640,253 @@ describe("GenreTreeView", () => {
 
       expect(screen.queryByText("Artists")).not.toBeInTheDocument();
       expect(useArtistSearchMock).toHaveBeenLastCalledWith(getBackendBaseUrl, "");
+    });
+  });
+
+  describe("artist panel", () => {
+    const suggestion = {
+      uuid: "11111111-1111-1111-1111-111111111111",
+      name: "Band",
+      disambiguation: null,
+      type: "group",
+      country: "GB",
+      beginYear: 1994,
+      endYear: null,
+      matchedAlias: null,
+      recordingCount: 3,
+    };
+    const member = { uuid: "33333333-3333-3333-3333-333333333333", name: "Alice" };
+    const detailed = (uuid: string, name: string) => ({
+      uuid,
+      name,
+      musicbrainzArtistId: "22222222-2222-2222-2222-222222222222",
+      type: "group",
+      country: "GB",
+      beginYear: 1994,
+      endYear: null,
+      ended: false,
+      links: [],
+      members: uuid === suggestion.uuid ? [{ artist: member, beginYear: 1994, endYear: null, ended: false, roles: [] }] : [],
+      memberOf: [],
+      albums: [],
+      tracksCount: 0,
+      image: null,
+    });
+    const names: Record<string, string> = { [suggestion.uuid]: suggestion.name, [member.uuid]: member.name };
+
+    beforeEach(() => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: [
+          makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } }),
+          makePlaylist({ uuid: "gp2", name: "Blues", criteria: { uuid: "c2", name: "Blues" } }),
+        ],
+        isPending: false,
+      });
+      useArtistSearchMock.mockReturnValue({ artists: [suggestion], isError: false, settled: true });
+      useArtistMock.mockImplementation((uuid: string | null) =>
+        uuid === null ? { status: "idle" } : { status: "success", artist: detailed(uuid, names[uuid]) },
+      );
+    });
+
+    const baseProps = () => ({
+      scope: "me" as const,
+      handleGenreCreationAction: vi.fn(),
+      handleGenreRenameAction: vi.fn(),
+      getBackendBaseUrl,
+      viewMode: "wheel" as const,
+    });
+    const wheelProps = () => treeWheelPropsMock.mock.calls.at(-1)?.[0];
+    const pickSuggestion = () => {
+      fireEvent.change(screen.getByRole("textbox", { name: "Search" }), { target: { value: "band" } });
+      fireEvent.click(screen.getByRole("button", { name: /Band/ }));
+    };
+
+    it("opens the picked artist's panel, notifies the host, and closes", () => {
+      const onArtistSelect = vi.fn();
+      render(<GenreTreeView {...baseProps()} onArtistSelect={onArtistSelect} />);
+
+      expect(wheelProps().overlayPanel).toBeUndefined();
+      pickSuggestion();
+
+      expect(wheelProps().overlayPanel.title).toBe("Band");
+      expect(onArtistSelect).toHaveBeenCalledWith(suggestion);
+
+      act(() => wheelProps().overlayPanel.onClose());
+      expect(wheelProps().overlayPanel).toBeUndefined();
+    });
+
+    it("loads the artist from artistSearchBaseUrl, falling back to getBackendBaseUrl", () => {
+      const artistBaseUrl = () => "https://grow.example.com";
+      render(<GenreTreeView {...baseProps()} artistSearchBaseUrl={artistBaseUrl} />);
+      pickSuggestion();
+      expect(useArtistMock).toHaveBeenLastCalledWith(suggestion.uuid, artistBaseUrl);
+
+      cleanup();
+      render(<GenreTreeView {...baseProps()} />);
+      expect(useArtistMock).toHaveBeenLastCalledWith(null, getBackendBaseUrl);
+    });
+
+    it("keeps genre and artist mutually exclusive when uncontrolled", () => {
+      render(<GenreTreeView {...baseProps()} />);
+      act(() => wheelProps().onSelectedNodeChange({ id: "gp1" }));
+      expect(wheelProps().selectedNodeId).toBe("gp1");
+
+      pickSuggestion();
+      expect(wheelProps().selectedNodeId).toBeNull();
+      expect(wheelProps().overlayPanel.title).toBe("Band");
+
+      act(() => wheelProps().onSelectedNodeChange({ id: "gp2" }));
+      expect(wheelProps().selectedNodeId).toBe("gp2");
+      expect(wheelProps().overlayPanel).toBeUndefined();
+    });
+
+    it("clears the artist when a genre is picked from the search", () => {
+      render(<GenreTreeView {...baseProps()} />);
+      pickSuggestion();
+
+      fireEvent.change(screen.getByRole("textbox", { name: "Search" }), { target: { value: "Jaz" } });
+      fireEvent.click(screen.getByRole("button", { name: "Jazz" }));
+
+      expect(wheelProps().selectedNodeId).toBe("gp1");
+      expect(wheelProps().overlayPanel).toBeUndefined();
+    });
+
+    it("follows a controlled artistUuid and reports both sides of the exclusion", () => {
+      const onArtistUuidChange = vi.fn();
+      const onSelectedNodeIdChange = vi.fn();
+      const props: GenreTreeViewProps = {
+        ...baseProps(),
+        selectedNodeId: "gp1",
+        onSelectedNodeIdChange,
+        artistUuid: null,
+        onArtistUuidChange,
+      };
+      const { rerender } = render(<GenreTreeView {...props} />);
+
+      pickSuggestion();
+      expect(onSelectedNodeIdChange).toHaveBeenCalledWith(null);
+      expect(onArtistUuidChange).toHaveBeenCalledWith(suggestion.uuid);
+      expect(wheelProps().overlayPanel).toBeUndefined();
+
+      rerender(<GenreTreeView {...props} selectedNodeId={null} artistUuid={suggestion.uuid} />);
+      expect(wheelProps().overlayPanel.title).toBe("Band");
+
+      onArtistUuidChange.mockClear();
+      onSelectedNodeIdChange.mockClear();
+      act(() => wheelProps().onSelectedNodeChange({ id: "gp2" }));
+      expect(onArtistUuidChange).toHaveBeenCalledWith(null);
+      expect(onSelectedNodeIdChange).toHaveBeenCalledWith("gp2");
+    });
+
+    it("lets a host overlayPanel take precedence", () => {
+      const overlayPanel = { title: "About", content: "x", onClose: vi.fn() };
+      render(<GenreTreeView {...baseProps()} overlayPanel={overlayPanel} artistUuid={suggestion.uuid} />);
+
+      expect(wheelProps().overlayPanel).toBe(overlayPanel);
+    });
+
+    it("switches the panel to a member from its default name button", () => {
+      render(<GenreTreeView {...baseProps()} />);
+      pickSuggestion();
+
+      const { unmount } = render(<>{wheelProps().overlayPanel.content}</>);
+      fireEvent.click(screen.getByRole("button", { name: "Alice" }));
+      unmount();
+
+      expect(wheelProps().overlayPanel.title).toBe("Alice");
+    });
+
+    it("renders a special-purpose member as plain text by default", () => {
+      const unknown = { uuid: "44444444-4444-4444-4444-444444444444", name: "[unknown]", isSpecialPurpose: true };
+      useArtistMock.mockReturnValue({
+        status: "success",
+        artist: {
+          ...detailed(suggestion.uuid, suggestion.name),
+          members: [{ artist: unknown, beginYear: null, endYear: null, ended: false, roles: [] }],
+        },
+      });
+      render(<GenreTreeView {...baseProps()} artistUuid={suggestion.uuid} />);
+
+      render(<>{wheelProps().overlayPanel.content}</>);
+      expect(screen.getByText("[unknown]")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "[unknown]" })).not.toBeInTheDocument();
+    });
+
+    it("renders member names through the host's renderArtistLink", () => {
+      render(
+        <GenreTreeView
+          {...baseProps()}
+          artistUuid={suggestion.uuid}
+          renderArtistLink={(artist) => <a href={`/artists/${artist.uuid}`}>{artist.name}</a>}
+        />,
+      );
+
+      render(<>{wheelProps().overlayPanel.content}</>);
+      expect(screen.getByRole("link", { name: "Alice" })).toHaveAttribute("href", `/artists/${member.uuid}`);
+    });
+
+    it("starts each artist compact", () => {
+      render(<GenreTreeView {...baseProps()} />);
+      pickSuggestion();
+
+      act(() => wheelProps().overlayPanel.onExpandedChange(true));
+      expect(wheelProps().overlayPanel.expanded).toBe(true);
+      act(() => wheelProps().overlayPanel.onExpandedChange(false));
+      expect(wheelProps().overlayPanel.expanded).toBe(false);
+      act(() => wheelProps().overlayPanel.onExpandedChange(true));
+
+      const { unmount } = render(<>{wheelProps().overlayPanel.content}</>);
+      fireEvent.click(screen.getByRole("button", { name: "Alice" }));
+      unmount();
+
+      expect(wheelProps().overlayPanel.expanded).toBe(false);
+    });
+
+    it("shows the artist's name in the search field, whose clear button closes it", () => {
+      const onArtistUuidChange = vi.fn();
+      render(<GenreTreeView {...baseProps()} artistUuid={suggestion.uuid} onArtistUuidChange={onArtistUuidChange} />);
+
+      expect(wheelProps().overlayPanel).toMatchObject({ title: "Band", hideTitle: true, hideClose: true });
+      expect(screen.getByRole("textbox", { name: "Search" })).toHaveValue("Band");
+
+      fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
+      expect(onArtistUuidChange).toHaveBeenCalledWith(null);
+    });
+
+    it("leaves a host overlayPanel's header and the search field alone", () => {
+      const overlayPanel = { title: "About", content: "x", onClose: vi.fn() };
+      render(<GenreTreeView {...baseProps()} overlayPanel={overlayPanel} artistUuid={suggestion.uuid} />);
+
+      expect(wheelProps().overlayPanel).not.toHaveProperty("hideClose");
+      expect(screen.getByRole("textbox", { name: "Search" })).toHaveValue("");
+    });
+
+    it("drives the artist panel from the edge tab", () => {
+      render(
+        <GenreTreeView {...baseProps()} placement="regions" onCollapsedChange={vi.fn()} artistUuid={suggestion.uuid} />,
+      );
+
+      expect(screen.getByRole("button", { name: "Hide panel" })).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "Extend panel" }));
+      expect(wheelProps().overlayPanel).toMatchObject({ expanded: true, hideExpandButton: true });
+    });
+
+    it("follows a controlled artistExpanded", () => {
+      const onArtistExpandedChange = vi.fn();
+      const props: GenreTreeViewProps = {
+        ...baseProps(),
+        artistUuid: suggestion.uuid,
+        artistExpanded: false,
+        onArtistExpandedChange,
+      };
+      const { rerender } = render(<GenreTreeView {...props} />);
+
+      act(() => wheelProps().overlayPanel.onExpandedChange(true));
+      expect(onArtistExpandedChange).toHaveBeenCalledWith(true);
+      expect(wheelProps().overlayPanel.expanded).toBe(false);
+
+      rerender(<GenreTreeView {...props} artistExpanded />);
+      expect(wheelProps().overlayPanel.expanded).toBe(true);
     });
   });
 });
