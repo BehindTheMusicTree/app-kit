@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [23.0.0] - 2026-10-28
+
 ### Fixed
 
 - `GenreTreeView` with `placement="regions"`: the info panel's edge tab fades in with the tree instead of showing before the panel while the data loads.
