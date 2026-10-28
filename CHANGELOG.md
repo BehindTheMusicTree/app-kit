@@ -23,6 +23,10 @@ easy to spot when bumping.
 
 - `@behindthemusictree/app-kit/genre-tree/testing` exports `makeGenreUuid` and `makeGenrePlaylistUuid` for test fixtures.
 
+### Changed
+
+- Tooling moves to Node 26: `.nvmrc` pins the major, root `engines.node` is `>=26 <27` (enforced by `engineStrict`), and the CI workflows read `.nvmrc`. The published packages are unaffected.
+
 ### Fixed
 
 - Changing a genre's parent from the genre tree sent the genre-playlist UUID to `PUT /v1/genres/{uuid}/`, which the API rejected with 404. It now sends the genre's criteria UUID.
