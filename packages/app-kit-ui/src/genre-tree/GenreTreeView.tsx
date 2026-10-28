@@ -150,6 +150,9 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   artistUuid?: string | null;
   /** Called when the user opens an artist (search pick, member link) or closes its panel. */
   onArtistUuidChange?: (uuid: string | null) => void;
+  /** Controlled expanded state of the artist panel. Uncontrolled, it resets to compact on each artist. */
+  artistExpanded?: boolean;
+  onArtistExpandedChange?: (expanded: boolean) => void;
 } & ArtistSearchProps &
   GenreDetailSlots<O> &
   GenrePlaylistTracksSlots &
@@ -185,6 +188,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   renderArtistLink,
   artistUuid: controlledArtistUuid,
   onArtistUuidChange,
+  artistExpanded: controlledArtistExpanded,
+  onArtistExpandedChange,
   artistSearch = true,
   onArtistSelect,
   artistSearchBaseUrl,
@@ -259,11 +264,17 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             {artist.name}
           </button>
         )),
-    expanded: artistUuid !== null && expandedArtistUuid === artistUuid,
-    onExpandedChange: (on) => setExpandedArtistUuid(on ? artistUuid : null),
+    expanded: controlledArtistExpanded ?? (artistUuid !== null && expandedArtistUuid === artistUuid),
+    onExpandedChange: (on) => {
+      if (controlledArtistExpanded === undefined) setExpandedArtistUuid(on ? artistUuid : null);
+      onArtistExpandedChange?.(on);
+    },
     onClose: () => changeArtist(null),
   });
-  const activeOverlayPanel = overlayPanel ?? artistPanel;
+  // Like a genre, the built-in artist panel shows its name in the search field and closes from its clear button.
+  const builtInArtistPanel = overlayPanel ? undefined : artistPanel;
+  const activeOverlayPanel =
+    overlayPanel ?? (builtInArtistPanel && { ...builtInArtistPanel, hideTitle: true, hideClose: true });
 
   // An expandable overlay (e.g. an artist) takes the info panel's slot, so the edge tab drives it instead.
   const detailOverlay =
@@ -447,8 +458,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
         <GenreSearch
           genrePlaylists={visibleGenrePlaylists}
           onSelect={handleGenreSearchSelect}
-          selectedName={selectedGenrePlaylist?.name ?? null}
-          onClear={handleGenreSearchClear}
+          selectedName={selectedGenrePlaylist?.name ?? builtInArtistPanel?.title ?? null}
+          onClear={builtInArtistPanel ? () => changeArtist(null) : handleGenreSearchClear}
           onPrevious={handlePrevious}
           onQueryChange={artistSearch ? setSearchText : undefined}
           extraResults={artistExtraResults}
