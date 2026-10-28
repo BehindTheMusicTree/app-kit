@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, type ReactNode } from "react";
+import { useCallback, useMemo } from "react";
 import {
   GenreTreeOutline,
   GenreTreeWheelRadialPopCore,
@@ -9,6 +9,8 @@ import {
   type FocusChangeReason,
   type GenreTreeAction,
   type GenreTreeNode,
+  type InfoPanelBody,
+  type InfoPanelSections,
 } from "@behindthemusictree/genre-tree-view";
 
 import { usePlayer } from "@behindthemusictree/app-kit/player";
@@ -45,7 +47,7 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   onNodeClick?: (node: GenreTreeNode) => void;
   onNodeHover?: (node: GenreTreeNode) => void;
-  renderExtraDetails?: (node: GenreTreeNode) => ReactNode;
+  renderInfoPanelBody?: (node: GenreTreeNode, sections: InfoPanelSections) => InfoPanelBody;
   /** Overrides which node is shown highlighted, e.g. from a search selection. */
   selectedNodeId?: string | null;
   /** Fires when a user action changes the info panel's node, or `null` when it is closed. */
@@ -88,7 +90,7 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     additionalActions,
     onNodeClick,
     onNodeHover,
-    renderExtraDetails,
+    renderInfoPanelBody,
     selectedNodeId,
     onSelectedNodeChange,
     hideInfoPanelClose,
@@ -194,7 +196,7 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     additionalActions,
     onNodeClick,
     onNodeHover,
-    renderExtraDetails,
+    renderInfoPanelBody,
     selectedNodeId,
     onSelectedNodeChange,
     hideInfoPanelClose,

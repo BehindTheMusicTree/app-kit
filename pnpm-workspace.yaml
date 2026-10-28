@@ -4,7 +4,7 @@ packages:
 
 catalog:
   "@behindthemusictree/brand": ^12.5.0
-  "@behindthemusictree/genre-tree-view": "4.8.0"
+  "@behindthemusictree/genre-tree-view": "5.0.0"
   "@behindthemusictree/ui": ^0.7.0
 
 allowBuilds:
@@ -23,3 +23,5 @@ overrides:
   "source-map-js@<1.2.2": ^1.2.2
   "esbuild@<0.28.1": ^0.28.1
   "postcss-selector-parser@<7.1.6": ^7.1.6
+
+engineStrict: true

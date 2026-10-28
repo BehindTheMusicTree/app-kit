@@ -116,6 +116,7 @@ function ReferenceGenreTree() {
       </div>
       <GenreTreeView
         scope="reference"
+        placement="regions"
         viewMode={viewMode}
         allowWheelRotation={allowWheelRotation}
       showAddRoot={false}

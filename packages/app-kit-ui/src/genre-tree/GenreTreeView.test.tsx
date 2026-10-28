@@ -176,6 +176,13 @@ function renderView(overrides: Partial<Omit<GenreTreeViewProps, keyof GenreFocus
   return props;
 }
 
+const PANEL_SECTIONS = {
+  toolbar: <p>Toolbar</p>,
+  ancestors: <p>Ancestors</p>,
+  family: <p>Family</p>,
+  itemCount: <p>Count</p>,
+};
+
 describe("GenreTreeView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -453,21 +460,75 @@ describe("GenreTreeView", () => {
     describe("detail edge tab", () => {
       const tabProps = { placement: "regions", selectedNodeId: "gp1" } as const;
 
-      it("is absent without a selection, outside regions placement, or without onCollapsedChange", () => {
+      it("is absent without a selection or outside regions placement", () => {
         renderView({ placement: "regions", onCollapsedChange: vi.fn() });
         expect(screen.queryByRole("button", { name: "Hide panel" })).not.toBeInTheDocument();
         cleanup();
         renderView({ selectedNodeId: "gp1", onCollapsedChange: vi.fn() });
         expect(screen.queryByRole("button", { name: "Hide panel" })).not.toBeInTheDocument();
-        cleanup();
+      });
+
+      describe("readiness", () => {
+        const tabWrapper = () =>
+          screen.getByRole("button", { name: "Hide panel" }).closest(".panel-edge-tab")?.parentElement as HTMLElement;
+
+        afterEach(() => {
+          vi.unstubAllGlobals();
+        });
+
+        it("stays hidden while the genre playlists load", () => {
+          useListFullGenrePlaylistsMock.mockReturnValue({ data: undefined, isPending: true });
+          renderView({ ...tabProps, viewMode: "stacked" });
+          expect(tabWrapper()).toHaveClass("invisible", "opacity-0", "pointer-events-none");
+        });
+
+        it("fades in with the wheel only after its handoff reveals it", () => {
+          const raf = stubRaf();
+          renderView({ ...tabProps, viewMode: "wheel" });
+          expect(tabWrapper()).toHaveClass("invisible", "opacity-0");
+          act(() => {
+            raf.flush();
+            raf.flush();
+          });
+          expect(tabWrapper()).toHaveClass("opacity-100");
+          expect(tabWrapper()).not.toHaveClass("invisible");
+        });
+
+        it("shows right away in a view without a handoff", () => {
+          renderView({ ...tabProps, viewMode: "stacked" });
+          expect(tabWrapper()).toHaveClass("opacity-100");
+        });
+      });
+
+      it("works uncontrolled when no callbacks are passed", () => {
         renderView(tabProps);
+        fireEvent.click(screen.getByRole("button", { name: "Extend panel" }));
+        expect(screen.getByRole("button", { name: "Shrink panel" })).toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button", { name: "Shrink panel" }));
+        fireEvent.click(screen.getByRole("button", { name: "Hide panel" }));
+        expect(screen.getByRole("button", { name: "Show panel" })).toBeInTheDocument();
         expect(screen.queryByRole("button", { name: "Hide panel" })).not.toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button", { name: "Show panel" }));
+        expect(screen.getByRole("button", { name: "Hide panel" })).toBeInTheDocument();
+      });
+
+      it("sets --layout-left-w to 0px on the document only while hidden in regions placement", () => {
+        const root = document.documentElement;
+        renderView(tabProps);
+        expect(root.style.getPropertyValue("--layout-left-w")).toBe("");
+        fireEvent.click(screen.getByRole("button", { name: "Hide panel" }));
+        expect(root.style.getPropertyValue("--layout-left-w")).toBe("0px");
+        fireEvent.click(screen.getByRole("button", { name: "Show panel" }));
+        expect(root.style.getPropertyValue("--layout-left-w")).toBe("");
+        cleanup();
+        renderView({ selectedNodeId: "gp1", collapsed: true });
+        expect(root.style.getPropertyValue("--layout-left-w")).toBe("");
       });
 
       it("hides or extends the panel from the default state", () => {
         const onCollapsedChange = vi.fn();
         const onExpandedChange = vi.fn();
-        renderView({ ...tabProps, onCollapsedChange, onExpandedChange });
+        renderView({ ...tabProps, collapsed: false, onCollapsedChange, onExpandedChange });
         fireEvent.click(screen.getByRole("button", { name: "Hide panel" }));
         expect(onCollapsedChange).toHaveBeenCalledWith(true);
         fireEvent.click(screen.getByRole("button", { name: "Extend panel" }));
@@ -1065,7 +1126,7 @@ describe("GenreTreeView", () => {
     });
   });
 
-  describe("renderExtraDetails", () => {
+  describe("renderInfoPanelBody", () => {
     function selectGenre(id = "gp1") {
       fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
       act(() => {
@@ -1073,10 +1134,22 @@ describe("GenreTreeView", () => {
       });
     }
 
-    function renderExtraDetailsFor(id: string) {
-      const output = treeWheelPropsMock.mock.calls.at(-1)?.[0].renderExtraDetails({ id });
-      render(<>{output}</>);
+    function renderBodyFor(id: string) {
+      const output = treeWheelPropsMock.mock.calls.at(-1)?.[0].renderInfoPanelBody({ id }, PANEL_SECTIONS);
+      render(
+        <>
+          {output.primary}
+          <aside>{output.aside}</aside>
+        </>,
+      );
       return output;
+    }
+
+    function sectionOrder() {
+      const labels = ["Essential tracks", "Summary", "Family", "Count"];
+      return Array.from(document.body.querySelectorAll("*"))
+        .filter((el) => el.children.length === 0 && labels.includes(el.textContent ?? ""))
+        .map((el) => el.textContent);
     }
 
     function mockOverview(overviews: Record<string, Record<string, unknown>>) {
@@ -1102,16 +1175,43 @@ describe("GenreTreeView", () => {
       renderView();
       selectGenre();
 
-      renderExtraDetailsFor("gp1");
+      renderBodyFor("gp1");
 
       expect(useFetchGenreOverviewMock).toHaveBeenCalledWith("c1");
     });
 
-    it("returns null for a node with no associated criteria", () => {
+    it("keeps the built-in toolbar, Family and Ancestors for a node with no associated criteria", () => {
       renderView();
       selectGenre("gp3");
 
-      expect(renderExtraDetailsFor("gp3")).toBeNull();
+      renderBodyFor("gp3");
+
+      expect(screen.getByText("Toolbar")).toBeInTheDocument();
+      expect(screen.getByText("Family")).toBeInTheDocument();
+      expect(screen.getByRole("complementary")).toHaveTextContent("Ancestors");
+      expect(screen.queryByText("Count")).not.toBeInTheDocument();
+    });
+
+    it("places Family right after the Summary, Ancestors in the aside, and drops the count row", () => {
+      mockOverview({ c1: { summary: "Loud guitars", essentialSongs: [] } });
+      renderView();
+      selectGenre();
+
+      renderBodyFor("gp1");
+
+      expect(sectionOrder()).toEqual(["Summary", "Family", "Essential tracks"]);
+      expect(screen.getByRole("complementary")).toHaveTextContent("Ancestors");
+      expect(screen.getByRole("complementary")).not.toHaveTextContent("Family");
+    });
+
+    it("shows Family after the Summary skeleton while the overview loads", () => {
+      useFetchGenreOverviewMock.mockReturnValue({ data: undefined, isPending: true });
+      renderView();
+      selectGenre();
+
+      renderBodyFor("gp1");
+
+      expect(sectionOrder()).toEqual(["Summary", "Family"]);
     });
 
     it("renders essential tracks and consumer detail extras", () => {
@@ -1129,7 +1229,7 @@ describe("GenreTreeView", () => {
       });
       selectGenre();
 
-      renderExtraDetailsFor("gp1");
+      renderBodyFor("gp1");
 
       expect(screen.getByText("Track One")).toBeInTheDocument();
       expect(screen.getByText("Track Two")).toBeInTheDocument();
@@ -1141,7 +1241,7 @@ describe("GenreTreeView", () => {
       renderView();
       selectGenre();
 
-      renderExtraDetailsFor("gp1");
+      renderBodyFor("gp1");
 
       expect(screen.getByText("Loud guitars")).toBeInTheDocument();
       expect(screen.queryByText("Essential tracks")).not.toBeInTheDocument();
@@ -1152,7 +1252,7 @@ describe("GenreTreeView", () => {
       renderView();
       selectGenre();
 
-      renderExtraDetailsFor("gp1");
+      renderBodyFor("gp1");
 
       expect(screen.getByText("Improvised music with swung rhythms.")).toBeInTheDocument();
     });
@@ -1162,7 +1262,7 @@ describe("GenreTreeView", () => {
       renderView();
       selectGenre("gp1");
 
-      renderExtraDetailsFor("gp2");
+      renderBodyFor("gp2");
 
       expect(screen.getByText("Blues summary")).toBeInTheDocument();
       expect(screen.queryByText("Jazz summary")).not.toBeInTheDocument();
@@ -1173,18 +1273,19 @@ describe("GenreTreeView", () => {
       renderView();
       selectGenre();
 
-      renderExtraDetailsFor("gp1");
+      renderBodyFor("gp1");
 
       expect(screen.getByTestId("genre-detail-extras-skeleton")).toBeInTheDocument();
     });
 
-    it("renders nothing when the overview failed to load", () => {
+    it("renders only Family when the overview failed to load", () => {
       renderView();
       selectGenre();
 
-      renderExtraDetailsFor("gp1");
+      renderBodyFor("gp1");
 
       expect(screen.queryByText("Summary")).not.toBeInTheDocument();
+      expect(screen.getByText("Family")).toBeInTheDocument();
     });
 
     it("renders blank summary and essential tracks placeholders when there is no summary, and no essential tracks", () => {
@@ -1192,19 +1293,19 @@ describe("GenreTreeView", () => {
       renderView();
       selectGenre();
 
-      renderExtraDetailsFor("gp1");
+      renderBodyFor("gp1");
 
       expect(screen.getByText("Summary")).toBeInTheDocument();
       expect(screen.getByText("Essential tracks")).toBeInTheDocument();
       expect(screen.getAllByText("—")).toHaveLength(2);
     });
 
-    // Perf regression guard: a selection must not hand the tree a new renderExtraDetails, and the
+    // Perf regression guard: a selection must not hand the tree a new renderInfoPanelBody, and the
     // tree must not own the overview fetch — otherwise every fetch state change re-renders it.
-    it("keeps renderExtraDetails stable across selections and never fetches from the tree's render", () => {
+    it("keeps renderInfoPanelBody stable across selections and never fetches from the tree's render", () => {
       renderView();
       fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
-      const before = treeWheelPropsMock.mock.calls.at(-1)?.[0].renderExtraDetails;
+      const before = treeWheelPropsMock.mock.calls.at(-1)?.[0].renderInfoPanelBody;
 
       act(() => {
         treeWheelPropsMock.mock.calls.at(-1)?.[0].onSelectedNodeChange({ id: "gp1" });
@@ -1213,7 +1314,7 @@ describe("GenreTreeView", () => {
         treeWheelPropsMock.mock.calls.at(-1)?.[0].onSelectedNodeChange({ id: "gp2" });
       });
 
-      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].renderExtraDetails).toBe(before);
+      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].renderInfoPanelBody).toBe(before);
       expect(useFetchGenreOverviewMock).not.toHaveBeenCalled();
     });
   });
@@ -1325,10 +1426,10 @@ describe("GenreTreeView", () => {
       fireEvent.click(screen.getByText("Jazz"));
 
       fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
-      const output = treeWheelPropsMock.mock.calls.at(-1)?.[0].renderExtraDetails({
+      const output = treeWheelPropsMock.mock.calls.at(-1)?.[0].renderInfoPanelBody({
         id: "gp1",
-      });
-      render(<>{output}</>);
+      }, PANEL_SECTIONS);
+      render(<>{output.primary}</>);
 
       expect(screen.getByText("Improvised music with swung rhythms.")).toBeInTheDocument();
     });
@@ -1372,8 +1473,8 @@ describe("GenreTreeView", () => {
     });
 
     function openBand(id: string) {
-      const output = treeWheelPropsMock.mock.calls.at(-1)?.[0].renderExtraDetails({ id });
-      render(<>{output}</>);
+      const output = treeWheelPropsMock.mock.calls.at(-1)?.[0].renderInfoPanelBody({ id }, PANEL_SECTIONS);
+      render(<>{output.primary}</>);
     }
 
     it("plays the selected genre from the action band's Play button", () => {
@@ -1439,8 +1540,8 @@ describe("GenreTreeView", () => {
 
       fireEvent.change(screen.getByRole("textbox", { name: "Search a genre" }), { target: { value: "Main" } });
       fireEvent.click(screen.getByRole("button", { name: "Mainstream Pop" }));
-      const output = treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0].renderExtraDetails({ id: "gp1" });
-      render(<>{output}</>);
+      const output = treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0].renderInfoPanelBody({ id: "gp1" }, PANEL_SECTIONS);
+      render(<>{output.primary}</>);
       fireEvent.click(screen.getByRole("button", { name: "Focus" }));
 
       expect(onFocusGenreChange).toHaveBeenCalledWith("gp1", "zoom-in");

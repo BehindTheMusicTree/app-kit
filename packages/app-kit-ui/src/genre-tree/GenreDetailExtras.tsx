@@ -30,6 +30,8 @@ export type GenreDetailExtrasProps<O extends CriteriaOverview> = GenreDetailSlot
   renderArtistLink?: RenderArtistLink;
   /** When set, the tracks list shows only this artist's songs in the genre. */
   artist?: { uuid: string; name: string } | null;
+  /** genre-tree-view's Family section, placed right after the Summary. */
+  family: ReactNode;
 };
 
 // Owns the overview fetch so its pending → success transitions re-render only the info panel,
@@ -44,6 +46,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
   renderArtistLink,
   renderSummary,
   renderEssentialTracks,
+  family,
   ...trackSlots
 }: GenreDetailExtrasProps<O>) {
   const trackNoun = useTrackNoun();
@@ -56,13 +59,16 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
 
   if (isPending) {
     return (
-      <div className="gtv-info-panel-children" aria-busy="true" data-testid="genre-detail-extras-skeleton">
-        <span className="gtv-info-panel-children-title">Summary</span>
-        <Skeleton className="h-4 w-3/4" />
-      </div>
+      <>
+        <div className="gtv-info-panel-children" aria-busy="true" data-testid="genre-detail-extras-skeleton">
+          <span className="gtv-info-panel-children-title">Summary</span>
+          <Skeleton className="h-4 w-3/4" />
+        </div>
+        {family}
+      </>
     );
   }
-  if (!overview) return null;
+  if (!overview) return <>{family}</>;
 
   const { summary, description, summarySourceUrl, essentialSongs } = overview;
 
@@ -101,6 +107,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
           Source: Wikipedia
         </a>
       )}
+      {family}
       {renderGenreDetailExtras?.(overview)}
       {renderEssentialTracks ? (
         renderEssentialTracks(overview)

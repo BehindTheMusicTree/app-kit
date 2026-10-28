@@ -11,6 +11,26 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [23.0.0] - 2026-10-28
+
+### Fixed
+
+- `GenreTreeView` with `placement="regions"`: the info panel's edge tab fades in with the tree instead of showing before the panel while the data loads.
+
+### Changed
+
+- `GenreTreeView`: the info panel body is composed in the same order in compact and expanded mode: action toolbar, action band, Summary, Family, essential tracks, then the songs list, with Ancestors in the left column when expanded. The separate "Song count" row is gone; the count stays in the songs section title.
+- **Breaking:** the `renderExtraDetails` prop of `TreePerRoot`, `TreeWheel` and `TreeWheelRadialPopCore` is now `renderInfoPanelBody(node, sections) => { primary, aside? }` (types from `@behindthemusictree/genre-tree-view`). Requires `@behindthemusictree/genre-tree-view` 5.0.0.
+- `GenreTreeView` with `placement="regions"`: the info panel's edge tab (hide / extend) works without `collapsed`, `onCollapsedChange` or `onExpandedChange`; they now only control the state. The view sets `--layout-left-w: 0px` on the document while the panel is hidden, so hosts no longer need to.
+
+### Removed
+
+- Vercel playground deployment: the `Sync playground env to Vercel` workflow, `scripts/sync-vercel-playground-env.mjs`, `apps/playground/vercel.json` and the `VITE_VERCEL_ENV` define. The playground is now run locally only.
+
+### Changed
+
+- Tooling moves to Node 26: `.nvmrc` pins the major, root `engines.node` is `>=26 <27` (enforced by `engineStrict`), and the CI workflows read `.nvmrc`. The published packages are unaffected.
+
 ## [22.0.0] - 2026-10-28
 
 ## [21.0.0] - 2026-10-28
