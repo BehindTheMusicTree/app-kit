@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Removed
+
+- Vercel playground deployment: the `Sync playground env to Vercel` workflow, `scripts/sync-vercel-playground-env.mjs`, `apps/playground/vercel.json` and the `VITE_VERCEL_ENV` define. The playground is now run locally only.
+
 ## [22.0.0] - 2026-10-28
 
 ## [21.0.0] - 2026-10-28

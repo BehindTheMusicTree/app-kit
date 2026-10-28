@@ -37,7 +37,7 @@ export interface BuildBackendBaseUrlParams {
   stagingSuffix?: string;
   /**
    * When set, short-circuits to this value instead of deriving from subdomain/env — mirrors
-   * grow's local/remote dev override pattern (`NEXT_PUBLIC_BACKEND_BASE_URL` off Vercel).
+   * grow's local/remote dev override pattern (`NEXT_PUBLIC_BACKEND_BASE_URL`).
    */
   overrideUrl?: string;
 }

@@ -48,7 +48,6 @@ export default defineConfig(({ mode }) => {
       ],
     },
     define: {
-      "import.meta.env.VITE_VERCEL_ENV": JSON.stringify(process.env.VERCEL_ENV ?? ""),
       "import.meta.env.VITE_APP_KIT_VERSION": JSON.stringify(appKitVersion),
     },
     server: {
