@@ -7,6 +7,7 @@
  */
 import { TrackBase } from "../schemas/track/base";
 import { CriteriaPlaylistMinimum } from "../schemas/criteria-playlist/minimum";
+import type { GenreUuid } from "../schemas/ids";
 import { Scope } from "../../transport/lib/scope";
 import { TrackListOriginType } from "./TrackListOriginType";
 
@@ -52,6 +53,8 @@ export class TrackListOriginFromArtist extends TrackListOrigin {
     scope: Scope,
     public ordering: ArtistSongsOrdering,
     public from?: string,
+    /** Narrows the artist's songs to this genre's subtree. */
+    public genreUuid?: GenreUuid,
   ) {
     super(TrackListOriginType.ARTIST, artist.name, artist.uuid, scope);
   }

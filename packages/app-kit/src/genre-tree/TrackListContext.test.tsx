@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { z } from "zod";
 import type { ReactNode } from "react";
+import type { GenreUuid } from "./schemas/ids";
 
 const { fetchMock, useSessionMock, useQueryWithParseMock, loadTrackForPlayerMock, showTrackListSidebarMock } =
   vi.hoisted(() => ({
@@ -213,6 +214,24 @@ describe("TrackListContext", () => {
       expect(fetchMock.mock.calls[0][4]).toMatchObject({ from: "t1", page: 1 });
       expect(fetchMock.mock.calls[1][4]).toMatchObject({ from: "t1", page: 2, artist: "a1", ordering: "title" });
       expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t1");
+    });
+
+    it("scopes the list to a genre with ?genre= and keeps it for later pages", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      const genreUuid = "g1" as GenreUuid;
+      fetchMock.mockResolvedValueOnce(makeArtistPage(makeTracks(20), { next: true, total: 21 }));
+
+      await act(async () => {
+        await result.current.playNewTrackListFromArtist(artist, "reference", { ordering: "title", genreUuid });
+      });
+      fetchMock.mockResolvedValueOnce(makeArtistPage(makeTracks(1, "u"), { page: 2, total: 21 }));
+      await act(async () => {
+        await result.current.loadMore();
+      });
+
+      expect(fetchMock.mock.calls[0][4]).toMatchObject({ artist: "a1", genre: "g1", playable: true, page: 1 });
+      expect(fetchMock.mock.calls[1][4]).toMatchObject({ artist: "a1", genre: "g1", page: 2 });
+      expect(result.current.trackList?.origin).toMatchObject({ type: TrackListOriginType.ARTIST, genreUuid });
     });
 
     it("loadMore appends page 2 and finishes paging", async () => {

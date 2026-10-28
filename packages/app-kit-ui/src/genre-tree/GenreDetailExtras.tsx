@@ -28,6 +28,8 @@ export type GenreDetailExtrasProps<O extends CriteriaOverview> = GenreDetailSlot
   criteriaOverviewSchema?: z.ZodType<O, z.ZodTypeDef, unknown>;
   renderGenreDetailExtras?: (overview: O) => ReactNode;
   renderArtistLink?: RenderArtistLink;
+  /** When set, the tracks list shows only this artist's songs in the genre. */
+  artist?: { uuid: string; name: string } | null;
 };
 
 // Owns the overview fetch so its pending → success transitions re-render only the info panel,
