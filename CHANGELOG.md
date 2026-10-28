@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [21.0.0] - 2026-10-28
+
 ### Breaking
 
 - `app-kit-ui` requires `@behindthemusictree/ui` `^0.7.0` (was `^0.4.0`).
