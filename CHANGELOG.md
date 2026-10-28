@@ -11,9 +11,21 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Breaking
+
+- `app-kit-ui` requires `@behindthemusictree/ui` `^0.7.0` (was `^0.4.0`).
+
+### Added
+
+- `GenreTreeView` opens an artist detail panel (photo, type, country, years, links, members, songs, discography) when an artist search suggestion is picked. It is uncontrolled by default; `artistUuid` / `onArtistUuidChange` control it, e.g. to sync it with the URL. Member names switch the panel to that artist unless the host gives `renderArtistLink`.
+- `useArtist(uuid, getBackendBaseUrl)`, `ArtistDetailedSchema` and its types (`ArtistDetailed`, `ArtistImage`, `ArtistMembership`, `ArtistLink`, `ArtistAlbum`, `ARTIST_LINK_KINDS`) in `@behindthemusictree/app-kit/genre-tree`.
+
 ### Changed
 
 - `app-kit-ui` uses genre-tree-view 4.7.0: the overlay panel draws the dividers between its content blocks.
+- `GenreTreeView`'s `onArtistSelect` is optional and only notifies the host; the view opens the artist itself.
+- `GenreTreeView` keeps the selected genre and the open artist mutually exclusive: opening an artist clears the genre (`onSelectedNodeIdChange(null)`), selecting a genre closes the artist (`onArtistUuidChange(null)`). A host `overlayPanel` still takes precedence over the artist panel.
+- `artistSearchBaseUrl` also serves the artist panel.
 
 ## [20.0.0] - 2026-10-28
 
