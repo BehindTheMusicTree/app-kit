@@ -15,6 +15,10 @@ easy to spot when bumping.
 
 - Vercel playground deployment: the `Sync playground env to Vercel` workflow, `scripts/sync-vercel-playground-env.mjs`, `apps/playground/vercel.json` and the `VITE_VERCEL_ENV` define. The playground is now run locally only.
 
+### Changed
+
+- Tooling moves to Node 26: `.nvmrc` pins the major, root `engines.node` is `>=26 <27` (enforced by `engineStrict`), and the CI workflows read `.nvmrc`. The published packages are unaffected.
+
 ## [22.0.0] - 2026-10-28
 
 ## [21.0.0] - 2026-10-28
