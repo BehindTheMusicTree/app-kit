@@ -6,7 +6,7 @@ import { Scope } from "../transport/lib/scope";
 import { CriteriaPlaylistSimple } from "./schemas/criteria-playlist/simple";
 import { CriteriaOverview } from "./schemas/criteria/overview";
 import { usePrefetchGenreOverview } from "./useGenre";
-import { useListFullGenrePlaylists } from "./useGenrePlaylist";
+import { useVisibleGenrePlaylists } from "./useVisibleGenrePlaylists";
 import { getGenrePlaylistsGroupedByRoot, hasMainstreamPopRoot } from "./lib/genre-playlist-helpers";
 
 export type GenreViewMode = "stacked" | "wheel" | "pop-core" | "outline";
@@ -20,6 +20,8 @@ export interface UseGenreTreeViewStateOptions<O extends CriteriaOverview = Crite
   getBackendBaseUrl: () => string;
   /** Controlled view mode; when provided the hook never changes it. */
   viewMode?: GenreViewMode;
+  /** Narrows the tree to this artist's footprint (see `useVisibleGenrePlaylists`). */
+  artistUuid?: string | null;
   /** Controlled selection (a genre playlist uuid, i.e. the tree node id). */
   selectedNodeId?: string | null;
   /** Called on every user-driven selection change (node click, search pick, search clear). */
@@ -55,6 +57,7 @@ export function useGenreTreeViewState<O extends CriteriaOverview = CriteriaOverv
   scope,
   getBackendBaseUrl,
   viewMode: controlledViewMode,
+  artistUuid,
   selectedNodeId: controlledSelectedNodeId,
   onSelectedNodeIdChange,
   criteriaOverviewSchema,
@@ -73,8 +76,7 @@ export function useGenreTreeViewState<O extends CriteriaOverview = CriteriaOverv
     [isSelectionControlled, onSelectedNodeIdChange],
   );
 
-  const { data, isPending: isLoading } = useListFullGenrePlaylists(scope, getBackendBaseUrl);
-  const genrePlaylists = useMemo(() => data ?? [], [data]);
+  const { isLoading, genrePlaylists } = useVisibleGenrePlaylists({ scope, getBackendBaseUrl, artistUuid });
 
   const genrePlaylistByNodeId = useMemo(() => new Map<string, CriteriaPlaylistSimple>(genrePlaylists.map((gp) => [gp.uuid, gp])), [genrePlaylists]);
 

@@ -8,6 +8,9 @@ describe("genre-tree barrel", () => {
     expect(genreTree.useGenreSearch).toBeTypeOf("function");
     expect(genreTree.useArtist).toBeTypeOf("function");
     expect(genreTree.useArtistSearch).toBeTypeOf("function");
+    expect(genreTree.useArtistGenreCounts).toBeTypeOf("function");
+    expect(genreTree.useVisibleGenrePlaylists).toBeTypeOf("function");
+    expect(genreTree.pruneGenrePlaylistsForArtist).toBeTypeOf("function");
     expect(genreTree.useListGenres).toBeTypeOf("function");
     expect(genreTree.useFetchGenre).toBeTypeOf("function");
     expect(genreTree.useListGenrePlaylists).toBeTypeOf("function");

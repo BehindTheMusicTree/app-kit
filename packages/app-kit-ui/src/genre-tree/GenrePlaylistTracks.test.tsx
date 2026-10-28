@@ -56,11 +56,12 @@ describe("GenrePlaylistTracks", () => {
   let observerCallback: IntersectionObserverCallback;
   const fetchGenrePlaylistTracksPage = vi.fn();
   const playNewTrackListFromGenrePlaylist = vi.fn().mockResolvedValue(undefined);
+  const playNewTrackListFromArtist = vi.fn().mockResolvedValue(undefined);
   const handlePlayPauseAction = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
-    useTrackListMock.mockReturnValue({ fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist });
+    useTrackListMock.mockReturnValue({ fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist, playNewTrackListFromArtist });
     usePlayerMock.mockReturnValue({ playerTrackObject: null, playState: PlayStates.STOPPED, handlePlayPauseAction });
     vi.stubGlobal(
       "IntersectionObserver",
@@ -75,7 +76,11 @@ describe("GenrePlaylistTracks", () => {
     vi.unstubAllGlobals();
   });
 
-  const renderTracks = (scope: "me" | "reference" = "reference", renderArtistLink?: RenderArtistLink) =>
+  const renderTracks = (
+    scope: "me" | "reference" = "reference",
+    renderArtistLink?: RenderArtistLink,
+    artist?: { uuid: string; name: string },
+  ) =>
     render(
       <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
         <GenrePlaylistTracks
@@ -84,6 +89,7 @@ describe("GenrePlaylistTracks", () => {
           scope={scope}
           getBackendBaseUrl={() => "https://b"}
           renderArtistLink={renderArtistLink}
+          artist={artist}
         />
       </QueryClientProvider>,
     );
@@ -109,6 +115,29 @@ describe("GenrePlaylistTracks", () => {
     expect(fetchMock).toHaveBeenLastCalledWith("library/songs/", true, false, {}, { genre: makeGenreUuid("g1"), pageSize: 100, withTotal: false, cursor: "CUR2" });
     expect(fetchGenrePlaylistTracksPage).not.toHaveBeenCalled();
     expect(playNewTrackListFromGenrePlaylist).toHaveBeenCalledWith(genrePlaylist, "reference", { startSongUuid: "b0" });
+  });
+
+  it("lists and plays only the artist's songs in the genre when an artist is set", async () => {
+    const artist = { uuid: "a1", name: "Band" };
+    fetchMock.mockResolvedValueOnce(songsPage(makeTracks(1, "x")));
+
+    renderTracks("reference", undefined, artist);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Play Song x0" }));
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "library/songs/",
+      true,
+      false,
+      {},
+      { genre: makeGenreUuid("g1"), artist: "a1", pageSize: 100, withTotal: false },
+    );
+    expect(playNewTrackListFromArtist).toHaveBeenCalledWith(artist, "reference", {
+      startSongUuid: "x0",
+      ordering: "title",
+      genreUuid: makeGenreUuid("g1"),
+    });
+    expect(playNewTrackListFromGenrePlaylist).not.toHaveBeenCalled();
   });
 
   it("shows a dash for an empty catalogue and no count when the total is null", async () => {

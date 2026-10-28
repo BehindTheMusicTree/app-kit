@@ -16,9 +16,15 @@ easy to spot when bumping.
 ### Breaking
 
 - `app-kit-ui` requires `@behindthemusictree/ui` `^0.7.0` (was `^0.4.0`).
+- `GenreTreeView`: selecting a genre no longer closes the open artist (`onArtistUuidChange(null)` is not called). The artist stays as a filter; hosts that relied on the exclusion to clear their artist state must clear it themselves.
+- `GenreTreeView`: with an artist open, the tree (and the `genrePlaylists` hosts validate against) is pruned to the genres the artist has songs in, so a URL-restored genre outside that footprint is dropped.
+- `PlayArtistOptions` gains an optional `genreUuid`, and `TrackListOriginFromArtist` a trailing optional `genreUuid` constructor argument.
 
 ### Added
 
+- Artist filter in `GenreTreeView`: the tree shows only genres the artist has songs in (plus Mainstream Pop and the scene children of Core electronic), a chip next to the search bar shows the artist (click reopens the panel, x clears the filter), a selected genre's panel lists only the artist's songs, and play buttons queue only the artist's songs in that genre.
+- `useArtistGenreCounts`, `useVisibleGenrePlaylists`, `pruneGenrePlaylistsForArtist`, `ArtistGenreCountSchema` in `@behindthemusictree/app-kit/genre-tree`; `useGenreTreeViewState` takes an optional `artistUuid`.
+- `GenrePlaylistTracks` and `GenreDetailExtras` take an optional `artist`; the tree components take an optional `playback`.
 - `GenreTreeView` opens an artist detail panel (photo, type, country, years, links, members, songs, discography) when an artist search suggestion is picked. It is uncontrolled by default; `artistUuid` / `onArtistUuidChange` control it, e.g. to sync it with the URL. Member names switch the panel to that artist unless the host gives `renderArtistLink`.
 - Like a genre, the artist panel has no title or close button of its own: its name fills the search field, whose clear button closes it, and the edge tab extends, shrinks and hides it. `artistExpanded` / `onArtistExpandedChange` control its expanded state (uncontrolled, each artist opens compact).
 - `useArtist(uuid, getBackendBaseUrl)`, `ArtistDetailedSchema` and its types (`ArtistDetailed`, `ArtistImage`, `ArtistMembership`, `ArtistLink`, `ArtistAlbum`, `ARTIST_LINK_KINDS`) in `@behindthemusictree/app-kit/genre-tree`.
@@ -27,7 +33,7 @@ easy to spot when bumping.
 
 - `app-kit-ui` uses genre-tree-view 4.8.0: the overlay panel draws the dividers between its content blocks, and can hide its title and close button.
 - `GenreTreeView`'s `onArtistSelect` is optional and only notifies the host; the view opens the artist itself.
-- `GenreTreeView` keeps the selected genre and the open artist mutually exclusive: opening an artist clears the genre (`onSelectedNodeIdChange(null)`), selecting a genre closes the artist (`onArtistUuidChange(null)`). A host `overlayPanel` still takes precedence over the artist panel.
+- `GenreTreeView`: opening an artist clears the selected genre (`onSelectedNodeIdChange(null)`); a selected genre's panel takes precedence over the artist panel. A host `overlayPanel` still takes precedence over the artist panel.
 - `artistSearchBaseUrl` also serves the artist panel.
 
 ## [20.0.0] - 2026-10-28
