@@ -23,8 +23,8 @@ type ValidatedMutationOptions<TData, TError, TVariables, TContext> = Omit<
   UseMutationOptions<TData, TError, TVariables, TContext>,
   "mutationFn"
 > & {
-  inputSchema: z.ZodType<TVariables, z.ZodTypeDef, unknown>;
-  outputSchema: z.ZodType<TData, z.ZodTypeDef, unknown>;
+  inputSchema: z.ZodType<TVariables, unknown>;
+  outputSchema: z.ZodType<TData, unknown>;
   mutationFn: (data: TVariables) => Promise<unknown>;
 };
 
@@ -42,7 +42,7 @@ export function useValidatedMutation<TData, TError = Error, TVariables = unknown
       setFormErrors([]);
       const parsedInput = inputSchema.safeParse(data);
       if (!parsedInput.success) {
-        const fieldErrors = parsedInput.error.errors.map((error) => ({
+        const fieldErrors = parsedInput.error.issues.map((error) => ({
           field: error.path.join("."),
           message: error.message,
         }));
@@ -65,7 +65,7 @@ export function useValidatedMutation<TData, TError = Error, TVariables = unknown
             const errorResponse = z
               .object({
                 details: z.object({
-                  fieldErrors: z.record(z.array(z.object({ message: z.string() }))),
+                  fieldErrors: z.record(z.string(), z.array(z.object({ message: z.string() }))),
                 }),
               })
               .parse((error as unknown as { json: unknown }).json);
