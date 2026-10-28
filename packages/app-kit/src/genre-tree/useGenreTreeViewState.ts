@@ -26,7 +26,7 @@ export interface UseGenreTreeViewStateOptions<O extends CriteriaOverview = Crite
   selectedNodeId?: string | null;
   /** Called on every user-driven selection change (node click, search pick, search clear). */
   onSelectedNodeIdChange?: (nodeId: string | null) => void;
-  criteriaOverviewSchema?: z.ZodType<O, z.ZodTypeDef, unknown>;
+  criteriaOverviewSchema?: z.ZodType<O, unknown>;
 }
 
 export interface UseGenreTreeViewStateResult {

@@ -110,14 +110,14 @@ export const useListFullGenrePlaylists = (scope: Scope, getBackendBaseUrl: () =>
   };
 };
 
-export const useFetchGenrePlaylist = <S extends z.ZodTypeAny>(
+export const useFetchGenrePlaylist = <T>(
   uuid: GenrePlaylistUuid,
   getBackendBaseUrl: () => string,
-  criteriaPlaylistDetailedSchema: S,
+  criteriaPlaylistDetailedSchema: z.ZodType<T, unknown>,
 ) => {
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
   const { session, sessionRestored } = useSession();
-  return useQueryWithParse<z.infer<S>>({
+  return useQueryWithParse<T>({
     queryKey: genrePlaylistQueryKeys.me.detail(uuid),
     queryFn: () => fetch(genrePlaylistEndpoints.me.detail(uuid)),
     schema: criteriaPlaylistDetailedSchema,

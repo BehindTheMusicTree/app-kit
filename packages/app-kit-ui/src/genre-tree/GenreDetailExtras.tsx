@@ -25,7 +25,7 @@ export type GenreDetailExtrasProps<O extends CriteriaOverview> = GenreDetailSlot
   genrePlaylist: CriteriaPlaylistMinimum;
   scope: Scope;
   getBackendBaseUrl: () => string;
-  criteriaOverviewSchema?: z.ZodType<O, z.ZodTypeDef, unknown>;
+  criteriaOverviewSchema?: z.ZodType<O, unknown>;
   renderGenreDetailExtras?: (overview: O) => ReactNode;
   renderArtistLink?: RenderArtistLink;
   /** When set, the tracks list shows only this artist's songs in the genre. */

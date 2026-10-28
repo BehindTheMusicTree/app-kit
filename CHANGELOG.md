@@ -11,6 +11,16 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [24.0.0] - 2026-10-29
+
+### Breaking
+
+- **Breaking:** `zod` moves from 3 to 4 (`^4.6.6`) in `app-kit` and `app-kit-ui`, closing the open zod 3 advisory. Schemas passed into app-kit hooks (`useFetchGenrePlaylist`, `useValidatedMutation`, `useQueryWithParse`, the criteria schemas) must be built with zod 4. `useFetchGenrePlaylist` is now generic over the schema output (`<T>(…, schema: z.ZodType<T, unknown>)`) instead of the schema type.
+
+### Changed
+
+- `HttpUrlSchema` uses `z.url({ protocol: /^https?$/ })`; `parseWithLog` logs `z.flattenError`; `useValidatedMutation` reads `ZodError.issues` and uses the two-argument `z.record`.
+
 ## [23.0.1] - 2026-10-29
 
 ### Security

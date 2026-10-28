@@ -55,7 +55,7 @@ export function useFetchGenreDetail<D extends CriteriaDetailed = CriteriaDetaile
   scope: Scope,
   getBackendBaseUrl: () => string,
   // The default only applies when D is left at its CriteriaDetailed default.
-  schema: z.ZodType<D, z.ZodTypeDef, unknown> = CriteriaDetailedSchema as unknown as z.ZodType<D, z.ZodTypeDef, unknown>,
+  schema: z.ZodType<D, unknown> = CriteriaDetailedSchema as unknown as z.ZodType<D, unknown>,
 ) {
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
   const queryKeys = scope === "reference" ? genreQueryKeys.reference : genreQueryKeys.me;
@@ -77,7 +77,7 @@ const GENRE_OVERVIEW_STALE_TIME_MS = 60_000;
 function useGenreOverviewQueryOptions<O extends CriteriaOverview>(
   scope: Scope,
   getBackendBaseUrl: () => string,
-  schema: z.ZodType<O, z.ZodTypeDef, unknown>,
+  schema: z.ZodType<O, unknown>,
 ) {
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
 
@@ -101,7 +101,7 @@ export function useFetchGenreOverview<O extends CriteriaOverview = CriteriaOverv
   scope: Scope,
   getBackendBaseUrl: () => string,
   // The default only applies when O is left at its CriteriaOverview default.
-  schema: z.ZodType<O, z.ZodTypeDef, unknown> = CriteriaOverviewSchema as unknown as z.ZodType<O, z.ZodTypeDef, unknown>,
+  schema: z.ZodType<O, unknown> = CriteriaOverviewSchema as unknown as z.ZodType<O, unknown>,
 ) {
   const queryOptions = useGenreOverviewQueryOptions(scope, getBackendBaseUrl, schema);
   // Disabled queries never run queryFn, so the empty placeholder is only a stable cache key.
@@ -111,7 +111,7 @@ export function useFetchGenreOverview<O extends CriteriaOverview = CriteriaOverv
 export function usePrefetchGenreOverview<O extends CriteriaOverview = CriteriaOverview>(
   scope: Scope,
   getBackendBaseUrl: () => string,
-  schema: z.ZodType<O, z.ZodTypeDef, unknown> = CriteriaOverviewSchema as unknown as z.ZodType<O, z.ZodTypeDef, unknown>,
+  schema: z.ZodType<O, unknown> = CriteriaOverviewSchema as unknown as z.ZodType<O, unknown>,
 ) {
   const queryClient = useQueryClient();
   const queryOptions = useGenreOverviewQueryOptions(scope, getBackendBaseUrl, schema);
