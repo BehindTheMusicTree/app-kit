@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [20.0.0] - 2026-10-28
+
 ### Breaking
 
 - Genre and genre-playlist UUIDs are branded types, `GenreUuid` and `GenrePlaylistUuid`, exported from `@behindthemusictree/app-kit/genre-tree`. Genre endpoints, query keys and hooks (`useUpdateGenre`, `useDeleteGenre`, `useRefreshGenreTree`, `useGenre`, `useGenrePlaylist`, `TrackListContext`, `songs.byGenre`) now require the branded type. Plain strings no longer compile.
