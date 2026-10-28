@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- `GenreTreeView` with `placement="regions"`: the info panel's edge tab (hide / extend) works without `collapsed`, `onCollapsedChange` or `onExpandedChange`; they now only control the state. The view sets `--layout-left-w: 0px` on the document while the panel is hidden, so hosts no longer need to.
+
 ## [22.0.0] - 2026-10-28
 
 ## [21.0.0] - 2026-10-28

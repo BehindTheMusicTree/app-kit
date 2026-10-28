@@ -453,21 +453,43 @@ describe("GenreTreeView", () => {
     describe("detail edge tab", () => {
       const tabProps = { placement: "regions", selectedNodeId: "gp1" } as const;
 
-      it("is absent without a selection, outside regions placement, or without onCollapsedChange", () => {
+      it("is absent without a selection or outside regions placement", () => {
         renderView({ placement: "regions", onCollapsedChange: vi.fn() });
         expect(screen.queryByRole("button", { name: "Hide panel" })).not.toBeInTheDocument();
         cleanup();
         renderView({ selectedNodeId: "gp1", onCollapsedChange: vi.fn() });
         expect(screen.queryByRole("button", { name: "Hide panel" })).not.toBeInTheDocument();
-        cleanup();
+      });
+
+      it("works uncontrolled when no callbacks are passed", () => {
         renderView(tabProps);
+        fireEvent.click(screen.getByRole("button", { name: "Extend panel" }));
+        expect(screen.getByRole("button", { name: "Shrink panel" })).toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button", { name: "Shrink panel" }));
+        fireEvent.click(screen.getByRole("button", { name: "Hide panel" }));
+        expect(screen.getByRole("button", { name: "Show panel" })).toBeInTheDocument();
         expect(screen.queryByRole("button", { name: "Hide panel" })).not.toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button", { name: "Show panel" }));
+        expect(screen.getByRole("button", { name: "Hide panel" })).toBeInTheDocument();
+      });
+
+      it("sets --layout-left-w to 0px on the document only while hidden in regions placement", () => {
+        const root = document.documentElement;
+        renderView(tabProps);
+        expect(root.style.getPropertyValue("--layout-left-w")).toBe("");
+        fireEvent.click(screen.getByRole("button", { name: "Hide panel" }));
+        expect(root.style.getPropertyValue("--layout-left-w")).toBe("0px");
+        fireEvent.click(screen.getByRole("button", { name: "Show panel" }));
+        expect(root.style.getPropertyValue("--layout-left-w")).toBe("");
+        cleanup();
+        renderView({ selectedNodeId: "gp1", collapsed: true });
+        expect(root.style.getPropertyValue("--layout-left-w")).toBe("");
       });
 
       it("hides or extends the panel from the default state", () => {
         const onCollapsedChange = vi.fn();
         const onExpandedChange = vi.fn();
-        renderView({ ...tabProps, onCollapsedChange, onExpandedChange });
+        renderView({ ...tabProps, collapsed: false, onCollapsedChange, onExpandedChange });
         fireEvent.click(screen.getByRole("button", { name: "Hide panel" }));
         expect(onCollapsedChange).toHaveBeenCalledWith(true);
         fireEvent.click(screen.getByRole("button", { name: "Extend panel" }));

@@ -37,6 +37,8 @@ Third-party brand colors (Spotify, Google) stay literal.
 
 `PlayerPanel` also reads the layout tokens `--layout-gutter`, `--layout-band-top`, `--layout-right-w` and `--layout-detail-panel-w` from the same stylesheet.
 
+`GenreTreeView` with `placement="regions"` sets `--layout-left-w` to `0px` on the document while its info panel is hidden, so the stylesheet can widen the center column.
+
 ## Extension points
 
 - `GenreTreeView` takes `className` on its root (no outer margin by default) and

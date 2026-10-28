@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState, type ComponentProps, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from "react";
 import { z } from "zod";
 import { Plus } from "lucide-react";
 import { IconTextButton, Button, SegmentedControl } from "@behindthemusictree/ui";
@@ -160,7 +160,7 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   GenrePlaylistTracksSlots &
   InfoPanelCurationProps &
   GenreFocusProps & {
-    /** Hides the info panel behind its edge tab (controlled); only applies with `placement="regions"`. */
+    /** Hides the info panel behind its edge tab; uncontrolled when omitted. Only applies with `placement="regions"`. */
     collapsed?: boolean;
     onCollapsedChange?: (collapsed: boolean) => void;
   };
@@ -287,22 +287,49 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const activeOverlayPanel =
     overlayPanel ?? (builtInArtistPanel && { ...builtInArtistPanel, hideTitle: true, hideClose: true });
 
+  const [uncontrolledCollapsed, setUncontrolledCollapsed] = useState(false);
+  const [uncontrolledExpanded, setUncontrolledExpanded] = useState(false);
+  const isCollapsed = collapsed ?? uncontrolledCollapsed;
+  const isExpanded = expanded ?? uncontrolledExpanded;
+  const changeCollapsed = (next: boolean) => {
+    setUncontrolledCollapsed(next);
+    onCollapsedChange?.(next);
+  };
+  const changeExpanded = (next: boolean) => {
+    setUncontrolledExpanded(next);
+    onExpandedChange?.(next);
+  };
+  useEffect(() => {
+    setUncontrolledCollapsed(false);
+  }, [selectedNodeId, artistUuid]);
+
+  // The brand layout tokens derive the center column from this variable.
+  const isDetailHidden = isCollapsed || (!selectedNodeId && !activeOverlayPanel);
+  useEffect(() => {
+    if (placement !== "regions" || !isDetailHidden) return undefined;
+    const root = document.documentElement;
+    root.style.setProperty("--layout-left-w", "0px");
+    return () => {
+      root.style.removeProperty("--layout-left-w");
+    };
+  }, [placement, isDetailHidden]);
+
   // An expandable overlay (e.g. an artist) takes the info panel's slot, so the edge tab drives it instead.
   const detailOverlay =
     placement === "regions" && activeOverlayPanel?.onExpandedChange ? activeOverlayPanel : undefined;
-  const detailExpanded = detailOverlay ? !!detailOverlay.expanded : expanded;
-  const onDetailExpandedChange = detailOverlay ? detailOverlay.onExpandedChange : onExpandedChange;
+  const detailExpanded = detailOverlay ? !!detailOverlay.expanded : isExpanded;
+  const onDetailExpandedChange = detailOverlay ? detailOverlay.onExpandedChange : changeExpanded;
   const infoPanelCuration: InfoPanelCurationProps = {
     editMode,
     onEditModeChange,
     renderTitleEditor,
     renderParentsEditor,
     renderDangerZone,
-    expanded,
-    onExpandedChange,
-    collapsed: placement === "regions" ? collapsed : undefined,
+    expanded: placement === "regions" ? isExpanded : expanded,
+    onExpandedChange: placement === "regions" ? changeExpanded : onExpandedChange,
+    collapsed: placement === "regions" ? isCollapsed : undefined,
     hideExpandButton: placement === "regions" ? true : undefined,
-    overlayPanel: detailOverlay ? { ...detailOverlay, collapsed, hideExpandButton: true } : activeOverlayPanel,
+    overlayPanel: detailOverlay ? { ...detailOverlay, collapsed: isCollapsed, hideExpandButton: true } : activeOverlayPanel,
   };
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -441,21 +468,21 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const allowWheelRotation = controlledAllowWheelRotation ?? internalAllowWheelRotation;
 
   const detailTab =
-    placement === "regions" && (selectedNodeId || detailOverlay) && onCollapsedChange ? (
+    placement === "regions" && (selectedNodeId || detailOverlay) ? (
       <PanelEdgeTab
         side="left"
         edge={
           detailExpanded
             ? { label: "Shrink panel", onClick: () => onDetailExpandedChange?.(false) }
-            : collapsed
+            : isCollapsed
               ? null
-              : { label: "Hide panel", onClick: () => onCollapsedChange(true) }
+              : { label: "Hide panel", onClick: () => changeCollapsed(true) }
         }
         center={
           detailExpanded
             ? null
-            : collapsed
-              ? { label: "Show panel", onClick: () => onCollapsedChange(false) }
+            : isCollapsed
+              ? { label: "Show panel", onClick: () => changeCollapsed(false) }
               : onDetailExpandedChange
                 ? { label: "Extend panel", onClick: () => onDetailExpandedChange(true) }
                 : null
@@ -560,7 +587,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           className={`absolute top-1/2 z-30 -translate-y-1/2 ${
             detailExpanded
               ? "right-[calc(var(--layout-center-right)-var(--layout-edge-tab-w))]"
-              : collapsed
+              : isCollapsed
                 ? "left-0"
                 : "left-[calc(var(--layout-gutter)+var(--layout-left-w))]"
           }`}
