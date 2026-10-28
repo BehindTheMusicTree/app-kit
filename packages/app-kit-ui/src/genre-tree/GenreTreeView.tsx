@@ -15,6 +15,8 @@ import type {
   GenreTreeNode,
   GenreTreeViewMode,
   GenreTreeViewport,
+  InfoPanelBody,
+  InfoPanelSections,
 } from "@behindthemusictree/genre-tree-view";
 
 import {
@@ -48,8 +50,6 @@ import { useGenrePlaylistPlayback, type GenrePlaylistPlayback } from "./playlist
 // under the floating search bar. It is hidden and its click is proxied by the search field's own button, which
 // appears (fading in, sliding from the left) whenever the original exists; the field makes room for it.
 const PREVIOUS_BUTTON_CSS = `
-.genre-tree-view .gtv-info-panel-body { display: flex; flex-direction: column; }
-.genre-tree-view .gtv-info-panel-extra { order: -1; }
 .genre-tree-view .search-overlay .gtv-info-panel-previous { display: none; }
 .genre-tree-view:has(.search-overlay .gtv-info-panel-previous) .genre-search input { padding-left: 2.75rem; }
 .genre-tree-view:has(.search-overlay .gtv-info-panel-previous) .genre-search-previous { display: flex; }
@@ -404,15 +404,18 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   zoomInRef.current = canZoomIn ? handleGenreSearchZoomIn : undefined;
 
   // Stable across selections: the overview fetch lives in GenreDetailExtras, so its loading
-  // states re-render only the info panel, never the tree.
-  const renderExtraDetails = useCallback(
-    (node: GenreTreeNode): ReactNode => {
+  // states re-render only the info panel, never the tree. The count row is left out: the tracks
+  // section title carries it.
+  const renderInfoPanelBody = useCallback(
+    (node: GenreTreeNode, { toolbar, ancestors, family }: InfoPanelSections): InfoPanelBody => {
       const genrePlaylist = genrePlaylistByNodeId.get(node.id);
       const criteria = genrePlaylist?.criteria;
-      if (!genrePlaylist || !criteria) return null;
+      if (!genrePlaylist || !criteria) return { primary: <>{toolbar}{family}</>, aside: ancestors };
       const genreUuid = criteria.uuid;
-      return (
+      return {
+        primary: (
         <>
+          {toolbar}
           <GenreNodeActionBand
             node={node}
             genrePlaylist={genrePlaylist}
@@ -439,6 +442,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           />
         <GenreDetailExtras<O>
           key={genreUuid}
+          family={family}
           genreUuid={genreUuid}
           genrePlaylist={genrePlaylist}
           scope={scope}
@@ -454,7 +458,9 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           renderTracksToolbar={renderTracksToolbar}
         />
         </>
-      );
+        ),
+        aside: ancestors,
+      };
     },
     [genrePlaylistByNodeId, additionalActions, readOnly, handleGenreCreationAction, handleGenreRenameAction,
       showPopup, hidePopup, visibleGenrePlaylists, playback, filterArtist,
@@ -623,7 +629,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   hideInfoPanelClose
                   hideInfoPanelTitle
                   onNodeHover={handleNodeHover}
-                  renderExtraDetails={renderExtraDetails}
+                  renderInfoPanelBody={renderInfoPanelBody}
                   playback={playback}
                   selectedNodeId={selectedNodeId}
                   readOnly={readOnly}
@@ -649,7 +655,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   hideInfoPanelClose
                   hideInfoPanelTitle
                   onNodeHover={handleNodeHover}
-                  renderExtraDetails={renderExtraDetails}
+                  renderInfoPanelBody={renderInfoPanelBody}
                   playback={playback}
                   selectedNodeId={selectedNodeId}
                   readOnly={readOnly}
@@ -675,7 +681,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                 hideInfoPanelClose
                 hideInfoPanelTitle
                 onNodeHover={handleNodeHover}
-                renderExtraDetails={renderExtraDetails}
+                renderInfoPanelBody={renderInfoPanelBody}
                 playback={playback}
                 selectedNodeId={selectedNodeId}
                 readOnly={readOnly}
@@ -703,7 +709,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                           hideInfoPanelClose
                           hideInfoPanelTitle
                           onNodeHover={handleNodeHover}
-                          renderExtraDetails={renderExtraDetails}
+                          renderInfoPanelBody={renderInfoPanelBody}
                           playback={playback}
                           // Each root has its own panel; null closes the one not holding the selection.
                           selectedNodeId={

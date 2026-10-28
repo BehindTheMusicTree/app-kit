@@ -17,6 +17,8 @@ easy to spot when bumping.
 
 ### Changed
 
+- `GenreTreeView`: the info panel body is composed in the same order in compact and expanded mode: action toolbar, action band, Summary, Family, essential tracks, then the songs list, with Ancestors in the left column when expanded. The separate "Song count" row is gone; the count stays in the songs section title.
+- **Breaking:** the `renderExtraDetails` prop of `TreePerRoot`, `TreeWheel` and `TreeWheelRadialPopCore` is now `renderInfoPanelBody(node, sections) => { primary, aside? }` (types from `@behindthemusictree/genre-tree-view`). Requires `@behindthemusictree/genre-tree-view` 5.0.0.
 - `GenreTreeView` with `placement="regions"`: the info panel's edge tab (hide / extend) works without `collapsed`, `onCollapsedChange` or `onExpandedChange`; they now only control the state. The view sets `--layout-left-w: 0px` on the document while the panel is hidden, so hosts no longer need to.
 
 ### Removed
