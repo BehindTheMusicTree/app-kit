@@ -140,6 +140,7 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
         side: genrePlaylist.criteria?.side ?? undefined,
         wikidataId: genrePlaylist.criteria?.wikidataId ?? null,
         umbrella: genrePlaylist.isUmbrella,
+        scene: genrePlaylist.scene ?? undefined,
       })),
     [genrePlaylists, sizeMetric],
   );

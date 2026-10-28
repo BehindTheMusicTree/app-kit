@@ -169,6 +169,18 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
     expect(props.itemCountLabel).toBe("Views");
   });
 
+  it("forwards scene to the tree nodes, null as undefined", () => {
+    renderWheelRadialPopCore({
+      genrePlaylists: [
+        makeGenrePlaylist({ uuid: makeGenrePlaylistUuid("gp1"), parent: null, name: "Underground electronic", scene: "underground" }),
+        makeGenrePlaylist({ uuid: makeGenrePlaylistUuid("gp2"), parent: null, name: "Rock", scene: null }),
+      ],
+    });
+
+    const { nodes } = genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0];
+    expect(nodes.map((node: { scene?: string }) => node.scene)).toEqual(["underground", undefined]);
+  });
+
   it("has no playing node when there is no track list", () => {
     renderWheelRadialPopCore();
     expect(genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0].playingNodeId).toBeNull();

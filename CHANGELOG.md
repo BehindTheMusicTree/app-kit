@@ -28,6 +28,7 @@ easy to spot when bumping.
 
 - `GenreTreeView` shows one busy indicator on the tree (`busy` on `GenrePlaylistTreeWheel` and `GenrePlaylistTreeWheelRadialPopCore`) while the size metric re-renders, the tree refetches, an artist's counts load, or a genre update is in flight.
 - `genreUpdateMutationKey`, the mutation key of `useUpdateGenre`.
+- Genre playlists carry the optional `scene` (`commercial` | `underground`); the pop-core wheel forwards it so Core electronic's commercial and underground subtrees are stacked radially (genre-tree-view 5.1.0).
 
 ### Changed
 
