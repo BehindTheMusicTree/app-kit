@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- `app-kit-ui` uses genre-tree-view 4.7.0: the overlay panel draws the dividers between its content blocks.
+
 ## [20.0.0] - 2026-10-28
 
 ### Breaking
