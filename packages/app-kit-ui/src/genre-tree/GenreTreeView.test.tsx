@@ -18,6 +18,8 @@ const {
   hidePopupMock,
   useArtistSearchMock,
   useArtistMock,
+  useArtistGenreCountsMock,
+  playNewTrackListFromArtistMock,
 } = vi.hoisted(() => ({
   useListFullGenrePlaylistsMock: vi.fn(),
   useFetchGenreOverviewMock: vi.fn(),
@@ -32,6 +34,8 @@ const {
   hidePopupMock: vi.fn(),
   useArtistSearchMock: vi.fn(),
   useArtistMock: vi.fn(),
+  useArtistGenreCountsMock: vi.fn(),
+  playNewTrackListFromArtistMock: vi.fn(() => Promise.resolve()),
 }));
 
 vi.mock("@behindthemusictree/app-kit/popup", async (importOriginal) => ({
@@ -46,7 +50,11 @@ vi.mock("../../../app-kit/src/player/PlayerContext", async (importOriginal) => (
 
 vi.mock("../../../app-kit/src/genre-tree/TrackListContext", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
-  useTrackList: () => ({ trackList: trackListState.value, playNewTrackListFromGenrePlaylist: playNewTrackListFromGenrePlaylistMock }),
+  useTrackList: () => ({
+    trackList: trackListState.value,
+    playNewTrackListFromGenrePlaylist: playNewTrackListFromGenrePlaylistMock,
+    playNewTrackListFromArtist: playNewTrackListFromArtistMock,
+  }),
 }));
 
 // useGenreTreeViewState and GenreDetailExtras reach these hooks through app-kit's internal modules,
@@ -58,6 +66,10 @@ vi.mock("../../../app-kit/src/genre-tree/useGenrePlaylist", async (importOrigina
 
 vi.mock("../../../app-kit/src/genre-tree/useArtistSearch", () => ({
   useArtistSearch: (getBaseUrl: () => string, text: string) => useArtistSearchMock(getBaseUrl, text),
+}));
+
+vi.mock("../../../app-kit/src/genre-tree/useArtistGenreCounts", () => ({
+  useArtistGenreCounts: (uuid: string | null) => useArtistGenreCountsMock(uuid),
 }));
 
 vi.mock("../../../app-kit/src/genre-tree/useArtist", () => ({
@@ -174,6 +186,7 @@ describe("GenreTreeView", () => {
     useFetchGenreOverviewMock.mockReturnValue({ data: undefined, isPending: false });
     useArtistSearchMock.mockReturnValue({ artists: [], isError: false, settled: false });
     useArtistMock.mockImplementation((uuid: string | null) => (uuid === null ? { status: "idle" } : { status: "loading" }));
+    useArtistGenreCountsMock.mockReturnValue({ data: undefined, isPending: false, isError: false });
   });
 
   it("shows the wheel skeleton while the genre playlists are loading", () => {
@@ -1751,7 +1764,7 @@ describe("GenreTreeView", () => {
       expect(wheelProps().overlayPanel).toBeUndefined();
     });
 
-    it("follows a controlled artistUuid and reports both sides of the exclusion", () => {
+    it("follows a controlled artistUuid and keeps it as a filter while a genre is selected", () => {
       const onArtistUuidChange = vi.fn();
       const onSelectedNodeIdChange = vi.fn();
       const props: GenreTreeViewProps = {
@@ -1774,8 +1787,31 @@ describe("GenreTreeView", () => {
       onArtistUuidChange.mockClear();
       onSelectedNodeIdChange.mockClear();
       act(() => wheelProps().onSelectedNodeChange({ id: "gp2" }));
-      expect(onArtistUuidChange).toHaveBeenCalledWith(null);
+      expect(onArtistUuidChange).not.toHaveBeenCalled();
       expect(onSelectedNodeIdChange).toHaveBeenCalledWith("gp2");
+
+      rerender(<GenreTreeView {...props} selectedNodeId="gp2" artistUuid={suggestion.uuid} />);
+      expect(wheelProps().overlayPanel).toBeUndefined();
+      expect(screen.getByRole("button", { name: "Clear artist filter Band" })).toBeDefined();
+      fireEvent.click(screen.getByRole("button", { name: "Clear artist filter Band" }));
+      expect(onArtistUuidChange).toHaveBeenCalledWith(null);
+    });
+
+    it("reopens the artist panel from the filter chip by clearing the selected genre", () => {
+      const onSelectedNodeIdChange = vi.fn();
+      useArtistMock.mockReturnValue({ status: "success", artist: { name: "Band", members: [], albums: [], links: [] } });
+      render(
+        <GenreTreeView
+          {...baseProps()}
+          selectedNodeId="gp1"
+          onSelectedNodeIdChange={onSelectedNodeIdChange}
+          artistUuid={suggestion.uuid}
+          onArtistUuidChange={vi.fn()}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: "Show artist Band" }));
+      expect(onSelectedNodeIdChange).toHaveBeenCalledWith(null);
     });
 
     it("lets a host overlayPanel take precedence", () => {

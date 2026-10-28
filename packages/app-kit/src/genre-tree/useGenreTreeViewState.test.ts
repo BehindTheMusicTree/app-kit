@@ -1,13 +1,18 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 
-const { useListFullGenrePlaylistsMock, prefetchMock } = vi.hoisted(() => ({
+const { useListFullGenrePlaylistsMock, useArtistGenreCountsMock, prefetchMock } = vi.hoisted(() => ({
   useListFullGenrePlaylistsMock: vi.fn(),
+  useArtistGenreCountsMock: vi.fn(),
   prefetchMock: vi.fn(),
 }));
 
 vi.mock("./useGenrePlaylist", () => ({
   useListFullGenrePlaylists: (...args: unknown[]) => useListFullGenrePlaylistsMock(...args),
+}));
+
+vi.mock("./useArtistGenreCounts", () => ({
+  useArtistGenreCounts: (...args: unknown[]) => useArtistGenreCountsMock(...args),
 }));
 
 vi.mock("./useGenre", () => ({
@@ -46,6 +51,7 @@ describe("useGenreTreeViewState", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
+    useArtistGenreCountsMock.mockReturnValue({ data: undefined, isPending: true, error: null });
     mockData([pop, rock, genreless, unaccepted, unacceptedChild]);
   });
 
@@ -175,5 +181,43 @@ describe("useGenreTreeViewState", () => {
       vi.advanceTimersByTime(200);
     });
     expect(prefetchMock).not.toHaveBeenCalled();
+  });
+
+  describe("with an artist", () => {
+    const artistUuid = "a1";
+    const counts = [
+      { genrePlaylist: "pop", songsCount: 2, tracksCount: 1 },
+      { genrePlaylist: "rock", songsCount: 2, tracksCount: 1 },
+    ];
+
+    it("shows the loading state, not the full tree, while counts load", () => {
+      const { result } = renderHook(() => useGenreTreeViewState({ ...options, artistUuid }));
+
+      expect(useArtistGenreCountsMock).toHaveBeenCalledWith(artistUuid, options.getBackendBaseUrl);
+      expect(result.current.isLoading).toBe(true);
+      expect(result.current.genrePlaylists).toEqual([]);
+    });
+
+    it("serves the pruned tree with the artist's counts to every consumer", () => {
+      mockData([pop, rock, makePlaylist("jazz", "Jazz", { parent: "pop", root: "pop" })]);
+      useArtistGenreCountsMock.mockReturnValue({ data: counts, isPending: false, error: null });
+      const { result } = renderHook(() => useGenreTreeViewState({ ...options, artistUuid, selectedNodeId: "rock" }));
+
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.visibleGenrePlaylists.map((gp) => [gp.uuid, gp.tracksCount])).toEqual([
+        ["pop", 1],
+        ["rock", 1],
+      ]);
+      expect(result.current.genrePlaylistByNodeId.has("jazz")).toBe(false);
+      expect(result.current.selectedGenrePlaylist?.uuid).toBe("rock");
+      expect(result.current.canShowPopCore).toBe(true);
+    });
+
+    it("serves the whole tree when the counts fail", () => {
+      useArtistGenreCountsMock.mockReturnValue({ data: undefined, isPending: false, error: new Error("404") });
+      const { result } = renderHook(() => useGenreTreeViewState({ ...options, artistUuid }));
+
+      expect(result.current.genrePlaylists).toHaveLength(5);
+    });
   });
 });
