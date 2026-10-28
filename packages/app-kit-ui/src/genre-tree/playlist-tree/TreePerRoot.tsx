@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, type ReactNode } from "react";
+import { useCallback, useMemo } from "react";
 import {
   GenreTree,
   getGenreTreeColor,
@@ -8,6 +8,8 @@ import {
   type GenreTreeViewport,
   type GenreTreeAction,
   type GenreTreeNode,
+  type InfoPanelBody,
+  type InfoPanelSections,
   type WheelZoomMode,
 } from "@behindthemusictree/genre-tree-view";
 
@@ -35,7 +37,7 @@ export type GenrePlaylistTreePerRootProps<T extends TrackBase> = {
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   onNodeClick?: (node: GenreTreeNode) => void;
   onNodeHover?: (node: GenreTreeNode) => void;
-  renderExtraDetails?: (node: GenreTreeNode) => ReactNode;
+  renderInfoPanelBody?: (node: GenreTreeNode, sections: InfoPanelSections) => InfoPanelBody;
   /** Overrides which node is shown highlighted, e.g. from a search selection. */
   selectedNodeId?: string | null;
   /** Fires when a user action changes the info panel's node, or `null` when it is closed. */
@@ -69,7 +71,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
   additionalActions,
   onNodeClick,
   onNodeHover,
-  renderExtraDetails,
+  renderInfoPanelBody,
   selectedNodeId,
   onSelectedNodeChange,
   hideInfoPanelClose,
@@ -172,7 +174,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
       additionalActions={additionalActions}
       onNodeClick={onNodeClick}
       onNodeHover={onNodeHover}
-      renderExtraDetails={renderExtraDetails}
+      renderInfoPanelBody={renderInfoPanelBody}
       selectedNodeId={selectedNodeId}
       onSelectedNodeChange={onSelectedNodeChange}
       hideInfoPanelClose={hideInfoPanelClose}

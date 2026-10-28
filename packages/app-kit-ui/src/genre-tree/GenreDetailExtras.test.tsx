@@ -31,6 +31,7 @@ const renderExtras = (overrides: Partial<GenreDetailExtrasProps<CriteriaOverview
       genrePlaylist={{ uuid: makeGenrePlaylistUuid("p1"), name: "Jazz" } as GenreDetailExtrasProps<CriteriaOverview>["genrePlaylist"]}
       scope="reference"
       getBackendBaseUrl={() => "https://b"}
+      family={null}
       {...overrides}
     />,
   );
