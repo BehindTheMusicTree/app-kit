@@ -36,6 +36,8 @@ import {
   useInvalidateAllGenrePlaylistQueries,
 } from "./useGenrePlaylist";
 import { CriteriaPlaylistSimpleSchema } from "./schemas/criteria-playlist/simple";
+import type { GenrePlaylistUuid } from "./schemas/ids";
+import { makeGenrePlaylistUuid } from "./testing";
 
 const getBackendBaseUrl = () => "https://backend.example.com";
 
@@ -197,25 +199,26 @@ describe("useGenrePlaylist", () => {
 
   describe("useFetchGenrePlaylist", () => {
     it("fetches the me detail endpoint and gates on a restored session with a token", () => {
-      renderHook(() => useFetchGenrePlaylist("gp1", getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
+      renderHook(() => useFetchGenrePlaylist(makeGenrePlaylistUuid("gp1"), getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
       const { queryKey, enabled, queryFn } = useQueryWithParseMock.mock.calls[0][0];
 
-      expect(queryKey).toEqual(["meGenrePlaylists", "gp1"]);
+      expect(queryKey).toEqual(["meGenrePlaylists", makeGenrePlaylistUuid("gp1")]);
       expect(enabled).toBe(true);
 
       queryFn();
-      expect(fetchMock).toHaveBeenCalledWith("me/genre-playlists/gp1/");
+      expect(fetchMock).toHaveBeenCalledWith(`me/genre-playlists/${makeGenrePlaylistUuid("gp1")}/`);
     });
 
     it("disables the query when uuid is empty", () => {
-      renderHook(() => useFetchGenrePlaylist("", getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
+      // An empty id cannot be built through the validated helper, so the runtime guard is exercised with a cast.
+      renderHook(() => useFetchGenrePlaylist("" as GenrePlaylistUuid, getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
 
       expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
     });
 
     it("disables the query until the session is restored", () => {
       useSessionMock.mockReturnValue({ session: null, sessionRestored: false });
-      renderHook(() => useFetchGenrePlaylist("gp1", getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
+      renderHook(() => useFetchGenrePlaylist(makeGenrePlaylistUuid("gp1"), getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
 
       expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
     });

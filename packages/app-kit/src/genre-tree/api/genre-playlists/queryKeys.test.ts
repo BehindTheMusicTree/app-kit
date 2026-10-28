@@ -1,12 +1,15 @@
 import { describe, it, expect } from "vitest";
 
+import { makeGenrePlaylistUuid } from "../../testing";
 import { genrePlaylistQueryKeys } from "./queryKeys";
+
+const u = makeGenrePlaylistUuid("u");
 
 describe("genrePlaylistQueryKeys", () => {
   it("builds me-scope keys", () => {
     expect(genrePlaylistQueryKeys.me.list(2)).toEqual(["meGenrePlaylists", "list", 2]);
-    expect(genrePlaylistQueryKeys.me.detail("u")).toEqual(["meGenrePlaylists", "u"]);
-    expect(genrePlaylistQueryKeys.me.tracks("u")).toEqual(["meGenrePlaylists", "u", "tracks"]);
+    expect(genrePlaylistQueryKeys.me.detail(u)).toEqual(["meGenrePlaylists", u]);
+    expect(genrePlaylistQueryKeys.me.tracks(u)).toEqual(["meGenrePlaylists", u, "tracks"]);
   });
 
   it("threads the base URL into reference-scope keys", () => {
@@ -17,10 +20,10 @@ describe("genrePlaylistQueryKeys", () => {
       1,
     ]);
     expect(genrePlaylistQueryKeys.reference.full("https://b")).toEqual(["referenceGenrePlaylists", "https://b", "full"]);
-    expect(genrePlaylistQueryKeys.reference.detail("https://b", "u")).toEqual([
+    expect(genrePlaylistQueryKeys.reference.detail("https://b", u)).toEqual([
       "referenceGenrePlaylists",
       "https://b",
-      "u",
+      u,
     ]);
   });
 });

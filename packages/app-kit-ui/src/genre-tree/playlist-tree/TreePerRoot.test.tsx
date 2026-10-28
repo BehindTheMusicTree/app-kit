@@ -5,6 +5,7 @@ import GenrePlaylistTreePerRoot from "./TreePerRoot";
 import { TrackListOriginType } from "@behindthemusictree/app-kit/genre-tree";
 import { ErrorCode } from "@behindthemusictree/app-kit/transport";
 import type { CriteriaPlaylistSimple } from "@behindthemusictree/app-kit/genre-tree";
+import { makeGenrePlaylistUuid, makeGenreUuid } from "@behindthemusictree/app-kit/genre-tree/testing";
 import type { GenreTreeProps } from "@behindthemusictree/genre-tree-view";
 
 const {
@@ -55,8 +56,8 @@ vi.mock("@behindthemusictree/genre-tree-view", () => ({
 // api/model/criteria/CriteriaManager.py, which creates the CriteriaPlaylist without passing the
 // criteria's uuid. Tree nodes are keyed by the playlist uuid, so any handler that needs the
 // underlying genre must resolve it via `.criteria`, not treat the node id as the genre id.
-const criteriaUuid = "786837e1-99ff-4b1a-8298-22e4105b652b";
-const playlistUuid = "e85e092c-4b53-449f-8e94-e2fca43f2988";
+const criteriaUuid = makeGenreUuid("786837e1-99ff-4b1a-8298-22e4105b652b");
+const playlistUuid = makeGenrePlaylistUuid("e85e092c-4b53-449f-8e94-e2fca43f2988");
 
 const genrePlaylist: CriteriaPlaylistSimple = {
   uuid: playlistUuid,

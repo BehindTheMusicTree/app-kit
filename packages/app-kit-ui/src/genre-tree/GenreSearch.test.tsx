@@ -2,13 +2,14 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import GenreSearch from "./GenreSearch";
 import { CriteriaPlaylistSimple } from "@behindthemusictree/app-kit/genre-tree";
+import { makeGenrePlaylistUuid } from "@behindthemusictree/app-kit/genre-tree/testing";
 
 const makeGenrePlaylist = (name: string): CriteriaPlaylistSimple => ({
-  uuid: name,
+  uuid: makeGenrePlaylistUuid(name),
   name,
   criteria: null,
   parent: null,
-  root: { uuid: "root", name: "root" },
+  root: { uuid: makeGenrePlaylistUuid("root"), name: "root" },
   tracksCount: 0,
   createdOn: "2026-01-01T00:00:00Z",
   updatedOn: null,

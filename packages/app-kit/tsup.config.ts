@@ -8,6 +8,7 @@ const entry = {
   "track-noun/index": "src/track-noun/index.ts",
   "player/index": "src/player/index.ts",
   "genre-tree/index": "src/genre-tree/index.ts",
+  "genre-tree/testing": "src/genre-tree/testing.ts",
 };
 
 const external = ["react", "react-dom", "@tanstack/react-query", "next"];

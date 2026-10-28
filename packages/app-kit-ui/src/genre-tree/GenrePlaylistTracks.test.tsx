@@ -37,8 +37,9 @@ vi.mock("@behindthemusictree/app-kit/auth", async (importOriginal) => ({
 import { GenrePlaylistTracks } from "./GenrePlaylistTracks";
 import { PlayStates } from "@behindthemusictree/app-kit/player";
 import type { RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
+import { makeGenrePlaylistUuid, makeGenreUuid } from "@behindthemusictree/app-kit/genre-tree/testing";
 
-const genrePlaylist = { uuid: "p1", name: "Jazz" };
+const genrePlaylist = { uuid: makeGenrePlaylistUuid("p1"), name: "Jazz" };
 const makeTracks = (count: number, prefix: string) =>
   Array.from({ length: count }, (_, i) => ({ uuid: `${prefix}${i}`, title: `Song ${prefix}${i}`, artists: null }));
 const songsPage = (results: unknown[], { next = false, total = results.length as number | null } = {}) => ({
@@ -78,7 +79,7 @@ describe("GenrePlaylistTracks", () => {
     render(
       <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
         <GenrePlaylistTracks
-          genreUuid="g1"
+          genreUuid={makeGenreUuid("g1")}
           genrePlaylist={genrePlaylist}
           scope={scope}
           getBackendBaseUrl={() => "https://b"}
@@ -98,14 +99,14 @@ describe("GenrePlaylistTracks", () => {
 
     expect(await screen.findByRole("button", { name: "Play Song a1" })).toBeInTheDocument();
     expect(screen.getByText("Tracks (250)")).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith("library/songs/", true, false, {}, { genre: "g1", pageSize: 100, withTotal: false });
+    expect(fetchMock).toHaveBeenCalledWith("library/songs/", true, false, {}, { genre: makeGenreUuid("g1"), pageSize: 100, withTotal: false });
 
     await act(async () => {
       observerCallback([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver);
     });
     fireEvent.click(await screen.findByRole("button", { name: "Play Song b0" }));
 
-    expect(fetchMock).toHaveBeenLastCalledWith("library/songs/", true, false, {}, { genre: "g1", pageSize: 100, withTotal: false, cursor: "CUR2" });
+    expect(fetchMock).toHaveBeenLastCalledWith("library/songs/", true, false, {}, { genre: makeGenreUuid("g1"), pageSize: 100, withTotal: false, cursor: "CUR2" });
     expect(fetchGenrePlaylistTracksPage).not.toHaveBeenCalled();
     expect(playNewTrackListFromGenrePlaylist).toHaveBeenCalledWith(genrePlaylist, "reference", { startSongUuid: "b0" });
   });
@@ -195,7 +196,7 @@ describe("GenrePlaylistTracks", () => {
     renderTracks("me");
 
     expect(await screen.findByText("—")).toBeInTheDocument();
-    expect(fetchGenrePlaylistTracksPage).toHaveBeenCalledWith("p1", "me", 1);
+    expect(fetchGenrePlaylistTracksPage).toHaveBeenCalledWith(makeGenrePlaylistUuid("p1"), "me", 1);
   });
 
   it("greys out an unplayable track with its reason and a disabled play button", async () => {
@@ -242,7 +243,7 @@ describe("GenrePlaylistTracks", () => {
     render(
       <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
         <GenrePlaylistTracks
-          genreUuid="g1"
+          genreUuid={makeGenreUuid("g1")}
           genrePlaylist={genrePlaylist}
           scope="reference"
           getBackendBaseUrl={() => "https://b"}

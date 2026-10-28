@@ -1,13 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { searchGenrePlaylistsByName } from "./genre-search";
 import { CriteriaPlaylistSimple } from "../schemas/criteria-playlist/simple";
+import { makeGenrePlaylistUuid } from "../testing";
 
 const makeGenrePlaylist = (name: string): CriteriaPlaylistSimple => ({
-  uuid: name,
+  uuid: makeGenrePlaylistUuid(name),
   name,
   criteria: null,
   parent: null,
-  root: { uuid: "root", name: "root" },
+  root: { uuid: makeGenrePlaylistUuid("root"), name: "root" },
   tracksCount: 0,
   createdOn: "2026-01-01T00:00:00Z",
   updatedOn: null,

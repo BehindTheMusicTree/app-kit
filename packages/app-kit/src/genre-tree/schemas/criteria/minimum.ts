@@ -1,7 +1,8 @@
 import { z } from "zod";
-import { UuidResourceSchema } from "../uuid-resource";
+import { GenreUuidSchema } from "../ids";
 
-export const CriteriaMinimumSchema = UuidResourceSchema.extend({
+export const CriteriaMinimumSchema = z.object({
+  uuid: GenreUuidSchema,
   name: z.string(),
   side: z.enum(["core", "pop"]).nullable().optional(),
   wikidataId: z.string().nullable().optional(),

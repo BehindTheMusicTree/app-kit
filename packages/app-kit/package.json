@@ -1,6 +1,6 @@
 {
   "name": "@behindthemusictree/app-kit",
-  "version": "19.1.0",
+  "version": "20.0.0",
   "description": "Headless transport, auth, popup state, player, and genre-tree data plumbing for BehindTheMusicTree React apps",
   "repository": {
     "type": "git",
@@ -48,6 +48,11 @@
       "types": "./dist/genre-tree/index.d.ts",
       "import": "./dist/genre-tree/index.js",
       "require": "./dist/genre-tree/index.cjs"
+    },
+    "./genre-tree/testing": {
+      "types": "./dist/genre-tree/testing.d.ts",
+      "import": "./dist/genre-tree/testing.js",
+      "require": "./dist/genre-tree/testing.cjs"
     }
   },
   "files": [

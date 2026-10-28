@@ -468,6 +468,30 @@ describe("GenreTreeView", () => {
         fireEvent.click(screen.getByRole("button", { name: "Shrink panel" }));
         expect(onExpandedChange).toHaveBeenCalledWith(false);
       });
+
+      it("drives an expandable overlay panel instead of the info panel", () => {
+        const overlayExpandedChange = vi.fn();
+        const infoExpandedChange = vi.fn();
+        const overlayPanel = { title: "Artist", content: "x", onClose: vi.fn(), onExpandedChange: overlayExpandedChange };
+        const props = { placement: "regions", onCollapsedChange: vi.fn(), onExpandedChange: infoExpandedChange } as const;
+        renderView({ ...props, overlayPanel });
+        fireEvent.click(screen.getByRole("button", { name: "Extend panel" }));
+        expect(overlayExpandedChange).toHaveBeenCalledWith(true);
+        expect(infoExpandedChange).not.toHaveBeenCalled();
+        cleanup();
+        renderView({ ...props, overlayPanel: { ...overlayPanel, expanded: true } });
+        fireEvent.click(screen.getByRole("button", { name: "Shrink panel" }));
+        expect(overlayExpandedChange).toHaveBeenCalledWith(false);
+      });
+
+      it("ignores a non-expandable overlay panel", () => {
+        renderView({
+          placement: "regions",
+          onCollapsedChange: vi.fn(),
+          overlayPanel: { title: "About", content: "x", onClose: vi.fn() },
+        });
+        expect(screen.queryByRole("button", { name: "Hide panel" })).not.toBeInTheDocument();
+      });
     });
 
     it("shows the display options group by default", () => {
