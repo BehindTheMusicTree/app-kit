@@ -27,6 +27,12 @@ easy to spot when bumping.
 
 - Changing a genre's parent from the genre tree sent the genre-playlist UUID to `PUT /v1/genres/{uuid}/`, which the API rejected with 404. It now sends the genre's criteria UUID.
 
+## [19.1.0] - 2026-10-27
+
+### Added
+
+- `GenreTreeView` accepts `defaultViewport` and `onViewportChange` (and re-exports the `GenreTreeViewport` type) so a consumer can restore and persist the pan/zoom position, e.g. in the URL. Wheel, pop-core and stacked views forward them (stacked: only to the tree holding the selection); outline ignores them.
+
 ## [19.0.0] - 2026-10-27
 
 ### Breaking

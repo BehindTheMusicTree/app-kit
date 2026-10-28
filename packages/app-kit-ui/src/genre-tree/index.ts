@@ -12,7 +12,7 @@ export {
   GenreTreeViewSkeleton,
   GenreTreeOutlineSkeleton,
 } from "@behindthemusictree/genre-tree-view";
-export type { GenreTreeAction, GenreTreeViewSkeletonProps } from "@behindthemusictree/genre-tree-view";
+export type { GenreTreeAction, GenreTreeViewport, GenreTreeViewSkeletonProps } from "@behindthemusictree/genre-tree-view";
 export { default as TrackListSidebar } from "./track-list-sidebar/TrackListSidebar";
 export type { TrackListSidebarProps } from "./track-list-sidebar/TrackListSidebar";
 export { default as PlayerPanel } from "./PlayerPanel";

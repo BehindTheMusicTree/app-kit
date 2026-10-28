@@ -102,6 +102,18 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
       );
     });
 
+    it("passes defaultViewport and onViewportChange to the wheel but not to GenreTreeOutline", () => {
+      const viewport = { x: 10, y: 20, zoom: 1.5 };
+      const onViewportChange = vi.fn();
+      renderWheelRadialPopCore({ defaultViewport: viewport, onViewportChange });
+      const props = genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0];
+      expect(props.defaultViewport).toBe(viewport);
+      expect(props.onViewportChange).toBe(onViewportChange);
+
+      renderWheelRadialPopCore({ outline: true, defaultViewport: viewport, onViewportChange });
+      expect(genreTreeOutlinePropsMock.mock.calls[0][0]).not.toHaveProperty("defaultViewport");
+    });
+
     it("passes controlsOrientation to the wheel but not to GenreTreeOutline", () => {
       renderWheelRadialPopCore({ controlsOrientation: "horizontal" });
       expect(genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0].controlsOrientation).toBe("horizontal");

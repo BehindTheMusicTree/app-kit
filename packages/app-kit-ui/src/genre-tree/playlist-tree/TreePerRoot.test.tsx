@@ -106,6 +106,25 @@ describe("GenrePlaylistTreePerRoot", () => {
     expect(capturedProps!.wheelZoom).toBe("modifier");
   });
 
+  it("passes defaultViewport and onViewportChange through to GenreTree", () => {
+    const viewport = { x: 10, y: 20, zoom: 1.5 };
+    const onViewportChange = vi.fn();
+    render(
+      <GenrePlaylistTreePerRoot
+        scope="reference"
+        rootUuid={playlistUuid}
+        genrePlaylistTreePerRoot={[genrePlaylist]}
+        handleGenreCreationAction={handleGenreCreationAction}
+        handleGenreRenameAction={handleGenreRenameAction}
+        defaultViewport={viewport}
+        onViewportChange={onViewportChange}
+      />,
+    );
+
+    expect(capturedProps!.defaultViewport).toBe(viewport);
+    expect(capturedProps!.onViewportChange).toBe(onViewportChange);
+  });
+
   it("passes controlsOrientation through to GenreTree", () => {
     render(
       <GenrePlaylistTreePerRoot
