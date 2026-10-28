@@ -11,6 +11,43 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Removed
+
+- Vercel playground deployment: the `Sync playground env to Vercel` workflow, `scripts/sync-vercel-playground-env.mjs`, `apps/playground/vercel.json` and the `VITE_VERCEL_ENV` define. The playground is now run locally only.
+
+### Changed
+
+- Tooling moves to Node 26: `.nvmrc` pins the major, root `engines.node` is `>=26 <27` (enforced by `engineStrict`), and the CI workflows read `.nvmrc`. The published packages are unaffected.
+
+## [22.0.0] - 2026-10-28
+
+## [21.0.0] - 2026-10-28
+
+### Breaking
+
+- `app-kit-ui` requires `@behindthemusictree/ui` `^0.7.0` (was `^0.4.0`).
+- `GenreTreeView`: selecting a genre no longer closes the open artist (`onArtistUuidChange(null)` is not called). The artist stays as a filter; hosts that relied on the exclusion to clear their artist state must clear it themselves.
+- `GenreTreeView`: with an artist open, the tree (and the `genrePlaylists` hosts validate against) is pruned to the genres the artist has songs in, so a URL-restored genre outside that footprint is dropped.
+- `PlayArtistOptions` gains an optional `genreUuid`, and `TrackListOriginFromArtist` a trailing optional `genreUuid` constructor argument.
+
+### Added
+
+- Artist filter in `GenreTreeView`: the tree shows only genres the artist has songs in (plus Mainstream Pop and the scene children of Core electronic), a chip next to the search bar shows the artist (click reopens the panel, x clears the filter), a selected genre's panel lists only the artist's songs, and play buttons queue only the artist's songs in that genre.
+- `useArtistGenreCounts`, `useVisibleGenrePlaylists`, `pruneGenrePlaylistsForArtist`, `ArtistGenreCountSchema` in `@behindthemusictree/app-kit/genre-tree`; `useGenreTreeViewState` takes an optional `artistUuid`.
+- `GenrePlaylistTracks` and `GenreDetailExtras` take an optional `artist`; the tree components take an optional `playback`.
+- `GenreTreeView` opens an artist detail panel (photo, type, country, years, links, members, songs, discography) when an artist search suggestion is picked. It is uncontrolled by default; `artistUuid` / `onArtistUuidChange` control it, e.g. to sync it with the URL. Member names switch the panel to that artist unless the host gives `renderArtistLink`.
+- Like a genre, the artist panel has no title or close button of its own: its name fills the search field, whose clear button closes it, and the edge tab extends, shrinks and hides it. `artistExpanded` / `onArtistExpandedChange` control its expanded state (uncontrolled, each artist opens compact).
+- `useArtist(uuid, getBackendBaseUrl)`, `ArtistDetailedSchema` and its types (`ArtistDetailed`, `ArtistImage`, `ArtistMembership`, `ArtistLink`, `ArtistAlbum`, `ARTIST_LINK_KINDS`) in `@behindthemusictree/app-kit/genre-tree`.
+
+### Changed
+
+- `app-kit-ui` uses genre-tree-view 4.8.0: the overlay panel draws the dividers between its content blocks, and can hide its title and close button.
+- `GenreTreeView`'s `onArtistSelect` is optional and only notifies the host; the view opens the artist itself.
+- `GenreTreeView`: opening an artist clears the selected genre (`onSelectedNodeIdChange(null)`); a selected genre's panel takes precedence over the artist panel. A host `overlayPanel` still takes precedence over the artist panel.
+- `artistSearchBaseUrl` also serves the artist panel.
+
+## [20.0.0] - 2026-10-28
+
 ### Breaking
 
 - Genre and genre-playlist UUIDs are branded types, `GenreUuid` and `GenrePlaylistUuid`, exported from `@behindthemusictree/app-kit/genre-tree`. Genre endpoints, query keys and hooks (`useUpdateGenre`, `useDeleteGenre`, `useRefreshGenreTree`, `useGenre`, `useGenrePlaylist`, `TrackListContext`, `songs.byGenre`) now require the branded type. Plain strings no longer compile.
@@ -21,11 +58,8 @@ easy to spot when bumping.
 
 ### Added
 
+- `GenreTreeView` with `placement="regions"`: an expandable `overlayPanel` (one with `onExpandedChange`, e.g. an artist) takes the info panel's slot. It is compact first, and the edge tab extends, shrinks, hides and shows it like the genre panel. Requires `genre-tree-view` 4.6.0.
 - `@behindthemusictree/app-kit/genre-tree/testing` exports `makeGenreUuid` and `makeGenrePlaylistUuid` for test fixtures.
-
-### Changed
-
-- Tooling moves to Node 26: `.nvmrc` pins the major, root `engines.node` is `>=26 <27` (enforced by `engineStrict`), and the CI workflows read `.nvmrc`. The published packages are unaffected.
 
 ### Fixed
 

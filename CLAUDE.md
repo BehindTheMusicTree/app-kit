@@ -38,8 +38,8 @@ to be" framing. History belongs in git log and `CHANGELOG.md`, not in reference 
   the running app never serves a stale `dist/`. `tsconfig.json` `paths` mirror those aliases so
   type-checking reads `src` too — keep the two in sync.
   Its backend proxy (`/api/grow-prototype-proxy`, `vite.config.ts`) only exists in Vite's dev
-  server — the Vercel-hosted PR preview build has no equivalent, so preview builds 404 on that
-  path and render with no real genre-tree data
+  server — a production build has no equivalent, so it 404s on that path and renders with no real
+  genre-tree data
 - `scripts/release.sh` + `.github/workflows/publish.yml` — version bump → tag → publish pipeline
 - `CHANGELOG.md` — update `[Unreleased]` for every user-facing change
 - `pnpm-workspace.yaml` — catalog pin for `@behindthemusictree/genre-tree-view`, the separately

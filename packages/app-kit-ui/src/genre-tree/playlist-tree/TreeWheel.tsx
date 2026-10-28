@@ -9,19 +9,18 @@ import {
   type GenreTreeNode,
 } from "@behindthemusictree/genre-tree-view";
 
-import { useTrackList } from "@behindthemusictree/app-kit/genre-tree";
 import { usePlayer } from "@behindthemusictree/app-kit/player";
 import { usePopup } from "@behindthemusictree/app-kit/popup";
 import InternalErrorPopup from "../../popup/InternalErrorPopup";
 import { ErrorCode } from "@behindthemusictree/app-kit/transport";
 
-import { TrackListOriginType } from "@behindthemusictree/app-kit/genre-tree";
 import { TrackBase } from "@behindthemusictree/app-kit/genre-tree";
 
 import { CriteriaPlaylistSimple } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaMinimum } from "@behindthemusictree/app-kit/genre-tree";
 import { Scope } from "@behindthemusictree/app-kit/transport";
 import type { InfoPanelCurationProps } from "./infoPanelCurationProps";
+import { useGenrePlaylistPlayback, type GenrePlaylistPlayback } from "./useGenrePlaylistPlayback";
 import { capitalize, useTrackNoun } from "@behindthemusictree/app-kit/track-noun";
 
 export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
@@ -55,6 +54,8 @@ export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
   defaultViewport?: GenreTreeViewport;
   /** Fires after a user-driven pan/zoom settles. */
   onViewportChange?: (viewport: GenreTreeViewport) => void;
+  /** What node play buttons play; defaults to each node's whole genre playlist. */
+  playback?: GenrePlaylistPlayback;
 } & InfoPanelCurationProps;
 
 export default function GenrePlaylistTreeWheel<T extends TrackBase>({
@@ -77,10 +78,12 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
   controlsOrientation,
   defaultViewport,
   onViewportChange,
+  playback,
   ...infoPanelCuration
 }: GenrePlaylistTreeWheelProps<T>) {
   const { isPlaying, setIsPlaying } = usePlayer();
-  const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList<T>();
+  const defaultPlayback = useGenrePlaylistPlayback<T>({ scope, genrePlaylists });
+  const { playingNodeId, play } = playback ?? defaultPlayback;
   const trackNoun = useTrackNoun();
   const { showPopup } = usePopup();
 
@@ -98,19 +101,12 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
     [genrePlaylists],
   );
 
-  const playingNodeId =
-    trackList && trackList.origin.type === TrackListOriginType.GENRE_PLAYLIST ? trackList.origin.uuid : null;
-
   const handlePlayPause = useCallback(
     (nodeId: string) => {
       const genrePlaylist = genrePlaylists.find((g) => g.uuid === nodeId);
       if (!genrePlaylist) return;
 
-      if (
-        trackList &&
-        trackList.origin.type === TrackListOriginType.GENRE_PLAYLIST &&
-        trackList.origin.uuid === genrePlaylist.uuid
-      ) {
+      if (nodeId === playingNodeId) {
         setIsPlaying(!isPlaying);
         return;
       }
@@ -119,18 +115,17 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
         return;
       }
 
-      playNewTrackListFromGenrePlaylist(genrePlaylist, scope).catch((error) => {
+      play(genrePlaylist).catch((error) => {
         console.error("Failed to load genre playlist tracks:", error);
         showPopup(<InternalErrorPopup errorCode={ErrorCode.CLIENT_UNKNOWN} />);
       });
     },
     [
       genrePlaylists,
-      trackList,
+      playingNodeId,
       isPlaying,
       setIsPlaying,
-      playNewTrackListFromGenrePlaylist,
-      scope,
+      play,
       showPopup,
     ],
   );

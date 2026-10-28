@@ -1,9 +1,12 @@
 // Data hooks + view state
 export * from "./useGenre";
 export * from "./useGenrePlaylist";
+export * from "./useArtist";
 export * from "./useArtistSearch";
+export * from "./useArtistGenreCounts";
 export * from "./useGenreSearch";
 export * from "./useGenreTreeViewState";
+export * from "./useVisibleGenrePlaylists";
 
 // Playback/track-list plumbing
 export * from "./TrackListContext";
@@ -32,6 +35,8 @@ export * from "./schemas/uuid-resource";
 export * from "./schemas/ids";
 export * from "./schemas/artist-minimum";
 export * from "./schemas/artist-search";
+export * from "./schemas/artist-detailed";
+export * from "./schemas/artist-genre-count";
 export * from "./schemas/album-minimum";
 export * from "./schemas/mb-artist";
 export * from "./schemas/mb-recording";
@@ -61,6 +66,7 @@ export { libraryEndpoints, libraryQueryKeys } from "./api/library";
 export * from "./lib/rating";
 export * from "./lib/formatting";
 export * from "./lib/genre-playlist-helpers";
+export * from "./lib/prune-genre-playlists-for-artist";
 export * from "./lib/genre-search";
 export * from "./lib/reparent-candidates";
 export * from "./lib/genre-songs-cache";

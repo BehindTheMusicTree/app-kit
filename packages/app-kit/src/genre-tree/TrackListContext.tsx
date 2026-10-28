@@ -32,7 +32,7 @@ import { TrackListOriginType } from "./models/TrackListOriginType";
 import { Scope } from "../transport/lib/scope";
 import { usePlayer } from "../player/PlayerContext";
 import { useTrackListSidebarVisibility } from "./TrackListSidebarVisibilityContext";
-import type { GenrePlaylistUuid } from "./schemas/ids";
+import type { GenrePlaylistUuid, GenreUuid } from "./schemas/ids";
 
 const TRACKS_PAGE_SIZE = 100;
 // Load the next page once the selected track is this close to the end of what's loaded, so
@@ -67,7 +67,7 @@ export type GenrePlaylistTracksPage<T> = { tracks: T[]; total: number; nextPage:
 
 export type PlayGenrePlaylistOptions = { startSongUuid?: string };
 
-export type PlayArtistOptions = { ordering: ArtistSongsOrdering; startSongUuid?: string };
+export type PlayArtistOptions = { ordering: ArtistSongsOrdering; startSongUuid?: string; genreUuid?: GenreUuid };
 
 interface TrackListContextType<T extends TrackBase> {
   trackList: TrackList<T> | null;
@@ -87,7 +87,8 @@ interface TrackListContextType<T extends TrackBase> {
   ) => Promise<void>;
   /**
    * Fetches the artist's first page of playable songs in `ordering` and plays the first one;
-   * later pages load lazily. With `startSongUuid`, the list starts at that song (`?from=`).
+   * later pages load lazily. With `startSongUuid`, the list starts at that song (`?from=`); with
+   * `genreUuid`, only the songs in that genre's subtree are queued (`?genre=`).
    * Rejects on fetch/parse failure, or when the artist's playable songs don't contain it.
    */
   playNewTrackListFromArtist: (
@@ -162,6 +163,7 @@ export function TrackListProvider<T extends TrackBase>({
         page,
         pageSize: TRACKS_PAGE_SIZE,
         ...(origin.from && { from: origin.from }),
+        ...(origin.genreUuid && { genre: origin.genreUuid }),
       };
       const response = await fetch(
         libraryEndpoints.reference.songs.list(),
@@ -247,7 +249,7 @@ export function TrackListProvider<T extends TrackBase>({
       if (scope !== "reference") throw new Error("Artist track lists only support the reference scope");
       const request = ++latestPlayRequestRef.current;
       const from = options.startSongUuid;
-      const origin = new TrackListOriginFromArtist(artist, scope, options.ordering, from);
+      const origin = new TrackListOriginFromArtist(artist, scope, options.ordering, from, options.genreUuid);
       let page: GenrePlaylistTracksPage<T>;
       try {
         page = await fetchArtistTracksPage(origin, 1);

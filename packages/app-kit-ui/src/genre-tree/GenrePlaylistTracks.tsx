@@ -68,6 +68,8 @@ export type GenrePlaylistTracksProps = GenrePlaylistTracksSlots & {
   getBackendBaseUrl: () => string;
   /** When set, artist names render through it (e.g. a router `Link`). */
   renderArtistLink?: RenderArtistLink;
+  /** When set, lists and plays only this artist's songs in the genre. */
+  artist?: { uuid: string; name: string } | null;
 };
 
 /**
@@ -84,8 +86,9 @@ export function GenrePlaylistTracks({
   renderSongLeading,
   renderSongActions,
   renderTracksToolbar,
+  artist = null,
 }: GenrePlaylistTracksProps) {
-  const { fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist } = useTrackList();
+  const { fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist, playNewTrackListFromArtist } = useTrackList();
   const { session, sessionRestored } = useSession();
   const { playerTrackObject, playState, handlePlayPauseAction } = usePlayer();
   const { showPopup } = usePopup();
@@ -98,7 +101,9 @@ export function GenrePlaylistTracks({
     queryKey:
       scope === "me"
         ? genrePlaylistQueryKeys.me.tracks(uuid)
-        : libraryQueryKeys.reference.songs.byGenre(getBackendBaseUrl(), genreUuid),
+        : artist
+          ? [...libraryQueryKeys.reference.songs.byGenre(getBackendBaseUrl(), genreUuid), "artist", artist.uuid]
+          : libraryQueryKeys.reference.songs.byGenre(getBackendBaseUrl(), genreUuid),
     queryFn: async ({ pageParam }): Promise<Omit<GenrePlaylistTracksPage<TrackBase>, "total" | "nextPage"> & { total: number | null; nextPage: number | string | null }> => {
       if (scope === "me") return fetchGenrePlaylistTracksPage(uuid, scope, Number(pageParam));
       const response = await fetch(
@@ -106,7 +111,7 @@ export function GenrePlaylistTracks({
         true,
         false,
         {},
-        { genre: genreUuid, pageSize: CATALOGUE_PAGE_SIZE, withTotal: false, ...(pageParam && { cursor: pageParam }) },
+        { genre: genreUuid, ...(artist && { artist: artist.uuid }), pageSize: CATALOGUE_PAGE_SIZE, withTotal: false, ...(pageParam && { cursor: pageParam }) },
       );
       const parsed = parseWithLog(SongPageSchema, response, "GenrePlaylistTracks");
       return { tracks: parsed.results, total: parsed.overallTotal, nextPage: parsed.next ? nextCursor(parsed.next) : null };
@@ -134,7 +139,10 @@ export function GenrePlaylistTracks({
   const total = pages[0]?.total ?? undefined;
 
   const play = (startSongUuid: string) => {
-    playNewTrackListFromGenrePlaylist(genrePlaylist, scope, { startSongUuid }).catch((error) => {
+    const started = artist
+      ? playNewTrackListFromArtist(artist, scope, { startSongUuid, ordering: "title", genreUuid })
+      : playNewTrackListFromGenrePlaylist(genrePlaylist, scope, { startSongUuid });
+    started.catch((error) => {
       console.error("Failed to play genre playlist:", error);
       showPopup(<InternalErrorPopup errorCode={ErrorCode.CLIENT_UNKNOWN} />);
     });

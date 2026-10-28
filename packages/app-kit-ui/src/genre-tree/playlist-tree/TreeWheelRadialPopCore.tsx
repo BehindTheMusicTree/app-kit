@@ -11,16 +11,15 @@ import {
   type GenreTreeNode,
 } from "@behindthemusictree/genre-tree-view";
 
-import { useTrackList } from "@behindthemusictree/app-kit/genre-tree";
 import { usePlayer } from "@behindthemusictree/app-kit/player";
 
-import { TrackListOriginType } from "@behindthemusictree/app-kit/genre-tree";
 import { TrackBase } from "@behindthemusictree/app-kit/genre-tree";
 
 import { CriteriaPlaylistSimple } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaMinimum } from "@behindthemusictree/app-kit/genre-tree";
 import { Scope } from "@behindthemusictree/app-kit/transport";
 import type { InfoPanelCurationProps } from "./infoPanelCurationProps";
+import { useGenrePlaylistPlayback, type GenrePlaylistPlayback } from "./useGenrePlaylistPlayback";
 import { capitalize, useTrackNoun } from "@behindthemusictree/app-kit/track-noun";
 
 /** Pop-core focus is controlled-only: pass both props or neither. Ignored in outline mode. */
@@ -72,6 +71,8 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   defaultViewport?: GenreTreeViewport;
   /** Fires after a user-driven pan/zoom settles. */
   onViewportChange?: (viewport: GenreTreeViewport) => void;
+  /** What node play buttons play; defaults to each node's whole genre playlist. */
+  playback?: GenrePlaylistPlayback;
 } & GenreFocusProps &
   InfoPanelCurationProps;
 
@@ -99,6 +100,7 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     outline = false,
     defaultViewport,
     onViewportChange,
+    playback,
   } = props;
   const focus: GenreFocusProps = props;
   const infoPanelCuration: InfoPanelCurationProps = {
@@ -114,7 +116,8 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     overlayPanel: props.overlayPanel,
   };
   const { isPlaying, setIsPlaying } = usePlayer();
-  const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList<T>();
+  const defaultPlayback = useGenrePlaylistPlayback<T>({ scope, genrePlaylists });
+  const { playingNodeId, play } = playback ?? defaultPlayback;
   const trackNoun = useTrackNoun();
 
   const nodes: GenreTreeNode[] = useMemo(
@@ -133,19 +136,12 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     [genrePlaylists],
   );
 
-  const playingNodeId =
-    trackList && trackList.origin.type === TrackListOriginType.GENRE_PLAYLIST ? trackList.origin.uuid : null;
-
   const handlePlayPause = useCallback(
     (nodeId: string) => {
       const genrePlaylist = genrePlaylists.find((g) => g.uuid === nodeId);
       if (!genrePlaylist) return;
 
-      if (
-        trackList &&
-        trackList.origin.type === TrackListOriginType.GENRE_PLAYLIST &&
-        trackList.origin.uuid === genrePlaylist.uuid
-      ) {
+      if (nodeId === playingNodeId) {
         setIsPlaying(!isPlaying);
         return;
       }
@@ -154,11 +150,11 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
         return;
       }
 
-      playNewTrackListFromGenrePlaylist(genrePlaylist, scope).catch((error) => {
+      play(genrePlaylist).catch((error) => {
         console.error("Failed to load genre playlist tracks:", error);
       });
     },
-    [genrePlaylists, trackList, isPlaying, setIsPlaying, playNewTrackListFromGenrePlaylist, scope],
+    [genrePlaylists, playingNodeId, isPlaying, setIsPlaying, play],
   );
 
   const handleAddChild = useCallback(

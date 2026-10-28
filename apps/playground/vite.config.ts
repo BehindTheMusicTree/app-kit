@@ -1,11 +1,28 @@
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
+import fs from "node:fs";
 import path from "node:path";
 
 const require = createRequire(import.meta.url);
 const dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Vite hashes the installed lockfile only at startup, so a running server keeps pre-bundling the old versions after a `pnpm install`.
+function restartOnInstall(): Plugin {
+  return {
+    name: "restart-on-install",
+    apply: "serve",
+    configureServer(server) {
+      const watcher = fs.watch(path.resolve(dirname, "../../node_modules/.pnpm"), (_, filename) => {
+        if (filename !== "lock.yaml") return;
+        server.config.logger.info("dependencies changed, restarting", { timestamp: true });
+        void server.restart();
+      });
+      server.httpServer?.once("close", () => watcher.close());
+    },
+  };
+}
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
@@ -13,7 +30,7 @@ export default defineConfig(({ mode }) => {
   const appKitVersion = require(path.resolve(dirname, "../../packages/app-kit/package.json")).version;
 
   return {
-    plugins: [react()],
+    plugins: [react(), restartOnInstall()],
     resolve: {
       alias: [
         {
@@ -31,7 +48,6 @@ export default defineConfig(({ mode }) => {
       ],
     },
     define: {
-      "import.meta.env.VITE_VERCEL_ENV": JSON.stringify(process.env.VERCEL_ENV ?? ""),
       "import.meta.env.VITE_APP_KIT_VERSION": JSON.stringify(appKitVersion),
     },
     server: {
