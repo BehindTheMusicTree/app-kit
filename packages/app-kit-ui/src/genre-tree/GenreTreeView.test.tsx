@@ -1841,5 +1841,52 @@ describe("GenreTreeView", () => {
 
       expect(wheelProps().overlayPanel.expanded).toBe(false);
     });
+
+    it("shows the artist's name in the search field, whose clear button closes it", () => {
+      const onArtistUuidChange = vi.fn();
+      render(<GenreTreeView {...baseProps()} artistUuid={suggestion.uuid} onArtistUuidChange={onArtistUuidChange} />);
+
+      expect(wheelProps().overlayPanel).toMatchObject({ title: "Band", hideTitle: true, hideClose: true });
+      expect(screen.getByRole("textbox", { name: "Search" })).toHaveValue("Band");
+
+      fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
+      expect(onArtistUuidChange).toHaveBeenCalledWith(null);
+    });
+
+    it("leaves a host overlayPanel's header and the search field alone", () => {
+      const overlayPanel = { title: "About", content: "x", onClose: vi.fn() };
+      render(<GenreTreeView {...baseProps()} overlayPanel={overlayPanel} artistUuid={suggestion.uuid} />);
+
+      expect(wheelProps().overlayPanel).not.toHaveProperty("hideClose");
+      expect(screen.getByRole("textbox", { name: "Search" })).toHaveValue("");
+    });
+
+    it("drives the artist panel from the edge tab", () => {
+      render(
+        <GenreTreeView {...baseProps()} placement="regions" onCollapsedChange={vi.fn()} artistUuid={suggestion.uuid} />,
+      );
+
+      expect(screen.getByRole("button", { name: "Hide panel" })).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "Extend panel" }));
+      expect(wheelProps().overlayPanel).toMatchObject({ expanded: true, hideExpandButton: true });
+    });
+
+    it("follows a controlled artistExpanded", () => {
+      const onArtistExpandedChange = vi.fn();
+      const props: GenreTreeViewProps = {
+        ...baseProps(),
+        artistUuid: suggestion.uuid,
+        artistExpanded: false,
+        onArtistExpandedChange,
+      };
+      const { rerender } = render(<GenreTreeView {...props} />);
+
+      act(() => wheelProps().overlayPanel.onExpandedChange(true));
+      expect(onArtistExpandedChange).toHaveBeenCalledWith(true);
+      expect(wheelProps().overlayPanel.expanded).toBe(false);
+
+      rerender(<GenreTreeView {...props} artistExpanded />);
+      expect(wheelProps().overlayPanel.expanded).toBe(true);
+    });
   });
 });
