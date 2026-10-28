@@ -14,6 +14,7 @@ easy to spot when bumping.
 ### Breaking
 
 - Genre and genre-playlist UUIDs are branded types, `GenreUuid` and `GenrePlaylistUuid`, exported from `@behindthemusictree/app-kit/genre-tree`. Genre endpoints, query keys and hooks (`useUpdateGenre`, `useDeleteGenre`, `useRefreshGenreTree`, `useGenre`, `useGenrePlaylist`, `TrackListContext`, `songs.byGenre`) now require the branded type. Plain strings no longer compile.
+- Criteria and song schemas (`CriteriaMinimum`, `CriteriaDetailed`, `TrackBase`, `SongDetailed`, …) now output branded `uuid` and `parent` values. Consumer schemas that declare those fields as plain strings must use `GenreUuidSchema` or `GenrePlaylistUuidSchema`.
 - `getReparentCandidates` no longer returns the criteria-less "Genreless" root, and returns `ReparentCandidate` (non-null `criteria`).
 - `ChangeParentPopup`'s `genrePlaylist` prop is now `CriteriaPlaylistSimple & { criteria: CriteriaMinimum }`.
 - `GenreSearch` and `useGenreSearch` are generic over the playlist type they return.
