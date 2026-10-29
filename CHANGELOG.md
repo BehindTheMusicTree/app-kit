@@ -13,6 +13,7 @@ easy to spot when bumping.
 
 ### Added
 
+- `GenreTreeView` accepts an optional `onParentChanged({ genre, from, to })`, called after the Parent popup moved a genre. The uuids are genre (criteria) uuids, so a host can undo with `PUT genres/<genre>/ { parent: from }`; `from` is `null` for a root genre. The `ParentChange` type is exported.
 - Search field shows a spinner in place of the magnifier (after a 300 ms grace delay) while artist results load; `useArtistSearch` returns a new `pending` flag and `GenreSearchExtraResults` accepts `loading`.
 
 ## [26.0.0] - 2026-10-29
