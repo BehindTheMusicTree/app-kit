@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [24.0.1] - 2026-10-29
+
 ### Security
 
 - `CriteriaOverviewSchema.summarySourceUrl` and `musicbrainzLink` in `MbArtistDetailedSchema` / `MbRecordingDetailedSchema` now reject non-`http(s)` URLs (`javascript:`, `data:`, `ftp:` ...) through the shared `HttpUrlSchema`, like the artist URLs in 23.0.1. `summarySourceUrl` is rendered as a link by `GenreDetailExtras`.
