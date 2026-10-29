@@ -16,6 +16,8 @@ export const CriteriaPlaylistSimpleSchema = CriteriaPlaylistDetailedSchema.pick(
   isUnacceptedRoot: z.boolean(),
   // Optional: a backend that does not curate umbrella genres omits it.
   isUmbrella: z.boolean().optional(),
+  // Optional: only the grow tree payload carries it; null when the genre has no scene.
+  scene: z.enum(["commercial", "underground"]).nullable().optional(),
 });
 
 export type CriteriaPlaylistSimple = z.infer<typeof CriteriaPlaylistSimpleSchema>;
