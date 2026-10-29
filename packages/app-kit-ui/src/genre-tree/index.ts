@@ -1,4 +1,5 @@
 export * from "./GenreTreeView";
+export type { ParentChange } from "./ChangeParentPopup";
 export type { GenreDetailSlots } from "./GenreDetailExtras";
 export type { GenrePlaylistTracksSlots } from "./GenrePlaylistTracks";
 export type { InfoPanelCurationProps } from "./playlist-tree/infoPanelCurationProps";
