@@ -46,7 +46,7 @@ import PanelEdgeTab from "./PanelEdgeTab";
 import ChangeParentPopup, { type ParentChange } from "./ChangeParentPopup";
 import { useArtistPanel } from "./artist/useArtistPanel";
 import { SizeMetricToggle } from "./SizeMetricToggle";
-import type { GenreTreeSizeMetric } from "./playlist-tree/size-metric";
+import { hasViewsCount, type GenreTreeSizeMetric } from "./playlist-tree/size-metric";
 import { useGenrePlaylistPlayback, type GenrePlaylistPlayback } from "./playlist-tree/useGenrePlaylistPlayback";
 
 // genre-tree-view's "previous" button (back to the last selected genre) renders inside the info panel, which sits
@@ -265,6 +265,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
 
   const isGenreUpdating = useIsMutating({ mutationKey: genreUpdateMutationKey }) > 0;
   const busy = deferredSizeMetric !== sizeMetric || isTreeFetching || isGenreUpdating;
+  const canSizeByViews = hasViewsCount(visibleGenrePlaylists);
 
   const artistResult = useArtist(artistUuid, artistSearchBaseUrl ?? getBackendBaseUrl);
   const filterArtistName = artistResult.status === "success" ? artistResult.artist.name : null;
@@ -652,9 +653,11 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   controlsOrientation={controlsOrientation}
-                  sizeMetric={filterArtist ? "songs" : deferredSizeMetric}
+                  sizeMetric={filterArtist || !canSizeByViews ? "songs" : deferredSizeMetric}
                   busy={busy}
-                  floatingControlsLeading={filterArtist ? undefined : <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />}
+                  floatingControlsLeading={
+                    filterArtist || !canSizeByViews ? undefined : <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />
+                  }
                   defaultViewport={defaultViewport}
                   onViewportChange={onViewportChange}
                   {...infoPanelCuration}
@@ -681,9 +684,11 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   controlsOrientation={controlsOrientation}
-                  sizeMetric={filterArtist ? "songs" : deferredSizeMetric}
+                  sizeMetric={filterArtist || !canSizeByViews ? "songs" : deferredSizeMetric}
                   busy={busy}
-                  floatingControlsLeading={filterArtist ? undefined : <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />}
+                  floatingControlsLeading={
+                    filterArtist || !canSizeByViews ? undefined : <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />
+                  }
                   defaultViewport={defaultViewport}
                   onViewportChange={onViewportChange}
                   {...infoPanelCuration}
