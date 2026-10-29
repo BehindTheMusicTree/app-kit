@@ -313,6 +313,14 @@ describe("GenreTreeView", () => {
       expect(onSizeMetricChange).toHaveBeenCalledWith("songs");
       expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].sizeMetric).toBe("views");
     });
+
+    it("hides the toggle and sizes by songs when the backend sends no viewsCount", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist({ viewsCount: undefined })], isPending: false });
+      renderView({ viewMode: "wheel", sizeMetric: "views" });
+
+      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].sizeMetric).toBe("songs");
+      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].floatingControlsLeading).toBeUndefined();
+    });
   });
 
   describe("busy indicator", () => {

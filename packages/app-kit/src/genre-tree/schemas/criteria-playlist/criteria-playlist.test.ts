@@ -29,6 +29,11 @@ describe("CriteriaPlaylistDetailedSchema", () => {
     expect(() => CriteriaPlaylistDetailedSchema.parse(invalid)).toThrow();
   });
 
+  it("accepts a shape without viewsCount, as hear-api sends it", () => {
+    const { viewsCount: _viewsCount, ...withoutViews } = validCriteriaPlaylistBase;
+    expect(() => CriteriaPlaylistDetailedSchema.parse(withoutViews)).not.toThrow();
+  });
+
   it("accepts null/omitted duration fields", () => {
     const { durationInSec: _durationInSec, durationStrInHourMinSec: _durationStrInHourMinSec, ...rest } =
       validCriteriaPlaylistBase;
