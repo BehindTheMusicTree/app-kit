@@ -200,10 +200,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   renderSongLeading,
   renderSongActions,
   renderTracksToolbar,
-  editMode,
-  onEditModeChange,
-  renderTitleEditor,
-  renderParentsEditor,
   renderDangerZone,
   expanded,
   onExpandedChange,
@@ -320,10 +316,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const detailExpanded = detailOverlay ? !!detailOverlay.expanded : isExpanded;
   const onDetailExpandedChange = detailOverlay ? detailOverlay.onExpandedChange : changeExpanded;
   const infoPanelCuration: InfoPanelCurationProps = {
-    editMode,
-    onEditModeChange,
-    renderTitleEditor,
-    renderParentsEditor,
     renderDangerZone,
     expanded: placement === "regions" ? isExpanded : expanded,
     onExpandedChange: placement === "regions" ? changeExpanded : onExpandedChange,
