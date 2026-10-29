@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [25.0.0] - 2026-10-29
+
 ### Breaking
 
 - **Breaking:** `genre-tree-view` moves to 6.0.0, which removes the info panel edit mode. `GenreTreeView`, `TreeWheelRadialPopCore` and `InfoPanelCurationProps` no longer accept `editMode`, `onEditModeChange`, `renderTitleEditor` or `renderParentsEditor`. `renderDangerZone` now renders whenever the tree is not `readOnly`.
