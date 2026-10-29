@@ -44,6 +44,8 @@ import GenreActionBand from "./GenreActionBand";
 import PanelEdgeTab from "./PanelEdgeTab";
 import ChangeParentPopup from "./ChangeParentPopup";
 import { useArtistPanel } from "./artist/useArtistPanel";
+import { SizeMetricToggle } from "./SizeMetricToggle";
+import type { GenreTreeSizeMetric } from "./playlist-tree/size-metric";
 import { useGenrePlaylistPlayback, type GenrePlaylistPlayback } from "./playlist-tree/useGenrePlaylistPlayback";
 
 // genre-tree-view's "previous" button (back to the last selected genre) renders inside the info panel, which sits
@@ -142,6 +144,10 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   renderGenreDetailExtras?: (overview: O) => ReactNode;
   /** Layout of the wheel/tree floating zoom/pop/fit controls. Defaults to "horizontal". */
   controlsOrientation?: ControlsOrientation;
+  /** Controlled size metric of the wheel and pop-core nodes: song count or summed song views. Uncontrolled when omitted
+   * (starts on songs). The toggle is hidden while an artist filters the tree, which only has song counts. */
+  sizeMetric?: GenreTreeSizeMetric;
+  onSizeMetricChange?: (metric: GenreTreeSizeMetric) => void;
   /** When set, artist names in the info panel's track list render through it (e.g. a router `Link`). In the artist
    * panel, names otherwise render as buttons that switch the panel to that artist. */
   renderArtistLink?: RenderArtistLink;
@@ -187,6 +193,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   criteriaOverviewSchema,
   renderGenreDetailExtras,
   controlsOrientation = "horizontal",
+  sizeMetric: controlledSizeMetric,
+  onSizeMetricChange,
   renderArtistLink,
   artistUuid: controlledArtistUuid,
   onArtistUuidChange,
@@ -212,6 +220,12 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const [internalArtistUuid, setInternalArtistUuid] = useState<string | null>(null);
   const isArtistControlled = controlledArtistUuid !== undefined;
   const artistUuid = isArtistControlled ? controlledArtistUuid : internalArtistUuid;
+  const [internalSizeMetric, setInternalSizeMetric] = useState<GenreTreeSizeMetric>("songs");
+  const sizeMetric = controlledSizeMetric ?? internalSizeMetric;
+  const changeSizeMetric = (metric: GenreTreeSizeMetric) => {
+    if (controlledSizeMetric === undefined) setInternalSizeMetric(metric);
+    onSizeMetricChange?.(metric);
+  };
   const changeArtist = (uuid: string | null) => {
     if (!isArtistControlled) setInternalArtistUuid(uuid);
     onArtistUuidChange?.(uuid);
@@ -627,6 +641,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   controlsOrientation={controlsOrientation}
+                  sizeMetric={filterArtist ? "songs" : sizeMetric}
+                  floatingControlsLeading={filterArtist ? undefined : <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />}
                   defaultViewport={defaultViewport}
                   onViewportChange={onViewportChange}
                   {...infoPanelCuration}
@@ -653,6 +669,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   controlsOrientation={controlsOrientation}
+                  sizeMetric={filterArtist ? "songs" : sizeMetric}
+                  floatingControlsLeading={filterArtist ? undefined : <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />}
                   defaultViewport={defaultViewport}
                   onViewportChange={onViewportChange}
                   {...infoPanelCuration}

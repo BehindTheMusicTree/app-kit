@@ -66,6 +66,7 @@ const genrePlaylist: CriteriaPlaylistSimple = {
   parent: null,
   root: { uuid: playlistUuid, name: "Electronic" },
   tracksCount: 3,
+  viewsCount: 0,
   createdOn: "2026-06-20T20:24:17.718222Z",
   updatedOn: "2026-06-20T20:24:17.718222Z",
   isUnacceptedRoot: false,

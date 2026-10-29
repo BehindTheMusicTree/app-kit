@@ -8,6 +8,7 @@ export const CriteriaPlaylistSimpleSchema = CriteriaPlaylistDetailedSchema.pick(
   parent: true,
   root: true,
   tracksCount: true,
+  viewsCount: true,
   createdOn: true,
   updatedOn: true,
 }).extend({

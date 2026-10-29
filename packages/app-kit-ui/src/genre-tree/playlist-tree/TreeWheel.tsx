@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, type ReactNode } from "react";
 import {
   GenreTreeWheel,
   type ControlsOrientation,
@@ -23,6 +23,7 @@ import { CriteriaMinimum } from "@behindthemusictree/app-kit/genre-tree";
 import { Scope } from "@behindthemusictree/app-kit/transport";
 import type { InfoPanelCurationProps } from "./infoPanelCurationProps";
 import { useGenrePlaylistPlayback, type GenrePlaylistPlayback } from "./useGenrePlaylistPlayback";
+import { genrePlaylistSize, type GenreTreeSizeMetric } from "./size-metric";
 import { capitalize, useTrackNoun } from "@behindthemusictree/app-kit/track-noun";
 
 export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
@@ -52,6 +53,10 @@ export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
   showToolbar?: boolean;
   /** Layout of the floating zoom/pop/fit controls. Defaults to "vertical". */
   controlsOrientation?: ControlsOrientation;
+  /** What node size is proportional to; defaults to the song count. */
+  sizeMetric?: GenreTreeSizeMetric;
+  /** Rendered in the floating controls, beside the zoom buttons. */
+  floatingControlsLeading?: ReactNode;
   /** Mount-only seed for the pan/zoom, replacing the initial fit. */
   defaultViewport?: GenreTreeViewport;
   /** Fires after a user-driven pan/zoom settles. */
@@ -78,6 +83,8 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
   allowWheelRotation,
   showToolbar,
   controlsOrientation,
+  sizeMetric = "songs",
+  floatingControlsLeading,
   defaultViewport,
   onViewportChange,
   playback,
@@ -95,12 +102,12 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
         id: genrePlaylist.uuid,
         parentId: genrePlaylist.parent?.uuid ?? null,
         name: genrePlaylist.name,
-        itemCount: genrePlaylist.tracksCount,
+        itemCount: genrePlaylistSize(genrePlaylist, sizeMetric),
         actionable: Boolean(genrePlaylist.criteria),
         side: genrePlaylist.criteria?.side ?? undefined,
         wikidataId: genrePlaylist.criteria?.wikidataId ?? null,
       })),
-    [genrePlaylists],
+    [genrePlaylists, sizeMetric],
   );
 
   const handlePlayPause = useCallback(
@@ -160,7 +167,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
     <GenreTreeWheel
       className={className}
       nodes={nodes}
-      itemCountLabel={`${capitalize(trackNoun.singular)} count`}
+      itemCountLabel={sizeMetric === "views" ? "Views" : `${capitalize(trackNoun.singular)} count`}
       playingNodeId={playingNodeId}
       playState={isPlaying ? "playing" : "paused"}
       onPlayPause={handlePlayPause}
@@ -178,6 +185,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
       allowWheelRotation={allowWheelRotation}
       showToolbar={showToolbar}
       controlsOrientation={controlsOrientation}
+      floatingControlsLeading={floatingControlsLeading}
       defaultViewport={defaultViewport}
       onViewportChange={onViewportChange}
       {...infoPanelCuration}
