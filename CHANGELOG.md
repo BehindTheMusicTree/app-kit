@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [26.0.0] - 2026-10-29
+
 ### Breaking
 
 - **Breaking:** `useVisibleGenrePlaylists` and `useGenreTreeViewState` no longer report `isLoading` or serve an empty `genrePlaylists` while an artist's counts load: the current tree stays (the full tree, or the previous artist's footprint) and the new `isFetching` is true meanwhile. `isLoading` is true only until the first tree arrives.
