@@ -11,11 +11,20 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Security
+
+- `CriteriaOverviewSchema.summarySourceUrl` and `musicbrainzLink` in `MbArtistDetailedSchema` / `MbRecordingDetailedSchema` now reject non-`http(s)` URLs (`javascript:`, `data:`, `ftp:` ...) through the shared `HttpUrlSchema`, like the artist URLs in 23.0.1. `summarySourceUrl` is rendered as a link by `GenreDetailExtras`.
+
+### Fixed
+
+- `useValidatedMutation` no longer throws when a validation issue path contains a symbol key (zod 4 paths are `PropertyKey[]`); path segments are stringified.
+
 ## [24.0.0] - 2026-10-29
 
 ### Breaking
 
 - **Breaking:** `zod` moves from 3 to 4 (`^4.6.6`) in `app-kit` and `app-kit-ui`, closing the open zod 3 advisory. Schemas passed into app-kit hooks (`useFetchGenrePlaylist`, `useValidatedMutation`, `useQueryWithParse`, the criteria schemas) must be built with zod 4. `useFetchGenrePlaylist` is now generic over the schema output (`<T>(…, schema: z.ZodType<T, unknown>)`) instead of the schema type.
+- **Breaking:** zod 4 validates more strictly, so payloads that parsed before can now fail: `.uuid()` enforces RFC 9562 version and variant bits; `.datetime()` rejects offsets such as `+02:00` unless `{ offset: true }`; `.url()` applies stricter hostname checks; and the `HttpUrlSchema` error message changed.
 
 ### Changed
 

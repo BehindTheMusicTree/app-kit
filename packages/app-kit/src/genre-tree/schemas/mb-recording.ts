@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { HttpUrlSchema } from "./http-url";
 import { MbArtistDetailedSchema } from "./mb-artist";
 
 export const MbRecordingDetailedSchema = z.object({
@@ -7,7 +8,7 @@ export const MbRecordingDetailedSchema = z.object({
   title: z.string(),
   score: z.number(),
   musicbrainzArtists: z.array(MbArtistDetailedSchema),
-  musicbrainzLink: z.string().url(),
+  musicbrainzLink: HttpUrlSchema,
   durationInSec: z.number().min(0).nullable().optional(),
   durationStrInHourMinSec: z.string().nullable().optional(),
   releaseDate: z.union([z.string().datetime(), z.string()]).transform((val) => {

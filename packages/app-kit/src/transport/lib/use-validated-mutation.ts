@@ -43,7 +43,7 @@ export function useValidatedMutation<TData, TError = Error, TVariables = unknown
       const parsedInput = inputSchema.safeParse(data);
       if (!parsedInput.success) {
         const fieldErrors = parsedInput.error.issues.map((error) => ({
-          field: error.path.join("."),
+          field: error.path.map(String).join("."),
           message: error.message,
         }));
         setFormErrors(fieldErrors);
