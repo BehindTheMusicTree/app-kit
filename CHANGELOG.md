@@ -11,6 +11,15 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Breaking
+
+- `CriteriaPlaylistSimple` / `CriteriaPlaylistDetailed` now require `viewsCount`, the summed YouTube views of the genre's songs; the API must serve it (grow-the-music-tree-api 14.5+) and test fixtures must include it.
+
+### Added
+
+- `GenreTreeView` toggle (bottom left of the zoom controls) sizing nodes by song count or by song views, via the `floatingControlsLeading` slot of `@behindthemusictree/genre-tree-view` 5.3.0 (now required). Controlled with the `sizeMetric` / `onSizeMetricChange` props, or uncontrolled starting on songs. Hidden, and sizing forced to songs, while an artist filters the tree.
+- `sizeMetric` and `floatingControlsLeading` props on `GenrePlaylistTreeWheel` and `GenrePlaylistTreeWheelRadialPopCore`.
+
 ## [24.0.1] - 2026-10-29
 
 ### Security

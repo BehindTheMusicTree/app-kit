@@ -35,6 +35,7 @@ describe("GenrePlaylistTreeWheelRadialPopCore focus (real genre-tree-view)", () 
         parent: null,
         root: { uuid: "gp1", name: "Mainstream Pop" },
         tracksCount: 3,
+        viewsCount: 0,
         criteria: { uuid: "c1", name: "Mainstream Pop" },
         createdOn: "2024-01-01T00:00:00.000Z",
         updatedOn: null,
