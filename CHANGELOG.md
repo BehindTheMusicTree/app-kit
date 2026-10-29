@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- Search field shows a spinner in place of the magnifier (after a 300 ms grace delay) while artist results load; `useArtistSearch` returns a new `pending` flag and `GenreSearchExtraResults` accepts `loading`.
+
 ## [26.0.0] - 2026-10-29
 
 ### Breaking

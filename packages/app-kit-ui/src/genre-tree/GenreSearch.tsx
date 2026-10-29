@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ArrowLeft, Search, X } from "lucide-react";
+import { ArrowLeft, LoaderCircle, Search, X } from "lucide-react";
 import { Input } from "@behindthemusictree/ui";
 
 import { CriteriaPlaylistSimple, useGenreSearch } from "@behindthemusictree/app-kit/genre-tree";
@@ -12,6 +12,8 @@ export type GenreSearchExtraResults = {
   items: { key: string; content: ReactNode; onSelect: () => void }[];
   /** Announced politely, e.g. "No artists found". */
   status?: string;
+  /** Shows a spinner in place of the search icon while the host resolves this group. */
+  loading?: boolean;
 };
 
 export type GenreSearchProps<T extends CriteriaPlaylistSimple = CriteriaPlaylistSimple> = {
@@ -49,6 +51,7 @@ export default function GenreSearch<T extends CriteriaPlaylistSimple = CriteriaP
 
   const extraItems = query !== "" && query !== selectedName ? (extraResults?.items ?? []) : [];
   const label = extraResults ? "Search" : "Search a genre";
+  const loading = query !== "" && query !== selectedName && (extraResults?.loading ?? false);
   const showList = results.length > 0 || extraItems.length > 0;
   const heading = "px-3 pt-2 pb-1 text-xs font-medium uppercase text-[var(--color-text-muted)]";
 
@@ -74,11 +77,24 @@ export default function GenreSearch<T extends CriteriaPlaylistSimple = CriteriaP
         }}
         placeholder={placeholder ?? `${label}…`}
         aria-label={label}
+        aria-busy={loading}
         className="h-[var(--layout-search-h,3rem)] pl-6 pr-20 text-base transition-[padding] duration-200 ease-out motion-reduce:transition-none bg-[var(--color-surface)] border-[var(--color-border)] rounded-full shadow-md"
       />
       <div className="absolute right-3 top-1/2 flex items-center -translate-y-1/2">
-          <span className="p-2 text-[var(--color-text-muted)] pointer-events-none">
-            <Search aria-hidden="true" className="w-6 h-6" />
+          <span
+            data-loading={loading}
+            className="relative p-2 text-[var(--color-text-muted)] pointer-events-none"
+          >
+            <Search
+              aria-hidden="true"
+              className={`w-6 h-6 transition-opacity duration-200 motion-reduce:transition-none ${loading ? "opacity-0" : ""}`}
+            />
+            <LoaderCircle
+              aria-hidden="true"
+              className={`absolute inset-2 w-6 h-6 transition-opacity duration-200 motion-reduce:transition-none ${
+                loading ? "opacity-100 delay-300 animate-spin motion-reduce:animate-none" : "opacity-0"
+              }`}
+            />
           </span>
           {canClear && (
             <button

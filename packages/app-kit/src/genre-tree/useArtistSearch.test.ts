@@ -48,6 +48,7 @@ describe("useArtistSearch", () => {
     expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
     expect(result.current.artists).toEqual([]);
     expect(result.current.settled).toBe(false);
+    expect(result.current.pending).toBe(false);
   });
 
   it("waits for the debounce before querying, then fetches the trimmed query anonymously", () => {
@@ -67,6 +68,20 @@ describe("useArtistSearch", () => {
     expect(fetchMock).toHaveBeenCalledWith("artists/search/", true, false, {}, { q: "taylor", limit: 8 });
     expect(result.current.artists).toEqual([swift]);
     expect(result.current.settled).toBe(true);
+    expect(result.current.pending).toBe(false);
+  });
+
+  it("is pending through the debounce and the fetch", () => {
+    useQueryWithParseMock.mockReturnValue({ data: undefined, isFetching: true, isError: false });
+    const { result } = renderHook(() => useArtistSearch(getBackendBaseUrl, "taylor"));
+
+    expect(result.current.pending).toBe(true);
+
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+
+    expect(result.current.pending).toBe(true);
   });
 
   it("keeps the previous results while the next query loads, and clears them below two characters", () => {
@@ -98,6 +113,7 @@ describe("useArtistSearch", () => {
 
     expect(result.current.isError).toBe(true);
     expect(result.current.settled).toBe(false);
+    expect(result.current.pending).toBe(false);
     expect(result.current.artists).toEqual([]);
   });
 });
