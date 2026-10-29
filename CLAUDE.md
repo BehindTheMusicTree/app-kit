@@ -10,6 +10,8 @@ Nothing styled goes in `packages/app-kit`: no JSX with classes, and no `ui`, `lu
 `react-icons`, `clsx`, `tailwind-merge` or `genre-tree-view` imports (`pnpm lint` enforces it).
 Put the logic in an app-kit hook and the markup in app-kit-ui, which reads colors from CSS tokens.
 
+Ecosystem map (which repo owns what, where UI changes go): `~/git/claude-config/CONVENTIONS.md` § Ecosystem.
+
 ## Stack
 
 - TypeScript (strict), React — no framework of its own; consumers are Next.js apps
