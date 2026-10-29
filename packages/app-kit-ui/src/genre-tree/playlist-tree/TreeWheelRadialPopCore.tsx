@@ -113,10 +113,6 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
   } = props;
   const focus: GenreFocusProps = props;
   const infoPanelCuration: InfoPanelCurationProps = {
-    editMode: props.editMode,
-    onEditModeChange: props.onEditModeChange,
-    renderTitleEditor: props.renderTitleEditor,
-    renderParentsEditor: props.renderParentsEditor,
     renderDangerZone: props.renderDangerZone,
     expanded: props.expanded,
     onExpandedChange: props.onExpandedChange,

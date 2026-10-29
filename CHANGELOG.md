@@ -13,11 +13,12 @@ easy to spot when bumping.
 
 ### Breaking
 
+- **Breaking:** `genre-tree-view` moves to 6.0.0, which removes the info panel edit mode. `GenreTreeView`, `TreeWheelRadialPopCore` and `InfoPanelCurationProps` no longer accept `editMode`, `onEditModeChange`, `renderTitleEditor` or `renderParentsEditor`. `renderDangerZone` now renders whenever the tree is not `readOnly`.
 - `CriteriaPlaylistSimple` / `CriteriaPlaylistDetailed` now require `viewsCount`, the summed YouTube views of the genre's songs; the API must serve it (grow-the-music-tree-api 14.5+) and test fixtures must include it.
 
 ### Added
 
-- `GenreTreeView` toggle (bottom left of the zoom controls) sizing nodes by song count or by song views, via the `floatingControlsLeading` slot of `@behindthemusictree/genre-tree-view` 5.3.0 (now required). Controlled with the `sizeMetric` / `onSizeMetricChange` props, or uncontrolled starting on songs. Hidden, and sizing forced to songs, while an artist filters the tree.
+- `GenreTreeView` toggle (bottom left of the zoom controls) sizing nodes by song count or by song views, via the `floatingControlsLeading` slot of `@behindthemusictree/genre-tree-view` 5.3.0 or later (now required). Controlled with the `sizeMetric` / `onSizeMetricChange` props, or uncontrolled starting on songs. Hidden, and sizing forced to songs, while an artist filters the tree.
 - `sizeMetric` and `floatingControlsLeading` props on `GenrePlaylistTreeWheel` and `GenrePlaylistTreeWheelRadialPopCore`.
 
 ## [24.0.1] - 2026-10-29

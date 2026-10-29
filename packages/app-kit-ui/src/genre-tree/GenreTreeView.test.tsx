@@ -392,10 +392,6 @@ describe("GenreTreeView", () => {
   it("passes the info panel curation props through to the stacked and wheel trees", () => {
     useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist()], isPending: false });
     const curation = {
-      editMode: true,
-      onEditModeChange: vi.fn(),
-      renderTitleEditor: vi.fn(),
-      renderParentsEditor: vi.fn(),
       renderDangerZone: vi.fn(),
       expanded: true,
       onExpandedChange: vi.fn(),
