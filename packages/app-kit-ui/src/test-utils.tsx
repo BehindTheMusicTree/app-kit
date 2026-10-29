@@ -1,12 +1,16 @@
 import { render as rtlRender, type RenderOptions, type RenderResult } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TrackNounProvider } from "@behindthemusictree/app-kit/track-noun";
-import type { ReactElement, ReactNode } from "react";
+import { useState, type ReactElement, type ReactNode } from "react";
 
 function TrackNounWrapper({ children }: { children: ReactNode }) {
+  const [queryClient] = useState(() => new QueryClient());
   return (
-    <TrackNounProvider singular="track" plural="tracks">
-      {children}
-    </TrackNounProvider>
+    <QueryClientProvider client={queryClient}>
+      <TrackNounProvider singular="track" plural="tracks">
+        {children}
+      </TrackNounProvider>
+    </QueryClientProvider>
   );
 }
 

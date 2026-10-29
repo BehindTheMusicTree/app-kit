@@ -190,12 +190,21 @@ describe("useGenreTreeViewState", () => {
       { genrePlaylist: "rock", songsCount: 2, tracksCount: 1 },
     ];
 
-    it("shows the loading state, not the full tree, while counts load", () => {
+    it("keeps the current tree and reports fetching while counts load", () => {
       const { result } = renderHook(() => useGenreTreeViewState({ ...options, artistUuid }));
 
       expect(useArtistGenreCountsMock).toHaveBeenCalledWith(artistUuid, options.getBackendBaseUrl);
-      expect(result.current.isLoading).toBe(true);
-      expect(result.current.genrePlaylists).toEqual([]);
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.isFetching).toBe(true);
+      expect(result.current.genrePlaylists.length).toBeGreaterThan(0);
+    });
+
+    it("keeps pruning by the previous artist's counts while the next artist's load", () => {
+      useArtistGenreCountsMock.mockReturnValue({ data: counts, isPending: false, isPlaceholderData: true, error: null });
+      const { result } = renderHook(() => useGenreTreeViewState({ ...options, artistUuid }));
+
+      expect(result.current.isFetching).toBe(true);
+      expect(result.current.genrePlaylists.map((gp) => gp.uuid)).toEqual(["pop", "rock"]);
     });
 
     it("serves the pruned tree with the artist's counts to every consumer", () => {

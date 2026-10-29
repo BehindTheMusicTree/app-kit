@@ -315,6 +315,44 @@ describe("GenreTreeView", () => {
     });
   });
 
+  describe("busy indicator", () => {
+    const lastWheelProps = () => treeWheelPropsMock.mock.calls.at(-1)?.[0];
+
+    it("is off once the tree is loaded and idle", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist()], isPending: false, isFetching: false });
+      renderView({ viewMode: "wheel" });
+
+      expect(lastWheelProps().busy).toBe(false);
+    });
+
+    it("is off after the size metric toggle settles", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist()], isPending: false, isFetching: false });
+      renderView({ viewMode: "wheel" });
+      render(<>{lastWheelProps().floatingControlsLeading}</>);
+      fireEvent.click(screen.getByRole("button", { name: "Size by views" }));
+
+      expect(lastWheelProps().busy).toBe(false);
+    });
+
+    it("keeps the tree mounted and turns busy on while the tree refetches", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist()], isPending: false, isFetching: true });
+      renderView({ viewMode: "wheel" });
+
+      expect(screen.getByTestId("tree-wheel")).toBeInTheDocument();
+      expect(lastWheelProps().busy).toBe(true);
+    });
+
+    it("keeps the tree mounted and turns busy on while an artist's counts load", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist()], isPending: false, isFetching: false });
+      useArtistGenreCountsMock.mockReturnValue({ data: undefined, isPending: true, isError: false });
+      renderView({ viewMode: "wheel", artistUuid: "a1" });
+
+      expect(screen.getByTestId("tree-wheel")).toBeInTheDocument();
+      expect(lastWheelProps().genrePlaylists).toHaveLength(1);
+      expect(lastWheelProps().busy).toBe(true);
+    });
+  });
+
   it("passes defaultViewport and onViewportChange to the wheel", () => {
     useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist()], isPending: false });
     const defaultViewport = { x: 10, y: 20, zoom: 1.5 };

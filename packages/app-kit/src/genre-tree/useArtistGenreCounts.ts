@@ -1,5 +1,6 @@
 "use client";
 
+import { keepPreviousData } from "@tanstack/react-query";
 import { z } from "zod";
 
 import { AppError, ErrorCode } from "../transport/app-errors";
@@ -19,6 +20,7 @@ export function useArtistGenreCounts(artistUuid: string | null, getBackendBaseUr
     queryFn: () => fetch(artistEndpoints.genreCounts(artistUuid as string), true, false, undefined, undefined, false, true),
     schema: z.array(ArtistGenreCountSchema),
     enabled: artistUuid !== null,
+    placeholderData: keepPreviousData,
     retry: (failureCount, error) => !isNotFound(error) && failureCount < 3,
     context: "useArtistGenreCounts",
   });
