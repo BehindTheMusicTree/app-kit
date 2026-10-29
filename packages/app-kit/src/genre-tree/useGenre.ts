@@ -16,7 +16,7 @@ import { CriteriaSimpleSchema } from "./schemas/criteria/simple";
 import { CriteriaCreationSchema } from "./schemas/criteria/creation";
 import { CriteriaUpdateSchema } from "./schemas/criteria/update";
 import { GenreUuidSchema, type GenreUuid } from "./schemas/ids";
-import { genreEndpoints, genreQueryKeys } from "./api/genres";
+import { genreEndpoints, genreQueryKeys, genreUpdateMutationKey } from "./api/genres";
 
 export function useListGenres(
   page = 1,
@@ -175,7 +175,10 @@ export function useUpdateGenre(scope: Scope, getBackendBaseUrl: () => string) {
       });
       return response;
     },
-    onSuccess: (_, { uuid }) => refreshGenreTree({ changedUuid: uuid }),
+    mutationKey: genreUpdateMutationKey,
+    onSuccess: (_, { uuid }) => {
+      void refreshGenreTree({ changedUuid: uuid });
+    },
   });
 
   const renameGenre = (uuid: GenreUuid, name: string) => {

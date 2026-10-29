@@ -14,3 +14,5 @@ export const genreQueryKeys = {
     overview: (id: GenreUuid) => ["referenceGenres", "overview", id] as const,
   },
 };
+
+export const genreUpdateMutationKey = ["genres", "update"] as const;

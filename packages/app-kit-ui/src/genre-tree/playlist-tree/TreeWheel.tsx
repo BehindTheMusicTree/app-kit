@@ -57,6 +57,8 @@ export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
   sizeMetric?: GenreTreeSizeMetric;
   /** Rendered in the floating controls, beside the zoom buttons. */
   floatingControlsLeading?: ReactNode;
+  /** Shows the tree's busy indicator while the data behind it is changing. */
+  busy?: boolean;
   /** Mount-only seed for the pan/zoom, replacing the initial fit. */
   defaultViewport?: GenreTreeViewport;
   /** Fires after a user-driven pan/zoom settles. */
@@ -85,6 +87,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
   controlsOrientation,
   sizeMetric = "songs",
   floatingControlsLeading,
+  busy,
   defaultViewport,
   onViewportChange,
   playback,
@@ -186,6 +189,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
       showToolbar={showToolbar}
       controlsOrientation={controlsOrientation}
       floatingControlsLeading={floatingControlsLeading}
+      busy={busy}
       defaultViewport={defaultViewport}
       onViewportChange={onViewportChange}
       {...infoPanelCuration}

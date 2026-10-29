@@ -71,6 +71,8 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   sizeMetric?: GenreTreeSizeMetric;
   /** Rendered in the floating controls, beside the zoom buttons. */
   floatingControlsLeading?: ReactNode;
+  /** Shows the tree's busy indicator while the data behind it is changing; ignored in outline mode. */
+  busy?: boolean;
   /** When true, renders the same forest as GenreTreeOutline's nested-list text view instead of
    * the radial wheel. Defaults to false. */
   outline?: boolean;
@@ -104,8 +106,9 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     allowWheelRotation,
     showToolbar,
     controlsOrientation,
-  sizeMetric = "songs",
-  floatingControlsLeading,
+    sizeMetric = "songs",
+    floatingControlsLeading,
+    busy,
     outline = false,
     defaultViewport,
     onViewportChange,
@@ -217,6 +220,7 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
       allowWheelRotation={allowWheelRotation}
       controlsOrientation={controlsOrientation}
       floatingControlsLeading={floatingControlsLeading}
+      busy={busy}
       defaultViewport={defaultViewport}
       onViewportChange={onViewportChange}
       {...(focus.onFocusGenreChange

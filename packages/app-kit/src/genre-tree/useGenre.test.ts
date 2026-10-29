@@ -72,6 +72,7 @@ import {
   useUpdateGenre,
   useDeleteGenre,
 } from "./useGenre";
+import { genreUpdateMutationKey } from "./api/genres";
 import { makeGenrePlaylistUuid, makeGenreUuid } from "./testing";
 
 const getBackendBaseUrl = () => "https://backend.example.com";
@@ -370,11 +371,19 @@ describe("useGenre", () => {
       result.current.renameGenre(genrePlaylistUuid, "Rock");
     });
 
-    it("onSuccess resolves only once every invalidation has resolved", async () => {
+    it("onSuccess starts the refetch without waiting for it, so the caller can close right after the PUT", () => {
       renderHook(() => useUpdateGenre("me", getBackendBaseUrl));
       const { onSuccess } = useValidatedMutationMock.mock.calls[0][0];
+      invalidateQueriesMock.mockReturnValueOnce(new Promise<void>(() => {}));
 
-      await expectPendingUntilRefetched(() => onSuccess(undefined, { uuid: makeGenreUuid("g1"), data: {} }));
+      expect(onSuccess(undefined, { uuid: makeGenreUuid("g1"), data: {} })).toBeUndefined();
+      expect(invalidateQueriesMock).toHaveBeenCalled();
+    });
+
+    it("tags the mutation so the tree can show it as busy", () => {
+      renderHook(() => useUpdateGenre("me", getBackendBaseUrl));
+
+      expect(useValidatedMutationMock.mock.calls[0][0].mutationKey).toBe(genreUpdateMutationKey);
     });
 
     it("exposes the mutation's isPending", () => {

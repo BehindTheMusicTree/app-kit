@@ -17,18 +17,21 @@ export interface UseVisibleGenrePlaylistsOptions {
 /**
  * The tree the user can navigate: the whole canonical tree, or the artist's footprint when
  * `artistUuid` is set. Hosts validate URL state (selected genre, focus) against this list. While the
- * artist's counts load it is empty and `isLoading` is true; if they fail (unknown artist, backend
- * error) the whole tree is served, the artist panel being where that failure is shown.
+ * artist's counts load the current tree stays (full, or the previous artist's footprint) and
+ * `isFetching` is true; `isLoading` is true only until the first tree arrives. If the counts fail
+ * (unknown artist, backend error) the whole tree is served, the artist panel being where that failure
+ * is shown.
  */
 export function useVisibleGenrePlaylists({ scope, getBackendBaseUrl, artistUuid = null }: UseVisibleGenrePlaylistsOptions) {
-  const { data: tree, isPending: isTreePending } = useListFullGenrePlaylists(scope, getBackendBaseUrl);
+  const { data: tree, isPending: isTreePending, isFetching: isTreeFetching } = useListFullGenrePlaylists(scope, getBackendBaseUrl);
   const counts = useArtistGenreCounts(artistUuid, getBackendBaseUrl);
-  const isCountsPending = artistUuid !== null && counts.isPending;
+  const artistCounts = artistUuid !== null ? counts.data : undefined;
+  const isCountsLoading = artistUuid !== null && (counts.isPending || counts.isPlaceholderData);
 
   const genrePlaylists = useMemo<CriteriaPlaylistSimple[]>(() => {
-    if (!tree || isCountsPending) return [];
-    return counts.data ? pruneGenrePlaylistsForArtist(tree, counts.data) : tree;
-  }, [tree, isCountsPending, counts.data]);
+    if (!tree) return [];
+    return artistCounts ? pruneGenrePlaylistsForArtist(tree, artistCounts) : tree;
+  }, [tree, artistCounts]);
 
-  return { isLoading: isTreePending || isCountsPending, genrePlaylists };
+  return { isLoading: isTreePending, isFetching: isCountsLoading || (!isTreePending && isTreeFetching), genrePlaylists };
 }

@@ -31,6 +31,8 @@ export interface UseGenreTreeViewStateOptions<O extends CriteriaOverview = Crite
 
 export interface UseGenreTreeViewStateResult {
   isLoading: boolean;
+  /** True while the visible tree is being refreshed or re-pruned; the previous tree stays in `genrePlaylists`. */
+  isFetching: boolean;
   genrePlaylists: CriteriaPlaylistSimple[];
   genrePlaylistByNodeId: Map<string, CriteriaPlaylistSimple>;
   /** Playlists the current view mode may show: unaccepted roots and, outside stacked/outline, criteria-less playlists are hidden. */
@@ -76,7 +78,7 @@ export function useGenreTreeViewState<O extends CriteriaOverview = CriteriaOverv
     [isSelectionControlled, onSelectedNodeIdChange],
   );
 
-  const { isLoading, genrePlaylists } = useVisibleGenrePlaylists({ scope, getBackendBaseUrl, artistUuid });
+  const { isLoading, isFetching, genrePlaylists } = useVisibleGenrePlaylists({ scope, getBackendBaseUrl, artistUuid });
 
   const genrePlaylistByNodeId = useMemo(() => new Map<string, CriteriaPlaylistSimple>(genrePlaylists.map((gp) => [gp.uuid, gp])), [genrePlaylists]);
 
@@ -151,6 +153,7 @@ export function useGenreTreeViewState<O extends CriteriaOverview = CriteriaOverv
 
   return {
     isLoading,
+    isFetching,
     genrePlaylists,
     genrePlaylistByNodeId,
     visibleGenrePlaylists,
