@@ -9,6 +9,8 @@ export const CriteriaPlaylistDetailedSchema = z.object({
   uuid: GenrePlaylistUuidSchema,
   name: z.string(),
   tracksCount: z.number(),
+  // Summed YouTube views of the same songs as `tracksCount`.
+  viewsCount: z.number(),
   durationInSec: z.number().min(0).nullable().optional(),
   durationStrInHourMinSec: z.string().nullable().optional(),
   // Nullable: the "Genreless" root playlist has no criteria attached and is never updated.

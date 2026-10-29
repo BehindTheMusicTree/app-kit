@@ -7,16 +7,22 @@ import { MbArtistDetailedSchema } from "./mb-artist";
 import { MbRecordingDetailedSchema } from "./mb-recording";
 
 describe("HttpUrlSchema", () => {
-  it.each(["http://example.org/a", "https://example.org/a?b=1"])("accepts %s", (url) => {
+  it.each(["http://example.org/a", "https://example.org/a?b=1", "http://localhost:8001/x"])("accepts %s", (url) => {
     expect(HttpUrlSchema.safeParse(url).success).toBe(true);
   });
 
-  it.each(["javascript:alert(1)", "data:text/html,<script>alert(1)</script>", "ftp://example.org/a", "example.org"])(
-    "rejects %s",
-    (url) => {
-      expect(HttpUrlSchema.safeParse(url).success).toBe(false);
-    },
-  );
+  it.each([
+    "javascript:alert(1)",
+    "data:text/html,<script>alert(1)</script>",
+    "ftp://example.org/a",
+    "example.org",
+    "http:foo",
+    "https:foo",
+    "http:/foo",
+    "https://",
+  ])("rejects %s", (url) => {
+    expect(HttpUrlSchema.safeParse(url).success).toBe(false);
+  });
 });
 
 describe("ArtistDetailedSchema URLs", () => {

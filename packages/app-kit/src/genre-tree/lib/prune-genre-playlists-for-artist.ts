@@ -31,5 +31,7 @@ export const pruneGenrePlaylistsForArtist = (
     .map((playlist) => ({
       ...playlist,
       tracksCount: countByPlaylist.get(playlist.uuid)?.tracksCount ?? 0,
+      // Per-artist view totals are not served, so the views metric is unavailable on a pruned tree.
+      viewsCount: 0,
     }));
 };

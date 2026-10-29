@@ -157,6 +157,7 @@ function makePlaylist(overrides: Record<string, unknown> = {}) {
     root: { uuid: "root1" },
     parent: null,
     tracksCount: 3,
+    viewsCount: 0,
     criteria: { uuid: "c1", name: "Jazz" },
     isUnacceptedRoot: false,
     ...overrides,
@@ -286,6 +287,34 @@ describe("GenreTreeView", () => {
     expect(second.onViewportChange).toBe(onViewportChange);
   });
 
+  describe("size metric toggle", () => {
+    const renderLeading = () => render(<>{treeWheelPropsMock.mock.calls.at(-1)?.[0].floatingControlsLeading}</>);
+
+    it("starts on songs and switches the wheel to views when toggled", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist()], isPending: false });
+      renderView({ viewMode: "wheel" });
+      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].sizeMetric).toBe("songs");
+
+      renderLeading();
+      fireEvent.click(screen.getByRole("button", { name: "Size by views" }));
+
+      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].sizeMetric).toBe("views");
+    });
+
+    it("follows a controlled sizeMetric and reports changes without switching itself", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist()], isPending: false });
+      const onSizeMetricChange = vi.fn();
+      renderView({ viewMode: "wheel", sizeMetric: "views", onSizeMetricChange });
+      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].sizeMetric).toBe("views");
+
+      renderLeading();
+      fireEvent.click(screen.getByRole("button", { name: "Size by songs" }));
+
+      expect(onSizeMetricChange).toHaveBeenCalledWith("songs");
+      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].sizeMetric).toBe("views");
+    });
+  });
+
   it("passes defaultViewport and onViewportChange to the wheel", () => {
     useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist()], isPending: false });
     const defaultViewport = { x: 10, y: 20, zoom: 1.5 };
@@ -363,10 +392,6 @@ describe("GenreTreeView", () => {
   it("passes the info panel curation props through to the stacked and wheel trees", () => {
     useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist()], isPending: false });
     const curation = {
-      editMode: true,
-      onEditModeChange: vi.fn(),
-      renderTitleEditor: vi.fn(),
-      renderParentsEditor: vi.fn(),
       renderDangerZone: vi.fn(),
       expanded: true,
       onExpandedChange: vi.fn(),

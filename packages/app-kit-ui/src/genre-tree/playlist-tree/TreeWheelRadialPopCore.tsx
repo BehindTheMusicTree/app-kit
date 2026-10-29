@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, type ReactNode } from "react";
 import {
   GenreTreeOutline,
   GenreTreeWheelRadialPopCore,
@@ -22,6 +22,7 @@ import { CriteriaMinimum } from "@behindthemusictree/app-kit/genre-tree";
 import { Scope } from "@behindthemusictree/app-kit/transport";
 import type { InfoPanelCurationProps } from "./infoPanelCurationProps";
 import { useGenrePlaylistPlayback, type GenrePlaylistPlayback } from "./useGenrePlaylistPlayback";
+import { genrePlaylistSize, type GenreTreeSizeMetric } from "./size-metric";
 import { capitalize, useTrackNoun } from "@behindthemusictree/app-kit/track-noun";
 
 /** Pop-core focus is controlled-only: pass both props or neither. Ignored in outline mode. */
@@ -66,6 +67,10 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   /** Layout of the wheel's floating zoom/pop/fit controls; ignored in outline mode. Defaults to
    * "vertical". */
   controlsOrientation?: ControlsOrientation;
+  /** What node size is proportional to; defaults to the song count. */
+  sizeMetric?: GenreTreeSizeMetric;
+  /** Rendered in the floating controls, beside the zoom buttons. */
+  floatingControlsLeading?: ReactNode;
   /** When true, renders the same forest as GenreTreeOutline's nested-list text view instead of
    * the radial wheel. Defaults to false. */
   outline?: boolean;
@@ -99,6 +104,8 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     allowWheelRotation,
     showToolbar,
     controlsOrientation,
+  sizeMetric = "songs",
+  floatingControlsLeading,
     outline = false,
     defaultViewport,
     onViewportChange,
@@ -106,10 +113,6 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
   } = props;
   const focus: GenreFocusProps = props;
   const infoPanelCuration: InfoPanelCurationProps = {
-    editMode: props.editMode,
-    onEditModeChange: props.onEditModeChange,
-    renderTitleEditor: props.renderTitleEditor,
-    renderParentsEditor: props.renderParentsEditor,
     renderDangerZone: props.renderDangerZone,
     expanded: props.expanded,
     onExpandedChange: props.onExpandedChange,
@@ -128,14 +131,14 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
         id: genrePlaylist.uuid,
         parentId: genrePlaylist.parent?.uuid ?? null,
         name: genrePlaylist.name,
-        itemCount: genrePlaylist.tracksCount,
+        itemCount: genrePlaylistSize(genrePlaylist, sizeMetric),
         actionable: Boolean(genrePlaylist.criteria),
         detached: !genrePlaylist.criteria,
         side: genrePlaylist.criteria?.side ?? undefined,
         wikidataId: genrePlaylist.criteria?.wikidataId ?? null,
         umbrella: genrePlaylist.isUmbrella,
       })),
-    [genrePlaylists],
+    [genrePlaylists, sizeMetric],
   );
 
   const handlePlayPause = useCallback(
@@ -186,7 +189,7 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
   const treeProps = {
     className,
     nodes,
-    itemCountLabel: `${capitalize(trackNoun.singular)} count`,
+    itemCountLabel: sizeMetric === "views" ? "Views" : `${capitalize(trackNoun.singular)} count`,
     playingNodeId,
     playState: isPlaying ? ("playing" as const) : ("paused" as const),
     onPlayPause: handlePlayPause,
@@ -213,6 +216,7 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
       {...treeProps}
       allowWheelRotation={allowWheelRotation}
       controlsOrientation={controlsOrientation}
+      floatingControlsLeading={floatingControlsLeading}
       defaultViewport={defaultViewport}
       onViewportChange={onViewportChange}
       {...(focus.onFocusGenreChange

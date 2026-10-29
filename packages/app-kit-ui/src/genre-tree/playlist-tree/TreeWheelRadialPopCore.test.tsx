@@ -50,6 +50,7 @@ function makeGenrePlaylist(overrides: Record<string, unknown> = {}) {
     parent: null,
     root: { uuid: makeGenrePlaylistUuid("root1"), name: "Root" },
     tracksCount: 3,
+    viewsCount: 0,
     criteria: { uuid: makeGenreUuid("c1"), name: "Jazz" },
     createdOn: "2024-01-01T00:00:00.000Z",
     updatedOn: null,
@@ -155,6 +156,17 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
       { id: makeGenrePlaylistUuid("gp1"), parentId: makeGenrePlaylistUuid("root"), name: "Jazz", itemCount: 3, actionable: true, detached: false, side: "pop", wikidataId: "Q8341" },
       { id: makeGenrePlaylistUuid("gp2"), parentId: null, name: "Rock", itemCount: 0, actionable: false, detached: true, side: undefined, wikidataId: null },
     ]);
+  });
+
+  it("sizes nodes by views when the views metric is selected", () => {
+    renderWheelRadialPopCore({
+      sizeMetric: "views",
+      genrePlaylists: [makeGenrePlaylist({ tracksCount: 3, viewsCount: 900 })],
+    });
+
+    const props = genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0];
+    expect(props.nodes[0].itemCount).toBe(900);
+    expect(props.itemCountLabel).toBe("Views");
   });
 
   it("has no playing node when there is no track list", () => {
