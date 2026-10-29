@@ -387,6 +387,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           : artistSearchResult.settled && artistSearchResult.artists.length === 0
             ? "No artists found"
             : "",
+        loading: artistSearchResult.pending,
       }
     : undefined;
   const handleSelectedNodeChange = (node: { id: string } | null) => {

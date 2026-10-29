@@ -17,6 +17,8 @@ export interface UseArtistSearchResult {
   isError: boolean;
   /** True once the debounced query has caught up with the typed one and its fetch has finished. */
   settled: boolean;
+  /** True from the first typed character past the minimum until results arrive or the search fails; covers the debounce. */
+  pending: boolean;
 }
 
 export function useArtistSearch(getBackendBaseUrl: () => string, text: string): UseArtistSearchResult {
@@ -38,9 +40,13 @@ export function useArtistSearch(getBackendBaseUrl: () => string, text: string): 
     placeholderData: keepPreviousData,
   });
 
+  const settled = enabled && !isFetching && query === trimmed;
+  const failed = enabled && isError;
+
   return {
     artists: trimmed.length >= MIN_QUERY_LENGTH ? (data ?? []) : [],
-    isError: enabled && isError,
-    settled: enabled && !isFetching && query === trimmed,
+    isError: failed,
+    settled,
+    pending: trimmed.length >= MIN_QUERY_LENGTH && !settled && !failed,
   };
 }

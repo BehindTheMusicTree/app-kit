@@ -192,7 +192,7 @@ describe("GenreTreeView", () => {
       isPending: false,
     });
     useFetchGenreOverviewMock.mockReturnValue({ data: undefined, isPending: false });
-    useArtistSearchMock.mockReturnValue({ artists: [], isError: false, settled: false });
+    useArtistSearchMock.mockReturnValue({ artists: [], isError: false, settled: false, pending: false });
     useArtistMock.mockImplementation((uuid: string | null) => (uuid === null ? { status: "idle" } : { status: "loading" }));
     useArtistGenreCountsMock.mockReturnValue({ data: undefined, isPending: false, isError: false });
   });
