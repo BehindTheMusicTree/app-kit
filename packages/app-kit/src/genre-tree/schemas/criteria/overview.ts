@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { HttpUrlSchema } from "../http-url";
 import { GenreUuidSchema } from "../ids";
 import { TrackMinimumSchema } from "../track/minimum";
 
@@ -8,7 +9,7 @@ export const CriteriaOverviewSchema = z.object({
   name: z.string(),
   summary: z.string().nullable(),
   description: z.string().nullable(),
-  summarySourceUrl: z.string().url().nullable(),
+  summarySourceUrl: HttpUrlSchema.nullable(),
   essentialSongs: z.array(TrackMinimumSchema).optional(),
 });
 
