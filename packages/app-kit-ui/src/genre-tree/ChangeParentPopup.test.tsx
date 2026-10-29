@@ -86,7 +86,40 @@ describe("ChangeParentPopup", () => {
     fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Blues" }));
 
     expect(useUpdateGenreMock).toHaveBeenCalledWith("reference", getBackendBaseUrl);
-    expect(mutateMock).toHaveBeenCalledWith({ uuid: "c-jazz", data: { parent: "c-blues" } }, { onSuccess: onClose });
+    expect(mutateMock).toHaveBeenCalledWith(
+      { uuid: "c-jazz", data: { parent: "c-blues" } },
+      { onSuccess: expect.any(Function) },
+    );
+    mutateMock.mock.calls[0][1].onSuccess();
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  describe("onParentChanged", () => {
+    const pickBlues = () => {
+      fireEvent.change(screen.getByPlaceholderText("Search a new parent…"), { target: { value: "Bl" } });
+      fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Blues" }));
+    };
+
+    it("reports genre uuids, not playlist uuids, once the update succeeds", () => {
+      const onParentChanged = vi.fn();
+      renderPopup({ onParentChanged });
+      pickBlues();
+
+      expect(onParentChanged).not.toHaveBeenCalled();
+      mutateMock.mock.calls[0][1].onSuccess();
+
+      expect(onParentChanged).toHaveBeenCalledWith({ genre: "c-jazz", from: "c-rock", to: "c-blues" });
+    });
+
+    it("reports a null origin for a root genre", () => {
+      const onParentChanged = vi.fn();
+      renderPopup({ genrePlaylist: blues, onParentChanged });
+      fireEvent.change(screen.getByPlaceholderText("Search a new parent…"), { target: { value: "So" } });
+      fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Soul" }));
+      mutateMock.mock.calls[0][1].onSuccess();
+
+      expect(onParentChanged).toHaveBeenCalledWith({ genre: "c-blues", from: null, to: "c-soul" });
+    });
   });
 
   it("marks the search busy while the update is pending", () => {

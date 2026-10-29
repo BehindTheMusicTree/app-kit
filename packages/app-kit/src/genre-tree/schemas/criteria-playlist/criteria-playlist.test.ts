@@ -53,6 +53,40 @@ describe("CriteriaPlaylistSimpleSchema", () => {
     expect(() => CriteriaPlaylistSimpleSchema.parse(valid)).not.toThrow();
   });
 
+  it.each([["commercial"], ["underground"], [null], [undefined]])("accepts scene %s", (scene) => {
+    const valid = {
+      uuid,
+      name: "Rock",
+      criteria: { uuid, name: "Rock" },
+      parent: null,
+      root: { uuid, name: "Root" },
+      tracksCount: 3,
+      viewsCount: 900,
+      createdOn: "2024-01-01T00:00:00.000Z",
+      updatedOn: null,
+      isUnacceptedRoot: false,
+      scene,
+    };
+    expect(() => CriteriaPlaylistSimpleSchema.parse(valid)).not.toThrow();
+  });
+
+  it("rejects an unknown scene", () => {
+    const invalid = {
+      uuid,
+      name: "Rock",
+      criteria: null,
+      parent: null,
+      root: { uuid, name: "Root" },
+      tracksCount: 3,
+      viewsCount: 900,
+      createdOn: "2024-01-01T00:00:00.000Z",
+      updatedOn: null,
+      isUnacceptedRoot: false,
+      scene: "mainstream",
+    };
+    expect(() => CriteriaPlaylistSimpleSchema.parse(invalid)).toThrow();
+  });
+
   it("rejects a shape with a wrong-typed field", () => {
     const invalid = {
       uuid,

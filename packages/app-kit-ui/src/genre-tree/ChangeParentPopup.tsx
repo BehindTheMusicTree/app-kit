@@ -5,6 +5,7 @@ import { useEffect, useMemo } from "react";
 import {
   CriteriaPlaylistSimple,
   ReparentCandidate,
+  type GenreUuid,
   getReparentCandidates,
   useUpdateGenre,
 } from "@behindthemusictree/app-kit/genre-tree";
@@ -12,12 +13,15 @@ import type { Scope } from "@behindthemusictree/app-kit/transport";
 import BasePopup from "../popup/BasePopup";
 import GenreSearch from "./GenreSearch";
 
+export type ParentChange = { genre: GenreUuid; from: GenreUuid | null; to: GenreUuid };
+
 type ChangeParentPopupProps = {
   genrePlaylist: ReparentCandidate;
   genrePlaylists: CriteriaPlaylistSimple[];
   scope: Scope;
   getBackendBaseUrl: () => string;
   onClose: () => void;
+  onParentChanged?: (change: ParentChange) => void;
 };
 
 export default function ChangeParentPopup({
@@ -26,12 +30,30 @@ export default function ChangeParentPopup({
   scope,
   getBackendBaseUrl,
   onClose,
+  onParentChanged,
 }: ChangeParentPopupProps) {
   const { mutate, isPending, formErrors } = useUpdateGenre(scope, getBackendBaseUrl);
   const candidates = useMemo(
     () => getReparentCandidates(genrePlaylists, genrePlaylist.uuid),
     [genrePlaylists, genrePlaylist.uuid],
   );
+
+  const handleSelect = (newParent: ReparentCandidate) => {
+    const genre = genrePlaylist.criteria.uuid;
+    const parentPlaylistUuid = genrePlaylist.parent?.uuid;
+    const from = parentPlaylistUuid
+      ? (genrePlaylists.find(({ uuid }) => uuid === parentPlaylistUuid)?.criteria?.uuid ?? null)
+      : null;
+    mutate(
+      { uuid: genre, data: { parent: newParent.criteria.uuid } },
+      {
+        onSuccess: () => {
+          onClose();
+          onParentChanged?.({ genre, from, to: newParent.criteria.uuid });
+        },
+      },
+    );
+  };
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -49,9 +71,7 @@ export default function ChangeParentPopup({
       <div aria-busy={isPending} className={isPending ? "pointer-events-none opacity-60" : undefined}>
         <GenreSearch
           genrePlaylists={candidates}
-          onSelect={(newParent) =>
-            mutate({ uuid: genrePlaylist.criteria.uuid, data: { parent: newParent.criteria.uuid } }, { onSuccess: onClose })
-          }
+          onSelect={handleSelect}
           placeholder="Search a new parent…"
         />
       </div>

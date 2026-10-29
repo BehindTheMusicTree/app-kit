@@ -127,6 +127,25 @@ describe("GenreSearch", () => {
       expect(screen.getByRole("textbox", { name: "Search a genre" })).toHaveAttribute("placeholder", "Search a genre…");
     });
 
+    it("shows the spinner and marks the input busy while extra results load", () => {
+      const { container, rerender } = render(
+        <GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} extraResults={{ ...extra(), loading: true }} />,
+      );
+      const slot = () => container.querySelector("[data-loading]");
+
+      expect(slot()).toHaveAttribute("data-loading", "false");
+
+      fireEvent.change(screen.getByRole("textbox"), { target: { value: "amb" } });
+      expect(slot()).toHaveAttribute("data-loading", "true");
+      expect(screen.getByRole("textbox")).toHaveAttribute("aria-busy", "true");
+
+      rerender(
+        <GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} extraResults={{ ...extra(), loading: false }} />,
+      );
+      expect(slot()).toHaveAttribute("data-loading", "false");
+      expect(screen.getByRole("textbox")).toHaveAttribute("aria-busy", "false");
+    });
+
     it("shows no headings without extra results", () => {
       render(<GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} />);
 

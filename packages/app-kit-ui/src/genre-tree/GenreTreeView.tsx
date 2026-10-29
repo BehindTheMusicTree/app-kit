@@ -43,7 +43,7 @@ import { GenreTreeWheelHandoff } from "./GenreTreeWheelHandoff";
 import GenreSearch, { type GenreSearchProps } from "./GenreSearch";
 import GenreActionBand from "./GenreActionBand";
 import PanelEdgeTab from "./PanelEdgeTab";
-import ChangeParentPopup from "./ChangeParentPopup";
+import ChangeParentPopup, { type ParentChange } from "./ChangeParentPopup";
 import { useArtistPanel } from "./artist/useArtistPanel";
 import { SizeMetricToggle } from "./SizeMetricToggle";
 import type { GenreTreeSizeMetric } from "./playlist-tree/size-metric";
@@ -116,6 +116,8 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   handleGenreCreationAction: (parent: CriteriaMinimum | null) => void;
   handleGenreRenameAction: (genre: CriteriaMinimum) => void;
   getBackendBaseUrl: () => string;
+  /** Called after the Parent popup moved a genre; `from` and `to` are genre (criteria) uuids, `from` null for a root genre. */
+  onParentChanged?: (change: ParentChange) => void;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   /** Controlled view mode. When provided, the internal Stacked/Wheel toggle is not rendered — the consumer owns that UI. */
   viewMode?: GenreTreeViewMode;
@@ -179,6 +181,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   scope,
   handleGenreCreationAction,
   handleGenreRenameAction,
+  onParentChanged,
   getBackendBaseUrl,
   additionalActions,
   viewMode: controlledViewMode,
@@ -387,6 +390,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           : artistSearchResult.settled && artistSearchResult.artists.length === 0
             ? "No artists found"
             : "",
+        loading: artistSearchResult.pending,
       }
     : undefined;
   const handleSelectedNodeChange = (node: { id: string } | null) => {
@@ -446,6 +450,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                         scope={scope}
                         getBackendBaseUrl={getBackendBaseUrl}
                         onClose={hidePopup}
+                        onParentChanged={onParentChanged}
                       />,
                     )
             }
@@ -475,7 +480,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       };
     },
     [genrePlaylistByNodeId, additionalActions, readOnly, handleGenreCreationAction, handleGenreRenameAction,
-      showPopup, hidePopup, visibleGenrePlaylists, playback, filterArtist,
+      showPopup, hidePopup, onParentChanged, visibleGenrePlaylists, playback, filterArtist,
       scope, getBackendBaseUrl, criteriaOverviewSchema,
       renderGenreDetailExtras,
       renderArtistLink,

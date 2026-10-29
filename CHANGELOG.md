@@ -11,6 +11,13 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [26.1.0] - 2026-10-29
+
+### Added
+
+- `GenreTreeView` accepts an optional `onParentChanged({ genre, from, to })`, called after the Parent popup moved a genre. The uuids are genre (criteria) uuids, so a host can undo with `PUT genres/<genre>/ { parent: from }`; `from` is `null` for a root genre. The `ParentChange` type is exported.
+- Search field shows a spinner in place of the magnifier (after a 300 ms grace delay) while artist results load; `useArtistSearch` returns a new `pending` flag and `GenreSearchExtraResults` accepts `loading`.
+
 ## [26.0.0] - 2026-10-29
 
 ### Breaking
@@ -23,6 +30,7 @@ easy to spot when bumping.
 
 - `GenreTreeView` shows one busy indicator on the tree (`busy` on `GenrePlaylistTreeWheel` and `GenrePlaylistTreeWheelRadialPopCore`) while the size metric re-renders, the tree refetches, an artist's counts load, or a genre update is in flight.
 - `genreUpdateMutationKey`, the mutation key of `useUpdateGenre`.
+- Genre playlists carry the optional `scene` (`commercial` | `underground`); the pop-core wheel forwards it so Core electronic's commercial and underground subtrees are stacked radially (genre-tree-view 5.1.0).
 
 ### Changed
 

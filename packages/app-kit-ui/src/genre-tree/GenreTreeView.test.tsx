@@ -192,7 +192,7 @@ describe("GenreTreeView", () => {
       isPending: false,
     });
     useFetchGenreOverviewMock.mockReturnValue({ data: undefined, isPending: false });
-    useArtistSearchMock.mockReturnValue({ artists: [], isError: false, settled: false });
+    useArtistSearchMock.mockReturnValue({ artists: [], isError: false, settled: false, pending: false });
     useArtistMock.mockImplementation((uuid: string | null) => (uuid === null ? { status: "idle" } : { status: "loading" }));
     useArtistGenreCountsMock.mockReturnValue({ data: undefined, isPending: false, isError: false });
   });
@@ -1646,6 +1646,17 @@ describe("GenreTreeView", () => {
           getBackendBaseUrl,
           onClose: hidePopupMock,
         });
+      });
+
+      it("hands onParentChanged to the popup", () => {
+        const onParentChanged = vi.fn();
+        useListFullGenrePlaylistsMock.mockReturnValue({ data: [jazz, rock], isPending: false });
+        renderView({ onParentChanged });
+        fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+        openBand("gp1");
+        fireEvent.click(screen.getByRole("button", { name: "Parent" }));
+
+        expect(showPopupMock.mock.calls[0][0].props.onParentChanged).toBe(onParentChanged);
       });
 
       it("does not hand a reparent mode to the tree components", () => {
