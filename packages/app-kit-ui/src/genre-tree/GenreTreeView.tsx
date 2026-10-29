@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from "react";
+import { useIsMutating } from "@tanstack/react-query";
 import { z } from "zod";
 import { Plus } from "lucide-react";
 import { IconTextButton, Button, SegmentedControl } from "@behindthemusictree/ui";
@@ -27,7 +28,7 @@ import {
 } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaOverview } from "@behindthemusictree/app-kit/genre-tree";
 import { Scope } from "@behindthemusictree/app-kit/transport";
-import { useGenreTreeViewState, useArtist } from "@behindthemusictree/app-kit/genre-tree";
+import { useGenreTreeViewState, useArtist, genreUpdateMutationKey } from "@behindthemusictree/app-kit/genre-tree";
 import { usePlayer } from "@behindthemusictree/app-kit/player";
 import { usePopup } from "@behindthemusictree/app-kit/popup";
 import { GenreDetailExtras, type GenreDetailSlots } from "./GenreDetailExtras";
@@ -222,6 +223,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const artistUuid = isArtistControlled ? controlledArtistUuid : internalArtistUuid;
   const [internalSizeMetric, setInternalSizeMetric] = useState<GenreTreeSizeMetric>("songs");
   const sizeMetric = controlledSizeMetric ?? internalSizeMetric;
+  const deferredSizeMetric = useDeferredValue(sizeMetric);
   const changeSizeMetric = (metric: GenreTreeSizeMetric) => {
     if (controlledSizeMetric === undefined) setInternalSizeMetric(metric);
     onSizeMetricChange?.(metric);
@@ -232,6 +234,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   };
   const {
     isLoading,
+    isFetching: isTreeFetching,
     genrePlaylistByNodeId,
     visibleGenrePlaylists,
     groupedGenrePlaylistsByRoot,
@@ -256,6 +259,9 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     criteriaOverviewSchema,
     artistUuid,
   });
+
+  const isGenreUpdating = useIsMutating({ mutationKey: genreUpdateMutationKey }) > 0;
+  const busy = deferredSizeMetric !== sizeMetric || isTreeFetching || isGenreUpdating;
 
   const artistResult = useArtist(artistUuid, artistSearchBaseUrl ?? getBackendBaseUrl);
   const filterArtistName = artistResult.status === "success" ? artistResult.artist.name : null;
@@ -641,7 +647,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   controlsOrientation={controlsOrientation}
-                  sizeMetric={filterArtist ? "songs" : sizeMetric}
+                  sizeMetric={filterArtist ? "songs" : deferredSizeMetric}
+                  busy={busy}
                   floatingControlsLeading={filterArtist ? undefined : <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />}
                   defaultViewport={defaultViewport}
                   onViewportChange={onViewportChange}
@@ -669,7 +676,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   controlsOrientation={controlsOrientation}
-                  sizeMetric={filterArtist ? "songs" : sizeMetric}
+                  sizeMetric={filterArtist ? "songs" : deferredSizeMetric}
+                  busy={busy}
                   floatingControlsLeading={filterArtist ? undefined : <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />}
                   defaultViewport={defaultViewport}
                   onViewportChange={onViewportChange}

@@ -11,6 +11,23 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [26.0.0] - 2026-10-29
+
+### Breaking
+
+- **Breaking:** `useVisibleGenrePlaylists` and `useGenreTreeViewState` no longer report `isLoading` or serve an empty `genrePlaylists` while an artist's counts load: the current tree stays (the full tree, or the previous artist's footprint) and the new `isFetching` is true meanwhile. `isLoading` is true only until the first tree arrives.
+- **Breaking:** `useUpdateGenre`'s mutation settles once the PUT succeeds instead of after the tree refetch, so `mutate(..., { onSuccess })` callers (e.g. closing a popup) run sooner; the refetch is shown through the busy indicator.
+- `genre-tree-view` 6.1.0 or later is now required (the `busy` prop).
+
+### Added
+
+- `GenreTreeView` shows one busy indicator on the tree (`busy` on `GenrePlaylistTreeWheel` and `GenrePlaylistTreeWheelRadialPopCore`) while the size metric re-renders, the tree refetches, an artist's counts load, or a genre update is in flight.
+- `genreUpdateMutationKey`, the mutation key of `useUpdateGenre`.
+
+### Changed
+
+- Switching the size metric or the artist filter no longer swaps the tree for the skeleton; the tree stays and updates in place. The skeleton only shows on the first load.
+
 ## [25.0.0] - 2026-10-29
 
 ### Breaking

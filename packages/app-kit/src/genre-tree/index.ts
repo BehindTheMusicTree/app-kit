@@ -57,7 +57,7 @@ export * from "./schemas/track/minimum";
 export * from "./schemas/track-playlist-rel/without-playlist";
 
 // API domain contracts
-export { genreEndpoints, genreQueryKeys } from "./api/genres";
+export { genreEndpoints, genreQueryKeys, genreUpdateMutationKey } from "./api/genres";
 export { artistEndpoints, artistQueryKeys } from "./api/artists";
 export { genrePlaylistEndpoints, genrePlaylistQueryKeys } from "./api/genre-playlists";
 export { libraryEndpoints, libraryQueryKeys } from "./api/library";
