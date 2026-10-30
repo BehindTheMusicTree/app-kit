@@ -32,8 +32,13 @@ export default function TrackListSidebar<T extends TrackBase>({
   onMinimize,
   renderArtistLink,
 }: TrackListSidebarProps<T>) {
-  const { trackList, loadMore } = useTrackList<T>();
+  const { trackList, loadMore, autoAdvancedTrackUuid } = useTrackList<T>();
   const trackNoun = useTrackNoun();
+  const trackListRef = useRef<HTMLUListElement>(null);
+  const previousOriginRef = useRef(trackList?.origin ?? null);
+  const handledAutoAdvanceRef = useRef<string | null>(null);
+  const shouldFollowPlaybackRef = useRef(true);
+  const programmaticScrollTopRef = useRef<number | null>(null);
   const loadMoreSentinelRef = useRef<HTMLLIElement>(null);
   const hasMore = !!trackList && trackList.nextPage !== null;
 
@@ -48,6 +53,51 @@ export default function TrackListSidebar<T extends TrackBase>({
     observer.observe(sentinel);
     return () => observer.disconnect();
   }, [hasMore, loadMore]);
+
+  useEffect(() => {
+    const origin = trackList?.origin ?? null;
+    if (previousOriginRef.current === origin) return;
+    previousOriginRef.current = origin;
+    handledAutoAdvanceRef.current = null;
+    shouldFollowPlaybackRef.current = true;
+    programmaticScrollTopRef.current = null;
+    if (trackListRef.current) trackListRef.current.scrollTop = 0;
+  }, [trackList?.origin]);
+
+  useEffect(() => {
+    const list = trackListRef.current;
+    if (!isCollapsed && list?.scrollTop === 0) shouldFollowPlaybackRef.current = true;
+  }, [isCollapsed]);
+
+  useEffect(() => {
+    if (!autoAdvancedTrackUuid || handledAutoAdvanceRef.current === autoAdvancedTrackUuid) return;
+    if (isCollapsed) return;
+
+    const list = trackListRef.current;
+    if (!list) return;
+    handledAutoAdvanceRef.current = autoAdvancedTrackUuid;
+    if (!shouldFollowPlaybackRef.current) return;
+
+    const row = Array.from(list.querySelectorAll<HTMLElement>("[data-track-uuid]")).find(
+      (element) => element.dataset.trackUuid === autoAdvancedTrackUuid,
+    );
+    if (!row) return;
+
+    const rowTop = row.getBoundingClientRect().top - list.getBoundingClientRect().top;
+    list.scrollTop += rowTop;
+    programmaticScrollTopRef.current = list.scrollTop;
+  }, [autoAdvancedTrackUuid, isCollapsed]);
+
+  const handleTrackListScroll = (event: React.UIEvent<HTMLUListElement>) => {
+    const list = event.currentTarget;
+    const programmaticScrollTop = programmaticScrollTopRef.current;
+    if (programmaticScrollTop !== null && Math.abs(list.scrollTop - programmaticScrollTop) <= 1) {
+      programmaticScrollTopRef.current = null;
+      return;
+    }
+    programmaticScrollTopRef.current = null;
+    shouldFollowPlaybackRef.current = list.scrollTop <= 1;
+  };
   const positionClasses =
     layout === "inline"
       ? "relative w-full flex h-full flex-col"
@@ -91,6 +141,8 @@ export default function TrackListSidebar<T extends TrackBase>({
       </div>
       {!isCollapsed && (
         <ul
+          ref={trackListRef}
+          onScroll={handleTrackListScroll}
           className={
             layout === "inline"
               ? "track-list flex-1 min-h-0 overflow-auto list-none p-0 m-0"
@@ -98,7 +150,7 @@ export default function TrackListSidebar<T extends TrackBase>({
           }
         >
           {trackList.tracks.map((track, index) => (
-            <li key={track.uuid}>
+            <li key={track.uuid} data-track-uuid={track.uuid}>
               <TrackItem
                 track={track}
                 position={index + 1}

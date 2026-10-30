@@ -75,6 +75,7 @@ interface TrackListContextType<T extends TrackBase> {
   trackList: TrackList<T> | null;
   selectedTrack: T | null;
   setSelectedTrack: (track: T | null) => void;
+  autoAdvancedTrackUuid: string | null;
   runtimeUnplayableTrackIds: ReadonlySet<string>;
   toTrackAtPosition: (position: number) => void;
   playNewTrackListFromTrackUuid: (track: T, scope: Scope) => void;
@@ -129,6 +130,7 @@ export function TrackListProvider<T extends TrackBase>({
 }: TrackListProviderProps<T>) {
   const [trackList, setTrackList] = useState<TrackList<T> | null>(null);
   const [selectedTrack, setSelectedTrack] = useState<T | null>(null);
+  const [autoAdvancedTrackUuid, setAutoAdvancedTrackUuid] = useState<string | null>(null);
   const [runtimeUnplayableTrackIds, setRuntimeUnplayableTrackIds] = useState<ReadonlySet<string>>(() => new Set());
   const { loadTrackForPlayer, setOnTrackEnd } = usePlayer();
   const { showTrackListSidebar } = useTrackListSidebarVisibility();
@@ -220,6 +222,7 @@ export function TrackListProvider<T extends TrackBase>({
       }
 
       pendingAdvanceRef.current = null;
+      setAutoAdvancedTrackUuid(nextTrack.uuid);
       setSelectedTrack(nextTrack);
       loadTrackForPlayer(nextTrack.uuid);
     },
@@ -234,6 +237,7 @@ export function TrackListProvider<T extends TrackBase>({
   const toTrackAtPosition = useCallback(
     (position: number) => {
       if (currentTrackList && position >= 0 && position < currentTrackList.tracks.length) {
+        setAutoAdvancedTrackUuid(null);
         setSelectedTrack(currentTrackList.tracks[position]);
       }
     },
@@ -243,6 +247,7 @@ export function TrackListProvider<T extends TrackBase>({
   const playNewTrackListFromTrackUuid = useCallback(
     (track: T, scope: Scope) => {
       latestPlayRequestRef.current++;
+      setAutoAdvancedTrackUuid(null);
       const origin = new TrackListOriginFromTrack(track, scope);
       const newTrackList = new TrackListFromTrack([track], origin);
 
@@ -277,6 +282,7 @@ export function TrackListProvider<T extends TrackBase>({
       }
 
       const origin = new TrackListOriginFromCriteriaPlaylist(genrePlaylist, scope, from);
+      setAutoAdvancedTrackUuid(null);
       setTrackList(new TrackListFromCriteriaPlaylist(page.tracks, origin, page.total, page.nextPage));
       setSelectedTrack(startTrack);
       showTrackListSidebar();
@@ -310,6 +316,7 @@ export function TrackListProvider<T extends TrackBase>({
       }
 
       setTrackList(new TrackListFromArtist(page.tracks, origin, page.total, page.nextPage));
+      setAutoAdvancedTrackUuid(null);
       setSelectedTrack(startTrack);
       showTrackListSidebar();
       loadTrackForPlayer(startTrack.uuid);
@@ -368,6 +375,7 @@ export function TrackListProvider<T extends TrackBase>({
     );
     if (nextTrack) {
       pendingAdvanceRef.current = null;
+      setAutoAdvancedTrackUuid(nextTrack.uuid);
       setSelectedTrack(nextTrack);
       loadTrackForPlayer(nextTrack.uuid);
     } else if (currentTrackList.nextPage === null) {
@@ -390,6 +398,7 @@ export function TrackListProvider<T extends TrackBase>({
       trackList: currentTrackList,
       selectedTrack,
       setSelectedTrack,
+      autoAdvancedTrackUuid,
       runtimeUnplayableTrackIds,
       toTrackAtPosition,
       playNewTrackListFromTrackUuid,
@@ -401,6 +410,7 @@ export function TrackListProvider<T extends TrackBase>({
     [
       currentTrackList,
       selectedTrack,
+      autoAdvancedTrackUuid,
       runtimeUnplayableTrackIds,
       toTrackAtPosition,
       playNewTrackListFromTrackUuid,
