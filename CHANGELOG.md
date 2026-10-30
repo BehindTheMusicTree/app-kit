@@ -18,6 +18,7 @@ easy to spot when bumping.
 ### Added
 
 - `useTrackList().updateTrack(track)` replaces the track with the same `uuid` across every loaded page of the current tracklist, and replaces the selected track if it is that one. It does nothing when no track matches.
+- `GenreTreeView` accepts a host control beside the tree controls, including in outline view.
 
 ## [27.1.0] - 2026-10-30
 

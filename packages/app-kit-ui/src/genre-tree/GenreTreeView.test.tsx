@@ -290,6 +290,32 @@ describe("GenreTreeView", () => {
     expect(second.onViewportChange).toBe(onViewportChange);
   });
 
+  describe("floating host control", () => {
+    it.each(["wheel", "pop-core"] as const)("renders before the size selector in %s view", (viewMode) => {
+      useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" }, parent: null })], isPending: false });
+      renderView({ viewMode, floatingControlsLeading: <button type="button">Switch view</button> });
+      const calls = viewMode === "wheel" ? treeWheelPropsMock : treeWheelRadialPopCorePropsMock;
+      render(<>{calls.mock.calls.at(-1)?.[0].floatingControlsLeading}</>);
+      const control = screen.getByRole("button", { name: "Switch view" });
+      const songs = screen.getByRole("button", { name: "Size by songs" });
+      expect(control.compareDocumentPosition(songs) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it("keeps the host control when view counts are unavailable", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist({ viewsCount: undefined })], isPending: false });
+      renderView({ viewMode: "wheel", floatingControlsLeading: <button type="button">Switch view</button> });
+      render(<>{treeWheelPropsMock.mock.calls.at(-1)?.[0].floatingControlsLeading}</>);
+      expect(screen.getByRole("button", { name: "Switch view" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Size by songs" })).not.toBeInTheDocument();
+    });
+
+    it("renders the host control in outline view", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" }, parent: null })], isPending: false });
+      renderView({ viewMode: "outline", floatingControlsLeading: <button type="button">Switch view</button> });
+      expect(screen.getByRole("button", { name: "Switch view" })).toBeInTheDocument();
+    });
+  });
+
   describe("size metric toggle", () => {
     const renderLeading = () => render(<>{treeWheelPropsMock.mock.calls.at(-1)?.[0].floatingControlsLeading}</>);
 

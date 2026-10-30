@@ -147,6 +147,8 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   renderGenreDetailExtras?: (overview: O) => ReactNode;
   /** Layout of the wheel/tree floating zoom/pop/fit controls. Defaults to "horizontal". */
   controlsOrientation?: ControlsOrientation;
+  /** Host control displayed before the size metric in the floating controls. */
+  floatingControlsLeading?: ReactNode;
   /** Controlled size metric of the wheel and pop-core nodes: song count or summed song views. Uncontrolled when omitted
    * (starts on songs). The toggle is hidden while an artist filters the tree, which only has song counts. */
   sizeMetric?: GenreTreeSizeMetric;
@@ -197,6 +199,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   criteriaOverviewSchema,
   renderGenreDetailExtras,
   controlsOrientation = "horizontal",
+  floatingControlsLeading,
   sizeMetric: controlledSizeMetric,
   onSizeMetricChange,
   renderArtistLink,
@@ -652,7 +655,10 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
         </div>
       )}
       <div className="content-container flex-1 min-h-0 flex flex-row gap-4">
-        <div className="tree-view-container flex-1 min-w-0 flex flex-col h-full">
+        <div className="tree-view-container relative flex-1 min-w-0 flex flex-col h-full">
+          {!isLoading && viewMode === "outline" && floatingControlsLeading && (
+            <div className="absolute bottom-3 right-3 z-10">{floatingControlsLeading}</div>
+          )}
           {isLoading ? (
             <GenreTreeViewSkeleton viewMode={viewMode} />
           ) : viewMode === "wheel" ? (
@@ -681,7 +687,12 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   sizeMetric={filterArtist || !canSizeByViews ? "songs" : deferredSizeMetric}
                   busy={busy}
                   floatingControlsLeading={
-                    filterArtist || !canSizeByViews ? undefined : <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />
+                    floatingControlsLeading || (!filterArtist && canSizeByViews) ? (
+                      <div className="flex items-center gap-2">
+                        {floatingControlsLeading}
+                        {!filterArtist && canSizeByViews && <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />}
+                      </div>
+                    ) : undefined
                   }
                   defaultViewport={defaultViewport}
                   onViewportChange={onViewportChange}
@@ -712,7 +723,12 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   sizeMetric={filterArtist || !canSizeByViews ? "songs" : deferredSizeMetric}
                   busy={busy}
                   floatingControlsLeading={
-                    filterArtist || !canSizeByViews ? undefined : <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />
+                    floatingControlsLeading || (!filterArtist && canSizeByViews) ? (
+                      <div className="flex items-center gap-2">
+                        {floatingControlsLeading}
+                        {!filterArtist && canSizeByViews && <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />}
+                      </div>
+                    ) : undefined
                   }
                   defaultViewport={defaultViewport}
                   onViewportChange={onViewportChange}
