@@ -577,6 +577,32 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       />
     ) : null;
 
+  const renderArtistFilter = () => {
+    if (isLoading || !filterArtist) return null;
+    return (
+      <span className="inline-flex items-center overflow-hidden rounded-full bg-[var(--color-neutral-100)] text-sm">
+        <button
+          type="button"
+          className="py-1 pl-3 pr-2 [@media(pointer:coarse)]:min-h-[var(--layout-touch-target)] hover:underline"
+          aria-label={`Show artist ${filterArtist.name}`}
+          onClick={() => {
+            if (selectedNodeId !== null) clearSelection();
+          }}
+        >
+          {filterArtist.name}
+        </button>
+        <button
+          type="button"
+          className="py-1 pl-1 pr-3 [@media(pointer:coarse)]:min-h-[var(--layout-touch-target)] hover:text-[var(--color-text)]"
+          aria-label={`Clear artist filter ${filterArtist.name}`}
+          onClick={() => changeArtist(null)}
+        >
+          ×
+        </button>
+      </span>
+    );
+  };
+
   const actions = (
     <>
       {!isLoading && (
@@ -590,29 +616,10 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           extraResults={artistExtraResults}
         />
       )}
+      {!isLoading && filterArtist && (
+        <div className="hidden w-full justify-center max-md:flex">{renderArtistFilter()}</div>
+      )}
       <div className="contents max-md:flex max-md:w-full max-md:items-center max-md:gap-2 max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[&>*]:shrink-0">
-        {!isLoading && filterArtist && (
-          <span className="inline-flex items-center overflow-hidden rounded-full bg-[var(--color-neutral-100)] text-sm">
-            <button
-              type="button"
-              className="py-1 pl-3 pr-2 [@media(pointer:coarse)]:min-h-[var(--layout-touch-target)] hover:underline"
-              aria-label={`Show artist ${filterArtist.name}`}
-              onClick={() => {
-                if (selectedNodeId !== null) clearSelection();
-              }}
-            >
-              {filterArtist.name}
-            </button>
-            <button
-              type="button"
-              className="py-1 pl-1 pr-3 [@media(pointer:coarse)]:min-h-[var(--layout-touch-target)] hover:text-[var(--color-text)]"
-              aria-label={`Clear artist filter ${filterArtist.name}`}
-              onClick={() => changeArtist(null)}
-            >
-              ×
-            </button>
-          </span>
-        )}
         {!isLoading && !isControlled && (
           <SegmentedControl
             aria-label="Tree view mode"
@@ -671,6 +678,15 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       >
         {actions}
       </div>
+      {!isLoading && filterArtist && (
+        <div
+          className={`absolute left-1/2 z-30 hidden -translate-x-1/2 md:block ${
+            placement === "regions" ? "top-[calc(var(--layout-gutter)+var(--layout-panel-inset))]" : "top-5"
+          }`}
+        >
+          {renderArtistFilter()}
+        </div>
+      )}
       {detailTab && (
         <div
           className={`absolute top-1/2 z-30 -translate-y-1/2 max-md:hidden transition-[opacity,visibility] duration-150 ease-out ${
