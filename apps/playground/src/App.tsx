@@ -119,7 +119,17 @@ function ReferenceGenreTree() {
         placement="regions"
         viewMode={viewMode}
         allowWheelRotation={allowWheelRotation}
-      showAddRoot={false}
+        floatingControlsLeading={
+          <Button
+            size="sm"
+            variant="outline"
+            aria-label={viewMode === "outline" ? "Show wheel view" : "Show outline view"}
+            onClick={() => setViewMode(viewMode === "outline" ? "pop-core" : "outline")}
+          >
+            {viewMode === "outline" ? "◉" : "☰"}
+          </Button>
+        }
+        showAddRoot={false}
         focusGenreUuid={focusGenreUuid}
         onFocusGenreChange={setFocusGenreUuid}
         handleGenreCreationAction={showCriteriaCreationPopup}

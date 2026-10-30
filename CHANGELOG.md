@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- `GenreTreeView` accepts a host control beside the tree controls, including in outline view.
+
 ## [27.1.0] - 2026-10-30
 
 ### Added
