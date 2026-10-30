@@ -173,7 +173,6 @@ function AppContent() {
   });
   const [loading, setLoading] = useState(false);
   const { playerTrackObject } = usePlayer();
-  const [dismissedTrackId, setDismissedTrackId] = useState<string | null>(null);
   const playerTrackId = playerTrackObject?.track.id ?? null;
 
   return (
@@ -222,8 +221,7 @@ function AppContent() {
         )}
       </div>
       <PlayerPanel
-        isVisible={playerTrackId !== null && playerTrackId !== dismissedTrackId}
-        onClose={() => setDismissedTrackId(playerTrackId)}
+        isVisible={playerTrackId !== null}
         className="top-3"
       />
       <PopupHost />

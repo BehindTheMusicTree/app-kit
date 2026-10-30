@@ -1,17 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { screen, fireEvent } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { render } from "../../test-utils";
 import { TrackNounProvider } from "@behindthemusictree/app-kit/track-noun";
 
-const { useTrackListMock, useTrackListSidebarVisibilityMock } = vi.hoisted(() => ({
+const { useTrackListMock } = vi.hoisted(() => ({
   useTrackListMock: vi.fn(),
-  useTrackListSidebarVisibilityMock: vi.fn(),
 }));
 
 vi.mock("@behindthemusictree/app-kit/genre-tree", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useTrackList: useTrackListMock,
-  useTrackListSidebarVisibility: useTrackListSidebarVisibilityMock,
 }));
 
 vi.mock("./TrackItem", () => ({
@@ -37,11 +35,8 @@ function makeTrackList(overrides: Record<string, unknown> = {}) {
 }
 
 describe("TrackListSidebar", () => {
-  const hideTrackListSidebar = vi.fn();
-
   beforeEach(() => {
     vi.clearAllMocks();
-    useTrackListSidebarVisibilityMock.mockReturnValue({ hideTrackListSidebar });
   });
 
   it("renders nothing when there is no track list", () => {
@@ -62,12 +57,13 @@ describe("TrackListSidebar", () => {
     expect(screen.getByText("Song Two")).toBeInTheDocument();
   });
 
-  it("shows genre playlist label and pluralized track count", () => {
+  it("shows genre label and pluralized track count", () => {
     useTrackListMock.mockReturnValue({ trackList: makeTrackList() });
 
     render(<TrackListSidebar />);
 
-    expect(screen.getByText(/Genre playlist/)).toBeInTheDocument();
+    expect(screen.getByText(/Genre • 2 tracks/)).toBeInTheDocument();
+    expect(screen.queryByText(/Genre playlist/)).not.toBeInTheDocument();
     expect(screen.getByText(/2 tracks/)).toBeInTheDocument();
   });
 
@@ -82,8 +78,7 @@ describe("TrackListSidebar", () => {
 
     render(<TrackListSidebar />);
 
-    expect(screen.getByText(/track playlist/)).toBeInTheDocument();
-    expect(screen.getByText(/1 track /)).toBeInTheDocument();
+    expect(document.querySelector(".info")).toHaveTextContent(/^track playlist • 1 track$/);
   });
 
   it("uses the noun supplied by the TrackNounProvider", () => {
@@ -101,8 +96,7 @@ describe("TrackListSidebar", () => {
       </TrackNounProvider>,
     );
 
-    expect(screen.getByText(/song playlist/)).toBeInTheDocument();
-    expect(screen.getByText(/2 songs /)).toBeInTheDocument();
+    expect(document.querySelector(".info")).toHaveTextContent(/^song playlist • 2 songs$/);
   });
 
   it("labels an artist origin and passes renderArtistLink to each track", () => {
@@ -112,7 +106,7 @@ describe("TrackListSidebar", () => {
 
     render(<TrackListSidebar renderArtistLink={(artist) => artist.name} />);
 
-    expect(screen.getByText(/• Artist •/)).toBeInTheDocument();
+    expect(document.querySelector(".info")).toHaveTextContent(/^Artist • 2 tracks$/);
     expect(screen.getByText("Song One")).toHaveAttribute("data-has-artist-link", "true");
   });
 
@@ -186,15 +180,6 @@ describe("TrackListSidebar", () => {
       );
       consoleErrorSpy.mockRestore();
     });
-  });
-
-  it("calls hideTrackListSidebar when the close control is clicked", () => {
-    useTrackListMock.mockReturnValue({ trackList: makeTrackList() });
-
-    render(<TrackListSidebar />);
-    fireEvent.click(screen.getByText("✕"));
-
-    expect(hideTrackListSidebar).toHaveBeenCalled();
   });
 
   it("defaults to fixed positioning", () => {

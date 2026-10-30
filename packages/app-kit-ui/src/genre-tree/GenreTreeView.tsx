@@ -486,6 +486,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           family={family}
           genreUuid={genreUuid}
           genrePlaylist={genrePlaylist}
+          wikidataId={criteria.wikidataId}
           scope={scope}
           getBackendBaseUrl={getBackendBaseUrl}
           criteriaOverviewSchema={criteriaOverviewSchema}

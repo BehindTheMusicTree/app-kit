@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 import {
   usePlayer,
@@ -16,9 +15,10 @@ import TrackListSidebar from "./track-list-sidebar/TrackListSidebar";
 
 export interface PlayerPanelProps {
   className?: string;
-  /** Hidden via CSS, never unmounted, so the video keeps playing while the panel is closed. */
+  /** Hidden via CSS, never unmounted, so the video keeps playing while the host hides the panel. */
   isVisible?: boolean;
-  onClose: () => void;
+  /** @deprecated The player no longer closes; its header action minimizes to video-only mode. */
+  onClose?: () => void;
   /** Controlled extended state; uncontrolled when omitted. */
   expanded?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
@@ -29,9 +29,6 @@ export interface PlayerPanelProps {
 
 const PANEL_ID = "player-panel";
 
-const iconButtonClassName =
-  "flex h-6 w-6 shrink-0 items-center justify-center p-0 rounded-md hover:bg-white/10";
-
 // Spans the center and right columns.
 const DEFAULT_EXTENDED_WIDTH =
   "calc(100vw - var(--layout-center-left) - var(--layout-gutter))";
@@ -39,7 +36,6 @@ const DEFAULT_EXTENDED_WIDTH =
 export default function PlayerPanel({
   className,
   isVisible = true,
-  onClose,
   expanded,
   onExpandedChange,
   extendedWidth = DEFAULT_EXTENDED_WIDTH,
@@ -55,23 +51,27 @@ export default function PlayerPanel({
     onExpandedChange?.(next);
   };
   const isExtended = isExtendRequested && isTrackListSidebarVisible;
+  const hideSongList = () => {
+    setIsExtendRequested(false);
+    if (isTrackListSidebarVisible) toggleTrackListSidebar();
+  };
 
-  const tabEdge = !isTrackListSidebarVisible
-    ? null
-    : isExtended
+  const tabEdge =
+    isTrackListSidebarVisible && isExtended
       ? {
-          label: "Shrink song list panel",
+          label: "Shrink player panel",
           onClick: () => setIsExtendRequested(false),
+          expanded: true,
         }
-      : { label: "Hide song list", onClick: toggleTrackListSidebar };
-  const tabCenter = !isTrackListSidebarVisible
-    ? { label: "Show song list", onClick: toggleTrackListSidebar }
-    : isExtended
-      ? null
-      : {
-          label: "Extend song list panel",
+      : null;
+  const tabCenter =
+    isTrackListSidebarVisible && !isExtended
+      ? {
+          label: "Extend player panel",
           onClick: () => setIsExtendRequested(true),
-        };
+          expanded: false,
+        }
+      : null;
 
   return (
     <div
@@ -104,16 +104,6 @@ export default function PlayerPanel({
             <span className="min-w-0 truncate text-sm font-semibold">
               {playerTrackObject?.track?.title}
             </span>
-            <div className="flex shrink-0 items-center gap-1">
-              <button
-                type="button"
-                onClick={onClose}
-                className={iconButtonClassName}
-                aria-label="Close player"
-              >
-                <X size={16} />
-              </button>
-            </div>
           </div>
           <div className="relative w-full shrink-0">
             <PlayerVideoSurface className="aspect-video w-full bg-black" />
@@ -124,16 +114,17 @@ export default function PlayerPanel({
             )}
           </div>
         </div>
-        {isTrackListSidebarVisible && (
-          <TrackListSidebar
-            layout="inline"
-            className={twMerge(
-              "min-h-0 min-w-0 flex-1",
-              isExtended && "border-l border-zinc-800",
-            )}
-            renderArtistLink={renderArtistLink}
-          />
-        )}
+        <TrackListSidebar
+          layout="inline"
+          isCollapsed={!isTrackListSidebarVisible}
+          onExpand={toggleTrackListSidebar}
+          onMinimize={hideSongList}
+          className={twMerge(
+            "min-h-0 min-w-0 flex-1",
+            isExtended && "border-l border-zinc-800",
+          )}
+          renderArtistLink={renderArtistLink}
+        />
       </div>
     </div>
   );

@@ -15,48 +15,43 @@ export interface TrackPositionPlayPauseProps {
 export default function TrackPositionPlayPause({ position, uuid, handlePlayPauseClick }: TrackPositionPlayPauseProps) {
   const { playerTrackObject, playState } = usePlayer();
   const isThisTrack = playerTrackObject?.track.id === uuid;
+  const isCurrentTrackActive = isThisTrack && playState !== PlayStates.STOPPED;
+  const isPlaying = isThisTrack && playState === PlayStates.PLAYING;
+  const isLoading = isThisTrack && playState === PlayStates.LOADING;
 
   return (
     <div
-      className="track-position-play-pause flex items-center justify-center text-lg w-16 cursor-pointer"
+      className="track-position-play-pause relative flex items-center justify-center gap-2 text-lg w-16 cursor-pointer"
       style={{ minWidth: "4rem", maxWidth: "4rem" }}
       onClick={handlePlayPauseClick}
     >
-      <div className="group-hover:hidden">
-        <div>
-          {isThisTrack && playState !== PlayStates.STOPPED ? (
-            <div className="flex space-x-1 items-end">
-              <div
-                className={`w-playingbar bg-[var(--color-green-500)] h-3 origin-bottom ${
-                  playState === PlayStates.PLAYING ? "animate-scale-pulse" : ""
-                }`}
-              ></div>
-              <div
-                className={`w-playingbar bg-[var(--color-green-500)] h-4 origin-bottom ${
-                  playState === PlayStates.PLAYING ? "animate-scale-pulse delay-200" : ""
-                }`}
-                style={{ animationDelay: "0.2s" }}
-              ></div>
-              <div
-                className={`w-playingbar bg-[var(--color-green-500)] h-3 origin-bottom ${
-                  playState === PlayStates.PLAYING ? "animate-scale-pulse delay-400" : ""
-                }`}
-                style={{ animationDelay: "0.3s" }}
-              ></div>
-            </div>
+      <div className="track-position-play-pause__status group-hover:hidden flex items-center justify-center">
+        {isCurrentTrackActive ? (
+          isLoading ? (
+            <RingLoader size={16} />
           ) : (
-            position
-          )}
-        </div>
-      </div>
-      <div className="hidden group-hover:flex items-center justify-center">
-        {isThisTrack && playState === PlayStates.LOADING ? (
-          <RingLoader size={16} />
-        ) : isThisTrack && playState === PlayStates.PLAYING ? (
-          <FaPause />
+            <span
+              className="track-position-play-pause__bars"
+              data-playing={isPlaying}
+              role="img"
+              aria-label={isPlaying ? "Playing" : "Paused"}
+            >
+              <span className="track-position-play-pause__bar" />
+              <span className="track-position-play-pause__bar" />
+              <span className="track-position-play-pause__bar" />
+            </span>
+          )
         ) : (
-          <FaPlay />
+          position
         )}
+      </div>
+      <div
+        className={`hidden group-hover:flex items-center justify-center ${
+          isCurrentTrackActive ? "" : "absolute inset-0"
+        }`}
+        aria-hidden="true"
+      >
+        {isLoading ? <RingLoader size={16} /> : isPlaying ? <FaPause /> : <FaPlay />}
       </div>
     </div>
   );
