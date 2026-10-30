@@ -20,6 +20,7 @@ const {
   useArtistMock,
   useArtistGenreCountsMock,
   playNewTrackListFromArtistMock,
+  updateGenreMock,
 } = vi.hoisted(() => ({
   useListFullGenrePlaylistsMock: vi.fn(),
   useFetchGenreOverviewMock: vi.fn(),
@@ -36,6 +37,7 @@ const {
   useArtistMock: vi.fn(),
   useArtistGenreCountsMock: vi.fn(),
   playNewTrackListFromArtistMock: vi.fn(() => Promise.resolve()),
+  updateGenreMock: vi.fn(),
 }));
 
 vi.mock("@behindthemusictree/app-kit/popup", async (importOriginal) => ({
@@ -82,6 +84,7 @@ vi.mock("../../../app-kit/src/genre-tree/useGenre", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useFetchGenreOverview: (id: string | null) => useFetchGenreOverviewMock(id),
   usePrefetchGenreOverview: () => prefetchGenreOverviewMock,
+  useUpdateGenre: () => ({ mutate: updateGenreMock }),
 }));
 
 vi.mock("./GenrePlaylistTracks", () => ({
@@ -1675,6 +1678,75 @@ describe("GenreTreeView", () => {
         const props = treeWheelPropsMock.mock.calls.at(-1)?.[0];
         expect(props.reparentingGenreUuid).toBeUndefined();
         expect(props.onReparentRequest).toBeUndefined();
+      });
+    });
+
+    describe("side toggle", () => {
+      const root = makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } });
+      const bebop = makePlaylist({
+        uuid: "gp2",
+        name: "Bebop",
+        parent: { uuid: "gp1" },
+        criteria: { uuid: "c2", name: "Bebop", side: "core" },
+      });
+      const smoothJazz = makePlaylist({
+        uuid: "gp3",
+        name: "Smooth Jazz",
+        parent: { uuid: "gp1" },
+        criteria: { uuid: "c3", name: "Smooth Jazz", side: "pop" },
+      });
+      const hardBop = makePlaylist({
+        uuid: "gp4",
+        name: "Hard Bop",
+        parent: { uuid: "gp2" },
+        criteria: { uuid: "c4", name: "Hard Bop" },
+      });
+
+      function openWheelBand(nodeId: string, props: Parameters<typeof renderView>[0] = {}) {
+        useListFullGenrePlaylistsMock.mockReturnValue({ data: [root, bebop, smoothJazz, hardBop], isPending: false });
+        renderView(props);
+        fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+        openBand(nodeId);
+      }
+
+      it("flips a root's pop child to core", () => {
+        openWheelBand("gp3");
+        fireEvent.click(screen.getByRole("button", { name: "Make core" }));
+
+        expect(updateGenreMock).toHaveBeenCalledWith({ uuid: "c3", data: { side: "core" } });
+      });
+
+      it("disables Make pop when the root already has a pop child", () => {
+        openWheelBand("gp2");
+
+        const toggle = screen.getByRole("button", { name: "Make pop" });
+        expect(toggle).toBeDisabled();
+        expect(toggle).toHaveAttribute("title", "Smooth Jazz is already the pop side of Jazz");
+      });
+
+      it("enables Make pop when no sibling is pop", () => {
+        useListFullGenrePlaylistsMock.mockReturnValue({ data: [root, bebop], isPending: false });
+        renderView();
+        fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+        openBand("gp2");
+        fireEvent.click(screen.getByRole("button", { name: "Make pop" }));
+
+        expect(updateGenreMock).toHaveBeenCalledWith({ uuid: "c2", data: { side: "pop" } });
+      });
+
+      it("is hidden for roots and deeper descendants", () => {
+        openWheelBand("gp1");
+        expect(screen.queryByRole("button", { name: /^Make (pop|core)$/ })).not.toBeInTheDocument();
+        cleanup();
+
+        openWheelBand("gp4");
+        expect(screen.queryByRole("button", { name: /^Make (pop|core)$/ })).not.toBeInTheDocument();
+      });
+
+      it("is hidden when read-only", () => {
+        openWheelBand("gp3", { readOnly: true });
+
+        expect(screen.queryByRole("button", { name: "Make core" })).not.toBeInTheDocument();
       });
     });
 

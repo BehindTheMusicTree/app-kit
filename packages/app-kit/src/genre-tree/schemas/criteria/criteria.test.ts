@@ -104,4 +104,9 @@ describe("CriteriaUpdateSchema", () => {
   it("parses a null parent (make root)", () => {
     expect(() => CriteriaUpdateSchema.parse({ parent: null })).not.toThrow();
   });
+
+  it("parses a side and rejects an unknown one", () => {
+    expect(() => CriteriaUpdateSchema.parse({ side: "pop" })).not.toThrow();
+    expect(() => CriteriaUpdateSchema.parse({ side: "edge" })).toThrow();
+  });
 });

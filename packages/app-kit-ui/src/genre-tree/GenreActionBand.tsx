@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { MoveUpRight, Pause, Pencil, Play, Plus, ZoomIn } from "lucide-react";
+import { ArrowLeftRight, MoveUpRight, Pause, Pencil, Play, Plus, ZoomIn } from "lucide-react";
 import type {
   GenreTreeAction,
   GenreTreeNode,
@@ -20,6 +20,11 @@ export type GenreActionBandProps = {
   onRename?: () => void;
   /** When set, shows the "Parent" (change parent) action. */
   onChangeParent?: () => void;
+  side?: "core" | "pop";
+  /** When set, shows the "Make pop" / "Make core" action. */
+  onToggleSide?: () => void;
+  /** When set, disables the side toggle and explains why in its tooltip. */
+  toggleSideDisabledReason?: string;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
 };
 
@@ -29,6 +34,7 @@ type BandItem = {
   icon: ReactNode;
   onClick: (event: React.MouseEvent) => void;
   disabled?: boolean;
+  title?: string;
 };
 
 export default function GenreActionBand({
@@ -39,6 +45,9 @@ export default function GenreActionBand({
   onAddChild,
   onRename,
   onChangeParent,
+  side,
+  onToggleSide,
+  toggleSideDisabledReason,
   additionalActions,
 }: GenreActionBandProps) {
   const items: BandItem[] = [];
@@ -72,6 +81,16 @@ export default function GenreActionBand({
   if (onChangeParent) {
     adminItems.push({ key: "change-parent", label: "Parent", icon: <MoveUpRight aria-hidden="true" className="w-5 h-5" />, onClick: onChangeParent });
   }
+  if (onToggleSide) {
+    adminItems.push({
+      key: "toggle-side",
+      label: side === "pop" ? "Make core" : "Make pop",
+      icon: <ArrowLeftRight aria-hidden="true" className="w-5 h-5" />,
+      onClick: onToggleSide,
+      disabled: !!toggleSideDisabledReason,
+      title: toggleSideDisabledReason,
+    });
+  }
   for (const action of additionalActions?.(node) ?? []) {
     items.push({
       key: action.key,
@@ -89,6 +108,7 @@ export default function GenreActionBand({
         key={item.key}
         type="button"
         disabled={item.disabled}
+        title={item.title}
         onClick={item.onClick}
         className="group flex flex-col items-center gap-1 w-16 text-xs text-center text-[var(--color-text)] focus-visible:outline-none disabled:opacity-50"
       >
