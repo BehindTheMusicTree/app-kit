@@ -1,4 +1,5 @@
 export * from "./GenreTreeView";
+export type { GenreTreeShareTarget, GetGenreTreeShareUrl } from "./share";
 export type { ParentChange } from "./ChangeParentPopup";
 export type { GenreDetailSlots } from "./GenreDetailExtras";
 export type { GenrePlaylistTracksSlots } from "./GenrePlaylistTracks";

@@ -48,6 +48,7 @@ import { useArtistPanel } from "./artist/useArtistPanel";
 import { SizeMetricToggle } from "./SizeMetricToggle";
 import { hasViewsCount, type GenreTreeSizeMetric } from "./playlist-tree/size-metric";
 import { useGenrePlaylistPlayback, type GenrePlaylistPlayback } from "./playlist-tree/useGenrePlaylistPlayback";
+import type { GetGenreTreeShareUrl, GenreTreeShareTarget } from "./share";
 
 // genre-tree-view's "previous" button (back to the last selected genre) renders inside the info panel, which sits
 // under the floating search bar. It is hidden and its click is proxied by the search field's own button, which
@@ -164,6 +165,8 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   /** Controlled expanded state of the artist panel. Uncontrolled, it resets to compact on each artist. */
   artistExpanded?: boolean;
   onArtistExpandedChange?: (expanded: boolean) => void;
+  /** Resolves a selected genre or artist to a share URL using the host app's routes. */
+  getShareUrl?: GetGenreTreeShareUrl;
 } & ArtistSearchProps &
   GenreDetailSlots<O> &
   GenrePlaylistTracksSlots &
@@ -204,6 +207,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   onArtistUuidChange,
   artistExpanded: controlledArtistExpanded,
   onArtistExpandedChange,
+  getShareUrl,
   artistSearch = true,
   onArtistSelect,
   artistSearchBaseUrl,
@@ -221,6 +225,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   placement = "default",
   ...focus
 }: GenreTreeViewProps<O>) {
+  const getShareUrlRef = useRef(getShareUrl);
+  getShareUrlRef.current = getShareUrl;
   const [internalArtistUuid, setInternalArtistUuid] = useState<string | null>(null);
   const isArtistControlled = controlledArtistUuid !== undefined;
   const artistUuid = isArtistControlled ? controlledArtistUuid : internalArtistUuid;
@@ -274,6 +280,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     () => (artistUuid !== null && filterArtistName !== null ? { uuid: artistUuid, name: filterArtistName } : null),
     [artistUuid, filterArtistName],
   );
+  const hasSelectedGenreNode =
+    selectedGenrePlaylist !== undefined && visibleGenrePlaylists.some(({ uuid }) => uuid === selectedGenrePlaylist.uuid);
   const playback = useGenrePlaylistPlayback({ scope, genrePlaylists: visibleGenrePlaylists, artist: filterArtist });
   const openArtist = (uuid: string) => {
     if (selectedNodeId !== null) clearSelection();
@@ -284,7 +292,9 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const artistBaseUrl = artistSearchBaseUrl ?? getBackendBaseUrl;
   const artistPanel = useArtistPanel({
     uuid: artistUuid,
+    scope,
     getBackendBaseUrl: artistBaseUrl,
+    getShareUrl: getShareUrlRef.current,
     renderArtistLink:
       renderArtistLink ??
       ((artist) =>
@@ -304,7 +314,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   });
   // Like a genre, the built-in artist panel shows its name in the search field and closes from its clear button.
   // A selected genre shows its own panel instead; the artist stays active as a filter.
-  const builtInArtistPanel = overlayPanel || selectedNodeId !== null ? undefined : artistPanel;
+  const builtInArtistPanel = overlayPanel || hasSelectedGenreNode ? undefined : artistPanel;
   const activeOverlayPanel =
     overlayPanel ?? (builtInArtistPanel && { ...builtInArtistPanel, hideTitle: true, hideClose: true });
 
@@ -325,7 +335,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   }, [selectedNodeId, artistUuid]);
 
   // The brand layout tokens derive the center column from this variable.
-  const isDetailHidden = isCollapsed || (!selectedNodeId && !activeOverlayPanel);
+  const isDetailHidden = isCollapsed || (!hasSelectedGenreNode && !activeOverlayPanel);
   useEffect(() => {
     if (placement !== "regions" || !isDetailHidden) return undefined;
     const root = document.documentElement;
@@ -358,6 +368,20 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const handlePrevious = () => {
     rootRef.current?.querySelector<HTMLButtonElement>(".search-overlay .gtv-info-panel-previous")?.click();
   };
+
+  useEffect(() => {
+    if (!isTreeReady || viewMode !== "pop-core" || !hasSelectedGenreNode || !selectedGenrePlaylist) return;
+
+    const root = rootRef.current;
+    const centerChip = root?.querySelector<HTMLButtonElement>(".gtv-wheel-center-node .gtv-wheel-chip");
+    if (!centerChip || centerChip.getAttribute("aria-label") !== selectedGenrePlaylist.name) return;
+
+    // The dependency's URL-selection effect looks up #group-<id>, but this center chip is outside the SVG
+    // and has no such id. Use its own click handler so URL selection opens the same info panel as a user click.
+    const panelTitle = root?.querySelector<HTMLElement>(".gtv-info-panel-title");
+    if (panelTitle?.textContent?.trim().startsWith(selectedGenrePlaylist.name)) return;
+    centerChip.click();
+  }, [hasSelectedGenreNode, isTreeReady, selectedGenrePlaylist, viewMode]);
 
   const { showPopup, hidePopup } = usePopup();
   const [searchText, setSearchText] = useState("");
@@ -434,6 +458,14 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       const parentPlaylist = visibleGenrePlaylists.find(({ uuid }) => uuid === genrePlaylist.parent?.uuid);
       const canToggleSide = !readOnly && parentPlaylist !== undefined && parentPlaylist.parent === null;
       const side = criteria.side ?? "core";
+      const shareTarget: GenreTreeShareTarget = {
+        kind: "genre",
+        genrePlaylistUuid: genrePlaylist.uuid,
+        name: criteria.name,
+        scope,
+        artistUuid,
+      };
+      const shareUrl = getShareUrlRef.current?.(shareTarget) ?? undefined;
       const popSibling =
         canToggleSide && side === "core"
           ? visibleGenrePlaylists.find(
@@ -451,6 +483,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             node={node}
             genrePlaylist={genrePlaylist}
             scope={scope}
+            shareTarget={shareUrl ? shareTarget : undefined}
+            shareUrl={shareUrl}
             onZoomIn={zoomInRef.current}
             onAddChild={readOnly ? undefined : () => handleGenreCreationAction(criteria)}
             onRename={readOnly ? undefined : () => handleGenreRenameAction(criteria)}
@@ -521,7 +555,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const allowWheelRotation = controlledAllowWheelRotation ?? internalAllowWheelRotation;
 
   const detailTab =
-    placement === "regions" && (selectedNodeId || detailOverlay) ? (
+    placement === "regions" && (hasSelectedGenreNode || detailOverlay) ? (
       <PanelEdgeTab
         side="left"
         edge={
