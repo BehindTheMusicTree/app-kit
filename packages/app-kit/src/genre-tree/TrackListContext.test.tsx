@@ -111,12 +111,7 @@ async function playGenre(result: RenderedTrackList, page: ReturnType<typeof make
 
 function wrapper({ children }: { children: ReactNode }) {
   return (
-    <TrackListProvider
-      getBackendBaseUrl={getBackendBaseUrl}
-      schema={schema}
-      listEndpoint={listEndpoint}
-      listQueryKey={listQueryKey}
-    >
+    <TrackListProvider getBackendBaseUrl={getBackendBaseUrl} schema={schema}>
       {children}
     </TrackListProvider>
   );
@@ -741,77 +736,68 @@ describe("TrackListContext", () => {
     });
   });
 
-  describe("currentTrackList refresh from query results", () => {
-    it("replaces the track with fresh data when the origin is a single track", () => {
-      const original = makeTrack("t1", "Old Title");
-      const updated = makeTrack("t1", "New Title");
-      useQueryWithParseMock.mockReturnValue({ data: { results: [updated] } });
-
+  describe("list query", () => {
+    it("never runs a list query when a genre playlist or artist list starts", async () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
 
-      act(() => {
-        result.current.playNewTrackListFromTrackUuid(original, "me");
-      });
-
-      expect(result.current.trackList?.tracks).toEqual([updated]);
-    });
-
-    it("keeps the original track list when no matching fresh track is found", () => {
-      const original = makeTrack("t1", "Old Title");
-      useQueryWithParseMock.mockReturnValue({ data: { results: [makeTrack("other", "Other")] } });
-
-      const { result } = renderHook(() => useTrackList(), { wrapper });
-
-      act(() => {
-        result.current.playNewTrackListFromTrackUuid(original, "me");
-      });
-
-      expect(result.current.trackList?.tracks).toEqual([original]);
-    });
-
-    it("updates matching tracks in a genre playlist and keeps others unchanged", async () => {
-      const trackA = makeTrack("a", "Track A");
-      const trackB = makeTrack("b", "Track B");
-      const updatedB = makeTrack("b", "Track B Updated");
-      useQueryWithParseMock.mockReturnValue({ data: { results: [updatedB] } });
-
-      const { result } = renderHook(() => useTrackList(), { wrapper });
-
-      await playGenre(result, makePage([trackA, trackB], { next: true, total: 7 }));
-
-      expect(result.current.trackList?.tracks).toEqual([trackA, updatedB]);
-      expect(result.current.trackList?.total).toBe(7);
-      expect(result.current.trackList?.nextPage).toBe(2);
-    });
-
-    it("leaves the genre playlist list untouched when nothing changed", async () => {
-      const trackA = makeTrack("a", "Track A");
-      useQueryWithParseMock.mockReturnValue({ data: { results: [] } });
-
-      const { result } = renderHook(() => useTrackList(), { wrapper });
-
-      await playGenre(result, makePage([trackA]));
-
-      expect(result.current.trackList?.tracks).toEqual([trackA]);
-    });
-
-    it("updates matching tracks in an artist list", async () => {
-      const trackA = makeTrack("a", "Track A");
-      const trackB = makeTrack("b", "Track B");
-      const updatedA = makeTrack("a", "Track A Updated");
-      useQueryWithParseMock.mockReturnValue({ data: { results: [updatedA] } });
-
-      const { result } = renderHook(() => useTrackList(), { wrapper });
-
-      fetchMock.mockResolvedValueOnce(makeArtistPage([trackA, trackB]));
+      await playGenre(result, makePage([makeTrack("a", "Track A")]));
+      fetchMock.mockResolvedValueOnce(makeArtistPage([makeTrack("b", "Track B")]));
       await act(async () => {
         await result.current.playNewTrackListFromArtist({ uuid: "ar1", name: "Artist" }, "reference", {
           ordering: "title",
         });
       });
 
-      expect(result.current.trackList?.tracks).toEqual([updatedA, trackB]);
-      expect(result.current.trackList?.origin.type).toBe(TrackListOriginType.ARTIST);
+      expect(useQueryWithParseMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("updateTrack", () => {
+    it("replaces a matching track on a later page and the selected track", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      const firstPage = makeTracks(20);
+      await playGenre(result, makePage(firstPage, { next: true, total: 23 }));
+      const secondPage = makeTracks(3, "u");
+      fetchMock.mockResolvedValueOnce(makePage(secondPage, { page: 2, total: 23 }));
+      await act(async () => {
+        await result.current.loadMore();
+      });
+      act(() => {
+        result.current.toTrackAtPosition(21);
+      });
+      const updated = makeTrack("u1", "Updated");
+
+      act(() => {
+        result.current.updateTrack(updated);
+      });
+
+      expect(result.current.trackList?.tracks[21]).toEqual(updated);
+      expect(result.current.trackList?.tracks).toHaveLength(23);
+      expect(result.current.trackList?.total).toBe(23);
+      expect(result.current.selectedTrack).toEqual(updated);
+    });
+
+    it("keeps the same track list when no track matches", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      await playGenre(result, makePage([makeTrack("a", "Track A")]));
+      const before = result.current.trackList;
+
+      act(() => {
+        result.current.updateTrack(makeTrack("unknown", "Unknown"));
+      });
+
+      expect(result.current.trackList).toBe(before);
+    });
+
+    it("does nothing without a track list", () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+
+      act(() => {
+        result.current.updateTrack(makeTrack("a", "Track A"));
+      });
+
+      expect(result.current.trackList).toBeNull();
+      expect(result.current.selectedTrack).toBeNull();
     });
   });
 
