@@ -11,6 +11,14 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Breaking
+
+- `TrackListProvider` no longer takes `listEndpoint` / `listQueryKey`. It used them to keep a page-1 library list query running whenever a tracklist existed, and to swap in fresh copies of matching tracks. On grow that query was unfiltered, so a curation invalidation or a window refocus ran a `COUNT(*)` over the whole song table and got a 503. Migration: drop both props. To show an edited track in the playing list, call `useTrackList().updateTrack(serverTrack)` from the mutation's `onSuccess`.
+
+### Added
+
+- `useTrackList().updateTrack(track)` replaces the track with the same `uuid` across every loaded page of the current tracklist, and replaces the selected track if it is that one. It does nothing when no track matches.
+
 ## [27.1.0] - 2026-10-30
 
 ### Added

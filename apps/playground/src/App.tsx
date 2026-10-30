@@ -12,7 +12,6 @@ import {
   TrackNounProvider,
   useFetchWrapper,
   libraryEndpoints,
-  libraryQueryKeys,
   SongDetailed,
   SongDetailedSchema,
 } from "@behindthemusictree/app-kit";
@@ -239,12 +238,7 @@ export function App() {
       <PlayerProvider loadTrack={loadTrack}>
         <PopupProvider>
           <TrackListSidebarVisibilityProvider>
-            <TrackListProvider
-              getBackendBaseUrl={getBackendBaseUrl}
-              schema={SongDetailedSchema}
-              listEndpoint={libraryEndpoints.reference.songs.list}
-              listQueryKey={libraryQueryKeys.reference.songs.list}
-            >
+            <TrackListProvider getBackendBaseUrl={getBackendBaseUrl} schema={SongDetailedSchema}>
               <AppContent />
             </TrackListProvider>
           </TrackListSidebarVisibilityProvider>
