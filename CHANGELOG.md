@@ -19,6 +19,13 @@ easy to spot when bumping.
 
 - `useTrackList().updateTrack(track)` replaces the track with the same `uuid` across every loaded page of the current tracklist, and replaces the selected track if it is that one. It does nothing when no track matches.
 
+## [27.1.0] - 2026-10-30
+
+### Added
+
+- `GenreTreeView`'s admin action band has a "Make pop" / "Make core" toggle on a root's direct children, which writes the genre's `side`. "Make pop" is disabled, with a tooltip naming the current pop child, when the root already has one. Requires a grow API that accepts `side` on genre updates.
+- `CriteriaUpdateSchema` accepts `side`; `GenreActionBand` takes `side`, `onToggleSide` and `toggleSideDisabledReason`.
+
 ## [27.0.0] - 2026-10-30
 
 ### Breaking

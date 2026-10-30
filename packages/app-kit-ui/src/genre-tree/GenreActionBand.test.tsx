@@ -59,4 +59,23 @@ describe("GenreActionBand", () => {
     expect(onClick).toHaveBeenCalledWith(expect.anything(), node);
     expect(screen.getByRole("button", { name: "Locked" })).toBeDisabled();
   });
+
+  it("labels the side toggle from the current side and wires its click", () => {
+    const onToggleSide = vi.fn();
+    const { rerender } = render(<GenreActionBand node={node} side="core" onToggleSide={onToggleSide} />);
+    fireEvent.click(screen.getByRole("button", { name: "Make pop" }));
+
+    rerender(<GenreActionBand node={node} side="pop" onToggleSide={onToggleSide} />);
+    fireEvent.click(screen.getByRole("button", { name: "Make core" }));
+
+    expect(onToggleSide).toHaveBeenCalledTimes(2);
+  });
+
+  it("disables the side toggle with the reason as its tooltip", () => {
+    render(<GenreActionBand node={node} side="core" onToggleSide={vi.fn()} toggleSideDisabledReason="Taken" />);
+
+    const toggle = screen.getByRole("button", { name: "Make pop" });
+    expect(toggle).toBeDisabled();
+    expect(toggle).toHaveAttribute("title", "Taken");
+  });
 });

@@ -28,7 +28,7 @@ import {
 } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaOverview } from "@behindthemusictree/app-kit/genre-tree";
 import { Scope } from "@behindthemusictree/app-kit/transport";
-import { useGenreTreeViewState, useArtist, genreUpdateMutationKey } from "@behindthemusictree/app-kit/genre-tree";
+import { useGenreTreeViewState, useArtist, useUpdateGenre, genreUpdateMutationKey } from "@behindthemusictree/app-kit/genre-tree";
 import { usePlayer } from "@behindthemusictree/app-kit/player";
 import { usePopup } from "@behindthemusictree/app-kit/popup";
 import { GenreDetailExtras, type GenreDetailSlots } from "./GenreDetailExtras";
@@ -264,6 +264,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   });
 
   const isGenreUpdating = useIsMutating({ mutationKey: genreUpdateMutationKey }) > 0;
+  const { mutate: updateGenre } = useUpdateGenre(scope, getBackendBaseUrl);
   const busy = deferredSizeMetric !== sizeMetric || isTreeFetching || isGenreUpdating;
   const canSizeByViews = hasViewsCount(visibleGenrePlaylists);
 
@@ -429,6 +430,19 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       const criteria = genrePlaylist?.criteria;
       if (!genrePlaylist || !criteria) return { primary: <>{toolbar}{family}</>, aside: ancestors };
       const genreUuid = criteria.uuid;
+      // The API only accepts a side on a root's direct child, and at most one pop child per root.
+      const parentPlaylist = visibleGenrePlaylists.find(({ uuid }) => uuid === genrePlaylist.parent?.uuid);
+      const canToggleSide = !readOnly && parentPlaylist !== undefined && parentPlaylist.parent === null;
+      const side = criteria.side ?? "core";
+      const popSibling =
+        canToggleSide && side === "core"
+          ? visibleGenrePlaylists.find(
+              (sibling) =>
+                sibling.parent?.uuid === parentPlaylist.uuid &&
+                sibling.uuid !== genrePlaylist.uuid &&
+                sibling.criteria?.side === "pop",
+            )
+          : undefined;
       return {
         primary: (
         <>
@@ -454,6 +468,15 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                         onParentChanged={onParentChanged}
                       />,
                     )
+            }
+            side={side}
+            onToggleSide={
+              canToggleSide
+                ? () => updateGenre({ uuid: genreUuid, data: { side: side === "pop" ? "core" : "pop" } })
+                : undefined
+            }
+            toggleSideDisabledReason={
+              popSibling ? `${popSibling.name} is already the pop side of ${parentPlaylist?.name}` : undefined
             }
             additionalActions={additionalActions}
             playback={playback}
@@ -481,7 +504,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       };
     },
     [genrePlaylistByNodeId, additionalActions, readOnly, handleGenreCreationAction, handleGenreRenameAction,
-      showPopup, hidePopup, onParentChanged, visibleGenrePlaylists, playback, filterArtist,
+      showPopup, hidePopup, onParentChanged, visibleGenrePlaylists, updateGenre, playback, filterArtist,
       scope, getBackendBaseUrl, criteriaOverviewSchema,
       renderGenreDetailExtras,
       renderArtistLink,
