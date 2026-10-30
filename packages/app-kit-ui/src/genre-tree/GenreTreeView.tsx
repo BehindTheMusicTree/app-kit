@@ -46,7 +46,7 @@ import PanelEdgeTab from "./PanelEdgeTab";
 import ChangeParentPopup, { type ParentChange } from "./ChangeParentPopup";
 import { useArtistPanel } from "./artist/useArtistPanel";
 import { SizeMetricToggle } from "./SizeMetricToggle";
-import type { GenreTreeSizeMetric } from "./playlist-tree/size-metric";
+import { hasViewsCount, type GenreTreeSizeMetric } from "./playlist-tree/size-metric";
 import { useGenrePlaylistPlayback, type GenrePlaylistPlayback } from "./playlist-tree/useGenrePlaylistPlayback";
 
 // genre-tree-view's "previous" button (back to the last selected genre) renders inside the info panel, which sits
@@ -265,6 +265,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
 
   const isGenreUpdating = useIsMutating({ mutationKey: genreUpdateMutationKey }) > 0;
   const busy = deferredSizeMetric !== sizeMetric || isTreeFetching || isGenreUpdating;
+  const canSizeByViews = hasViewsCount(visibleGenrePlaylists);
 
   const artistResult = useArtist(artistUuid, artistSearchBaseUrl ?? getBackendBaseUrl);
   const filterArtistName = artistResult.status === "success" ? artistResult.artist.name : null;
@@ -531,65 +532,67 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           extraResults={artistExtraResults}
         />
       )}
-      {!isLoading && filterArtist && (
-        <span className="inline-flex items-center overflow-hidden rounded-full bg-[var(--color-neutral-100)] text-sm">
-          <button
-            type="button"
-            className="py-1 pl-3 pr-2 hover:underline"
-            aria-label={`Show artist ${filterArtist.name}`}
-            onClick={() => {
-              if (selectedNodeId !== null) clearSelection();
-            }}
-          >
-            {filterArtist.name}
-          </button>
-          <button
-            type="button"
-            className="py-1 pl-1 pr-3 hover:text-[var(--color-text)]"
-            aria-label={`Clear artist filter ${filterArtist.name}`}
-            onClick={() => changeArtist(null)}
-          >
-            ×
-          </button>
-        </span>
-      )}
-      {!isLoading && !isControlled && (
-        <SegmentedControl
-          aria-label="Tree view mode"
-          value={viewMode}
-          onChange={setViewMode}
-          options={[
-            { value: "pop-core", label: "Pop/Core", disabled: !canShowPopCore, title: canShowPopCore ? undefined : NO_POP_ROOT_TITLE },
-            { value: "wheel", label: "Wheel" },
-            { value: "stacked", label: "Stacked" },
-            { value: "outline", label: "Outline", disabled: !canShowPopCore, title: canShowPopCore ? undefined : NO_POP_ROOT_TITLE },
-          ]}
-        />
-      )}
-      {!isLoading && showDisplayOptions && (
-        <div
-          className="flex items-center gap-1"
-          role="group"
-          aria-label="Tree display options"
-        >
-          {!isRotationControlled && viewMode !== "stacked" && viewMode !== "outline" && (
-            <Button
-              variant={allowWheelRotation ? "default" : "outline"}
-              size="sm"
-              onClick={toggleWheelRotation}
+      <div className="contents max-md:flex max-md:w-full max-md:items-center max-md:gap-2 max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[&>*]:shrink-0">
+        {!isLoading && filterArtist && (
+          <span className="inline-flex items-center overflow-hidden rounded-full bg-[var(--color-neutral-100)] text-sm">
+            <button
+              type="button"
+              className="py-1 pl-3 pr-2 [@media(pointer:coarse)]:min-h-[var(--layout-touch-target)] hover:underline"
+              aria-label={`Show artist ${filterArtist.name}`}
+              onClick={() => {
+                if (selectedNodeId !== null) clearSelection();
+              }}
             >
-              Rotation
-            </Button>
-          )}
-        </div>
-      )}
-      {!isLoading && !readOnly && showAddRoot && (
-        <IconTextButton
-          icon={Plus}
-          text="Add root"
-          onClick={() => handleGenreCreationAction(null)}
-        />
-      )}
+              {filterArtist.name}
+            </button>
+            <button
+              type="button"
+              className="py-1 pl-1 pr-3 [@media(pointer:coarse)]:min-h-[var(--layout-touch-target)] hover:text-[var(--color-text)]"
+              aria-label={`Clear artist filter ${filterArtist.name}`}
+              onClick={() => changeArtist(null)}
+            >
+              ×
+            </button>
+          </span>
+        )}
+        {!isLoading && !isControlled && (
+          <SegmentedControl
+            aria-label="Tree view mode"
+            value={viewMode}
+            onChange={setViewMode}
+            options={[
+              { value: "pop-core", label: "Pop/Core", disabled: !canShowPopCore, title: canShowPopCore ? undefined : NO_POP_ROOT_TITLE },
+              { value: "wheel", label: "Wheel" },
+              { value: "stacked", label: "Stacked" },
+              { value: "outline", label: "Outline", disabled: !canShowPopCore, title: canShowPopCore ? undefined : NO_POP_ROOT_TITLE },
+            ]}
+          />
+        )}
+        {!isLoading && showDisplayOptions && (
+          <div
+            className="flex items-center gap-1"
+            role="group"
+            aria-label="Tree display options"
+          >
+            {!isRotationControlled && viewMode !== "stacked" && viewMode !== "outline" && (
+              <Button
+                variant={allowWheelRotation ? "default" : "outline"}
+                size="sm"
+                onClick={toggleWheelRotation}
+              >
+                Rotation
+              </Button>
+            )}
+          </div>
+        )}
+        {!isLoading && !readOnly && showAddRoot && (
+          <IconTextButton
+            icon={Plus}
+            text="Add root"
+            onClick={() => handleGenreCreationAction(null)}
+          />
+        )}
+      </div>
     </>
   );
 
@@ -604,7 +607,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       <div
         className={`actions-container absolute z-30 flex items-center gap-2 ${
           placement === "regions"
-            ? "left-[calc(var(--layout-gutter)+var(--layout-panel-inset))] top-[calc(var(--layout-gutter)+var(--layout-panel-inset))]"
+            ? "left-[calc(var(--layout-gutter)+var(--layout-panel-inset))] top-[calc(var(--layout-gutter)+var(--layout-panel-inset))] max-md:right-[calc(var(--layout-gutter)+var(--layout-panel-inset))] max-md:top-[var(--layout-band-top)] max-md:flex-col max-md:items-stretch"
             : "left-5 top-5"
         }`}
       >
@@ -612,7 +615,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       </div>
       {detailTab && (
         <div
-          className={`absolute top-1/2 z-30 -translate-y-1/2 transition-[opacity,visibility] duration-150 ease-out ${
+          className={`absolute top-1/2 z-30 -translate-y-1/2 max-md:hidden transition-[opacity,visibility] duration-150 ease-out ${
             isTreeReady ? "opacity-100" : "pointer-events-none invisible opacity-0"
           } ${
             detailExpanded
@@ -652,9 +655,11 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   controlsOrientation={controlsOrientation}
-                  sizeMetric={filterArtist ? "songs" : deferredSizeMetric}
+                  sizeMetric={filterArtist || !canSizeByViews ? "songs" : deferredSizeMetric}
                   busy={busy}
-                  floatingControlsLeading={filterArtist ? undefined : <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />}
+                  floatingControlsLeading={
+                    filterArtist || !canSizeByViews ? undefined : <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />
+                  }
                   defaultViewport={defaultViewport}
                   onViewportChange={onViewportChange}
                   {...infoPanelCuration}
@@ -681,9 +686,11 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   controlsOrientation={controlsOrientation}
-                  sizeMetric={filterArtist ? "songs" : deferredSizeMetric}
+                  sizeMetric={filterArtist || !canSizeByViews ? "songs" : deferredSizeMetric}
                   busy={busy}
-                  floatingControlsLeading={filterArtist ? undefined : <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />}
+                  floatingControlsLeading={
+                    filterArtist || !canSizeByViews ? undefined : <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />
+                  }
                   defaultViewport={defaultViewport}
                   onViewportChange={onViewportChange}
                   {...infoPanelCuration}

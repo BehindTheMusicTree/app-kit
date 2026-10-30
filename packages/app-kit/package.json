@@ -1,6 +1,6 @@
 {
   "name": "@behindthemusictree/app-kit",
-  "version": "26.1.0",
+  "version": "27.0.0",
   "description": "Headless transport, auth, popup state, player, and genre-tree data plumbing for BehindTheMusicTree React apps",
   "repository": {
     "type": "git",

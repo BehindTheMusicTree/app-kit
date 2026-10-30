@@ -25,6 +25,14 @@ describe("GenreSearch", () => {
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
+  it("asks mobile keyboards for a search key without autocomplete", () => {
+    render(<GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} />);
+    const input = screen.getByRole("textbox");
+    expect(input).toHaveAttribute("inputmode", "search");
+    expect(input).toHaveAttribute("enterkeyhint", "search");
+    expect(input).toHaveAttribute("autocomplete", "off");
+  });
+
   it("shows matching results as the user types", () => {
     render(<GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} />);
 
