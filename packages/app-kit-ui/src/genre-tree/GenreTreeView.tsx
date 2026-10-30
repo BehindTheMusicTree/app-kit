@@ -655,7 +655,10 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
         </div>
       )}
       <div className="content-container flex-1 min-h-0 flex flex-row gap-4">
-        <div className="tree-view-container flex-1 min-w-0 flex flex-col h-full">
+        <div className="tree-view-container relative flex-1 min-w-0 flex flex-col h-full">
+          {!isLoading && viewMode === "outline" && floatingControlsLeading && (
+            <div className="absolute bottom-3 right-3 z-10">{floatingControlsLeading}</div>
+          )}
           {isLoading ? (
             <GenreTreeViewSkeleton viewMode={viewMode} />
           ) : viewMode === "wheel" ? (
@@ -736,7 +739,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             </div>
           ) : viewMode === "outline" ? (
             <div className="tree-container flex-1 min-h-0 w-full overflow-y-auto relative [--gtv-info-panel-header-inset:calc(var(--layout-search-h,2.5rem)+var(--layout-panel-inset,0.5rem)+0.75rem)] [&_.gtv-toolbar]:hidden">
-              {floatingControlsLeading && <div className="absolute bottom-3 right-3 z-10">{floatingControlsLeading}</div>}
               <GenrePlaylistTreeWheelRadialPopCore
                 outline
                 scope={scope}
