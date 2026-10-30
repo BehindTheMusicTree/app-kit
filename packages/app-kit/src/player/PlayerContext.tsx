@@ -53,6 +53,13 @@ export interface YoutubePlayerTrack extends PlayerTrackBase {
 /** Minimal shape the player needs to play a track and identify it. Extend as needed per app. */
 export type PlayerTrack = AudioPlayerTrack | YoutubePlayerTrack;
 
+export interface PlayerTrackEndEvent {
+  trackId: string;
+  error?: { code: number; message: string };
+}
+
+export type PlayerTrackEndHandler = (event?: PlayerTrackEndEvent) => void;
+
 const isPlayable = (track: PlayerTrack) => track.kind !== "youtube" || !track.unplayableReason;
 
 function youtubeErrorMessage(code: number): string {
@@ -92,8 +99,8 @@ interface PlayerContextType {
     currentTrack: PlayerTrack,
     onTrackChange: (track: PlayerTrack) => void,
   ) => void;
-  onTrackEnd: (() => void) | null;
-  setOnTrackEnd: (callback: (() => void) | null) => void;
+  onTrackEnd: PlayerTrackEndHandler | null;
+  setOnTrackEnd: (callback: PlayerTrackEndHandler | null) => void;
   /** Container the YouTube IFrame player mounts into. Render `<PlayerVideoSurface />` to attach it. */
   videoContainerRef: React.RefObject<HTMLDivElement>;
 }
@@ -113,11 +120,15 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
   const [volume, setVolume] = useState(50);
   const [playState, setPlayState] = useState<PlayStates>(PlayStates.STOPPED);
   const [isLoading, setIsLoading] = useState(false);
-  const [onTrackEnd, setOnTrackEnd] = useState<(() => void) | null>(null);
+  const [onTrackEnd, setOnTrackEndState] = useState<PlayerTrackEndHandler | null>(null);
+  const setOnTrackEnd = useCallback((callback: PlayerTrackEndHandler | null) => {
+    setOnTrackEndState(() => callback);
+  }, []);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const youtubePlayerRef = useRef<YT.Player | null>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const currentTimeRef = useRef(0);
+  const currentTrackIdRef = useRef<string | null>(null);
   const onTrackEndRef = useRef(onTrackEnd);
   useEffect(() => {
     onTrackEndRef.current = onTrackEnd;
@@ -150,7 +161,8 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
     if (event.data === window.YT.PlayerState.ENDED) {
       setPlayState(PlayStates.STOPPED);
       setIsPlaying(false);
-      onTrackEndRef.current?.();
+      const trackId = currentTrackIdRef.current;
+      if (trackId) onTrackEndRef.current?.({ trackId });
     }
   }, []);
 
@@ -172,7 +184,8 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
       audio.addEventListener("ended", () => {
         setPlayState(PlayStates.STOPPED);
         setIsPlaying(false);
-        onTrackEndRef.current?.();
+        const trackId = currentTrackIdRef.current;
+        if (trackId) onTrackEndRef.current?.({ trackId });
       });
 
       audio.addEventListener("error", (e) => {
@@ -224,10 +237,13 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
             onStateChange: handleYoutubeStateChange,
             onError: (event: YT.OnErrorEvent) => {
               const loadError = youtubeErrorMessage(event.data);
-              setPlayerTrackObject((prev) => (prev ? { ...prev, loadError } : prev));
+              const trackId = currentTrackIdRef.current;
+              setPlayerTrackObject((prev) =>
+                prev?.track.id === trackId ? { ...prev, loadError } : prev,
+              );
               setPlayState(PlayStates.STOPPED);
               setIsPlaying(false);
-              onTrackEndRef.current?.();
+              if (trackId) onTrackEndRef.current?.({ trackId, error: { code: event.data, message: loadError } });
             },
           },
         });
@@ -238,6 +254,7 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
 
   const loadTrackForPlayer = useCallback(
     (trackId: string) => {
+      currentTrackIdRef.current = trackId;
       if (audioElementRef.current) {
         audioElementRef.current.pause();
         audioElementRef.current.currentTime = 0;
@@ -366,6 +383,7 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
       handleNextTrack,
       handlePreviousTrack,
       onTrackEnd,
+      setOnTrackEnd,
     ],
   );
 

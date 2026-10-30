@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import {
   usePlayer,
@@ -44,6 +44,11 @@ export default function PlayerPanel({
   const { playerTrackObject } = usePlayer();
   const { toggleTrackListSidebar, isTrackListSidebarVisible } =
     useTrackListSidebarVisibility();
+  const [lastLoadedTrackTitle, setLastLoadedTrackTitle] = useState("");
+  const loadedTrackTitle = playerTrackObject?.track.title;
+  useEffect(() => {
+    if (loadedTrackTitle) setLastLoadedTrackTitle(loadedTrackTitle);
+  }, [loadedTrackTitle]);
   const [uncontrolledExtended, setUncontrolledExtended] = useState(false);
   const isExtendRequested = expanded ?? uncontrolledExtended;
   const setIsExtendRequested = (next: boolean) => {
@@ -102,7 +107,7 @@ export default function PlayerPanel({
         <div className="flex w-[var(--layout-right-w)] shrink-0 flex-col">
           <div className="flex shrink-0 items-center justify-between gap-2 border-b border-zinc-800 p-2">
             <span className="min-w-0 truncate text-sm font-semibold">
-              {playerTrackObject?.track?.title}
+              {loadedTrackTitle || lastLoadedTrackTitle}
             </span>
           </div>
           <div className="relative w-full shrink-0">

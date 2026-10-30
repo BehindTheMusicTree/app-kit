@@ -31,8 +31,10 @@ import {
 import { TrackListOriginType } from "./models/TrackListOriginType";
 import { Scope } from "../transport/lib/scope";
 import { usePlayer } from "../player/PlayerContext";
+import type { PlayerTrackEndEvent } from "../player/PlayerContext";
 import { useTrackListSidebarVisibility } from "./TrackListSidebarVisibilityContext";
 import type { GenrePlaylistUuid, GenreUuid } from "./schemas/ids";
+import { isSong, songUnplayableReason } from "./schemas/song/detailed";
 
 const TRACKS_PAGE_SIZE = 100;
 // Load the next page once the selected track is this close to the end of what's loaded, so
@@ -73,6 +75,7 @@ interface TrackListContextType<T extends TrackBase> {
   trackList: TrackList<T> | null;
   selectedTrack: T | null;
   setSelectedTrack: (track: T | null) => void;
+  runtimeUnplayableTrackIds: ReadonlySet<string>;
   toTrackAtPosition: (position: number) => void;
   playNewTrackListFromTrackUuid: (track: T, scope: Scope) => void;
   /**
@@ -126,7 +129,8 @@ export function TrackListProvider<T extends TrackBase>({
 }: TrackListProviderProps<T>) {
   const [trackList, setTrackList] = useState<TrackList<T> | null>(null);
   const [selectedTrack, setSelectedTrack] = useState<T | null>(null);
-  const { loadTrackForPlayer } = usePlayer();
+  const [runtimeUnplayableTrackIds, setRuntimeUnplayableTrackIds] = useState<ReadonlySet<string>>(() => new Set());
+  const { loadTrackForPlayer, setOnTrackEnd } = usePlayer();
   const { showTrackListSidebar } = useTrackListSidebarVisibility();
   const scope = trackList?.origin?.scope ?? null;
   const { data: tracksResponse } = useListTracks(scope, getBackendBaseUrl, schema, listEndpoint, listQueryKey);
@@ -136,6 +140,7 @@ export function TrackListProvider<T extends TrackBase>({
   // no longer current are dropped.
   const latestPlayRequestRef = useRef(0);
   const loadingOriginRef = useRef<TrackListOriginFromCriteriaPlaylist | TrackListOriginFromArtist | null>(null);
+  const pendingAdvanceRef = useRef<{ trackId: string; origin: TrackList<T>["origin"] } | null>(null);
 
   const fetchTracksPage = useCallback(
     async (uuid: GenrePlaylistUuid, scope: Scope, page: number, from?: string): Promise<GenrePlaylistTracksPage<T>> => {
@@ -189,6 +194,42 @@ export function TrackListProvider<T extends TrackBase>({
     if (tracks.every((track, index) => track === trackList.tracks[index])) return trackList;
     return new TrackList(tracks, trackList.origin, trackList.total, trackList.nextPage);
   }, [trackList, tracksResponse]);
+
+  const advanceAfterTrackEnd = useCallback(
+    (event?: PlayerTrackEndEvent) => {
+      const completedTrackId = event?.trackId ?? selectedTrack?.uuid;
+      if (!completedTrackId || !currentTrackList) return;
+      // Ignore late media events from a track that is no longer selected.
+      if (selectedTrack && selectedTrack.uuid !== completedTrackId) return;
+
+      if (event?.error) {
+        setRuntimeUnplayableTrackIds((previous) => new Set(previous).add(completedTrackId));
+        if (event.error.code !== 101 && event.error.code !== 150) return;
+      }
+
+      const currentIndex = currentTrackList.tracks.findIndex((track) => track.uuid === completedTrackId);
+      if (currentIndex === -1) return;
+      const nextTrack = currentTrackList.tracks.slice(currentIndex + 1).find(
+        (track) => !isSong(track) || songUnplayableReason(track) === null,
+      );
+      if (!nextTrack) {
+        pendingAdvanceRef.current = currentTrackList.nextPage === null
+          ? null
+          : { trackId: completedTrackId, origin: currentTrackList.origin };
+        return;
+      }
+
+      pendingAdvanceRef.current = null;
+      setSelectedTrack(nextTrack);
+      loadTrackForPlayer(nextTrack.uuid);
+    },
+    [currentTrackList, loadTrackForPlayer, selectedTrack],
+  );
+
+  useEffect(() => {
+    setOnTrackEnd(currentTrackList && selectedTrack ? advanceAfterTrackEnd : null);
+    return () => setOnTrackEnd(null);
+  }, [advanceAfterTrackEnd, currentTrackList, selectedTrack, setOnTrackEnd]);
 
   const toTrackAtPosition = useCallback(
     (position: number) => {
@@ -306,6 +347,37 @@ export function TrackListProvider<T extends TrackBase>({
   }, [trackList, fetchTracksPage, fetchArtistTracksPage]);
 
   useEffect(() => {
+    const pending = pendingAdvanceRef.current;
+    if (!pending) return;
+    if (
+      !currentTrackList ||
+      currentTrackList.origin !== pending.origin ||
+      selectedTrack?.uuid !== pending.trackId
+    ) {
+      pendingAdvanceRef.current = null;
+      return;
+    }
+
+    const currentIndex = currentTrackList.tracks.findIndex((track) => track.uuid === pending.trackId);
+    if (currentIndex === -1) {
+      pendingAdvanceRef.current = null;
+      return;
+    }
+    const nextTrack = currentTrackList.tracks.slice(currentIndex + 1).find(
+      (track) => !isSong(track) || songUnplayableReason(track) === null,
+    );
+    if (nextTrack) {
+      pendingAdvanceRef.current = null;
+      setSelectedTrack(nextTrack);
+      loadTrackForPlayer(nextTrack.uuid);
+    } else if (currentTrackList.nextPage === null) {
+      pendingAdvanceRef.current = null;
+    } else {
+      loadMore().catch((error) => console.error("Failed to load more tracks:", error));
+    }
+  }, [currentTrackList, loadMore, loadTrackForPlayer, selectedTrack]);
+
+  useEffect(() => {
     if (!currentTrackList || currentTrackList.nextPage === null || !selectedTrack) return;
     const index = currentTrackList.tracks.findIndex((track) => track.uuid === selectedTrack.uuid);
     if (index !== -1 && currentTrackList.tracks.length - index <= AUTO_LOAD_REMAINING_TRACKS) {
@@ -318,6 +390,7 @@ export function TrackListProvider<T extends TrackBase>({
       trackList: currentTrackList,
       selectedTrack,
       setSelectedTrack,
+      runtimeUnplayableTrackIds,
       toTrackAtPosition,
       playNewTrackListFromTrackUuid,
       playNewTrackListFromGenrePlaylist,
@@ -328,6 +401,7 @@ export function TrackListProvider<T extends TrackBase>({
     [
       currentTrackList,
       selectedTrack,
+      runtimeUnplayableTrackIds,
       toTrackAtPosition,
       playNewTrackListFromTrackUuid,
       playNewTrackListFromGenrePlaylist,

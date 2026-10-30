@@ -172,8 +172,8 @@ function AppContent() {
     },
   });
   const [loading, setLoading] = useState(false);
-  const { playerTrackObject } = usePlayer();
-  const playerTrackId = playerTrackObject?.track.id ?? null;
+  const { playerTrackObject, isLoading: isPlayerLoading } = usePlayer();
+  const isPlayerVisible = playerTrackObject !== null || isPlayerLoading;
 
   return (
     <>
@@ -221,7 +221,7 @@ function AppContent() {
         )}
       </div>
       <PlayerPanel
-        isVisible={playerTrackId !== null}
+        isVisible={isPlayerVisible}
         className="top-3"
       />
       <PopupHost />

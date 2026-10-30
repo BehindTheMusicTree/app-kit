@@ -4,12 +4,20 @@ import { z } from "zod";
 import type { ReactNode } from "react";
 import type { GenreUuid } from "./schemas/ids";
 
-const { fetchMock, useSessionMock, useQueryWithParseMock, loadTrackForPlayerMock, showTrackListSidebarMock } =
+const {
+  fetchMock,
+  useSessionMock,
+  useQueryWithParseMock,
+  loadTrackForPlayerMock,
+  setOnTrackEndMock,
+  showTrackListSidebarMock,
+} =
   vi.hoisted(() => ({
     fetchMock: vi.fn(),
     useSessionMock: vi.fn(),
     useQueryWithParseMock: vi.fn(),
     loadTrackForPlayerMock: vi.fn(),
+    setOnTrackEndMock: vi.fn(),
     showTrackListSidebarMock: vi.fn(),
   }));
 
@@ -26,7 +34,7 @@ vi.mock("../transport/lib/use-query-with-parse", () => ({
 }));
 
 vi.mock("../player/PlayerContext", () => ({
-  usePlayer: () => ({ loadTrackForPlayer: loadTrackForPlayerMock }),
+  usePlayer: () => ({ loadTrackForPlayer: loadTrackForPlayerMock, setOnTrackEnd: setOnTrackEndMock }),
 }));
 
 vi.mock("./TrackListSidebarVisibilityContext", () => ({
