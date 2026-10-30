@@ -34,6 +34,9 @@ vi.mock("./track-list-sidebar/TrackListSidebar", () => ({
     </div>
   ),
 }));
+vi.mock("./PlayerControls", () => ({
+  default: () => <div data-testid="player-controls" />,
+}));
 
 import PlayerPanel from "./PlayerPanel";
 
@@ -77,6 +80,18 @@ describe("PlayerPanel", () => {
     expect(screen.queryByRole("button", { name: "Extend player panel" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Show tracks" }));
     expect(toggleTrackListSidebar).toHaveBeenCalledTimes(1);
+  });
+
+  it("places player controls below the video and before the track list", () => {
+    setup(true);
+    render(<PlayerPanel />);
+
+    const video = screen.getByTestId("video");
+    const controls = screen.getByTestId("player-controls");
+    const trackList = screen.getByTestId("sidebar");
+
+    expect(video.compareDocumentPosition(controls) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(controls.compareDocumentPosition(trackList) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("follows a controlled expanded prop and reports toggles", () => {

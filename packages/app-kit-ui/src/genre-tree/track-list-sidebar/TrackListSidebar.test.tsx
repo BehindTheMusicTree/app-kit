@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { render } from "../../test-utils";
 import { TrackNounProvider } from "@behindthemusictree/app-kit/track-noun";
 
@@ -55,6 +55,123 @@ describe("TrackListSidebar", () => {
     expect(screen.getByText("My Playlist")).toBeInTheDocument();
     expect(screen.getByText("Song One")).toBeInTheDocument();
     expect(screen.getByText("Song Two")).toBeInTheDocument();
+  });
+
+  it("aligns the automatically selected track at the top when playback is being followed", () => {
+    useTrackListMock.mockReturnValue({
+      trackList: makeTrackList(),
+      loadMore: vi.fn(),
+      autoAdvanceScrollRequest: { id: 1, trackUuid: "t2" },
+    });
+    const makeRect = (top: number) =>
+      ({ top, bottom: top, left: 0, right: 0, width: 0, height: 0, x: 0, y: top, toJSON: () => ({}) }) as DOMRect;
+    const boundsSpy = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockImplementation(function (this: HTMLElement) {
+        if (this.classList.contains("track-list")) return makeRect(100);
+        if (this.dataset.trackUuid === "t2") {
+          const scrollTop = (this.closest(".track-list") as HTMLElement | null)?.scrollTop ?? 0;
+          return makeRect(156 - scrollTop);
+        }
+        return makeRect(0);
+      });
+
+    try {
+      const { container } = render(<TrackListSidebar />);
+
+      expect(container.querySelector(".track-list")?.scrollTop).toBe(56);
+    } finally {
+      boundsSpy.mockRestore();
+    }
+  });
+
+  it("keeps following after intermediate scroll events during consecutive automatic advances", () => {
+    const trackList = makeTrackList({
+      tracks: [
+        { uuid: "t1", title: "Song One" },
+        { uuid: "t2", title: "Song Two" },
+        { uuid: "t3", title: "Song Three" },
+        { uuid: "t4", title: "Song Four" },
+        { uuid: "t5", title: "Song Five" },
+      ],
+    });
+    useTrackListMock.mockReturnValue({
+      trackList,
+      loadMore: vi.fn(),
+      autoAdvanceScrollRequest: { id: 1, trackUuid: "t2" },
+    });
+    const makeRect = (top: number) =>
+      ({ top, bottom: top, left: 0, right: 0, width: 0, height: 0, x: 0, y: top, toJSON: () => ({}) }) as DOMRect;
+    const boundsSpy = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockImplementation(function (this: HTMLElement) {
+        if (this.classList.contains("track-list")) return makeRect(100);
+        const rowOffset = { t2: 56, t3: 112, t4: 168, t5: 224 }[this.dataset.trackUuid ?? ""];
+        if (rowOffset !== undefined) {
+          const scrollTop = (this.closest(".track-list") as HTMLElement | null)?.scrollTop ?? 0;
+          return makeRect(100 + rowOffset - scrollTop);
+        }
+        return makeRect(0);
+      });
+
+    try {
+      const { container, rerender } = render(<TrackListSidebar />);
+      const list = container.querySelector<HTMLElement>(".track-list");
+      expect(list?.scrollTop).toBe(56);
+
+      list!.scrollTop = 24;
+      fireEvent.scroll(list!);
+      list!.scrollTop = 56;
+      fireEvent.scroll(list!);
+
+      useTrackListMock.mockReturnValue({
+        trackList,
+        loadMore: vi.fn(),
+        autoAdvanceScrollRequest: { id: 2, trackUuid: "t3" },
+      });
+      rerender(<TrackListSidebar />);
+      expect(list!.scrollTop).toBe(112);
+
+      fireEvent.scroll(list!);
+      useTrackListMock.mockReturnValue({
+        trackList,
+        loadMore: vi.fn(),
+        autoAdvanceScrollRequest: { id: 3, trackUuid: "t4" },
+      });
+      rerender(<TrackListSidebar />);
+      expect(list!.scrollTop).toBe(168);
+
+      fireEvent.scroll(list!);
+      useTrackListMock.mockReturnValue({
+        trackList,
+        loadMore: vi.fn(),
+        autoAdvanceScrollRequest: { id: 4, trackUuid: "t5" },
+      });
+      rerender(<TrackListSidebar />);
+      expect(list!.scrollTop).toBe(224);
+    } finally {
+      boundsSpy.mockRestore();
+    }
+  });
+
+  it("preserves the user's scrolled position during automatic track changes", () => {
+    const trackList = makeTrackList();
+    useTrackListMock.mockReturnValue({ trackList, loadMore: vi.fn(), autoAdvanceScrollRequest: null });
+    const { container, rerender } = render(<TrackListSidebar />);
+    const list = container.querySelector<HTMLElement>(".track-list");
+    expect(list).not.toBeNull();
+    list!.scrollTop = 24;
+    fireEvent.wheel(list!);
+    fireEvent.scroll(list!);
+
+    useTrackListMock.mockReturnValue({
+      trackList,
+      loadMore: vi.fn(),
+      autoAdvanceScrollRequest: { id: 1, trackUuid: "t2" },
+    });
+    rerender(<TrackListSidebar />);
+
+    expect(list!.scrollTop).toBe(24);
   });
 
   it("shows genre label and pluralized track count", () => {

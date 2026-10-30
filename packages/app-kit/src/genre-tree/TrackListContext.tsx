@@ -40,6 +40,15 @@ const TRACKS_PAGE_SIZE = 100;
 // Load the next page once the selected track is this close to the end of what's loaded, so
 // auto-advance and next-track never run out.
 const AUTO_LOAD_REMAINING_TRACKS = 10;
+// Keep each blocked embed visible long enough for the row reposition and dim state to register.
+const AUTO_SKIP_DELAY_MS = 1_000;
+
+function isTrackPlayable<T extends TrackBase>(track: T, runtimeUnplayableTrackIds: ReadonlySet<string>) {
+  return (
+    !runtimeUnplayableTrackIds.has(track.uuid) &&
+    (!isSong(track) || songUnplayableReason(track) === null)
+  );
+}
 
 export function useListTracks<T>(
   scope: Scope | null,
@@ -75,8 +84,12 @@ interface TrackListContextType<T extends TrackBase> {
   trackList: TrackList<T> | null;
   selectedTrack: T | null;
   setSelectedTrack: (track: T | null) => void;
-  autoAdvancedTrackUuid: string | null;
+  autoAdvanceScrollRequest: { id: number; trackUuid: string } | null;
   runtimeUnplayableTrackIds: ReadonlySet<string>;
+  hasNextTrack: boolean;
+  hasPreviousTrack: boolean;
+  playNextTrack: () => void;
+  playPreviousTrack: () => void;
   toTrackAtPosition: (position: number) => void;
   playNewTrackListFromTrackUuid: (track: T, scope: Scope) => void;
   /**
@@ -130,7 +143,10 @@ export function TrackListProvider<T extends TrackBase>({
 }: TrackListProviderProps<T>) {
   const [trackList, setTrackList] = useState<TrackList<T> | null>(null);
   const [selectedTrack, setSelectedTrack] = useState<T | null>(null);
-  const [autoAdvancedTrackUuid, setAutoAdvancedTrackUuid] = useState<string | null>(null);
+  const [autoAdvanceScrollRequest, setAutoAdvanceScrollRequest] = useState<{
+    id: number;
+    trackUuid: string;
+  } | null>(null);
   const [runtimeUnplayableTrackIds, setRuntimeUnplayableTrackIds] = useState<ReadonlySet<string>>(() => new Set());
   const { loadTrackForPlayer, setOnTrackEnd } = usePlayer();
   const { showTrackListSidebar } = useTrackListSidebarVisibility();
@@ -141,8 +157,36 @@ export function TrackListProvider<T extends TrackBase>({
   // Identifies the latest play request / in-flight page load, so late responses for a list that's
   // no longer current are dropped.
   const latestPlayRequestRef = useRef(0);
+  const autoAdvanceScrollRequestIdRef = useRef(0);
+  const delayedTrackLoadRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const loadingOriginRef = useRef<TrackListOriginFromCriteriaPlaylist | TrackListOriginFromArtist | null>(null);
-  const pendingAdvanceRef = useRef<{ trackId: string; origin: TrackList<T>["origin"] } | null>(null);
+  const pendingAdvanceRef = useRef<{
+    trackId: string;
+    origin: TrackList<T>["origin"];
+    delayLoad: boolean;
+  } | null>(null);
+
+  const clearDelayedTrackLoad = useCallback(() => {
+    if (delayedTrackLoadRef.current !== null) {
+      clearTimeout(delayedTrackLoadRef.current);
+      delayedTrackLoadRef.current = null;
+    }
+  }, []);
+
+  const requestAutoAdvanceScroll = useCallback((trackUuid: string) => {
+    setAutoAdvanceScrollRequest({ id: ++autoAdvanceScrollRequestIdRef.current, trackUuid });
+  }, []);
+
+  const loadTrackAfterSkipDelay = useCallback(
+    (trackUuid: string) => {
+      clearDelayedTrackLoad();
+      delayedTrackLoadRef.current = setTimeout(() => {
+        delayedTrackLoadRef.current = null;
+        loadTrackForPlayer(trackUuid);
+      }, AUTO_SKIP_DELAY_MS);
+    },
+    [clearDelayedTrackLoad, loadTrackForPlayer],
+  );
 
   const fetchTracksPage = useCallback(
     async (uuid: GenrePlaylistUuid, scope: Scope, page: number, from?: string): Promise<GenrePlaylistTracksPage<T>> => {
@@ -204,29 +248,38 @@ export function TrackListProvider<T extends TrackBase>({
       // Ignore late media events from a track that is no longer selected.
       if (selectedTrack && selectedTrack.uuid !== completedTrackId) return;
 
+      const isEmbeddingBlocked = event?.error?.code === 101 || event?.error?.code === 150;
       if (event?.error) {
         setRuntimeUnplayableTrackIds((previous) => new Set(previous).add(completedTrackId));
-        if (event.error.code !== 101 && event.error.code !== 150) return;
+        if (!isEmbeddingBlocked) return;
       }
 
       const currentIndex = currentTrackList.tracks.findIndex((track) => track.uuid === completedTrackId);
       if (currentIndex === -1) return;
-      const nextTrack = currentTrackList.tracks.slice(currentIndex + 1).find(
-        (track) => !isSong(track) || songUnplayableReason(track) === null,
-      );
+      const nextTrack = currentTrackList.tracks
+        .slice(currentIndex + 1)
+        .find((track) => isTrackPlayable(track, runtimeUnplayableTrackIds));
       if (!nextTrack) {
         pendingAdvanceRef.current = currentTrackList.nextPage === null
           ? null
-          : { trackId: completedTrackId, origin: currentTrackList.origin };
+          : { trackId: completedTrackId, origin: currentTrackList.origin, delayLoad: isEmbeddingBlocked };
         return;
       }
 
       pendingAdvanceRef.current = null;
-      setAutoAdvancedTrackUuid(nextTrack.uuid);
+      requestAutoAdvanceScroll(nextTrack.uuid);
       setSelectedTrack(nextTrack);
-      loadTrackForPlayer(nextTrack.uuid);
+      if (isEmbeddingBlocked) loadTrackAfterSkipDelay(nextTrack.uuid);
+      else loadTrackForPlayer(nextTrack.uuid);
     },
-    [currentTrackList, loadTrackForPlayer, selectedTrack],
+    [
+      currentTrackList,
+      loadTrackAfterSkipDelay,
+      loadTrackForPlayer,
+      requestAutoAdvanceScroll,
+      runtimeUnplayableTrackIds,
+      selectedTrack,
+    ],
   );
 
   useEffect(() => {
@@ -237,17 +290,19 @@ export function TrackListProvider<T extends TrackBase>({
   const toTrackAtPosition = useCallback(
     (position: number) => {
       if (currentTrackList && position >= 0 && position < currentTrackList.tracks.length) {
-        setAutoAdvancedTrackUuid(null);
+        clearDelayedTrackLoad();
+        setAutoAdvanceScrollRequest(null);
         setSelectedTrack(currentTrackList.tracks[position]);
       }
     },
-    [currentTrackList],
+    [clearDelayedTrackLoad, currentTrackList],
   );
 
   const playNewTrackListFromTrackUuid = useCallback(
     (track: T, scope: Scope) => {
       latestPlayRequestRef.current++;
-      setAutoAdvancedTrackUuid(null);
+      clearDelayedTrackLoad();
+      setAutoAdvanceScrollRequest(null);
       const origin = new TrackListOriginFromTrack(track, scope);
       const newTrackList = new TrackListFromTrack([track], origin);
 
@@ -256,11 +311,12 @@ export function TrackListProvider<T extends TrackBase>({
       showTrackListSidebar();
       loadTrackForPlayer(track.uuid);
     },
-    [showTrackListSidebar, loadTrackForPlayer],
+    [clearDelayedTrackLoad, showTrackListSidebar, loadTrackForPlayer],
   );
 
   const playNewTrackListFromGenrePlaylist = useCallback(
     async (genrePlaylist: CriteriaPlaylistMinimum, scope: Scope, options?: PlayGenrePlaylistOptions) => {
+      clearDelayedTrackLoad();
       const request = ++latestPlayRequestRef.current;
       const from = options?.startSongUuid;
       let page: GenrePlaylistTracksPage<T>;
@@ -282,18 +338,19 @@ export function TrackListProvider<T extends TrackBase>({
       }
 
       const origin = new TrackListOriginFromCriteriaPlaylist(genrePlaylist, scope, from);
-      setAutoAdvancedTrackUuid(null);
+      setAutoAdvanceScrollRequest(null);
       setTrackList(new TrackListFromCriteriaPlaylist(page.tracks, origin, page.total, page.nextPage));
       setSelectedTrack(startTrack);
       showTrackListSidebar();
       loadTrackForPlayer(startTrack.uuid);
     },
-    [fetchTracksPage, showTrackListSidebar, loadTrackForPlayer],
+    [clearDelayedTrackLoad, fetchTracksPage, showTrackListSidebar, loadTrackForPlayer],
   );
 
   const playNewTrackListFromArtist = useCallback(
     async (artist: ArtistTrackListOriginInput, scope: Scope, options: PlayArtistOptions) => {
       if (scope !== "reference") throw new Error("Artist track lists only support the reference scope");
+      clearDelayedTrackLoad();
       const request = ++latestPlayRequestRef.current;
       const from = options.startSongUuid;
       const origin = new TrackListOriginFromArtist(artist, scope, options.ordering, from, options.genreUuid);
@@ -316,12 +373,12 @@ export function TrackListProvider<T extends TrackBase>({
       }
 
       setTrackList(new TrackListFromArtist(page.tracks, origin, page.total, page.nextPage));
-      setAutoAdvancedTrackUuid(null);
+      setAutoAdvanceScrollRequest(null);
       setSelectedTrack(startTrack);
       showTrackListSidebar();
       loadTrackForPlayer(startTrack.uuid);
     },
-    [fetchArtistTracksPage, showTrackListSidebar, loadTrackForPlayer],
+    [clearDelayedTrackLoad, fetchArtistTracksPage, showTrackListSidebar, loadTrackForPlayer],
   );
 
   const loadMore = useCallback(async () => {
@@ -353,6 +410,51 @@ export function TrackListProvider<T extends TrackBase>({
     }
   }, [trackList, fetchTracksPage, fetchArtistTracksPage]);
 
+  const selectedTrackIndex = currentTrackList?.tracks.findIndex((track) => track.uuid === selectedTrack?.uuid) ?? -1;
+  const nextTrack =
+    currentTrackList && selectedTrackIndex >= 0
+      ? currentTrackList.tracks
+          .slice(selectedTrackIndex + 1)
+          .find((track) => isTrackPlayable(track, runtimeUnplayableTrackIds)) ?? null
+      : null;
+  const previousTrack =
+    currentTrackList && selectedTrackIndex > 0
+      ? currentTrackList.tracks
+          .slice(0, selectedTrackIndex)
+          .reverse()
+          .find((track) => isTrackPlayable(track, runtimeUnplayableTrackIds)) ?? null
+      : null;
+  const hasNextTrack = nextTrack !== null || (selectedTrackIndex >= 0 && currentTrackList?.nextPage != null);
+  const hasPreviousTrack = previousTrack !== null;
+
+  const playNextTrack = useCallback(() => {
+    if (!currentTrackList || !selectedTrack || selectedTrackIndex < 0) return;
+    clearDelayedTrackLoad();
+    if (nextTrack) {
+      pendingAdvanceRef.current = null;
+      requestAutoAdvanceScroll(nextTrack.uuid);
+      setSelectedTrack(nextTrack);
+      loadTrackForPlayer(nextTrack.uuid);
+      return;
+    }
+    if (currentTrackList.nextPage === null) return;
+
+    pendingAdvanceRef.current = { trackId: selectedTrack.uuid, origin: currentTrackList.origin, delayLoad: false };
+    loadMore().catch((error) => {
+      pendingAdvanceRef.current = null;
+      console.error("Failed to load more tracks:", error);
+    });
+  }, [clearDelayedTrackLoad, currentTrackList, loadMore, loadTrackForPlayer, nextTrack, selectedTrack, selectedTrackIndex]);
+
+  const playPreviousTrack = useCallback(() => {
+    if (!previousTrack) return;
+    clearDelayedTrackLoad();
+    pendingAdvanceRef.current = null;
+    requestAutoAdvanceScroll(previousTrack.uuid);
+    setSelectedTrack(previousTrack);
+    loadTrackForPlayer(previousTrack.uuid);
+  }, [clearDelayedTrackLoad, loadTrackForPlayer, previousTrack, requestAutoAdvanceScroll]);
+
   useEffect(() => {
     const pending = pendingAdvanceRef.current;
     if (!pending) return;
@@ -370,20 +472,31 @@ export function TrackListProvider<T extends TrackBase>({
       pendingAdvanceRef.current = null;
       return;
     }
-    const nextTrack = currentTrackList.tracks.slice(currentIndex + 1).find(
-      (track) => !isSong(track) || songUnplayableReason(track) === null,
-    );
+    const nextTrack = currentTrackList.tracks
+      .slice(currentIndex + 1)
+      .find((track) => isTrackPlayable(track, runtimeUnplayableTrackIds));
     if (nextTrack) {
       pendingAdvanceRef.current = null;
-      setAutoAdvancedTrackUuid(nextTrack.uuid);
+      requestAutoAdvanceScroll(nextTrack.uuid);
       setSelectedTrack(nextTrack);
-      loadTrackForPlayer(nextTrack.uuid);
+      if (pending.delayLoad) loadTrackAfterSkipDelay(nextTrack.uuid);
+      else loadTrackForPlayer(nextTrack.uuid);
     } else if (currentTrackList.nextPage === null) {
       pendingAdvanceRef.current = null;
     } else {
       loadMore().catch((error) => console.error("Failed to load more tracks:", error));
     }
-  }, [currentTrackList, loadMore, loadTrackForPlayer, selectedTrack]);
+  }, [
+    currentTrackList,
+    loadMore,
+    loadTrackAfterSkipDelay,
+    loadTrackForPlayer,
+    requestAutoAdvanceScroll,
+    runtimeUnplayableTrackIds,
+    selectedTrack,
+  ]);
+
+  useEffect(() => clearDelayedTrackLoad, [clearDelayedTrackLoad]);
 
   useEffect(() => {
     if (!currentTrackList || currentTrackList.nextPage === null || !selectedTrack) return;
@@ -398,8 +511,12 @@ export function TrackListProvider<T extends TrackBase>({
       trackList: currentTrackList,
       selectedTrack,
       setSelectedTrack,
-      autoAdvancedTrackUuid,
+      autoAdvanceScrollRequest,
       runtimeUnplayableTrackIds,
+      hasNextTrack,
+      hasPreviousTrack,
+      playNextTrack,
+      playPreviousTrack,
       toTrackAtPosition,
       playNewTrackListFromTrackUuid,
       playNewTrackListFromGenrePlaylist,
@@ -410,8 +527,12 @@ export function TrackListProvider<T extends TrackBase>({
     [
       currentTrackList,
       selectedTrack,
-      autoAdvancedTrackUuid,
+      autoAdvanceScrollRequest,
       runtimeUnplayableTrackIds,
+      hasNextTrack,
+      hasPreviousTrack,
+      playNextTrack,
+      playPreviousTrack,
       toTrackAtPosition,
       playNewTrackListFromTrackUuid,
       playNewTrackListFromGenrePlaylist,

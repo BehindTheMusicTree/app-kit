@@ -168,6 +168,111 @@ describe("TrackListContext", () => {
     });
   });
 
+  describe("track navigation", () => {
+    it("moves between the selected track and skips unavailable tracks", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      const tracks = makeTracks(3);
+      await playGenre(result, makePage(tracks));
+
+      expect(result.current.hasPreviousTrack).toBe(false);
+      expect(result.current.hasNextTrack).toBe(true);
+      loadTrackForPlayerMock.mockClear();
+
+      act(() => result.current.playNextTrack());
+      expect(result.current.selectedTrack?.uuid).toBe("t1");
+      expect(result.current.hasPreviousTrack).toBe(true);
+      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t1");
+      expect(result.current.autoAdvanceScrollRequest).toMatchObject({ trackUuid: "t1" });
+
+      const trackEndHandler = setOnTrackEndMock.mock.lastCall?.[0] as
+        | ((event: { trackId: string; error: { code: number; message: string } }) => void)
+        | undefined;
+      expect(trackEndHandler).toBeTypeOf("function");
+      act(() => trackEndHandler?.({ trackId: "t1", error: { code: 2, message: "playback error" } }));
+
+      loadTrackForPlayerMock.mockClear();
+      act(() => result.current.playPreviousTrack());
+      expect(result.current.selectedTrack?.uuid).toBe("t0");
+      expect(result.current.hasPreviousTrack).toBe(false);
+      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t0");
+
+      loadTrackForPlayerMock.mockClear();
+      act(() => result.current.playNextTrack());
+      expect(result.current.selectedTrack?.uuid).toBe("t2");
+      expect(result.current.hasNextTrack).toBe(false);
+      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t2");
+    });
+
+    it("requests the next row move to the top when an embedded video is skipped", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      await playGenre(result, makePage(makeTracks(2)));
+
+      const trackEndHandler = setOnTrackEndMock.mock.lastCall?.[0] as
+        | ((event: { trackId: string; error: { code: number; message: string } }) => void)
+        | undefined;
+      expect(trackEndHandler).toBeTypeOf("function");
+
+      act(() => trackEndHandler?.({
+        trackId: "t0",
+        error: { code: 101, message: "Embedding disabled by the video owner" },
+      }));
+
+      expect(result.current.selectedTrack?.uuid).toBe("t1");
+      expect(result.current.autoAdvanceScrollRequest?.trackUuid).toBe("t1");
+    });
+
+    it("waits for the skipped video row to reposition before loading the next track", async () => {
+      vi.useFakeTimers();
+      try {
+        const { result } = renderHook(() => useTrackList(), { wrapper });
+        await playGenre(result, makePage(makeTracks(3)));
+        loadTrackForPlayerMock.mockClear();
+
+        const trackEndHandler = setOnTrackEndMock.mock.lastCall?.[0] as
+          | ((event: { trackId: string; error: { code: number; message: string } }) => void)
+          | undefined;
+        expect(trackEndHandler).toBeTypeOf("function");
+
+        act(() => trackEndHandler?.({
+          trackId: "t0",
+          error: { code: 150, message: "Embedding disabled by the video owner" },
+        }));
+
+        expect(result.current.selectedTrack?.uuid).toBe("t1");
+        expect(result.current.autoAdvanceScrollRequest?.trackUuid).toBe("t1");
+        expect(loadTrackForPlayerMock).not.toHaveBeenCalled();
+
+        await act(async () => vi.advanceTimersByTimeAsync(999));
+        expect(loadTrackForPlayerMock).not.toHaveBeenCalled();
+
+        await act(async () => vi.advanceTimersByTimeAsync(1));
+        expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t1");
+
+        loadTrackForPlayerMock.mockClear();
+        const nextTrackEndHandler = setOnTrackEndMock.mock.lastCall?.[0] as
+          | ((event: { trackId: string; error: { code: number; message: string } }) => void)
+          | undefined;
+        expect(nextTrackEndHandler).toBeTypeOf("function");
+        act(() => nextTrackEndHandler?.({
+          trackId: "t1",
+          error: { code: 101, message: "Embedding disabled by the video owner" },
+        }));
+
+        expect(result.current.selectedTrack?.uuid).toBe("t2");
+        expect(result.current.autoAdvanceScrollRequest?.trackUuid).toBe("t2");
+        expect(loadTrackForPlayerMock).not.toHaveBeenCalled();
+
+        await act(async () => vi.advanceTimersByTimeAsync(999));
+        expect(loadTrackForPlayerMock).not.toHaveBeenCalled();
+
+        await act(async () => vi.advanceTimersByTimeAsync(1));
+        expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t2");
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
   describe("playNewTrackListFromArtist", () => {
     const artist = { uuid: "a1", name: "Miles Davis" };
 

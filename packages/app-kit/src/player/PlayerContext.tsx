@@ -84,6 +84,7 @@ interface PlayerContextType {
   setDuration: (duration: number) => void;
   volume: number;
   setVolume: (volume: number) => void;
+  seekTo: (time: number) => void;
   playState: PlayStates;
   setPlayState: (state: PlayStates) => void;
   handlePlayPauseAction: () => void;
@@ -117,7 +118,7 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
   const [playerTrackObject, setPlayerTrackObject] = useState<PlayerTrackObject | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(50);
+  const [volume, setVolumeState] = useState(50);
   const [playState, setPlayState] = useState<PlayStates>(PlayStates.STOPPED);
   const [isLoading, setIsLoading] = useState(false);
   const [onTrackEnd, setOnTrackEndState] = useState<PlayerTrackEndHandler | null>(null);
@@ -133,6 +134,26 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
   useEffect(() => {
     onTrackEndRef.current = onTrackEnd;
   }, [onTrackEnd]);
+
+  const setVolume = useCallback((nextVolume: number) => {
+    if (!Number.isFinite(nextVolume)) return;
+    setVolumeState(Math.max(0, Math.min(100, nextVolume)));
+  }, []);
+
+  useEffect(() => {
+    if (playerTrackObject?.isReady) playerTrackObject.mediaController?.setVolume(volume);
+  }, [playerTrackObject?.isReady, playerTrackObject?.mediaController, volume]);
+
+  const seekTo = useCallback(
+    (time: number) => {
+      const mediaController = playerTrackObject?.isReady ? playerTrackObject.mediaController : undefined;
+      if (!mediaController || !Number.isFinite(time)) return;
+      const seekTime = Math.max(0, duration > 0 ? Math.min(duration, time) : time);
+      mediaController.setCurrentTime(seekTime);
+      currentTimeRef.current = seekTime;
+    },
+    [duration, playerTrackObject?.isReady, playerTrackObject?.mediaController],
+  );
 
   // Kick off the YouTube IFrame API script fetch as soon as the provider mounts, rather than on
   // the first youtube-track play click — that first click otherwise pays for both the script
@@ -255,6 +276,8 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
   const loadTrackForPlayer = useCallback(
     (trackId: string) => {
       currentTrackIdRef.current = trackId;
+      currentTimeRef.current = 0;
+      setDuration(0);
       if (audioElementRef.current) {
         audioElementRef.current.pause();
         audioElementRef.current.currentTime = 0;
@@ -360,6 +383,7 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
       setDuration,
       volume,
       setVolume,
+      seekTo,
       playState,
       setPlayState,
       handlePlayPauseAction,
@@ -384,6 +408,8 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
       handlePreviousTrack,
       onTrackEnd,
       setOnTrackEnd,
+      seekTo,
+      setVolume,
     ],
   );
 

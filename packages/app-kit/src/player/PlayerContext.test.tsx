@@ -180,6 +180,32 @@ describe("PlayerProvider - loadTrackForPlayer (audio)", () => {
     expect(result.current.currentTimeRef.current).toBe(12);
   });
 
+  it("seeks within the loaded track and applies volume changes to the active media", async () => {
+    loadTrackMock.mockResolvedValue(makeAudioTrack());
+    const { result } = renderHook(() => usePlayer(), { wrapper });
+
+    await act(async () => {
+      result.current.loadTrackForPlayer("audio-1");
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    act(() => {
+      audioInstances[0].duration = 55;
+      audioInstances[0].dispatch("loadedmetadata");
+    });
+
+    act(() => result.current.seekTo(60));
+    expect(audioInstances[0].currentTime).toBe(55);
+    expect(result.current.currentTimeRef.current).toBe(55);
+
+    act(() => result.current.seekTo(-5));
+    expect(audioInstances[0].currentTime).toBe(0);
+
+    act(() => result.current.setVolume(25));
+    expect(result.current.volume).toBe(25);
+    expect(audioInstances[0].volume).toBe(0.25);
+  });
+
   it("stops playback and fires onTrackEnd when audio ends", async () => {
     loadTrackMock.mockResolvedValue(makeAudioTrack());
     const { result } = renderHook(() => usePlayer(), { wrapper });
@@ -461,7 +487,7 @@ describe("PlayerProvider - loadTrackForPlayer (youtube)", () => {
         <div>
           <PlayerVideoSurface />
           <button onClick={() => player.loadTrackForPlayer("yt-1")}>load</button>
-          <button onClick={() => player.setOnTrackEnd(() => onTrackEnd)}>subscribe</button>
+          <button onClick={() => player.setOnTrackEnd(onTrackEnd)}>subscribe</button>
           <p>{player.playerTrackObject?.loadError}</p>
         </div>
       );

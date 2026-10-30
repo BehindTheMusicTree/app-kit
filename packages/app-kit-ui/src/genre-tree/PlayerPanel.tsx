@@ -11,6 +11,7 @@ import {
   type RenderArtistLink,
 } from "@behindthemusictree/app-kit/genre-tree";
 import PanelEdgeTab from "./PanelEdgeTab";
+import PlayerControls from "./PlayerControls";
 import TrackListSidebar from "./track-list-sidebar/TrackListSidebar";
 
 export interface PlayerPanelProps {
@@ -118,6 +119,7 @@ export default function PlayerPanel({
               </span>
             )}
           </div>
+          <PlayerControls />
         </div>
         <TrackListSidebar
           layout="inline"
