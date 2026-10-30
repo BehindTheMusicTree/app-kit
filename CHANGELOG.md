@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- `@behindthemusictree/genre-tree-view` 6.3.0 and `@behindthemusictree/ui` `^0.10.0` (peer range raised from `^0.7.0`).
+
 ### Fixed
 
 - `CriteriaPlaylistSimpleSchema`/`CriteriaPlaylistDetailedSchema` accept a genre playlist without `viewsCount`, so the tree loads from an API that sends no view counts (hear-api, or grow-api before 14.5.0) instead of failing schema validation. `GenreTreeView` then hides the song-count/views toggle and sizes by songs; `genrePlaylistSize` throws if asked for views a playlist doesn't carry.
