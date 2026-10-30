@@ -100,7 +100,9 @@ beforeEach(() => {
 
   loadYoutubeIframeApiMock.mockResolvedValue({ Player: ytPlayerCtor });
 
-  (window as unknown as { YT: { PlayerState: { ENDED: number } } }).YT = { PlayerState: { ENDED: 0 } };
+  (window as unknown as { YT: { PlayerState: { PLAYING: number; ENDED: number } } }).YT = {
+    PlayerState: { PLAYING: 1, ENDED: 0 },
+  };
 });
 
 afterEach(() => {
@@ -154,7 +156,11 @@ describe("PlayerProvider - loadTrackForPlayer (audio)", () => {
     expect(result.current.isPlaying).toBe(true);
     expect(result.current.isLoading).toBe(false);
     expect(result.current.playerTrackObject?.isReady).toBe(true);
+    expect(result.current.playbackConfirmedTrackId).toBeNull();
     expect(audioInstances[0].play).toHaveBeenCalled();
+
+    act(() => audioInstances[0].dispatch("playing"));
+    expect(result.current.playbackConfirmedTrackId).toBe("audio-1");
   });
 
   it("sets duration and currentTimeRef from audio events", async () => {
@@ -355,6 +361,7 @@ describe("PlayerProvider - loadTrackForPlayer (youtube)", () => {
         <div>
           <PlayerVideoSurface />
           <div data-testid="playState">{player.playState}</div>
+          <div data-testid="confirmedTrackId">{player.playbackConfirmedTrackId}</div>
           <button onClick={() => player.loadTrackForPlayer("yt-1")}>load</button>
         </div>
       );
@@ -378,6 +385,10 @@ describe("PlayerProvider - loadTrackForPlayer (youtube)", () => {
       ytPlayers[0].config.events.onReady();
     });
 
+    expect(screen.getByTestId("playState").textContent).toBe(PlayStates.PLAYING);
+    expect(ytPlayers[0].playVideo).toHaveBeenCalled();
+    expect(screen.getByTestId("confirmedTrackId").textContent).toBe("");
+
     await waitFor(() => {
       expect(ytPlayers[0].playVideo).toHaveBeenCalled();
     });
@@ -389,6 +400,7 @@ describe("PlayerProvider - loadTrackForPlayer (youtube)", () => {
       ytPlayers[0].config.events.onStateChange({ data: 1 });
     });
     expect(screen.getByTestId("playState").textContent).toBe(PlayStates.PLAYING);
+    expect(screen.getByTestId("confirmedTrackId").textContent).toBe("yt-1");
   });
 
   it("reuses an existing player via loadVideoById on subsequent loads", async () => {

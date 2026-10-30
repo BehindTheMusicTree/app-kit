@@ -44,8 +44,8 @@ export default function PlayerControls() {
         <span aria-label="Duration">{formatTime(safeDuration)}</span>
       </div>
 
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-1 items-center justify-center gap-2">
+      <div className="grid min-h-9 grid-cols-[1fr_auto_1fr] items-center gap-3">
+        <div className="col-start-2 flex items-center justify-center gap-2">
           <button
             type="button"
             aria-label="Previous track"
@@ -82,16 +82,16 @@ export default function PlayerControls() {
           </button>
         </div>
 
-        <label className="flex w-24 shrink-0 items-center gap-2 text-zinc-400 sm:w-28">
+        <label className="col-start-3 flex w-[4.2rem] shrink-0 items-center gap-[0.35rem] justify-self-end text-zinc-400 sm:w-[4.9rem]">
           {volume === 0 ? (
-            <VolumeX aria-hidden="true" className="h-4 w-4 shrink-0" />
+            <VolumeX aria-hidden="true" className="h-[0.7rem] w-[0.7rem] shrink-0" />
           ) : (
-            <Volume2 aria-hidden="true" className="h-4 w-4 shrink-0" />
+            <Volume2 aria-hidden="true" className="h-[0.7rem] w-[0.7rem] shrink-0" />
           )}
           <span className="sr-only">Volume</span>
           <input
             aria-label="Volume"
-            className="h-1 min-w-0 flex-1 cursor-pointer accent-white disabled:cursor-not-allowed disabled:opacity-40"
+            className="h-[3px] min-w-0 flex-1 cursor-pointer accent-white disabled:cursor-not-allowed disabled:opacity-40"
             type="range"
             min={0}
             max={100}

@@ -4,20 +4,31 @@ import { FaPlay, FaPause } from "react-icons/fa";
 
 import { usePlayer } from "@behindthemusictree/app-kit/player";
 import { PlayStates } from "@behindthemusictree/app-kit/player";
-import { RingLoader } from "@behindthemusictree/ui";
 
 export interface TrackPositionPlayPauseProps {
   position: number;
   uuid: string;
   handlePlayPauseClick: (event: React.MouseEvent) => void;
+  isSelected?: boolean;
 }
 
-export default function TrackPositionPlayPause({ position, uuid, handlePlayPauseClick }: TrackPositionPlayPauseProps) {
-  const { playerTrackObject, playState } = usePlayer();
+export default function TrackPositionPlayPause({
+  position,
+  uuid,
+  handlePlayPauseClick,
+  isSelected = false,
+}: TrackPositionPlayPauseProps) {
+  const { playerTrackObject, playbackConfirmedTrackId, playState, isLoading: isPlayerLoading } = usePlayer();
   const isThisTrack = playerTrackObject?.track.id === uuid;
-  const isCurrentTrackActive = isThisTrack && playState !== PlayStates.STOPPED;
-  const isPlaying = isThisTrack && playState === PlayStates.PLAYING;
-  const isLoading = isThisTrack && playState === PlayStates.LOADING;
+  const isConfirmedPlayable = playbackConfirmedTrackId === uuid;
+  const isAwaitingPlayback =
+    (isSelected || isThisTrack) &&
+    !isConfirmedPlayable &&
+    !(isThisTrack && playerTrackObject?.loadError) &&
+    (!isThisTrack || isPlayerLoading || playState === PlayStates.LOADING || playState === PlayStates.PLAYING);
+  const isPlaying = isThisTrack && isConfirmedPlayable && playState === PlayStates.PLAYING;
+  const isPaused = isThisTrack && isConfirmedPlayable && playState === PlayStates.PAUSED;
+  const isCurrentTrackActive = isPlaying || isPaused;
 
   return (
     <div
@@ -26,21 +37,19 @@ export default function TrackPositionPlayPause({ position, uuid, handlePlayPause
       onClick={handlePlayPauseClick}
     >
       <div className="track-position-play-pause__status group-hover:hidden flex items-center justify-center">
-        {isCurrentTrackActive ? (
-          isLoading ? (
-            <RingLoader size={16} />
-          ) : (
-            <span
-              className="track-position-play-pause__bars"
-              data-playing={isPlaying}
-              role="img"
-              aria-label={isPlaying ? "Playing" : "Paused"}
-            >
-              <span className="track-position-play-pause__bar" />
-              <span className="track-position-play-pause__bar" />
-              <span className="track-position-play-pause__bar" />
-            </span>
-          )
+        {isAwaitingPlayback ? (
+          <span className="track-position-play-pause__spinner" role="status" aria-label="Loading track" />
+        ) : isCurrentTrackActive ? (
+          <span
+            className="track-position-play-pause__bars"
+            data-playing={isPlaying}
+            role="img"
+            aria-label={isPlaying ? "Playing" : "Paused"}
+          >
+            <span className="track-position-play-pause__bar" />
+            <span className="track-position-play-pause__bar" />
+            <span className="track-position-play-pause__bar" />
+          </span>
         ) : (
           position
         )}
@@ -51,7 +60,13 @@ export default function TrackPositionPlayPause({ position, uuid, handlePlayPause
         }`}
         aria-hidden="true"
       >
-        {isLoading ? <RingLoader size={16} /> : isPlaying ? <FaPause /> : <FaPlay />}
+        {isAwaitingPlayback ? (
+          <span className="track-position-play-pause__spinner" />
+        ) : isPlaying ? (
+          <FaPause />
+        ) : (
+          <FaPlay />
+        )}
       </div>
     </div>
   );

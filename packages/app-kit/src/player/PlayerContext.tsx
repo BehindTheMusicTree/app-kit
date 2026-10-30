@@ -77,6 +77,8 @@ interface PlayerTrackObject {
 
 interface PlayerContextType {
   playerTrackObject: PlayerTrackObject | null;
+  /** Track id confirmed by the media source's actual playing event. */
+  playbackConfirmedTrackId: string | null;
   isPlaying: boolean;
   setIsPlaying: (isPlaying: boolean) => void;
   currentTimeRef: React.MutableRefObject<number>;
@@ -116,6 +118,7 @@ interface PlayerProviderProps {
 
 export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
   const [playerTrackObject, setPlayerTrackObject] = useState<PlayerTrackObject | null>(null);
+  const [playbackConfirmedTrackId, setPlaybackConfirmedTrackId] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [volume, setVolumeState] = useState(50);
@@ -179,7 +182,12 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
   }, []);
 
   const handleYoutubeStateChange = useCallback((event: YT.OnStateChangeEvent) => {
+    if (event.data === window.YT.PlayerState.PLAYING) {
+      const trackId = currentTrackIdRef.current;
+      if (trackId) setPlaybackConfirmedTrackId(trackId);
+    }
     if (event.data === window.YT.PlayerState.ENDED) {
+      setPlaybackConfirmedTrackId(null);
       setPlayState(PlayStates.STOPPED);
       setIsPlaying(false);
       const trackId = currentTrackIdRef.current;
@@ -202,7 +210,12 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
         currentTimeRef.current = audio.currentTime;
       });
 
+      audio.addEventListener("playing", () => {
+        if (currentTrackIdRef.current === track.id) setPlaybackConfirmedTrackId(track.id);
+      });
+
       audio.addEventListener("ended", () => {
+        if (currentTrackIdRef.current === track.id) setPlaybackConfirmedTrackId(null);
         setPlayState(PlayStates.STOPPED);
         setIsPlaying(false);
         const trackId = currentTrackIdRef.current;
@@ -211,6 +224,7 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
 
       audio.addEventListener("error", (e) => {
         console.error("Audio error event fired:", e);
+        if (currentTrackIdRef.current === track.id) setPlaybackConfirmedTrackId(null);
       });
 
       setPlayerTrackObject({ track, mediaController: new AudioMediaController(audio), isReady: true, loadError: undefined });
@@ -259,6 +273,7 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
             onError: (event: YT.OnErrorEvent) => {
               const loadError = youtubeErrorMessage(event.data);
               const trackId = currentTrackIdRef.current;
+              setPlaybackConfirmedTrackId(null);
               setPlayerTrackObject((prev) =>
                 prev?.track.id === trackId ? { ...prev, loadError } : prev,
               );
@@ -276,6 +291,7 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
   const loadTrackForPlayer = useCallback(
     (trackId: string) => {
       currentTrackIdRef.current = trackId;
+      setPlaybackConfirmedTrackId(null);
       currentTimeRef.current = 0;
       setDuration(0);
       if (audioElementRef.current) {
@@ -295,6 +311,7 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
         .then((track) => (track.kind === "youtube" ? loadYoutubeTrack(track) : loadAudioTrack(track)))
         .catch((error) => {
           console.error("Error loading track:", error);
+          setPlaybackConfirmedTrackId(null);
           setPlayState(PlayStates.STOPPED);
           setPlayerTrackObject({
             track: { id: trackId, kind: "audio", streamUrl: "", title: "" },
@@ -376,6 +393,7 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
   const contextValue = useMemo(
     () => ({
       playerTrackObject,
+      playbackConfirmedTrackId,
       isPlaying,
       setIsPlaying,
       currentTimeRef,
@@ -397,6 +415,7 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
     }),
     [
       playerTrackObject,
+      playbackConfirmedTrackId,
       isPlaying,
       duration,
       volume,

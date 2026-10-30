@@ -15,8 +15,16 @@ vi.mock("@behindthemusictree/app-kit/genre-tree", async (importOriginal) => ({
   useTrackList: useTrackListMock,
 }));
 vi.mock("../TrackPositionPlayPause", () => ({
-  default: ({ handlePlayPauseClick }: { handlePlayPauseClick: (e: React.MouseEvent) => void }) => (
-    <button onClick={handlePlayPauseClick as unknown as () => void}>play-pause</button>
+  default: ({
+    handlePlayPauseClick,
+    isSelected,
+  }: {
+    handlePlayPauseClick: (e: React.MouseEvent) => void;
+    isSelected?: boolean;
+  }) => (
+    <button data-selected={isSelected} onClick={handlePlayPauseClick as unknown as () => void}>
+      play-pause
+    </button>
   ),
 }));
 
@@ -54,6 +62,7 @@ describe("TrackItem", () => {
     });
     useTrackListMock.mockReturnValue({
       trackList: { origin: { scope: "reference" } },
+      selectedTrack: null,
       toTrackAtPosition,
     });
   });
@@ -64,6 +73,18 @@ describe("TrackItem", () => {
     expect(screen.getByText("My Song")).toBeInTheDocument();
     expect(screen.getByText("Artist One, Artist Two")).toBeInTheDocument();
     expect(screen.getByText("Rock")).toBeInTheDocument();
+  });
+
+  it("passes selected state to the track status so it can show a pending spinner", () => {
+    useTrackListMock.mockReturnValue({
+      trackList: { origin: { scope: "reference" } },
+      selectedTrack: makeTrack(),
+      toTrackAtPosition,
+    });
+
+    render(<TrackItem track={makeTrack()} position={1} />);
+
+    expect(screen.getByRole("button", { name: "play-pause" })).toHaveAttribute("data-selected", "true");
   });
 
   it("truncates long title and artist", () => {

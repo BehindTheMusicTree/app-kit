@@ -27,7 +27,7 @@ export default function TrackItem<T extends TrackBase>({
   renderArtistLink,
 }: TrackItemProps<T>) {
   const { handlePlayPauseAction, playerTrackObject, loadTrackForPlayer } = usePlayer();
-  const { trackList, toTrackAtPosition, runtimeUnplayableTrackIds } = useTrackList<T>();
+  const { trackList, selectedTrack, toTrackAtPosition, runtimeUnplayableTrackIds } = useTrackList<T>();
   const scope = trackList?.origin?.scope ?? null;
   const isCurrentTrack = playerTrackObject?.track.id === track.uuid;
   const hasPlaybackError = isCurrentTrack && !!playerTrackObject?.loadError;
@@ -59,7 +59,12 @@ export default function TrackItem<T extends TrackBase>({
           {position}
         </div>
       ) : (
-        <TrackPositionPlayPause position={position} uuid={track.uuid} handlePlayPauseClick={handlePlayPauseClick} />
+        <TrackPositionPlayPause
+          position={position}
+          uuid={track.uuid}
+          handlePlayPauseClick={handlePlayPauseClick}
+          isSelected={selectedTrack?.uuid === track.uuid}
+        />
       )}
       <div className="title-artist-container flex flex-col items-start justify-center min-w-0 flex-1">
         <div className="flex max-w-full items-center gap-2">

@@ -1,3 +1,14 @@
+.track-position-play-pause__spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border: 2px solid rgb(255 255 255 / 65%);
+  border-top-color: #22c55e;
+  border-radius: 50%;
+  animation: app-kit-track-spinner 700ms linear infinite;
+}
+
 .track-position-play-pause__bars {
   display: flex;
   width: 16px;
@@ -50,7 +61,17 @@
   }
 }
 
+@keyframes app-kit-track-spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .track-position-play-pause__spinner {
+    animation-duration: 1400ms;
+  }
+
   .track-position-play-pause__bars[data-playing="true"] .track-position-play-pause__bar {
     animation: none;
   }
