@@ -11,6 +11,16 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Breaking
+
+- `@behindthemusictree/app-kit-ui` peer dependency `@behindthemusictree/ui` is now `^0.10.0` (was `^0.7.0`), required by `@behindthemusictree/genre-tree-view` 6.3.0.
+
+### Changed
+
+- `GenreTreeView` on screens under 768px (`regions` placement): the search bar spans the width below the app header, and the artist chip, view-mode switch, Rotation and Add root sit in one horizontally scrolling row under it; the panel edge tab is hidden (the info panel's bottom-sheet grabber replaces it).
+- Touch screens: `GenreSearch` previous/clear buttons, search results and the artist chip get 44px touch targets (`--layout-touch-target`); the results list is capped at half the viewport height; the input asks for a search keyboard key and disables autocomplete.
+- Bumps `@behindthemusictree/genre-tree-view` to 6.3.0, `@behindthemusictree/ui` to `^0.10.0` and `@behindthemusictree/brand` to `^12.7.0`.
+
 ### Fixed
 
 - `CriteriaPlaylistSimpleSchema`/`CriteriaPlaylistDetailedSchema` accept a genre playlist without `viewsCount`, so the tree loads from an API that sends no view counts (hear-api, or grow-api before 14.5.0) instead of failing schema validation. `GenreTreeView` then hides the song-count/views toggle and sizes by songs; `genrePlaylistSize` throws if asked for views a playlist doesn't carry.

@@ -56,13 +56,13 @@ export default function GenreSearch<T extends CriteriaPlaylistSimple = CriteriaP
   const heading = "px-3 pt-2 pb-1 text-xs font-medium uppercase text-[var(--color-text-muted)]";
 
   return (
-    <div className="genre-search relative w-[calc(var(--layout-detail-panel-w,25.5rem)-2*var(--layout-panel-inset,1rem))] shrink-0">
+    <div className="genre-search relative w-[calc(var(--layout-detail-panel-w,25.5rem)-2*var(--layout-panel-inset,1rem))] shrink-0 max-md:w-full">
       {onPrevious && (
         <button
           type="button"
           aria-label="Previous"
           title="Previous"
-          className="genre-search-previous absolute left-2 top-1/2 z-10 hidden p-1.5 text-[var(--color-text-muted)] rounded-full -translate-y-1/2 hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
+          className="genre-search-previous absolute left-2 top-1/2 z-10 hidden items-center justify-center p-1.5 [@media(pointer:coarse)]:min-h-[var(--layout-touch-target)] [@media(pointer:coarse)]:min-w-[var(--layout-touch-target)] text-[var(--color-text-muted)] rounded-full -translate-y-1/2 hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
           onClick={onPrevious}
         >
           <ArrowLeft aria-hidden="true" className="w-4 h-4" />
@@ -78,6 +78,9 @@ export default function GenreSearch<T extends CriteriaPlaylistSimple = CriteriaP
         placeholder={placeholder ?? `${label}…`}
         aria-label={label}
         aria-busy={loading}
+        inputMode="search"
+        enterKeyHint="search"
+        autoComplete="off"
         className="h-[var(--layout-search-h,3rem)] pl-6 pr-20 text-base transition-[padding] duration-200 ease-out motion-reduce:transition-none bg-[var(--color-surface)] border-[var(--color-border)] rounded-full shadow-md"
       />
       <div className="absolute right-3 top-1/2 flex items-center -translate-y-1/2">
@@ -100,7 +103,7 @@ export default function GenreSearch<T extends CriteriaPlaylistSimple = CriteriaP
             <button
               type="button"
               aria-label="Clear search"
-              className="p-2 text-[var(--color-text-muted)] rounded-full hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
+              className="flex items-center justify-center p-2 [@media(pointer:coarse)]:min-h-[var(--layout-touch-target)] [@media(pointer:coarse)]:min-w-[var(--layout-touch-target)] text-[var(--color-text-muted)] rounded-full hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
               onClick={() => {
                 clear();
                 onQueryChange?.("");
@@ -116,13 +119,13 @@ export default function GenreSearch<T extends CriteriaPlaylistSimple = CriteriaP
         </p>
       )}
       {showList && (
-        <ul className="genre-search-results absolute z-40 w-full max-h-64 mt-1 overflow-y-auto bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-md">
+        <ul className="genre-search-results absolute z-40 w-full max-h-[min(16rem,50dvh)] mt-1 overflow-y-auto bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-md">
           {extraResults && results.length > 0 && <li className={heading}>Genres</li>}
           {results.map((genrePlaylist) => (
             <li key={genrePlaylist.uuid}>
               <button
                 type="button"
-                className="w-full px-3 py-1.5 text-left hover:bg-[var(--color-surface-muted)]"
+                className="w-full px-3 py-1.5 [@media(pointer:coarse)]:min-h-[var(--layout-touch-target)] text-left hover:bg-[var(--color-surface-muted)]"
                 onClick={() => {
                   select(genrePlaylist);
                   onQueryChange?.("");
@@ -138,7 +141,7 @@ export default function GenreSearch<T extends CriteriaPlaylistSimple = CriteriaP
             <li key={item.key}>
               <button
                 type="button"
-                className="w-full px-3 py-1.5 text-left hover:bg-[var(--color-surface-muted)]"
+                className="w-full px-3 py-1.5 [@media(pointer:coarse)]:min-h-[var(--layout-touch-target)] text-left hover:bg-[var(--color-surface-muted)]"
                 onClick={() => {
                   setQuery("");
                   onQueryChange?.("");
