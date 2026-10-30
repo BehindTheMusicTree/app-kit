@@ -241,11 +241,11 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
     async (track: YoutubePlayerTrack) => {
       if (youtubePlayerRef.current) {
         const player = youtubePlayerRef.current;
+        // loadVideoById loads and starts playback itself; don't issue a redundant playVideo call.
         player.loadVideoById(track.youtubeVideoId);
         setPlayerTrackObject({ track, mediaController: new YoutubeMediaController(player), isReady: true, loadError: undefined });
         setPlayState(PlayStates.PLAYING);
         setIsPlaying(true);
-        player.playVideo();
         return;
       }
 
@@ -259,14 +259,13 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
       await new Promise<void>((resolve) => {
         const player = new YT.Player(container, {
           videoId: track.youtubeVideoId,
-          playerVars: { autoplay: 1 },
+          playerVars: { autoplay: 1, controls: 0 },
           events: {
             onReady: () => {
               youtubePlayerRef.current = player;
               setPlayerTrackObject({ track, mediaController: new YoutubeMediaController(player), isReady: true, loadError: undefined });
               setPlayState(PlayStates.PLAYING);
               setIsPlaying(true);
-              player.playVideo();
               resolve();
             },
             onStateChange: handleYoutubeStateChange,
