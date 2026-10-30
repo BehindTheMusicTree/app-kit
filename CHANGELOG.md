@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [27.0.0] - 2026-10-30
+
 ### Breaking
 
 - `@behindthemusictree/app-kit-ui` peer dependency `@behindthemusictree/ui` is now `^0.10.0` (was `^0.7.0`), required by `@behindthemusictree/genre-tree-view` 6.3.0.
