@@ -29,11 +29,13 @@ export default function TrackItem<T extends TrackBase>({
   const { handlePlayPauseAction, playerTrackObject, loadTrackForPlayer } = usePlayer();
   const { trackList, toTrackAtPosition } = useTrackList<T>();
   const scope = trackList?.origin?.scope ?? null;
-  const isUnplayable = isSong(track) && songUnplayableReason(track) !== null;
+  const isCurrentTrack = playerTrackObject?.track.id === track.uuid;
+  const hasPlaybackError = isCurrentTrack && !!playerTrackObject?.loadError;
+  const isUnplayable = hasPlaybackError || (isSong(track) && songUnplayableReason(track) !== null);
 
   const handlePlayPauseClick = (event: React.MouseEvent) => {
     event.stopPropagation();
-    if (playerTrackObject && playerTrackObject.track.id === track.uuid) {
+    if (isCurrentTrack) {
       handlePlayPauseAction();
     } else if (scope != null) {
       toTrackAtPosition(position);
