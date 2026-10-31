@@ -272,7 +272,9 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const isGenreUpdating = useIsMutating({ mutationKey: genreUpdateMutationKey }) > 0;
   const { mutate: updateGenre } = useUpdateGenre(scope, getBackendBaseUrl);
   const busy = deferredSizeMetric !== sizeMetric || isTreeFetching || isGenreUpdating;
-  const canSizeByViews = hasViewsCount(visibleGenrePlaylists);
+  // The artist detail can load after the filtered counts, so use the UUID as the filter state.
+  const isArtistFiltered = artistUuid !== null;
+  const canSizeByViews = !isArtistFiltered && hasViewsCount(visibleGenrePlaylists);
 
   const artistResult = useArtist(artistUuid, artistSearchBaseUrl ?? getBackendBaseUrl);
   const filterArtistName = artistResult.status === "success" ? artistResult.artist.name : null;
@@ -729,10 +731,10 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   controlsOrientation={controlsOrientation}
-                  sizeMetric={filterArtist || !canSizeByViews ? "songs" : deferredSizeMetric}
+                  sizeMetric={isArtistFiltered || !canSizeByViews ? "songs" : deferredSizeMetric}
                   busy={busy}
                   floatingControlsLeading={
-                    filterArtist || !canSizeByViews ? undefined : <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />
+                    isArtistFiltered || !canSizeByViews ? undefined : <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />
                   }
                   defaultViewport={defaultViewport}
                   onViewportChange={onViewportChange}
@@ -760,10 +762,10 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   controlsOrientation={controlsOrientation}
-                  sizeMetric={filterArtist || !canSizeByViews ? "songs" : deferredSizeMetric}
+                  sizeMetric={isArtistFiltered || !canSizeByViews ? "songs" : deferredSizeMetric}
                   busy={busy}
                   floatingControlsLeading={
-                    filterArtist || !canSizeByViews ? undefined : <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />
+                    isArtistFiltered || !canSizeByViews ? undefined : <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />
                   }
                   defaultViewport={defaultViewport}
                   onViewportChange={onViewportChange}
