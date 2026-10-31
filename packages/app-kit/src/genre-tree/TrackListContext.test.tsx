@@ -198,6 +198,31 @@ describe("TrackListContext", () => {
       expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t2");
     });
 
+    it("advances on completion and ignores stale or terminal events", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      await playGenre(result, makePage(makeTracks(2)));
+      const handler = () => setOnTrackEndMock.mock.lastCall?.[0] as (event?: { trackId: string }) => void;
+      act(() => handler()({ trackId: "stale" }));
+      expect(result.current.selectedTrack?.uuid).toBe("t0");
+      act(() => handler()());
+      expect(result.current.selectedTrack?.uuid).toBe("t1");
+      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t1");
+      act(() => handler()({ trackId: "t1" }));
+      expect(result.current.hasNextTrack).toBe(false);
+    });
+
+    it("advances into the next page after completion", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      const page = deferred<ReturnType<typeof makePage>>();
+      fetchMock.mockResolvedValueOnce(makePage(makeTracks(1), { next: true, total: 2 })).mockReturnValueOnce(page.promise);
+      await act(async () => { await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me"); });
+      const handler = setOnTrackEndMock.mock.lastCall?.[0] as (event: { trackId: string }) => void;
+      act(() => handler({ trackId: "t0" }));
+      await act(async () => { page.resolve(makePage([makeTrack("t1", "Next")], { page: 2, total: 2 })); await page.promise; });
+      expect(result.current.selectedTrack?.uuid).toBe("t1");
+      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t1");
+    });
+
     it("requests the next row move to the top when an embedded video is skipped", async () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
       await playGenre(result, makePage(makeTracks(2)));
