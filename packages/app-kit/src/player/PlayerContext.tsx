@@ -53,6 +53,13 @@ export interface YoutubePlayerTrack extends PlayerTrackBase {
 /** Minimal shape the player needs to play a track and identify it. Extend as needed per app. */
 export type PlayerTrack = AudioPlayerTrack | YoutubePlayerTrack;
 
+export interface PlayerTrackEndEvent {
+  trackId: string;
+  error?: { code: number; message: string };
+}
+
+export type PlayerTrackEndHandler = (event?: PlayerTrackEndEvent) => void;
+
 const isPlayable = (track: PlayerTrack) => track.kind !== "youtube" || !track.unplayableReason;
 
 function youtubeErrorMessage(code: number): string {
@@ -70,6 +77,8 @@ interface PlayerTrackObject {
 
 interface PlayerContextType {
   playerTrackObject: PlayerTrackObject | null;
+  /** Track id confirmed by the media source's actual playing event. */
+  playbackConfirmedTrackId: string | null;
   isPlaying: boolean;
   setIsPlaying: (isPlaying: boolean) => void;
   currentTimeRef: React.MutableRefObject<number>;
@@ -77,6 +86,7 @@ interface PlayerContextType {
   setDuration: (duration: number) => void;
   volume: number;
   setVolume: (volume: number) => void;
+  seekTo: (time: number) => void;
   playState: PlayStates;
   setPlayState: (state: PlayStates) => void;
   handlePlayPauseAction: () => void;
@@ -92,8 +102,8 @@ interface PlayerContextType {
     currentTrack: PlayerTrack,
     onTrackChange: (track: PlayerTrack) => void,
   ) => void;
-  onTrackEnd: (() => void) | null;
-  setOnTrackEnd: (callback: (() => void) | null) => void;
+  onTrackEnd: PlayerTrackEndHandler | null;
+  setOnTrackEnd: (callback: PlayerTrackEndHandler | null) => void;
   /** Container the YouTube IFrame player mounts into. Render `<PlayerVideoSurface />` to attach it. */
   videoContainerRef: React.RefObject<HTMLDivElement>;
 }
@@ -108,20 +118,45 @@ interface PlayerProviderProps {
 
 export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
   const [playerTrackObject, setPlayerTrackObject] = useState<PlayerTrackObject | null>(null);
+  const [playbackConfirmedTrackId, setPlaybackConfirmedTrackId] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(50);
+  const [volume, setVolumeState] = useState(50);
   const [playState, setPlayState] = useState<PlayStates>(PlayStates.STOPPED);
   const [isLoading, setIsLoading] = useState(false);
-  const [onTrackEnd, setOnTrackEnd] = useState<(() => void) | null>(null);
+  const [onTrackEnd, setOnTrackEndState] = useState<PlayerTrackEndHandler | null>(null);
+  const setOnTrackEnd = useCallback((callback: PlayerTrackEndHandler | null) => {
+    setOnTrackEndState(() => callback);
+  }, []);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const youtubePlayerRef = useRef<YT.Player | null>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const currentTimeRef = useRef(0);
+  const currentTrackIdRef = useRef<string | null>(null);
   const onTrackEndRef = useRef(onTrackEnd);
   useEffect(() => {
     onTrackEndRef.current = onTrackEnd;
   }, [onTrackEnd]);
+
+  const setVolume = useCallback((nextVolume: number) => {
+    if (!Number.isFinite(nextVolume)) return;
+    setVolumeState(Math.max(0, Math.min(100, nextVolume)));
+  }, []);
+
+  useEffect(() => {
+    if (playerTrackObject?.isReady) playerTrackObject.mediaController?.setVolume(volume);
+  }, [playerTrackObject?.isReady, playerTrackObject?.mediaController, volume]);
+
+  const seekTo = useCallback(
+    (time: number) => {
+      const mediaController = playerTrackObject?.isReady ? playerTrackObject.mediaController : undefined;
+      if (!mediaController || !Number.isFinite(time)) return;
+      const seekTime = Math.max(0, duration > 0 ? Math.min(duration, time) : time);
+      mediaController.setCurrentTime(seekTime);
+      currentTimeRef.current = seekTime;
+    },
+    [duration, playerTrackObject?.isReady, playerTrackObject?.mediaController],
+  );
 
   // Kick off the YouTube IFrame API script fetch as soon as the provider mounts, rather than on
   // the first youtube-track play click — that first click otherwise pays for both the script
@@ -147,10 +182,16 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
   }, []);
 
   const handleYoutubeStateChange = useCallback((event: YT.OnStateChangeEvent) => {
+    if (event.data === window.YT.PlayerState.PLAYING) {
+      const trackId = currentTrackIdRef.current;
+      if (trackId) setPlaybackConfirmedTrackId(trackId);
+    }
     if (event.data === window.YT.PlayerState.ENDED) {
+      setPlaybackConfirmedTrackId(null);
       setPlayState(PlayStates.STOPPED);
       setIsPlaying(false);
-      onTrackEndRef.current?.();
+      const trackId = currentTrackIdRef.current;
+      if (trackId) onTrackEndRef.current?.({ trackId });
     }
   }, []);
 
@@ -169,14 +210,21 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
         currentTimeRef.current = audio.currentTime;
       });
 
+      audio.addEventListener("playing", () => {
+        if (currentTrackIdRef.current === track.id) setPlaybackConfirmedTrackId(track.id);
+      });
+
       audio.addEventListener("ended", () => {
+        if (currentTrackIdRef.current === track.id) setPlaybackConfirmedTrackId(null);
         setPlayState(PlayStates.STOPPED);
         setIsPlaying(false);
-        onTrackEndRef.current?.();
+        const trackId = currentTrackIdRef.current;
+        if (trackId) onTrackEndRef.current?.({ trackId });
       });
 
       audio.addEventListener("error", (e) => {
         console.error("Audio error event fired:", e);
+        if (currentTrackIdRef.current === track.id) setPlaybackConfirmedTrackId(null);
       });
 
       setPlayerTrackObject({ track, mediaController: new AudioMediaController(audio), isReady: true, loadError: undefined });
@@ -193,11 +241,11 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
     async (track: YoutubePlayerTrack) => {
       if (youtubePlayerRef.current) {
         const player = youtubePlayerRef.current;
+        // loadVideoById loads and starts playback itself; don't issue a redundant playVideo call.
         player.loadVideoById(track.youtubeVideoId);
         setPlayerTrackObject({ track, mediaController: new YoutubeMediaController(player), isReady: true, loadError: undefined });
         setPlayState(PlayStates.PLAYING);
         setIsPlaying(true);
-        player.playVideo();
         return;
       }
 
@@ -211,23 +259,26 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
       await new Promise<void>((resolve) => {
         const player = new YT.Player(container, {
           videoId: track.youtubeVideoId,
-          playerVars: { autoplay: 1 },
+          playerVars: { autoplay: 1, controls: 0 },
           events: {
             onReady: () => {
               youtubePlayerRef.current = player;
               setPlayerTrackObject({ track, mediaController: new YoutubeMediaController(player), isReady: true, loadError: undefined });
               setPlayState(PlayStates.PLAYING);
               setIsPlaying(true);
-              player.playVideo();
               resolve();
             },
             onStateChange: handleYoutubeStateChange,
             onError: (event: YT.OnErrorEvent) => {
               const loadError = youtubeErrorMessage(event.data);
-              setPlayerTrackObject((prev) => (prev ? { ...prev, loadError } : prev));
+              const trackId = currentTrackIdRef.current;
+              setPlaybackConfirmedTrackId(null);
+              setPlayerTrackObject((prev) =>
+                prev?.track.id === trackId ? { ...prev, loadError } : prev,
+              );
               setPlayState(PlayStates.STOPPED);
               setIsPlaying(false);
-              onTrackEndRef.current?.();
+              if (trackId) onTrackEndRef.current?.({ trackId, error: { code: event.data, message: loadError } });
             },
           },
         });
@@ -238,6 +289,10 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
 
   const loadTrackForPlayer = useCallback(
     (trackId: string) => {
+      currentTrackIdRef.current = trackId;
+      setPlaybackConfirmedTrackId(null);
+      currentTimeRef.current = 0;
+      setDuration(0);
       if (audioElementRef.current) {
         audioElementRef.current.pause();
         audioElementRef.current.currentTime = 0;
@@ -255,6 +310,7 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
         .then((track) => (track.kind === "youtube" ? loadYoutubeTrack(track) : loadAudioTrack(track)))
         .catch((error) => {
           console.error("Error loading track:", error);
+          setPlaybackConfirmedTrackId(null);
           setPlayState(PlayStates.STOPPED);
           setPlayerTrackObject({
             track: { id: trackId, kind: "audio", streamUrl: "", title: "" },
@@ -336,6 +392,7 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
   const contextValue = useMemo(
     () => ({
       playerTrackObject,
+      playbackConfirmedTrackId,
       isPlaying,
       setIsPlaying,
       currentTimeRef,
@@ -343,6 +400,7 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
       setDuration,
       volume,
       setVolume,
+      seekTo,
       playState,
       setPlayState,
       handlePlayPauseAction,
@@ -356,6 +414,7 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
     }),
     [
       playerTrackObject,
+      playbackConfirmedTrackId,
       isPlaying,
       duration,
       volume,
@@ -366,6 +425,9 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
       handleNextTrack,
       handlePreviousTrack,
       onTrackEnd,
+      setOnTrackEnd,
+      seekTo,
+      setVolume,
     ],
   );
 

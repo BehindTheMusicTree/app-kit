@@ -8,10 +8,15 @@ import ArtistPhoto from "./ArtistPhoto";
 import ArtistMembers from "./ArtistMembers";
 import ArtistDiscography from "./ArtistDiscography";
 import ArtistSongs from "./ArtistSongs";
+import ShareActionButton from "../ShareActionButton";
+import type { GetGenreTreeShareUrl } from "../share";
+import type { Scope } from "@behindthemusictree/app-kit/transport";
 
 export interface ArtistPanelOptions {
   uuid: string | null;
+  scope?: Scope;
   getBackendBaseUrl: () => string;
+  getShareUrl?: GetGenreTreeShareUrl;
   /** Renders member and song artist names. */
   renderArtistLink: RenderArtistLink;
   expanded: boolean;
@@ -22,7 +27,9 @@ export interface ArtistPanelOptions {
 /** The artist detail overlay panel for `uuid`, or undefined when no artist is set. */
 export function useArtistPanel({
   uuid,
+  scope,
   getBackendBaseUrl,
+  getShareUrl,
   renderArtistLink,
   expanded,
   onExpandedChange,
@@ -63,11 +70,22 @@ export function useArtistPanel({
       };
     case "success": {
       const { artist } = result;
+      const shareTarget = scope
+        ? { kind: "artist" as const, uuid: artist.uuid, name: artist.name, scope }
+        : undefined;
+      const shareUrl = shareTarget ? getShareUrl?.(shareTarget) : undefined;
       return {
         ...panel,
         title: artist.name,
         content: (
           <>
+            {shareUrl && (
+              <div className="genre-action-band border-b border-[var(--color-border)]">
+                <div className="flex flex-wrap gap-1 px-3.5 py-3">
+                  {shareTarget && <ShareActionButton target={shareTarget} url={shareUrl} />}
+                </div>
+              </div>
+            )}
             {artist.image && <ArtistPhoto image={artist.image} name={artist.name} />}
             <ArtistHeader artist={artist} />
             <ArtistMembers title="Members" memberships={artist.members} renderArtistLink={renderArtistLink} />

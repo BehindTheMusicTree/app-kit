@@ -16,7 +16,26 @@ vi.mock("@behindthemusictree/app-kit/genre-tree", async (importOriginal) => ({
   useTrackListSidebarVisibility: useVisibilityMock,
 }));
 vi.mock("./track-list-sidebar/TrackListSidebar", () => ({
-  default: () => <div data-testid="sidebar" />,
+  default: ({
+    isCollapsed,
+    onExpand,
+    onMinimize,
+  }: {
+    isCollapsed?: boolean;
+    onExpand?: () => void;
+    onMinimize?: () => void;
+  }) => (
+    <div data-testid="sidebar" data-collapsed={isCollapsed}>
+      <button
+        type="button"
+        aria-label={isCollapsed ? "Show tracks" : "Hide tracks"}
+        onClick={isCollapsed ? onExpand : onMinimize}
+      />
+    </div>
+  ),
+}));
+vi.mock("./PlayerControls", () => ({
+  default: () => <div data-testid="player-controls" />,
 }));
 
 import PlayerPanel from "./PlayerPanel";
@@ -34,56 +53,84 @@ describe("PlayerPanel", () => {
     vi.clearAllMocks();
   });
 
-  it("offers the extend tab only while the song list is visible, and widens the panel when used", () => {
-    setup(false);
-    const { container, rerender } = render(<PlayerPanel onClose={vi.fn()} />);
-    expect(screen.queryByRole("button", { name: "Extend song list panel" })).not.toBeInTheDocument();
-
+  it("extends and shrinks from the middle edge tab", () => {
     setup(true);
-    rerender(<PlayerPanel onClose={vi.fn()} extendedWidth="500px" />);
+    const { container } = render(<PlayerPanel extendedWidth="500px" />);
     expect(container.firstChild).toHaveClass("w-[var(--layout-right-w)]");
 
-    fireEvent.click(screen.getByRole("button", { name: "Extend song list panel" }));
+    fireEvent.click(screen.getByRole("button", { name: "Extend player panel" }));
     expect(container.firstChild).toHaveStyle({ width: "500px" });
 
-    fireEvent.click(screen.getByRole("button", { name: "Shrink song list panel" }));
+    fireEvent.click(screen.getByRole("button", { name: "Shrink player panel" }));
     expect(container.firstChild).toHaveClass("w-[var(--layout-right-w)]");
+    expect(screen.queryByRole("button", { name: "Extend song list panel" })).not.toBeInTheDocument();
   });
 
-  it("hides the song list from the edge tab, leaving only the video", () => {
+  it("hides the song list from the From header", () => {
     setup(true);
-    render(<PlayerPanel onClose={vi.fn()} />);
-    fireEvent.click(screen.getByRole("button", { name: "Hide song list" }));
+    render(<PlayerPanel />);
+    fireEvent.click(screen.getByRole("button", { name: "Hide tracks" }));
     expect(toggleTrackListSidebar).toHaveBeenCalledTimes(1);
   });
 
-  it("shows the song list again from the only tab button when it is hidden", () => {
+  it("keeps the From header visible and shows a track-list action when rows are hidden", () => {
     setup(false);
-    render(<PlayerPanel onClose={vi.fn()} />);
-    expect(screen.queryByRole("button", { name: "Hide song list" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Show song list" }));
+    render(<PlayerPanel />);
+    expect(screen.getByTestId("sidebar")).toHaveAttribute("data-collapsed", "true");
+    expect(screen.queryByRole("button", { name: "Extend player panel" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show tracks" }));
     expect(toggleTrackListSidebar).toHaveBeenCalledTimes(1);
+  });
+
+  it("places player controls below the video and before the track list", () => {
+    setup(true);
+    render(<PlayerPanel />);
+
+    const video = screen.getByTestId("video");
+    const controls = screen.getByTestId("player-controls");
+    const trackList = screen.getByTestId("sidebar");
+
+    expect(video.compareDocumentPosition(controls) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(controls.compareDocumentPosition(trackList) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("follows a controlled expanded prop and reports toggles", () => {
     setup(true);
     const onExpandedChange = vi.fn();
     const { container } = render(
-      <PlayerPanel onClose={vi.fn()} expanded onExpandedChange={onExpandedChange} extendedWidth="500px" />,
+      <PlayerPanel expanded onExpandedChange={onExpandedChange} extendedWidth="500px" />,
     );
     expect(container.firstChild).toHaveStyle({ width: "500px" });
 
-    fireEvent.click(screen.getByRole("button", { name: "Shrink song list panel" }));
+    fireEvent.click(screen.getByRole("button", { name: "Shrink player panel" }));
     expect(onExpandedChange).toHaveBeenCalledWith(false);
   });
 
-  it("hides via CSS when not visible and calls onClose", () => {
+  it("minimizes to video-only without closing or unmounting the player", () => {
+    setup(true);
+    const onExpandedChange = vi.fn();
+    const { container, rerender } = render(
+      <PlayerPanel expanded onExpandedChange={onExpandedChange} extendedWidth="500px" />,
+    );
+    expect(container.firstChild).toHaveStyle({ width: "500px" });
+    expect(screen.getByTestId("sidebar")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Hide tracks" }));
+    expect(toggleTrackListSidebar).toHaveBeenCalledTimes(1);
+    expect(onExpandedChange).toHaveBeenCalledWith(false);
+
     setup(false);
-    const onClose = vi.fn();
-    const { container } = render(<PlayerPanel isVisible={false} onClose={onClose} />);
-    expect(container.firstChild).toHaveClass("hidden");
+    rerender(<PlayerPanel expanded={false} onExpandedChange={onExpandedChange} extendedWidth="500px" />);
+    expect(container.firstChild).toHaveClass("w-[var(--layout-right-w)]");
     expect(screen.getByTestId("video")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Close player" }));
-    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("sidebar")).toHaveAttribute("data-collapsed", "true");
+    expect(screen.queryByRole("button", { name: "Close player" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Show tracks" }));
+    expect(toggleTrackListSidebar).toHaveBeenCalledTimes(2);
+    setup(true);
+    rerender(<PlayerPanel expanded={false} onExpandedChange={onExpandedChange} extendedWidth="500px" />);
+    expect(screen.getByTestId("sidebar")).toHaveAttribute("data-collapsed", "false");
+    expect(screen.getByRole("button", { name: "Hide tracks" })).toBeInTheDocument();
   });
 });

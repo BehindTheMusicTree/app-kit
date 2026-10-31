@@ -48,6 +48,7 @@ import { useArtistPanel } from "./artist/useArtistPanel";
 import { SizeMetricToggle } from "./SizeMetricToggle";
 import { hasViewsCount, type GenreTreeSizeMetric } from "./playlist-tree/size-metric";
 import { useGenrePlaylistPlayback, type GenrePlaylistPlayback } from "./playlist-tree/useGenrePlaylistPlayback";
+import type { GetGenreTreeShareUrl, GenreTreeShareTarget } from "./share";
 
 // genre-tree-view's "previous" button (back to the last selected genre) renders inside the info panel, which sits
 // under the floating search bar. It is hidden and its click is proxied by the search field's own button, which
@@ -166,6 +167,8 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   /** Controlled expanded state of the artist panel. Uncontrolled, it resets to compact on each artist. */
   artistExpanded?: boolean;
   onArtistExpandedChange?: (expanded: boolean) => void;
+  /** Resolves a selected genre or artist to a share URL using the host app's routes. */
+  getShareUrl?: GetGenreTreeShareUrl;
 } & ArtistSearchProps &
   GenreDetailSlots<O> &
   GenrePlaylistTracksSlots &
@@ -207,6 +210,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   onArtistUuidChange,
   artistExpanded: controlledArtistExpanded,
   onArtistExpandedChange,
+  getShareUrl,
   artistSearch = true,
   onArtistSelect,
   artistSearchBaseUrl,
@@ -224,6 +228,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   placement = "default",
   ...focus
 }: GenreTreeViewProps<O>) {
+  const getShareUrlRef = useRef(getShareUrl);
+  getShareUrlRef.current = getShareUrl;
   const [internalArtistUuid, setInternalArtistUuid] = useState<string | null>(null);
   const isArtistControlled = controlledArtistUuid !== undefined;
   const artistUuid = isArtistControlled ? controlledArtistUuid : internalArtistUuid;
@@ -269,7 +275,9 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const isGenreUpdating = useIsMutating({ mutationKey: genreUpdateMutationKey }) > 0;
   const { mutate: updateGenre } = useUpdateGenre(scope, getBackendBaseUrl);
   const busy = deferredSizeMetric !== sizeMetric || isTreeFetching || isGenreUpdating;
-  const canSizeByViews = hasViewsCount(visibleGenrePlaylists);
+  // The artist detail can load after the filtered counts, so use the UUID as the filter state.
+  const isArtistFiltered = artistUuid !== null;
+  const canSizeByViews = !isArtistFiltered && hasViewsCount(visibleGenrePlaylists);
 
   const artistResult = useArtist(artistUuid, artistSearchBaseUrl ?? getBackendBaseUrl);
   const filterArtistName = artistResult.status === "success" ? artistResult.artist.name : null;
@@ -277,6 +285,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     () => (artistUuid !== null && filterArtistName !== null ? { uuid: artistUuid, name: filterArtistName } : null),
     [artistUuid, filterArtistName],
   );
+  const hasSelectedGenreNode =
+    selectedGenrePlaylist !== undefined && visibleGenrePlaylists.some(({ uuid }) => uuid === selectedGenrePlaylist.uuid);
   const playback = useGenrePlaylistPlayback({ scope, genrePlaylists: visibleGenrePlaylists, artist: filterArtist });
   const openArtist = (uuid: string) => {
     if (selectedNodeId !== null) clearSelection();
@@ -287,7 +297,9 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const artistBaseUrl = artistSearchBaseUrl ?? getBackendBaseUrl;
   const artistPanel = useArtistPanel({
     uuid: artistUuid,
+    scope,
     getBackendBaseUrl: artistBaseUrl,
+    getShareUrl: getShareUrlRef.current,
     renderArtistLink:
       renderArtistLink ??
       ((artist) =>
@@ -307,7 +319,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   });
   // Like a genre, the built-in artist panel shows its name in the search field and closes from its clear button.
   // A selected genre shows its own panel instead; the artist stays active as a filter.
-  const builtInArtistPanel = overlayPanel || selectedNodeId !== null ? undefined : artistPanel;
+  const builtInArtistPanel = overlayPanel || hasSelectedGenreNode ? undefined : artistPanel;
   const activeOverlayPanel =
     overlayPanel ?? (builtInArtistPanel && { ...builtInArtistPanel, hideTitle: true, hideClose: true });
 
@@ -328,7 +340,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   }, [selectedNodeId, artistUuid]);
 
   // The brand layout tokens derive the center column from this variable.
-  const isDetailHidden = isCollapsed || (!selectedNodeId && !activeOverlayPanel);
+  const isDetailHidden = isCollapsed || (!hasSelectedGenreNode && !activeOverlayPanel);
   useEffect(() => {
     if (placement !== "regions" || !isDetailHidden) return undefined;
     const root = document.documentElement;
@@ -361,6 +373,20 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const handlePrevious = () => {
     rootRef.current?.querySelector<HTMLButtonElement>(".search-overlay .gtv-info-panel-previous")?.click();
   };
+
+  useEffect(() => {
+    if (!isTreeReady || viewMode !== "pop-core" || !hasSelectedGenreNode || !selectedGenrePlaylist) return;
+
+    const root = rootRef.current;
+    const centerChip = root?.querySelector<HTMLButtonElement>(".gtv-wheel-center-node .gtv-wheel-chip");
+    if (!centerChip || centerChip.getAttribute("aria-label") !== selectedGenrePlaylist.name) return;
+
+    // The dependency's URL-selection effect looks up #group-<id>, but this center chip is outside the SVG
+    // and has no such id. Use its own click handler so URL selection opens the same info panel as a user click.
+    const panelTitle = root?.querySelector<HTMLElement>(".gtv-info-panel-title");
+    if (panelTitle?.textContent?.trim().startsWith(selectedGenrePlaylist.name)) return;
+    centerChip.click();
+  }, [hasSelectedGenreNode, isTreeReady, selectedGenrePlaylist, viewMode]);
 
   const { showPopup, hidePopup } = usePopup();
   const [searchText, setSearchText] = useState("");
@@ -437,6 +463,14 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       const parentPlaylist = visibleGenrePlaylists.find(({ uuid }) => uuid === genrePlaylist.parent?.uuid);
       const canToggleSide = !readOnly && parentPlaylist !== undefined && parentPlaylist.parent === null;
       const side = criteria.side ?? "core";
+      const shareTarget: GenreTreeShareTarget = {
+        kind: "genre",
+        genrePlaylistUuid: genrePlaylist.uuid,
+        name: criteria.name,
+        scope,
+        artistUuid,
+      };
+      const shareUrl = getShareUrlRef.current?.(shareTarget) ?? undefined;
       const popSibling =
         canToggleSide && side === "core"
           ? visibleGenrePlaylists.find(
@@ -454,6 +488,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             node={node}
             genrePlaylist={genrePlaylist}
             scope={scope}
+            shareTarget={shareUrl ? shareTarget : undefined}
+            shareUrl={shareUrl}
             onZoomIn={zoomInRef.current}
             onAddChild={readOnly ? undefined : () => handleGenreCreationAction(criteria)}
             onRename={readOnly ? undefined : () => handleGenreRenameAction(criteria)}
@@ -489,6 +525,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           family={family}
           genreUuid={genreUuid}
           genrePlaylist={genrePlaylist}
+          wikidataId={criteria.wikidataId}
           scope={scope}
           getBackendBaseUrl={getBackendBaseUrl}
           criteriaOverviewSchema={criteriaOverviewSchema}
@@ -523,7 +560,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const allowWheelRotation = controlledAllowWheelRotation ?? internalAllowWheelRotation;
 
   const detailTab =
-    placement === "regions" && (selectedNodeId || detailOverlay) ? (
+    placement === "regions" && (hasSelectedGenreNode || detailOverlay) ? (
       <PanelEdgeTab
         side="left"
         edge={
@@ -545,6 +582,32 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       />
     ) : null;
 
+  const renderArtistFilter = () => {
+    if (isLoading || !filterArtist) return null;
+    return (
+      <span className="inline-flex items-center overflow-hidden rounded-full bg-[var(--color-neutral-100)] text-sm">
+        <button
+          type="button"
+          className="py-1 pl-3 pr-2 [@media(pointer:coarse)]:min-h-[var(--layout-touch-target)] hover:underline"
+          aria-label={`Show artist ${filterArtist.name}`}
+          onClick={() => {
+            if (selectedNodeId !== null) clearSelection();
+          }}
+        >
+          {filterArtist.name}
+        </button>
+        <button
+          type="button"
+          className="py-1 pl-1 pr-3 [@media(pointer:coarse)]:min-h-[var(--layout-touch-target)] hover:text-[var(--color-text)]"
+          aria-label={`Clear artist filter ${filterArtist.name}`}
+          onClick={() => changeArtist(null)}
+        >
+          ×
+        </button>
+      </span>
+    );
+  };
+
   const actions = (
     <>
       {!isLoading && (
@@ -558,29 +621,10 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           extraResults={artistExtraResults}
         />
       )}
+      {!isLoading && filterArtist && (
+        <div className="hidden w-full justify-center max-md:flex">{renderArtistFilter()}</div>
+      )}
       <div className="contents max-md:flex max-md:w-full max-md:items-center max-md:gap-2 max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[&>*]:shrink-0">
-        {!isLoading && filterArtist && (
-          <span className="inline-flex items-center overflow-hidden rounded-full bg-[var(--color-neutral-100)] text-sm">
-            <button
-              type="button"
-              className="py-1 pl-3 pr-2 [@media(pointer:coarse)]:min-h-[var(--layout-touch-target)] hover:underline"
-              aria-label={`Show artist ${filterArtist.name}`}
-              onClick={() => {
-                if (selectedNodeId !== null) clearSelection();
-              }}
-            >
-              {filterArtist.name}
-            </button>
-            <button
-              type="button"
-              className="py-1 pl-1 pr-3 [@media(pointer:coarse)]:min-h-[var(--layout-touch-target)] hover:text-[var(--color-text)]"
-              aria-label={`Clear artist filter ${filterArtist.name}`}
-              onClick={() => changeArtist(null)}
-            >
-              ×
-            </button>
-          </span>
-        )}
         {!isLoading && !isControlled && (
           <SegmentedControl
             aria-label="Tree view mode"
@@ -639,6 +683,15 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       >
         {actions}
       </div>
+      {!isLoading && filterArtist && (
+        <div
+          className={`absolute left-1/2 z-30 hidden -translate-x-1/2 md:block ${
+            placement === "regions" ? "top-[calc(var(--layout-gutter)+var(--layout-panel-inset))]" : "top-5"
+          }`}
+        >
+          {renderArtistFilter()}
+        </div>
+      )}
       {detailTab && (
         <div
           className={`absolute top-1/2 z-30 -translate-y-1/2 max-md:hidden transition-[opacity,visibility] duration-150 ease-out ${
@@ -684,13 +737,13 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   controlsOrientation={controlsOrientation}
-                  sizeMetric={filterArtist || !canSizeByViews ? "songs" : deferredSizeMetric}
+                  sizeMetric={isArtistFiltered || !canSizeByViews ? "songs" : deferredSizeMetric}
                   busy={busy}
                   floatingControlsLeading={
-                    floatingControlsLeading || (!filterArtist && canSizeByViews) ? (
+                    floatingControlsLeading || canSizeByViews ? (
                       <div className="flex items-center gap-2">
                         {floatingControlsLeading}
-                        {!filterArtist && canSizeByViews && <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />}
+                        {canSizeByViews && <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />}
                       </div>
                     ) : undefined
                   }
@@ -720,13 +773,13 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
                   controlsOrientation={controlsOrientation}
-                  sizeMetric={filterArtist || !canSizeByViews ? "songs" : deferredSizeMetric}
+                  sizeMetric={isArtistFiltered || !canSizeByViews ? "songs" : deferredSizeMetric}
                   busy={busy}
                   floatingControlsLeading={
-                    floatingControlsLeading || (!filterArtist && canSizeByViews) ? (
+                    floatingControlsLeading || canSizeByViews ? (
                       <div className="flex items-center gap-2">
                         {floatingControlsLeading}
-                        {!filterArtist && canSizeByViews && <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />}
+                        {canSizeByViews && <SizeMetricToggle value={sizeMetric} onChange={changeSizeMetric} />}
                       </div>
                     ) : undefined
                   }

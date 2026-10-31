@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- Keep tree nodes sized by song count while an artist filter is active, including while artist details load.
+
 ### Changed
 
 - Upgrade genre-tree-view to 6.4.0 for density-aware node sizing.
@@ -21,6 +25,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Share genre and artist panels, and control playback and track navigation from the player.
 - `useTrackList().updateTrack(track)` replaces the track with the same `uuid` across every loaded page of the current tracklist, and replaces the selected track if it is that one. It does nothing when no track matches.
 - `GenreTreeView` accepts a host control beside the tree controls, including in outline view.
 

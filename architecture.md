@@ -56,6 +56,28 @@ re-exported from the root barrel `src/index.ts`.
 | `player` | `src/player/` | `PlayerContext`, `MediaController`, playback state machine — generic over `PlayerTrack`, consumer supplies how to load a track |
 | `genre-tree` | `src/genre-tree/` | Schemas, data hooks (`useGenre`, `useGenrePlaylist`), `useGenreTreeViewState`, `useGenreSearch`, `TrackListContext` |
 
+### Known YouTube iframe behavior
+
+The embedded YouTube player can temporarily show its own title, channel avatar, playback overlay,
+and branding while the pointer is outside the video. This UI is rendered inside YouTube's
+cross-origin iframe, so app CSS hover state does not control it. The supported `controls=0`
+parameter hides the standard controls only; YouTube documents that the title and avatar can still
+appear before playback, while paused, and after playback. The `showinfo` and `modestbranding`
+parameters no longer provide a supported way to hide them.
+
+Reports from other developers describe the same startup overlay lasting about three seconds, even
+with `controls=0` and `pointer-events: none`; they also note that the IFrame API can report
+`PLAYING` before the first video frame is visible. Repeated programmatic seeks have also been
+reported to bring the native player chrome back for several seconds. There is no documented
+parameter to suppress this transient UI or reliable API event for the first visible frame. Keep
+YouTube playback commands to one per load: `autoplay=1` starts the initial video, and
+`loadVideoById()` loads and starts subsequent videos.
+
+References: [YouTube player parameters](https://developers.google.com/youtube/player_parameters),
+[IFrame API reference](https://developers.google.com/youtube/iframe_api_reference),
+[startup overlay report](https://stackoverflow.com/questions/79993522/youtube-iframe-always-overlays-the-video-for-3-seconds-before-disappearing),
+[seek-triggered overlay report](https://stackoverflow.com/questions/79936448/how-can-i-make-youtube-iframe-api-seekto-calls-silent-without-setting-controls).
+
 `genre-tree` never knows a consumer's routes: artist names in track lists (`TrackItem`,
 `TrackListSidebar`, the genre detail panel via `GenreTreeView`, all in `app-kit-ui`) become links only when the
 consumer passes `renderArtistLink(artist)`, which returns its own router link so navigation stays

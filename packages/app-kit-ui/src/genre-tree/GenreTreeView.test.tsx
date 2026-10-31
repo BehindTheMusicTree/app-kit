@@ -570,7 +570,7 @@ describe("GenreTreeView", () => {
 
       describe("readiness", () => {
         const tabWrapper = () =>
-          screen.getByRole("button", { name: "Hide panel" }).closest(".panel-edge-tab")?.parentElement as HTMLElement;
+          screen.getByLabelText("Hide panel").closest(".panel-edge-tab")?.parentElement as HTMLElement;
 
         afterEach(() => {
           vi.unstubAllGlobals();
@@ -579,7 +579,7 @@ describe("GenreTreeView", () => {
         it("stays hidden while the genre playlists load", () => {
           useListFullGenrePlaylistsMock.mockReturnValue({ data: undefined, isPending: true });
           renderView({ ...tabProps, viewMode: "stacked" });
-          expect(tabWrapper()).toHaveClass("invisible", "opacity-0", "pointer-events-none");
+          expect(screen.queryByLabelText("Hide panel")).not.toBeInTheDocument();
         });
 
         it("fades in with the wheel only after its handoff reveals it", () => {
@@ -1995,6 +1995,15 @@ describe("GenreTreeView", () => {
       fireEvent.click(screen.getByRole("button", { name: /Band/ }));
     };
 
+    it("uses song sizing while artist details are loading and keeps host controls", () => {
+      useArtistMock.mockReturnValue({ status: "loading" });
+      render(<GenreTreeView {...baseProps()} artistUuid={suggestion.uuid} floatingControlsLeading={<span>Host control</span>} />);
+
+      expect(wheelProps().sizeMetric).toBe("songs");
+      expect(wheelProps().floatingControlsLeading.props.children[0]).toEqual(<span>Host control</span>);
+      expect(wheelProps().floatingControlsLeading.props.children[1]).toBe(false);
+    });
+
     it("opens the picked artist's panel, notifies the host, and closes", () => {
       const onArtistSelect = vi.fn();
       render(<GenreTreeView {...baseProps()} onArtistSelect={onArtistSelect} />);
@@ -2073,8 +2082,8 @@ describe("GenreTreeView", () => {
 
       rerender(<GenreTreeView {...props} selectedNodeId="gp2" artistUuid={suggestion.uuid} />);
       expect(wheelProps().overlayPanel).toBeUndefined();
-      expect(screen.getByRole("button", { name: "Clear artist filter Band" })).toBeDefined();
-      fireEvent.click(screen.getByRole("button", { name: "Clear artist filter Band" }));
+      expect(screen.getAllByRole("button", { name: "Clear artist filter Band" })[0]).toBeDefined();
+      fireEvent.click(screen.getAllByRole("button", { name: "Clear artist filter Band" })[0]);
       expect(onArtistUuidChange).toHaveBeenCalledWith(null);
     });
 
@@ -2091,7 +2100,7 @@ describe("GenreTreeView", () => {
         />,
       );
 
-      fireEvent.click(screen.getByRole("button", { name: "Show artist Band" }));
+      fireEvent.click(screen.getAllByRole("button", { name: "Show artist Band" })[0]);
       expect(onSelectedNodeIdChange).toHaveBeenCalledWith(null);
     });
 
