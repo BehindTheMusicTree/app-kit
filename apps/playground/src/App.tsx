@@ -12,7 +12,6 @@ import {
   TrackNounProvider,
   useFetchWrapper,
   libraryEndpoints,
-  libraryQueryKeys,
   SongDetailed,
   SongDetailedSchema,
 } from "@behindthemusictree/app-kit";
@@ -156,7 +155,17 @@ function ReferenceGenreTree() {
         placement="regions"
         viewMode={viewMode}
         allowWheelRotation={allowWheelRotation}
-      showAddRoot={false}
+        floatingControlsLeading={
+          <Button
+            size="sm"
+            variant="outline"
+            aria-label={viewMode === "outline" ? "Show wheel view" : "Show outline view"}
+            onClick={() => setViewMode(viewMode === "outline" ? "pop-core" : "outline")}
+          >
+            {viewMode === "outline" ? "◉" : "☰"}
+          </Button>
+        }
+        showAddRoot={false}
         focusGenreUuid={focusGenreUuid}
         onFocusGenreChange={setFocusGenreUuid}
         handleGenreCreationAction={showCriteriaCreationPopup}
@@ -279,12 +288,7 @@ export function App() {
       <PlayerProvider loadTrack={loadTrack}>
         <PopupProvider>
           <TrackListSidebarVisibilityProvider>
-            <TrackListProvider
-              getBackendBaseUrl={getBackendBaseUrl}
-              schema={SongDetailedSchema}
-              listEndpoint={libraryEndpoints.reference.songs.list}
-              listQueryKey={libraryQueryKeys.reference.songs.list}
-            >
+            <TrackListProvider getBackendBaseUrl={getBackendBaseUrl} schema={SongDetailedSchema}>
               <AppContent />
             </TrackListProvider>
           </TrackListSidebarVisibilityProvider>
