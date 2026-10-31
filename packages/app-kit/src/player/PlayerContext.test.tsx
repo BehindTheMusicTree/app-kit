@@ -386,12 +386,8 @@ describe("PlayerProvider - loadTrackForPlayer (youtube)", () => {
     });
 
     expect(screen.getByTestId("playState").textContent).toBe(PlayStates.PLAYING);
-    expect(ytPlayers[0].playVideo).toHaveBeenCalled();
+    expect(ytPlayers[0].playVideo).not.toHaveBeenCalled();
     expect(screen.getByTestId("confirmedTrackId").textContent).toBe("");
-
-    await waitFor(() => {
-      expect(ytPlayers[0].playVideo).toHaveBeenCalled();
-    });
 
     await waitFor(() => expect(ytPlayers[0].getCurrentTime).toHaveBeenCalled());
     expect(ytPlayers[0].getDuration).toHaveBeenCalled();
@@ -442,7 +438,7 @@ describe("PlayerProvider - loadTrackForPlayer (youtube)", () => {
 
     expect(ytPlayerCtor).toHaveBeenCalledTimes(1);
     expect(ytPlayers[0].loadVideoById).toHaveBeenCalledWith("yt-2");
-    expect(ytPlayers[0].playVideo).toHaveBeenCalled();
+    expect(ytPlayers[0].playVideo).not.toHaveBeenCalled();
   });
 
   it("stops playback and fires onTrackEnd when the YouTube state changes to ENDED", async () => {

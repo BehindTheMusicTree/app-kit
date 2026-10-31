@@ -570,7 +570,7 @@ describe("GenreTreeView", () => {
 
       describe("readiness", () => {
         const tabWrapper = () =>
-          screen.getByRole("button", { name: "Hide panel" }).closest(".panel-edge-tab")?.parentElement as HTMLElement;
+          screen.getByLabelText("Hide panel").closest(".panel-edge-tab")?.parentElement as HTMLElement;
 
         afterEach(() => {
           vi.unstubAllGlobals();
@@ -2082,8 +2082,8 @@ describe("GenreTreeView", () => {
 
       rerender(<GenreTreeView {...props} selectedNodeId="gp2" artistUuid={suggestion.uuid} />);
       expect(wheelProps().overlayPanel).toBeUndefined();
-      expect(screen.getByRole("button", { name: "Clear artist filter Band" })).toBeDefined();
-      fireEvent.click(screen.getByRole("button", { name: "Clear artist filter Band" }));
+      expect(screen.getAllByRole("button", { name: "Clear artist filter Band" })[0]).toBeDefined();
+      fireEvent.click(screen.getAllByRole("button", { name: "Clear artist filter Band" })[0]);
       expect(onArtistUuidChange).toHaveBeenCalledWith(null);
     });
 
@@ -2100,7 +2100,7 @@ describe("GenreTreeView", () => {
         />,
       );
 
-      fireEvent.click(screen.getByRole("button", { name: "Show artist Band" }));
+      fireEvent.click(screen.getAllByRole("button", { name: "Show artist Band" })[0]);
       expect(onSelectedNodeIdChange).toHaveBeenCalledWith(null);
     });
 
