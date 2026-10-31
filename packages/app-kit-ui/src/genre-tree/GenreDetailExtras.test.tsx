@@ -151,7 +151,7 @@ describe("GenreDetailExtras", () => {
       "https://www.wikidata.org/wiki/Q123",
     );
     expect(linksSection).not.toContainElement(screen.getByText("Default summary text"));
-    expect(linksSection?.compareDocumentPosition(summarySection!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(linksSection!.compareDocumentPosition(summarySection!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("forwards the track slots to GenrePlaylistTracks", () => {
