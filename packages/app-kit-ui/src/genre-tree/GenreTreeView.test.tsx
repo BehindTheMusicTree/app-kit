@@ -579,7 +579,7 @@ describe("GenreTreeView", () => {
         it("stays hidden while the genre playlists load", () => {
           useListFullGenrePlaylistsMock.mockReturnValue({ data: undefined, isPending: true });
           renderView({ ...tabProps, viewMode: "stacked" });
-          expect(tabWrapper()).toHaveClass("invisible", "opacity-0", "pointer-events-none");
+          expect(screen.queryByLabelText("Hide panel")).not.toBeInTheDocument();
         });
 
         it("fades in with the wheel only after its handoff reveals it", () => {
