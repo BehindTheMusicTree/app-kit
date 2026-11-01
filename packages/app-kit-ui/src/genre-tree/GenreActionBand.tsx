@@ -6,6 +6,8 @@ import type {
   GenreTreeAction,
   GenreTreeNode,
 } from "@behindthemusictree/genre-tree-view";
+import type { GenreTreeShareTarget } from "./share";
+import ShareActionButton from "./ShareActionButton";
 
 export type GenreActionBandProps = {
   node: GenreTreeNode;
@@ -26,6 +28,8 @@ export type GenreActionBandProps = {
   /** When set, disables the side toggle and explains why in its tooltip. */
   toggleSideDisabledReason?: string;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
+  shareTarget?: GenreTreeShareTarget;
+  shareUrl?: string;
 };
 
 type BandItem = {
@@ -49,6 +53,8 @@ export default function GenreActionBand({
   onToggleSide,
   toggleSideDisabledReason,
   additionalActions,
+  shareTarget,
+  shareUrl,
 }: GenreActionBandProps) {
   const items: BandItem[] = [];
   const adminItems: BandItem[] = [];
@@ -100,7 +106,7 @@ export default function GenreActionBand({
       disabled: action.enabled ? !action.enabled(node) : false,
     });
   }
-  if (items.length === 0 && adminItems.length === 0) return null;
+  if (items.length === 0 && (!shareTarget || !shareUrl) && adminItems.length === 0) return null;
 
   const renderItems = (list: BandItem[]) =>
     list.map((item) => (
@@ -121,7 +127,12 @@ export default function GenreActionBand({
 
   return (
     <div className="genre-action-band border-b border-[var(--color-border)]">
-      {items.length > 0 && <div className="flex flex-wrap gap-1 px-3.5 py-3">{renderItems(items)}</div>}
+      {(items.length > 0 || (shareTarget && shareUrl)) && (
+        <div className="flex flex-wrap gap-1 px-3.5 py-3">
+          {renderItems(items)}
+          {shareTarget && shareUrl && <ShareActionButton target={shareTarget} url={shareUrl} />}
+        </div>
+      )}
       {adminItems.length > 0 && (
         <section
           aria-label="Admin actions"

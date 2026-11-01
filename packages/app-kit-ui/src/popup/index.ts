@@ -1,6 +1,8 @@
 export * from "./PopupTitle";
 export * from "./PopupButtons";
 export * from "./BasePopup";
+export { default as Toast } from "./Toast";
+export type { ToastProps } from "./Toast";
 export { default as TrackUploadPopup } from "./TrackUploadPopup";
 export { default as AuthErrorPopup } from "./AuthErrorPopup";
 export { default as InternalErrorPopup } from "./InternalErrorPopup";

@@ -12,6 +12,7 @@ import { ClampedText } from "./ClampedText";
 import { GenrePlaylistTracks, type GenrePlaylistTracksSlots } from "./GenrePlaylistTracks";
 import { RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
 import { useTrackNoun } from "@behindthemusictree/app-kit/track-noun";
+import { SiWikidata, SiWikipedia } from "react-icons/si";
 
 export type GenreDetailSlots<O extends CriteriaOverview> = {
   /** Replaces the default Summary section. */
@@ -23,6 +24,7 @@ export type GenreDetailSlots<O extends CriteriaOverview> = {
 export type GenreDetailExtrasProps<O extends CriteriaOverview> = GenreDetailSlots<O> & GenrePlaylistTracksSlots & {
   genreUuid: GenreUuid;
   genrePlaylist: CriteriaPlaylistMinimum;
+  wikidataId?: string | null;
   scope: Scope;
   getBackendBaseUrl: () => string;
   criteriaOverviewSchema?: z.ZodType<O, unknown>;
@@ -39,6 +41,7 @@ export type GenreDetailExtrasProps<O extends CriteriaOverview> = GenreDetailSlot
 export function GenreDetailExtras<O extends CriteriaOverview>({
   genreUuid,
   genrePlaylist,
+  wikidataId,
   scope,
   getBackendBaseUrl,
   criteriaOverviewSchema,
@@ -70,13 +73,38 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
   }
   if (!overview) return <>{family}</>;
 
-  const { summary, description, summarySourceUrl, essentialSongs } = overview;
+  const { summary, summarySourceUrl, essentialSongs } = overview;
+  const wikidataUrl = wikidataId ? `https://www.wikidata.org/wiki/${encodeURIComponent(wikidataId)}` : null;
 
   return (
     <>
-      {description && (
-        <div className="px-3.5 py-2.5">
-          <ClampedText key={genreUuid} className="text-[0.8125rem] leading-[1.45] text-[var(--color-text-muted)]">{description}</ClampedText>
+      {(summarySourceUrl || wikidataUrl) && (
+        <div className="gtv-info-panel-children text-[0.8125rem] leading-[1.45] text-[var(--color-text)]">
+          <span className="gtv-info-panel-children-title">Links</span>
+          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+            {summarySourceUrl && (
+              <a
+                href={summarySourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+              >
+                <SiWikipedia aria-hidden="true" className="h-3.5 w-3.5" />
+                Wikipedia
+              </a>
+            )}
+            {wikidataUrl && (
+              <a
+                href={wikidataUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+              >
+                <SiWikidata aria-hidden="true" className="h-3.5 w-3.5" />
+                Wikidata
+              </a>
+            )}
+          </div>
         </div>
       )}
       {renderSummary ? (
@@ -85,27 +113,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
         <div className="gtv-info-panel-children text-[0.8125rem] leading-[1.45] text-[var(--color-text)]">
           <span className="gtv-info-panel-children-title">Summary</span>
           <ClampedText key={genreUuid} className="mt-1">{summary ?? "—"}</ClampedText>
-          {summarySourceUrl && (
-            <a
-              href={summarySourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-1 inline-block text-xs text-[var(--color-text-muted)] underline hover:text-[var(--color-text)]"
-            >
-              Source: Wikipedia
-            </a>
-          )}
         </div>
-      )}
-      {renderSummary && summarySourceUrl && (
-        <a
-          href={summarySourceUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mx-3.5 mb-2.5 inline-block text-xs text-[var(--color-text-muted)] underline hover:text-[var(--color-text)]"
-        >
-          Source: Wikipedia
-        </a>
       )}
       {family}
       {renderGenreDetailExtras?.(overview)}

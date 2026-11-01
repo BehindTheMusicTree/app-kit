@@ -15,8 +15,16 @@ vi.mock("@behindthemusictree/app-kit/genre-tree", async (importOriginal) => ({
   useTrackList: useTrackListMock,
 }));
 vi.mock("../TrackPositionPlayPause", () => ({
-  default: ({ handlePlayPauseClick }: { handlePlayPauseClick: (e: React.MouseEvent) => void }) => (
-    <button onClick={handlePlayPauseClick as unknown as () => void}>play-pause</button>
+  default: ({
+    handlePlayPauseClick,
+    isSelected,
+  }: {
+    handlePlayPauseClick: (e: React.MouseEvent) => void;
+    isSelected?: boolean;
+  }) => (
+    <button data-selected={isSelected} onClick={handlePlayPauseClick as unknown as () => void}>
+      play-pause
+    </button>
   ),
 }));
 
@@ -54,23 +62,35 @@ describe("TrackItem", () => {
     });
     useTrackListMock.mockReturnValue({
       trackList: { origin: { scope: "reference" } },
+      selectedTrack: null,
       toTrackAtPosition,
     });
   });
 
-  it("renders title, artists, album, and genre", () => {
+  it("renders title, artists, and genre", () => {
     render(<TrackItem track={makeTrack()} position={1} />);
 
     expect(screen.getByText("My Song")).toBeInTheDocument();
     expect(screen.getByText("Artist One, Artist Two")).toBeInTheDocument();
-    expect(screen.getByText("My Album")).toBeInTheDocument();
     expect(screen.getByText("Rock")).toBeInTheDocument();
   });
 
-  it("truncates long title, artist, album and genre instead of wrapping", () => {
+  it("passes selected state to the track status so it can show a pending spinner", () => {
+    useTrackListMock.mockReturnValue({
+      trackList: { origin: { scope: "reference" } },
+      selectedTrack: makeTrack(),
+      toTrackAtPosition,
+    });
+
     render(<TrackItem track={makeTrack()} position={1} />);
 
-    for (const text of ["My Song", "Artist One, Artist Two", "My Album", "Rock"]) {
+    expect(screen.getByRole("button", { name: "play-pause" })).toHaveAttribute("data-selected", "true");
+  });
+
+  it("truncates long title and artist", () => {
+    render(<TrackItem track={makeTrack()} position={1} />);
+
+    for (const text of ["My Song", "Artist One, Artist Two"]) {
       expect(screen.getByText(text).closest(".truncate")).not.toBeNull();
     }
   });
@@ -184,20 +204,21 @@ describe("TrackItem", () => {
     expect(handlePlayPauseAction).not.toHaveBeenCalled();
   });
 
-  it("greys out an unplayable track, shows the reason, and offers no play control", () => {
-    render(<TrackItem track={makeTrack({ youtubeVideo: { id: "v1", unplayableReason: "not_embeddable" } })} position={3} />);
+  it("greys out an unplayable track without showing the reason or a play control", () => {
+    const { container } = render(<TrackItem track={makeTrack({ youtubeVideo: { id: "v1", unplayableReason: "not_embeddable" } })} position={3} />);
 
-    expect(screen.getByText("Embedding disabled")).toBeInTheDocument();
-    expect(screen.getByTitle("Embedding disabled")).toHaveClass("opacity-50");
+    expect(container.querySelector(".track-item")).toHaveClass("opacity-50");
+    expect(screen.queryByText("Embedding disabled")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "play-pause" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByText("3"));
     expect(loadTrackForPlayer).not.toHaveBeenCalled();
   });
 
-  it("greys out a song without a video as unplayable", () => {
-    render(<TrackItem track={makeTrack({ youtubeVideo: null, musicbrainzRecordingId: null })} position={2} />);
+  it("greys out a song without a video without showing the availability reason", () => {
+    const { container } = render(<TrackItem track={makeTrack({ youtubeVideo: null, musicbrainzRecordingId: null })} position={2} />);
 
-    expect(screen.getByTitle("No video available")).toHaveClass("opacity-50");
+    expect(container.querySelector(".track-item")).toHaveClass("opacity-50");
+    expect(screen.queryByText("No video available")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "play-pause" })).not.toBeInTheDocument();
   });
 

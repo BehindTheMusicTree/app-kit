@@ -14,7 +14,6 @@ import { usePlayer } from "@behindthemusictree/app-kit/player";
 import { PlayStates } from "@behindthemusictree/app-kit/player";
 import { usePopup } from "@behindthemusictree/app-kit/popup";
 import InternalErrorPopup from "../popup/InternalErrorPopup";
-import { UnplayableReason } from "./UnplayableReason";
 import { ErrorCode } from "@behindthemusictree/app-kit/transport";
 import { Scope } from "@behindthemusictree/app-kit/transport";
 import { genrePlaylistQueryKeys } from "@behindthemusictree/app-kit/genre-tree";
@@ -173,7 +172,15 @@ export function GenrePlaylistTracks({
             const isPlaying = isCurrent && playState === PlayStates.PLAYING;
             const text = (
               <span className={TEXT_CELL}>
-                <span className={TITLE_CELL}>{track.title}</span>
+                <span className={TITLE_CELL}>
+                  {isSong(track) ? (
+                    <MusicBrainzRecordingLink song={track} className="hover:underline focus-visible:underline">
+                      {track.title}
+                    </MusicBrainzRecordingLink>
+                  ) : (
+                    track.title
+                  )}
+                </span>
                 {track.artists?.length ? <span className={SEPARATOR}>{" — "}</span> : null}
                 <span className={COLUMN_CELL}>
                   {track.artists?.length ? (
@@ -185,25 +192,21 @@ export function GenrePlaylistTracks({
             );
             const leading = renderSongLeading?.(track, index);
             const actions = renderSongActions?.(track);
-            const unplayableReason = isSong(track) ? songUnplayableReason(track) : null;
-            if (unplayableReason) {
+            const isUnplayable = isSong(track) && songUnplayableReason(track) !== null;
+            if (isUnplayable) {
               return (
-                <li key={track.uuid} className="flex min-h-8 items-center gap-1 px-1 opacity-50" title={unplayableReason}>
+                <li key={track.uuid} className="flex min-h-8 items-center gap-1 px-1 opacity-50">
                   {leading}
                   <button
                     type="button"
                     disabled
                     aria-disabled="true"
-                    aria-label={`${label} — ${unplayableReason}`}
+                    aria-label={label}
                     className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full opacity-0 cursor-not-allowed"
                   >
                     <FaPlay size={10} />
                   </button>
                   {text}
-                  {isSong(track) && <MusicBrainzRecordingLink song={track} />}
-                  <span className="shrink-0 text-xs">
-                    <UnplayableReason reason={unplayableReason} />
-                  </span>
                   {actions}
                 </li>
               );
@@ -229,7 +232,6 @@ export function GenrePlaylistTracks({
                   )}
                 </button>
                 {text}
-                {isSong(track) && <MusicBrainzRecordingLink song={track} />}
                 {actions}
               </li>
             );

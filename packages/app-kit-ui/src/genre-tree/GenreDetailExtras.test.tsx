@@ -47,6 +47,7 @@ describe("GenreDetailExtras", () => {
 
     expect(screen.getByText("Default summary text")).toBeInTheDocument();
     expect(screen.getByText("Essential tracks")).toBeInTheDocument();
+    expect(screen.queryByText("Description")).not.toBeInTheDocument();
   });
 
   describe("text clamp", () => {
@@ -59,12 +60,12 @@ describe("GenreDetailExtras", () => {
       vi.restoreAllMocks();
     });
 
-    it("clamps the summary and description to three lines", () => {
+    it("clamps the summary to three lines", () => {
       useFetchGenreOverviewMock.mockReturnValue({ data: { ...overview, description: "A description" }, isPending: false });
       renderExtras();
 
       expect(screen.getByText("Default summary text")).toHaveClass("line-clamp-3");
-      expect(screen.getByText("A description")).toHaveClass("line-clamp-3");
+      expect(screen.queryByText("A description")).not.toBeInTheDocument();
     });
 
     it("shows no toggle when the text fits", () => {
@@ -103,13 +104,13 @@ describe("GenreDetailExtras", () => {
     expect(renderEssentialTracks).toHaveBeenCalledWith(overview);
   });
 
-  it("shows the description only when present", () => {
+  it("does not render the description", () => {
     useFetchGenreOverviewMock.mockReturnValue({
       data: { ...overview, description: "music genre" },
       isPending: false,
     });
     const { unmount } = renderExtras();
-    expect(screen.getByText("music genre")).toBeInTheDocument();
+    expect(screen.queryByText("music genre")).not.toBeInTheDocument();
     unmount();
 
     useFetchGenreOverviewMock.mockReturnValue({ data: { ...overview, description: null }, isPending: false });
@@ -131,15 +132,26 @@ describe("GenreDetailExtras", () => {
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
 
-  it("renders the Wikipedia source inside the default Summary section", () => {
+  it("renders Wikipedia and Wikidata links above the default Summary section", () => {
     useFetchGenreOverviewMock.mockReturnValue({
       data: { ...overview, summarySourceUrl: "https://en.wikipedia.org/wiki/Jazz" },
       isPending: false,
     });
-    renderExtras();
+    renderExtras({ wikidataId: "Q123" });
 
-    const link = screen.getByRole("link", { name: /wikipedia/i });
-    expect(link.closest(".gtv-info-panel-children")).toContainElement(screen.getByText("Default summary text"));
+    const linksTitle = screen.getByText("Links");
+    const linksSection = linksTitle.closest(".gtv-info-panel-children");
+    const summarySection = screen.getByText("Default summary text").closest(".gtv-info-panel-children");
+    expect(screen.getByRole("link", { name: /wikipedia/i })).toHaveAttribute(
+      "href",
+      "https://en.wikipedia.org/wiki/Jazz",
+    );
+    expect(screen.getByRole("link", { name: /wikidata/i })).toHaveAttribute(
+      "href",
+      "https://www.wikidata.org/wiki/Q123",
+    );
+    expect(linksSection).not.toContainElement(screen.getByText("Default summary text"));
+    expect(linksSection!.compareDocumentPosition(summarySection!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("forwards the track slots to GenrePlaylistTracks", () => {

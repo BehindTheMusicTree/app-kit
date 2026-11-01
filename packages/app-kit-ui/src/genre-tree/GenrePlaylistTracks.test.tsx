@@ -228,26 +228,27 @@ describe("GenrePlaylistTracks", () => {
     expect(fetchGenrePlaylistTracksPage).toHaveBeenCalledWith(makeGenrePlaylistUuid("p1"), "me", 1);
   });
 
-  it("greys out an unplayable track with its reason and a disabled play button", async () => {
+  it("greys out an unplayable track without showing its reason", async () => {
     fetchMock.mockResolvedValueOnce(songsPage([{ uuid: "x", title: "Blocked", artists: null, youtubeVideo: { id: "v1", unplayableReason: "private" }, musicbrainzRecordingId: null }]));
 
     renderTracks();
 
-    const button = await screen.findByRole("button", { name: "Blocked — Private video" });
+    const button = await screen.findByRole("button", { name: "Blocked" });
     expect(button).toBeDisabled();
     expect(button).toHaveAttribute("aria-disabled", "true");
-    expect(screen.getByText("Private video")).toBeInTheDocument();
+    expect(screen.queryByText("Private video")).not.toBeInTheDocument();
     expect(screen.getByRole("listitem")).toHaveClass("opacity-50");
     fireEvent.click(button);
     expect(playNewTrackListFromGenrePlaylist).not.toHaveBeenCalled();
   });
 
-  it("shows a song without a video as unplayable", async () => {
+  it("shows a song without a video without an availability reason", async () => {
     fetchMock.mockResolvedValueOnce(songsPage([{ uuid: "x", title: "Lucky", artists: null, youtubeVideo: null, musicbrainzRecordingId: null }]));
 
     renderTracks();
 
-    expect(await screen.findByRole("button", { name: "Lucky — No video available" })).toBeDisabled();
+    expect(await screen.findByRole("button", { name: "Lucky" })).toBeDisabled();
+    expect(screen.queryByText("No video available")).not.toBeInTheDocument();
   });
 
   it("links tracks with an MBID to MusicBrainz without starting playback", async () => {

@@ -24,9 +24,10 @@ describe("TrackPositionPlayPause", () => {
     expect(screen.getByText("3")).toBeInTheDocument();
   });
 
-  it("renders playing bars when it is the current track and playing", () => {
+  it("renders animated bars when it is the current track and playing", () => {
     usePlayerMock.mockReturnValue({
       playerTrackObject: { track: { id: "track-1" } },
+      playbackConfirmedTrackId: "track-1",
       playState: PlayStates.PLAYING,
     });
 
@@ -34,12 +35,14 @@ describe("TrackPositionPlayPause", () => {
       <TrackPositionPlayPause position={3} uuid="track-1" handlePlayPauseClick={vi.fn()} />,
     );
 
-    expect(container.querySelectorAll(".animate-scale-pulse").length).toBeGreaterThan(0);
+    expect(container.querySelectorAll(".track-position-play-pause__bar")).toHaveLength(3);
+    expect(container.querySelector(".track-position-play-pause__bars")).toHaveAttribute("data-playing", "true");
   });
 
-  it("renders bars without the pulse animation when paused", () => {
+  it("renders static bars when the current track is paused", () => {
     usePlayerMock.mockReturnValue({
       playerTrackObject: { track: { id: "track-1" } },
+      playbackConfirmedTrackId: "track-1",
       playState: PlayStates.PAUSED,
     });
 
@@ -47,7 +50,80 @@ describe("TrackPositionPlayPause", () => {
       <TrackPositionPlayPause position={3} uuid="track-1" handlePlayPauseClick={vi.fn()} />,
     );
 
-    expect(container.querySelectorAll(".animate-scale-pulse").length).toBe(0);
+    expect(container.querySelectorAll(".track-position-play-pause__bar")).toHaveLength(3);
+    expect(container.querySelector(".track-position-play-pause__bars")).toHaveAttribute("data-playing", "false");
+  });
+
+  it("hides playing bars on hover and reveals only the pause action", () => {
+    usePlayerMock.mockReturnValue({
+      playerTrackObject: { track: { id: "track-1" } },
+      playbackConfirmedTrackId: "track-1",
+      playState: PlayStates.PLAYING,
+    });
+
+    const { container } = render(
+      <TrackPositionPlayPause position={3} uuid="track-1" handlePlayPauseClick={vi.fn()} />,
+    );
+    const status = container.querySelector(".track-position-play-pause__status");
+    const pauseAction = container.querySelector(".group-hover\\:flex");
+
+    expect(status).toHaveClass("group-hover:hidden");
+    expect(status?.querySelector(".track-position-play-pause__bars")).toHaveAttribute("data-playing", "true");
+    expect(pauseAction).toBeInTheDocument();
+  });
+
+  it("shows the track number instead of bars for a different current track", () => {
+    usePlayerMock.mockReturnValue({
+      playerTrackObject: { track: { id: "another-track" } },
+      playState: PlayStates.PLAYING,
+    });
+
+    const { container } = render(
+      <TrackPositionPlayPause position={3} uuid="track-1" handlePlayPauseClick={vi.fn()} />,
+    );
+
+    expect(screen.getByText("3")).toBeInTheDocument();
+    expect(container.querySelector(".track-position-play-pause__bars")).toBeNull();
+  });
+
+  it("shows a spinner for a selected track until the media confirms playback", () => {
+    usePlayerMock.mockReturnValue({
+      playerTrackObject: { track: { id: "track-1" } },
+      playbackConfirmedTrackId: null,
+      playState: PlayStates.PLAYING,
+    });
+
+    const { container } = render(
+      <TrackPositionPlayPause
+        position={3}
+        uuid="track-1"
+        isSelected
+        handlePlayPauseClick={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("status", { name: "Loading track" })).toBeInTheDocument();
+    expect(container.querySelector(".track-position-play-pause__bars")).toBeNull();
+  });
+
+  it("shows a spinner for a selected row while its player load has not reached the media object", () => {
+    usePlayerMock.mockReturnValue({
+      playerTrackObject: null,
+      playbackConfirmedTrackId: null,
+      isLoading: false,
+      playState: PlayStates.STOPPED,
+    });
+
+    render(
+      <TrackPositionPlayPause
+        position={3}
+        uuid="track-1"
+        isSelected
+        handlePlayPauseClick={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("status", { name: "Loading track" })).toBeInTheDocument();
   });
 
   it("renders without throwing when loading", () => {

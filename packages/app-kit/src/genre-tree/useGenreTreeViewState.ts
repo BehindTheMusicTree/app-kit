@@ -22,9 +22,11 @@ export interface UseGenreTreeViewStateOptions<O extends CriteriaOverview = Crite
   viewMode?: GenreViewMode;
   /** Narrows the tree to this artist's footprint (see `useVisibleGenrePlaylists`). */
   artistUuid?: string | null;
-  /** Controlled selection (a genre playlist uuid, i.e. the tree node id). */
+  /** Controlled selection (a genre playlist UUID, i.e. the tree node ID).
+   * Legacy criteria UUIDs are resolved on load.
+   */
   selectedNodeId?: string | null;
-  /** Called on every user-driven selection change (node click, search pick, search clear). */
+  /** Called when selection changes, including normalizing a legacy criteria UUID to its playlist UUID. */
   onSelectedNodeIdChange?: (nodeId: string | null) => void;
   criteriaOverviewSchema?: z.ZodType<O, unknown>;
 }
@@ -69,7 +71,7 @@ export function useGenreTreeViewState<O extends CriteriaOverview = CriteriaOverv
   const [internalSelectedNodeId, setInternalSelectedNodeId] = useState<string | null>(null);
 
   const isSelectionControlled = controlledSelectedNodeId !== undefined;
-  const selectedNodeId = isSelectionControlled ? controlledSelectedNodeId : internalSelectedNodeId;
+  const requestedSelectedNodeId = isSelectionControlled ? controlledSelectedNodeId : internalSelectedNodeId;
   const setSelectedNodeId = useCallback(
     (nodeId: string | null) => {
       if (!isSelectionControlled) setInternalSelectedNodeId(nodeId);
@@ -83,9 +85,26 @@ export function useGenreTreeViewState<O extends CriteriaOverview = CriteriaOverv
   const genrePlaylistByNodeId = useMemo(() => new Map<string, CriteriaPlaylistSimple>(genrePlaylists.map((gp) => [gp.uuid, gp])), [genrePlaylists]);
 
   const selectedGenrePlaylist = useMemo(
-    () => genrePlaylists.find((gp) => gp.uuid === selectedNodeId),
-    [genrePlaylists, selectedNodeId],
+    () =>
+      genrePlaylists.find((gp) => gp.uuid === requestedSelectedNodeId) ??
+      // Older shared links stored the criteria UUID in `genre`; resolve that alias while preserving
+      // the playlist UUID as the canonical tree selection identity.
+      genrePlaylists.find((gp) => gp.criteria?.uuid === requestedSelectedNodeId),
+    [genrePlaylists, requestedSelectedNodeId],
   );
+  const selectedNodeId = selectedGenrePlaylist?.uuid ?? requestedSelectedNodeId;
+
+  useEffect(() => {
+    if (
+      !isSelectionControlled ||
+      requestedSelectedNodeId == null ||
+      selectedGenrePlaylist == null ||
+      requestedSelectedNodeId === selectedGenrePlaylist.uuid
+    ) {
+      return;
+    }
+    onSelectedNodeIdChange?.(selectedGenrePlaylist.uuid);
+  }, [isSelectionControlled, onSelectedNodeIdChange, requestedSelectedNodeId, selectedGenrePlaylist]);
 
   const selectNode = useCallback((node: { id: string } | null) => setSelectedNodeId(node?.id ?? null), [setSelectedNodeId]);
   const clearSelection = useCallback(() => setSelectedNodeId(null), [setSelectedNodeId]);

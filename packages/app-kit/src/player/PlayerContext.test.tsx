@@ -100,7 +100,9 @@ beforeEach(() => {
 
   loadYoutubeIframeApiMock.mockResolvedValue({ Player: ytPlayerCtor });
 
-  (window as unknown as { YT: { PlayerState: { ENDED: number } } }).YT = { PlayerState: { ENDED: 0 } };
+  (window as unknown as { YT: { PlayerState: { PLAYING: number; ENDED: number } } }).YT = {
+    PlayerState: { PLAYING: 1, ENDED: 0 },
+  };
 });
 
 afterEach(() => {
@@ -154,7 +156,11 @@ describe("PlayerProvider - loadTrackForPlayer (audio)", () => {
     expect(result.current.isPlaying).toBe(true);
     expect(result.current.isLoading).toBe(false);
     expect(result.current.playerTrackObject?.isReady).toBe(true);
+    expect(result.current.playbackConfirmedTrackId).toBeNull();
     expect(audioInstances[0].play).toHaveBeenCalled();
+
+    act(() => audioInstances[0].dispatch("playing"));
+    expect(result.current.playbackConfirmedTrackId).toBe("audio-1");
   });
 
   it("sets duration and currentTimeRef from audio events", async () => {
@@ -178,6 +184,32 @@ describe("PlayerProvider - loadTrackForPlayer (audio)", () => {
       audioInstances[0].dispatch("timeupdate");
     });
     expect(result.current.currentTimeRef.current).toBe(12);
+  });
+
+  it("seeks within the loaded track and applies volume changes to the active media", async () => {
+    loadTrackMock.mockResolvedValue(makeAudioTrack());
+    const { result } = renderHook(() => usePlayer(), { wrapper });
+
+    await act(async () => {
+      result.current.loadTrackForPlayer("audio-1");
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    act(() => {
+      audioInstances[0].duration = 55;
+      audioInstances[0].dispatch("loadedmetadata");
+    });
+
+    act(() => result.current.seekTo(60));
+    expect(audioInstances[0].currentTime).toBe(55);
+    expect(result.current.currentTimeRef.current).toBe(55);
+
+    act(() => result.current.seekTo(-5));
+    expect(audioInstances[0].currentTime).toBe(0);
+
+    act(() => result.current.setVolume(25));
+    expect(result.current.volume).toBe(25);
+    expect(audioInstances[0].volume).toBe(0.25);
   });
 
   it("stops playback and fires onTrackEnd when audio ends", async () => {
@@ -329,6 +361,7 @@ describe("PlayerProvider - loadTrackForPlayer (youtube)", () => {
         <div>
           <PlayerVideoSurface />
           <div data-testid="playState">{player.playState}</div>
+          <div data-testid="confirmedTrackId">{player.playbackConfirmedTrackId}</div>
           <button onClick={() => player.loadTrackForPlayer("yt-1")}>load</button>
         </div>
       );
@@ -352,9 +385,9 @@ describe("PlayerProvider - loadTrackForPlayer (youtube)", () => {
       ytPlayers[0].config.events.onReady();
     });
 
-    await waitFor(() => {
-      expect(ytPlayers[0].playVideo).toHaveBeenCalled();
-    });
+    expect(screen.getByTestId("playState").textContent).toBe(PlayStates.PLAYING);
+    expect(ytPlayers[0].playVideo).not.toHaveBeenCalled();
+    expect(screen.getByTestId("confirmedTrackId").textContent).toBe("");
 
     await waitFor(() => expect(ytPlayers[0].getCurrentTime).toHaveBeenCalled());
     expect(ytPlayers[0].getDuration).toHaveBeenCalled();
@@ -363,6 +396,7 @@ describe("PlayerProvider - loadTrackForPlayer (youtube)", () => {
       ytPlayers[0].config.events.onStateChange({ data: 1 });
     });
     expect(screen.getByTestId("playState").textContent).toBe(PlayStates.PLAYING);
+    expect(screen.getByTestId("confirmedTrackId").textContent).toBe("yt-1");
   });
 
   it("reuses an existing player via loadVideoById on subsequent loads", async () => {
@@ -404,7 +438,7 @@ describe("PlayerProvider - loadTrackForPlayer (youtube)", () => {
 
     expect(ytPlayerCtor).toHaveBeenCalledTimes(1);
     expect(ytPlayers[0].loadVideoById).toHaveBeenCalledWith("yt-2");
-    expect(ytPlayers[0].playVideo).toHaveBeenCalled();
+    expect(ytPlayers[0].playVideo).not.toHaveBeenCalled();
   });
 
   it("stops playback and fires onTrackEnd when the YouTube state changes to ENDED", async () => {
@@ -461,7 +495,7 @@ describe("PlayerProvider - loadTrackForPlayer (youtube)", () => {
         <div>
           <PlayerVideoSurface />
           <button onClick={() => player.loadTrackForPlayer("yt-1")}>load</button>
-          <button onClick={() => player.setOnTrackEnd(() => onTrackEnd)}>subscribe</button>
+          <button onClick={() => player.setOnTrackEnd(onTrackEnd)}>subscribe</button>
           <p>{player.playerTrackObject?.loadError}</p>
         </div>
       );

@@ -8,7 +8,6 @@ import TrackPositionPlayPause from "../TrackPositionPlayPause";
 import { TrackBase } from "@behindthemusictree/app-kit/genre-tree";
 import { isSong, songUnplayableReason } from "@behindthemusictree/app-kit/genre-tree";
 import { MusicBrainzRecordingLink } from "../MusicBrainzRecordingLink";
-import { UnplayableReason } from "../UnplayableReason";
 import { ArtistNames, RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
 
 export interface TrackItemProps<T extends TrackBase> {
@@ -28,13 +27,18 @@ export default function TrackItem<T extends TrackBase>({
   renderArtistLink,
 }: TrackItemProps<T>) {
   const { handlePlayPauseAction, playerTrackObject, loadTrackForPlayer } = usePlayer();
-  const { trackList, toTrackAtPosition } = useTrackList<T>();
+  const { trackList, selectedTrack, toTrackAtPosition, runtimeUnplayableTrackIds } = useTrackList<T>();
   const scope = trackList?.origin?.scope ?? null;
-  const unplayableReason = isSong(track) ? songUnplayableReason(track) : null;
+  const isCurrentTrack = playerTrackObject?.track.id === track.uuid;
+  const hasPlaybackError = isCurrentTrack && !!playerTrackObject?.loadError;
+  const isUnplayable =
+    hasPlaybackError ||
+    runtimeUnplayableTrackIds?.has(track.uuid) === true ||
+    (isSong(track) && songUnplayableReason(track) !== null);
 
   const handlePlayPauseClick = (event: React.MouseEvent) => {
     event.stopPropagation();
-    if (playerTrackObject && playerTrackObject.track.id === track.uuid) {
+    if (isCurrentTrack) {
       handlePlayPauseAction();
     } else if (scope != null) {
       toTrackAtPosition(position);
@@ -44,10 +48,9 @@ export default function TrackItem<T extends TrackBase>({
 
   return (
     <div
-      className={`track-item flex h-14 text-[var(--color-text)] ${unplayableReason ? "opacity-50" : "hover:bg-[var(--color-surface-muted)] group"}`}
-      title={unplayableReason ?? undefined}
+      className={`track-item flex h-14 text-[var(--color-text)] ${isUnplayable ? "opacity-50" : "hover:bg-[var(--color-surface-muted)] group"}`}
     >
-      {unplayableReason ? (
+      {isUnplayable ? (
         <div
           className="flex items-center justify-center text-lg w-16"
           style={{ minWidth: "4rem", maxWidth: "4rem" }}
@@ -56,12 +59,24 @@ export default function TrackItem<T extends TrackBase>({
           {position}
         </div>
       ) : (
-        <TrackPositionPlayPause position={position} uuid={track.uuid} handlePlayPauseClick={handlePlayPauseClick} />
+        <TrackPositionPlayPause
+          position={position}
+          uuid={track.uuid}
+          handlePlayPauseClick={handlePlayPauseClick}
+          isSelected={selectedTrack?.uuid === track.uuid}
+        />
       )}
       <div className="title-artist-container flex flex-col items-start justify-center min-w-0 flex-1">
         <div className="flex max-w-full items-center gap-2">
-          <div className="title text-lg font-bold text-[var(--color-text)] max-w-full truncate">{track.title}</div>
-          {isSong(track) && <MusicBrainzRecordingLink song={track} />}
+          <div className="title text-lg font-bold text-[var(--color-text)] max-w-full truncate">
+            {isSong(track) ? (
+              <MusicBrainzRecordingLink song={track} className="hover:underline focus-visible:underline">
+                {track.title}
+              </MusicBrainzRecordingLink>
+            ) : (
+              track.title
+            )}
+          </div>
         </div>
         {track.artists && track.artists.length > 0 ? (
           <div className="artist text-base max-w-full truncate text-[var(--color-text-muted)]">
@@ -70,18 +85,10 @@ export default function TrackItem<T extends TrackBase>({
         ) : (
           ""
         )}
-        {unplayableReason && (
-          <div className="text-xs">
-            <UnplayableReason reason={unplayableReason} />
-          </div>
-        )}
       </div>
-      <div className="album-name items-start justify-center w-1/3 min-w-0 ml-2 max-w-full truncate text-[var(--color-text-muted)]">
-        {track.album ? track.album.name : ""}
-      </div>
-      <div className="genre-name-container flex items-center justify-end w-1/6 min-w-0 shrink-0">
+      <div className="genre-name-container flex items-center justify-start w-[21.6%] min-w-0 shrink-0">
         {track.genre ? (
-          <div className="genre-name font-bold p-1 border border-[var(--color-text-muted)] text-xs max-w-full truncate">{track.genre.name}</div>
+          <div className="genre-name max-w-full whitespace-normal break-words p-1 text-xs font-bold">{track.genre.name}</div>
         ) : (
           ""
         )}
