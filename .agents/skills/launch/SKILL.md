@@ -5,8 +5,8 @@ description: Use this skill when asked to run, start, dev-serve, or preview app-
 
 # Launch app-kit
 
-`app-kit` is a Turborepo publishing a library package
-(`packages/app-kit`, `@behindthemusictree/app-kit`) consumed by
+`app-kit` is a Turborepo publishing headless and UI packages
+(`@behindthemusictree/app-kit` and `@behindthemusictree/app-kit-ui`) consumed by
 `grow-the-music-tree-frontend` and `hear-the-music-tree-frontend`. There is no
 app to run in production — the "launch" target is `apps/playground`, a small
 Vite app for manually exercising exported components, proxied through to the
@@ -18,9 +18,9 @@ staging grow-api, before opening a PR. It is not published.
 pnpm install
 ```
 
-Requires a GitHub PAT with `read:packages` scope, exported as `NPM_TOKEN`, to
-install `@behindthemusictree/genre-tree-view` (a private dependency) per
-`.npmrc`.
+The lockfile includes GitHub Packages tarballs for `@behindthemusictree/brand`
+and `@behindthemusictree/ui`; those require a GitHub PAT with `read:packages`,
+exported as `NPM_TOKEN` per `.npmrc`. `genre-tree-view` is fetched from npm.
 
 ## 2. Env setup (first run only)
 
@@ -42,16 +42,15 @@ pnpm dev
 
 Runs `turbo run dev`, which is `dev: { cache: false, persistent: true }` in
 `turbo.json` — it fans out to every workspace's `dev` script in parallel:
-`tsup --watch` on `packages/app-kit` (rebuilds the library on change) plus
-`vite` in `apps/playground` (serves the preview app, default
+`tsup --watch` on both packages plus `vite` in `apps/playground` (serves the preview app, default
 `http://localhost:5173`).
 
 ## 4. Verify
 
 Open the printed playground URL and exercise the component(s) you changed.
-Since `packages/app-kit` rebuilds on save via `tsup --watch`, edits to the
-library show up in the playground without restarting `pnpm dev`.
+The playground aliases package subpaths to source; edits appear without restarting
+`pnpm dev` (see `apps/playground/vite.config.ts`).
 
 For a non-visual check instead, `pnpm build && pnpm lint` (tsup + `tsc
 --noEmit`) is the primary type-safety gate; run `pnpm test` for the Vitest
-suite under `packages/app-kit`.
+suites in the workspace.
