@@ -3,13 +3,13 @@ import { describe, it, expect } from "vitest";
 import { libraryEndpoints, libraryQueryKeys } from "./index";
 
 describe("libraryEndpoints", () => {
-  it("exposes reference.youtube endpoints", () => {
-    expect(libraryEndpoints.reference.youtube.list()).toBe("library/youtube/");
+  it("exposes reference.songs endpoints", () => {
+    expect(libraryEndpoints.reference.songs.list()).toBe("library/songs/");
   });
 });
 
 describe("libraryQueryKeys", () => {
-  it("exposes reference.youtube query keys", () => {
-    expect(libraryQueryKeys.reference.youtube.all).toEqual(["referenceYoutubeTracks"]);
+  it("exposes reference.songs query keys", () => {
+    expect(libraryQueryKeys.reference.songs.all).toEqual(["referenceSongs"]);
   });
 });

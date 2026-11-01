@@ -1,3 +1,5 @@
+import type { GenrePlaylistUuid } from "../../schemas/ids";
+
 /**
  * "Genre playlists" (backend path `genre-playlists/`) are the item-count-bearing nodes that back
  * the genre tree view — not to be confused with a Spotify-library "playlist" feature (out of scope
@@ -6,14 +8,14 @@
  */
 const makeGenrePlaylistEndpoints = (prefix: string) => ({
   list: () => `${prefix}genre-playlists/`,
-  detail: (uuid: string) => `${prefix}genre-playlists/${uuid}/`,
-  tracks: (uuid: string) => `${prefix}genre-playlists/${uuid}/tracks/`,
+  detail: (uuid: GenrePlaylistUuid) => `${prefix}genre-playlists/${uuid}/`,
+  tracks: (uuid: GenrePlaylistUuid) => `${prefix}genre-playlists/${uuid}/tracks/`,
   create: () => `${prefix}genre-playlists/`,
-  update: (uuid: string) => `${prefix}genre-playlists/${uuid}/`,
-  delete: (uuid: string) => `${prefix}genre-playlists/${uuid}/`,
+  update: (uuid: GenrePlaylistUuid) => `${prefix}genre-playlists/${uuid}/`,
+  delete: (uuid: GenrePlaylistUuid) => `${prefix}genre-playlists/${uuid}/`,
 });
 
 export const genrePlaylistEndpoints = {
   me: makeGenrePlaylistEndpoints("me/"),
-  reference: makeGenrePlaylistEndpoints(""),
+  reference: { ...makeGenrePlaylistEndpoints(""), tree: () => "genre-playlists/tree/" },
 };

@@ -1,3 +1,0 @@
-{
-  "buildCommand": "cd ../.. && npx turbo run build --filter=app-kit-playground..."
-}

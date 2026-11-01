@@ -36,6 +36,8 @@ import {
   useInvalidateAllGenrePlaylistQueries,
 } from "./useGenrePlaylist";
 import { CriteriaPlaylistSimpleSchema } from "./schemas/criteria-playlist/simple";
+import type { GenrePlaylistUuid } from "./schemas/ids";
+import { makeGenrePlaylistUuid } from "./testing";
 
 const getBackendBaseUrl = () => "https://backend.example.com";
 
@@ -74,25 +76,19 @@ describe("useGenrePlaylist", () => {
   });
 
   describe("useListFullGenrePlaylists", () => {
-    it("queries the reference full endpoint and is always enabled for the reference scope", async () => {
+    it("loads the reference tree with exactly one request to the tree endpoint", async () => {
       useSessionMock.mockReturnValue({ session: null, sessionRestored: false });
-      fetchMock.mockResolvedValue({
-        overallTotal: 1,
-        next: null,
-        previous: null,
-        results: [{ uuid: "gp1" }],
-        page: 1,
-        pageSize: 1000,
-        totalPages: 1,
-      });
+      fetchMock.mockResolvedValue([{ uuid: "gp1" }]);
       renderHook(() => useListFullGenrePlaylists("reference", getBackendBaseUrl));
       const { queryKey, enabled, queryFn } = useQueryWithParseMock.mock.calls[0][0];
 
       expect(queryKey).toEqual(["referenceGenrePlaylists", "https://backend.example.com", "full"]);
       expect(enabled).toBe(true);
 
-      await queryFn();
-      expect(fetchMock).toHaveBeenCalledWith("genre-playlists/", true, false, {}, { page: 1, pageSize: 1000, treeName: "canonical" });
+      const result = await queryFn();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledWith("genre-playlists/tree/", true, false, {}, { treeName: "canonical" });
+      expect(result).toEqual([{ uuid: "gp1" }]);
     });
 
     it("queries the me full endpoint and gates on a restored session with a token", async () => {
@@ -102,7 +98,7 @@ describe("useGenrePlaylist", () => {
         previous: null,
         results: [{ uuid: "gp1" }],
         page: 1,
-        pageSize: 1000,
+        pageSize: 100,
         totalPages: 1,
       });
       renderHook(() => useListFullGenrePlaylists("me", getBackendBaseUrl));
@@ -111,8 +107,10 @@ describe("useGenrePlaylist", () => {
       expect(queryKey).toEqual(["meGenrePlaylists", "full"]);
       expect(enabled).toBe(true);
 
-      await queryFn();
-      expect(fetchMock).toHaveBeenCalledWith("me/genre-playlists/", true, true, {}, { page: 1, pageSize: 1000, treeName: "canonical" });
+      const result = await queryFn();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledWith("me/genre-playlists/", true, true, {}, { page: 1, pageSize: 100, treeName: "canonical" });
+      expect(result).toEqual([{ uuid: "gp1" }]);
     });
 
     it("disables the me query until the session is restored", () => {
@@ -122,46 +120,70 @@ describe("useGenrePlaylist", () => {
       expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
     });
 
-    it("follows `next` and merges results when the backend clamps pageSize below overallTotal", async () => {
-      fetchMock
-        .mockResolvedValueOnce({
-          overallTotal: 250,
-          next: "https://backend.example.com/genre-playlists/?page=2",
-          previous: null,
-          results: Array.from({ length: 100 }, (_, i) => ({ uuid: `gp${i}` })),
-          page: 1,
-          pageSize: 100,
-          totalPages: 3,
-        })
-        .mockResolvedValueOnce({
-          overallTotal: 250,
-          next: "https://backend.example.com/genre-playlists/?page=3",
-          previous: "https://backend.example.com/genre-playlists/?page=1",
-          results: Array.from({ length: 100 }, (_, i) => ({ uuid: `gp${100 + i}` })),
-          page: 2,
-          pageSize: 100,
-          totalPages: 3,
-        })
-        .mockResolvedValueOnce({
-          overallTotal: 250,
-          next: null,
-          previous: "https://backend.example.com/genre-playlists/?page=2",
-          results: Array.from({ length: 50 }, (_, i) => ({ uuid: `gp${200 + i}` })),
-          page: 3,
-          pageSize: 100,
-          totalPages: 3,
-        });
-      renderHook(() => useListFullGenrePlaylists("reference", getBackendBaseUrl));
+    it("keeps at most 4 me page requests in flight and merges results in page order", async () => {
+      let inFlight = 0;
+      let maxInFlight = 0;
+      fetchMock.mockImplementation(async (_url, _a, _b, _c, { page }: { page: number }) => {
+        inFlight++;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        await new Promise((resolve) => setTimeout(resolve, (18 - page) % 5));
+        inFlight--;
+        return { overallTotal: 18, next: null, previous: null, results: [{ uuid: `gp${page}` }], page, pageSize: 1, totalPages: 18 };
+      });
+      renderHook(() => useListFullGenrePlaylists("me", getBackendBaseUrl));
       const { queryFn } = useQueryWithParseMock.mock.calls[0][0];
 
       const result = await queryFn();
 
-      expect(fetchMock).toHaveBeenCalledTimes(3);
-      expect(fetchMock).toHaveBeenNthCalledWith(1, "genre-playlists/", true, false, {}, { page: 1, pageSize: 1000, treeName: "canonical" });
-      expect(fetchMock).toHaveBeenNthCalledWith(2, "genre-playlists/", true, false, {}, { page: 2, pageSize: 1000, treeName: "canonical" });
-      expect(fetchMock).toHaveBeenNthCalledWith(3, "genre-playlists/", true, false, {}, { page: 3, pageSize: 1000, treeName: "canonical" });
-      expect(result.results).toHaveLength(250);
-      expect(result.overallTotal).toBe(250);
+      expect(fetchMock).toHaveBeenCalledTimes(18);
+      expect(maxInFlight).toBe(4);
+      expect(result.map((gp: { uuid: string }) => gp.uuid)).toEqual(Array.from({ length: 18 }, (_, i) => `gp${i + 1}`));
+    });
+
+    it("returns an empty list with a single me request when totalPages is 0", async () => {
+      fetchMock.mockResolvedValueOnce({
+        overallTotal: 0,
+        next: null,
+        previous: null,
+        results: [],
+        page: 1,
+        pageSize: 100,
+        totalPages: 0,
+      });
+      renderHook(() => useListFullGenrePlaylists("me", getBackendBaseUrl));
+      const { queryFn } = useQueryWithParseMock.mock.calls[0][0];
+
+      const result = await queryFn();
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(result).toEqual([]);
+    });
+
+    it("rejects with the page number when a later me page returns no body", async () => {
+      fetchMock
+        .mockResolvedValueOnce({
+          overallTotal: 150,
+          next: "https://backend.example.com/me/genre-playlists/?page=2",
+          previous: null,
+          results: Array.from({ length: 100 }, (_, i) => ({ uuid: `gp${i}` })),
+          page: 1,
+          pageSize: 100,
+          totalPages: 2,
+        })
+        .mockResolvedValueOnce(null);
+      renderHook(() => useListFullGenrePlaylists("me", getBackendBaseUrl));
+      const { queryFn } = useQueryWithParseMock.mock.calls[0][0];
+
+      await expect(queryFn()).rejects.toThrow("page 2 returned no body");
+    });
+
+    it("rejects when the first me page returns no body", async () => {
+      fetchMock.mockResolvedValueOnce(null);
+      renderHook(() => useListFullGenrePlaylists("me", getBackendBaseUrl));
+      const { queryFn } = useQueryWithParseMock.mock.calls[0][0];
+
+      await expect(queryFn()).rejects.toThrow("page 1 returned no body");
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
     it("invalidateFullGenrePlaylists invalidates the scoped full query key", () => {
@@ -177,32 +199,33 @@ describe("useGenrePlaylist", () => {
 
   describe("useFetchGenrePlaylist", () => {
     it("fetches the me detail endpoint and gates on a restored session with a token", () => {
-      renderHook(() => useFetchGenrePlaylist("gp1", getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
+      renderHook(() => useFetchGenrePlaylist(makeGenrePlaylistUuid("gp1"), getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
       const { queryKey, enabled, queryFn } = useQueryWithParseMock.mock.calls[0][0];
 
-      expect(queryKey).toEqual(["meGenrePlaylists", "gp1"]);
+      expect(queryKey).toEqual(["meGenrePlaylists", makeGenrePlaylistUuid("gp1")]);
       expect(enabled).toBe(true);
 
       queryFn();
-      expect(fetchMock).toHaveBeenCalledWith("me/genre-playlists/gp1/");
+      expect(fetchMock).toHaveBeenCalledWith(`me/genre-playlists/${makeGenrePlaylistUuid("gp1")}/`);
     });
 
     it("disables the query when uuid is empty", () => {
-      renderHook(() => useFetchGenrePlaylist("", getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
+      // An empty id cannot be built through the validated helper, so the runtime guard is exercised with a cast.
+      renderHook(() => useFetchGenrePlaylist("" as GenrePlaylistUuid, getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
 
       expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
     });
 
     it("disables the query until the session is restored", () => {
       useSessionMock.mockReturnValue({ session: null, sessionRestored: false });
-      renderHook(() => useFetchGenrePlaylist("gp1", getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
+      renderHook(() => useFetchGenrePlaylist(makeGenrePlaylistUuid("gp1"), getBackendBaseUrl, CriteriaPlaylistSimpleSchema));
 
       expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
     });
   });
 
   describe("useInvalidateAllGenrePlaylistQueries", () => {
-    it("returns a function that invalidates the me and reference genre playlist query keys", () => {
+    it("returns a function that invalidates the genre playlist and reference songs query keys", () => {
       const { result } = renderHook(() => useInvalidateAllGenrePlaylistQueries());
 
       result.current();
@@ -210,6 +233,22 @@ describe("useGenrePlaylist", () => {
       expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["meGenrePlaylists"] });
       expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["meGenrePlaylists", "full"] });
       expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["referenceGenrePlaylists"] });
+      expect(invalidateQueriesMock).toHaveBeenCalledWith({ queryKey: ["referenceSongs"] });
+    });
+
+    it("returns a promise that resolves only once every invalidation has resolved", async () => {
+      let finishRefetch!: () => void;
+      invalidateQueriesMock.mockReturnValueOnce(new Promise<void>((resolve) => (finishRefetch = resolve)));
+      const { result } = renderHook(() => useInvalidateAllGenrePlaylistQueries());
+
+      let resolved = false;
+      const settled = result.current().then(() => (resolved = true));
+      await Promise.resolve();
+
+      expect(resolved).toBe(false);
+      finishRefetch();
+      await settled;
+      expect(resolved).toBe(true);
     });
   });
 });

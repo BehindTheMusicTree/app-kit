@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `@behindthemusictree/app-kit` are documented here.
+All notable changes to `@behindthemusictree/app-kit` are documented here; `@behindthemusictree/app-kit-ui` is versioned in lockstep.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Any change that requires a consumer to update its own code (removed/renamed export,
@@ -13,7 +13,780 @@ easy to spot when bumping.
 
 ### Changed
 
-- **genre-tree**: `TrackListSidebar` (fixed layout) anchors to the top-right, just below the app header, and grows with its content up to the player instead of sitting above the player.
+- **app-kit-ui**: Anchor fixed track list sidebars below the header and let them grow toward the player.
+
+### Fixed
+
+- Keep tree nodes sized by song count while an artist filter is active, including while artist details load.
+
+### Changed
+
+- Upgrade genre-tree-view to 6.4.0 for density-aware node sizing.
+
+### Breaking
+
+- `TrackListProvider` no longer takes `listEndpoint` / `listQueryKey`. It used them to keep a page-1 library list query running whenever a tracklist existed, and to swap in fresh copies of matching tracks. On grow that query was unfiltered, so a curation invalidation or a window refocus ran a `COUNT(*)` over the whole song table and got a 503. Migration: drop both props. To show an edited track in the playing list, call `useTrackList().updateTrack(serverTrack)` from the mutation's `onSuccess`.
+
+### Added
+
+- Share genre and artist panels, and control playback and track navigation from the player.
+- `useTrackList().updateTrack(track)` replaces the track with the same `uuid` across every loaded page of the current tracklist, and replaces the selected track if it is that one. It does nothing when no track matches.
+- `GenreTreeView` accepts a host control beside the tree controls, including in outline view.
+
+## [27.1.0] - 2026-10-30
+
+### Added
+
+- `GenreTreeView`'s admin action band has a "Make pop" / "Make core" toggle on a root's direct children, which writes the genre's `side`. "Make pop" is disabled, with a tooltip naming the current pop child, when the root already has one. Requires a grow API that accepts `side` on genre updates.
+- `CriteriaUpdateSchema` accepts `side`; `GenreActionBand` takes `side`, `onToggleSide` and `toggleSideDisabledReason`.
+
+## [27.0.0] - 2026-10-30
+
+### Breaking
+
+- `@behindthemusictree/app-kit-ui` peer dependency `@behindthemusictree/ui` is now `^0.10.0` (was `^0.7.0`), required by `@behindthemusictree/genre-tree-view` 6.3.0.
+
+### Changed
+
+- `GenreTreeView` on screens under 768px (`regions` placement): the search bar spans the width below the app header, and the artist chip, view-mode switch, Rotation and Add root sit in one horizontally scrolling row under it; the panel edge tab is hidden (the info panel's bottom-sheet grabber replaces it).
+- Touch screens: `GenreSearch` previous/clear buttons, search results and the artist chip get 44px touch targets (`--layout-touch-target`); the results list is capped at half the viewport height; the input asks for a search keyboard key and disables autocomplete.
+- Bumps `@behindthemusictree/genre-tree-view` to 6.3.0, `@behindthemusictree/ui` to `^0.10.0` and `@behindthemusictree/brand` to `^12.7.0`.
+
+### Fixed
+
+- `CriteriaPlaylistSimpleSchema`/`CriteriaPlaylistDetailedSchema` accept a genre playlist without `viewsCount`, so the tree loads from an API that sends no view counts (hear-api, or grow-api before 14.5.0) instead of failing schema validation. `GenreTreeView` then hides the song-count/views toggle and sizes by songs; `genrePlaylistSize` throws if asked for views a playlist doesn't carry.
+
+## [26.1.0] - 2026-10-29
+
+### Added
+
+- `GenreTreeView` accepts an optional `onParentChanged({ genre, from, to })`, called after the Parent popup moved a genre. The uuids are genre (criteria) uuids, so a host can undo with `PUT genres/<genre>/ { parent: from }`; `from` is `null` for a root genre. The `ParentChange` type is exported.
+- Search field shows a spinner in place of the magnifier (after a 300 ms grace delay) while artist results load; `useArtistSearch` returns a new `pending` flag and `GenreSearchExtraResults` accepts `loading`.
+
+## [26.0.0] - 2026-10-29
+
+### Breaking
+
+- **Breaking:** `useVisibleGenrePlaylists` and `useGenreTreeViewState` no longer report `isLoading` or serve an empty `genrePlaylists` while an artist's counts load: the current tree stays (the full tree, or the previous artist's footprint) and the new `isFetching` is true meanwhile. `isLoading` is true only until the first tree arrives.
+- **Breaking:** `useUpdateGenre`'s mutation settles once the PUT succeeds instead of after the tree refetch, so `mutate(..., { onSuccess })` callers (e.g. closing a popup) run sooner; the refetch is shown through the busy indicator.
+- `genre-tree-view` 6.1.0 or later is now required (the `busy` prop).
+
+### Added
+
+- `GenreTreeView` shows one busy indicator on the tree (`busy` on `GenrePlaylistTreeWheel` and `GenrePlaylistTreeWheelRadialPopCore`) while the size metric re-renders, the tree refetches, an artist's counts load, or a genre update is in flight.
+- `genreUpdateMutationKey`, the mutation key of `useUpdateGenre`.
+- Genre playlists carry the optional `scene` (`commercial` | `underground`); the pop-core wheel forwards it so Core electronic's commercial and underground subtrees are stacked radially (genre-tree-view 5.1.0).
+
+### Changed
+
+- Switching the size metric or the artist filter no longer swaps the tree for the skeleton; the tree stays and updates in place. The skeleton only shows on the first load.
+
+## [25.0.0] - 2026-10-29
+
+### Breaking
+
+- **Breaking:** `genre-tree-view` moves to 6.0.0, which removes the info panel edit mode. `GenreTreeView`, `TreeWheelRadialPopCore` and `InfoPanelCurationProps` no longer accept `editMode`, `onEditModeChange`, `renderTitleEditor` or `renderParentsEditor`. `renderDangerZone` now renders whenever the tree is not `readOnly`.
+- `CriteriaPlaylistSimple` / `CriteriaPlaylistDetailed` now require `viewsCount`, the summed YouTube views of the genre's songs; the API must serve it (grow-the-music-tree-api 14.5+) and test fixtures must include it.
+
+### Added
+
+- `GenreTreeView` toggle (bottom left of the zoom controls) sizing nodes by song count or by song views, via the `floatingControlsLeading` slot of `@behindthemusictree/genre-tree-view` 5.3.0 or later (now required). Controlled with the `sizeMetric` / `onSizeMetricChange` props, or uncontrolled starting on songs. Hidden, and sizing forced to songs, while an artist filters the tree.
+- `sizeMetric` and `floatingControlsLeading` props on `GenrePlaylistTreeWheel` and `GenrePlaylistTreeWheelRadialPopCore`.
+
+## [24.0.1] - 2026-10-29
+
+### Security
+
+- `CriteriaOverviewSchema.summarySourceUrl` and `musicbrainzLink` in `MbArtistDetailedSchema` / `MbRecordingDetailedSchema` now reject non-`http(s)` URLs (`javascript:`, `data:`, `ftp:` ...) through the shared `HttpUrlSchema`, like the artist URLs in 23.0.1. `summarySourceUrl` is rendered as a link by `GenreDetailExtras`.
+
+### Fixed
+
+- `useValidatedMutation` no longer throws when a validation issue path contains a symbol key (zod 4 paths are `PropertyKey[]`); path segments are stringified.
+
+## [24.0.0] - 2026-10-29
+
+### Breaking
+
+- **Breaking:** `zod` moves from 3 to 4 (`^4.6.6`) in `app-kit` and `app-kit-ui`, closing the open zod 3 advisory. Schemas passed into app-kit hooks (`useFetchGenrePlaylist`, `useValidatedMutation`, `useQueryWithParse`, the criteria schemas) must be built with zod 4. `useFetchGenrePlaylist` is now generic over the schema output (`<T>(…, schema: z.ZodType<T, unknown>)`) instead of the schema type.
+- **Breaking:** zod 4 validates more strictly, so payloads that parsed before can now fail: `.uuid()` enforces RFC 9562 version and variant bits; `.datetime()` rejects offsets such as `+02:00` unless `{ offset: true }`; `.url()` applies stricter hostname checks; and the `HttpUrlSchema` error message changed.
+
+### Changed
+
+- `HttpUrlSchema` uses `z.url({ protocol: /^https?$/ })`; `parseWithLog` logs `z.flattenError`; `useValidatedMutation` reads `ZodError.issues` and uses the two-argument `z.record`.
+
+## [23.0.1] - 2026-10-29
+
+### Security
+
+- `ArtistDetailedSchema` now rejects non-`http(s)` URLs (`javascript:`, `data:`, `ftp:` …) in `image.url`, `image.pageUrl`, `image.licenseUrl` and `links[].url` through a shared `HttpUrlSchema`, so a bad payload fails parsing instead of reaching the links `ArtistPhoto` and the artist panel render. grow-api already enforces this on import.
+
+## [23.0.0] - 2026-10-28
+
+### Fixed
+
+- `GenreTreeView` with `placement="regions"`: the info panel's edge tab fades in with the tree instead of showing before the panel while the data loads.
+
+### Changed
+
+- `GenreTreeView`: the info panel body is composed in the same order in compact and expanded mode: action toolbar, action band, Summary, Family, essential tracks, then the songs list, with Ancestors in the left column when expanded. The separate "Song count" row is gone; the count stays in the songs section title.
+- **Breaking:** the `renderExtraDetails` prop of `TreePerRoot`, `TreeWheel` and `TreeWheelRadialPopCore` is now `renderInfoPanelBody(node, sections) => { primary, aside? }` (types from `@behindthemusictree/genre-tree-view`). Requires `@behindthemusictree/genre-tree-view` 5.0.0.
+- `GenreTreeView` with `placement="regions"`: the info panel's edge tab (hide / extend) works without `collapsed`, `onCollapsedChange` or `onExpandedChange`; they now only control the state. The view sets `--layout-left-w: 0px` on the document while the panel is hidden, so hosts no longer need to.
+
+### Removed
+
+- Vercel playground deployment: the `Sync playground env to Vercel` workflow, `scripts/sync-vercel-playground-env.mjs`, `apps/playground/vercel.json` and the `VITE_VERCEL_ENV` define. The playground is now run locally only.
+
+### Changed
+
+- Tooling moves to Node 26: `.nvmrc` pins the major, root `engines.node` is `>=26 <27` (enforced by `engineStrict`), and the CI workflows read `.nvmrc`. The published packages are unaffected.
+
+## [22.0.0] - 2026-10-28
+
+## [21.0.0] - 2026-10-28
+
+### Breaking
+
+- `app-kit-ui` requires `@behindthemusictree/ui` `^0.7.0` (was `^0.4.0`).
+- `GenreTreeView`: selecting a genre no longer closes the open artist (`onArtistUuidChange(null)` is not called). The artist stays as a filter; hosts that relied on the exclusion to clear their artist state must clear it themselves.
+- `GenreTreeView`: with an artist open, the tree (and the `genrePlaylists` hosts validate against) is pruned to the genres the artist has songs in, so a URL-restored genre outside that footprint is dropped.
+- `PlayArtistOptions` gains an optional `genreUuid`, and `TrackListOriginFromArtist` a trailing optional `genreUuid` constructor argument.
+
+### Added
+
+- Artist filter in `GenreTreeView`: the tree shows only genres the artist has songs in (plus Mainstream Pop and the scene children of Core electronic), a chip next to the search bar shows the artist (click reopens the panel, x clears the filter), a selected genre's panel lists only the artist's songs, and play buttons queue only the artist's songs in that genre.
+- `useArtistGenreCounts`, `useVisibleGenrePlaylists`, `pruneGenrePlaylistsForArtist`, `ArtistGenreCountSchema` in `@behindthemusictree/app-kit/genre-tree`; `useGenreTreeViewState` takes an optional `artistUuid`.
+- `GenrePlaylistTracks` and `GenreDetailExtras` take an optional `artist`; the tree components take an optional `playback`.
+- `GenreTreeView` opens an artist detail panel (photo, type, country, years, links, members, songs, discography) when an artist search suggestion is picked. It is uncontrolled by default; `artistUuid` / `onArtistUuidChange` control it, e.g. to sync it with the URL. Member names switch the panel to that artist unless the host gives `renderArtistLink`.
+- Like a genre, the artist panel has no title or close button of its own: its name fills the search field, whose clear button closes it, and the edge tab extends, shrinks and hides it. `artistExpanded` / `onArtistExpandedChange` control its expanded state (uncontrolled, each artist opens compact).
+- `useArtist(uuid, getBackendBaseUrl)`, `ArtistDetailedSchema` and its types (`ArtistDetailed`, `ArtistImage`, `ArtistMembership`, `ArtistLink`, `ArtistAlbum`, `ARTIST_LINK_KINDS`) in `@behindthemusictree/app-kit/genre-tree`.
+
+### Changed
+
+- `app-kit-ui` uses genre-tree-view 4.8.0: the overlay panel draws the dividers between its content blocks, and can hide its title and close button.
+- `GenreTreeView`'s `onArtistSelect` is optional and only notifies the host; the view opens the artist itself.
+- `GenreTreeView`: opening an artist clears the selected genre (`onSelectedNodeIdChange(null)`); a selected genre's panel takes precedence over the artist panel. A host `overlayPanel` still takes precedence over the artist panel.
+- `artistSearchBaseUrl` also serves the artist panel.
+
+## [20.0.0] - 2026-10-28
+
+### Breaking
+
+- Genre and genre-playlist UUIDs are branded types, `GenreUuid` and `GenrePlaylistUuid`, exported from `@behindthemusictree/app-kit/genre-tree`. Genre endpoints, query keys and hooks (`useUpdateGenre`, `useDeleteGenre`, `useRefreshGenreTree`, `useGenre`, `useGenrePlaylist`, `TrackListContext`, `songs.byGenre`) now require the branded type. Plain strings no longer compile.
+- Criteria and song schemas (`CriteriaMinimum`, `CriteriaDetailed`, `TrackBase`, `SongDetailed`, …) now output branded `uuid` and `parent` values. Consumer schemas that declare those fields as plain strings must use `GenreUuidSchema` or `GenrePlaylistUuidSchema`.
+- `getReparentCandidates` no longer returns the criteria-less "Genreless" root, and returns `ReparentCandidate` (non-null `criteria`).
+- `ChangeParentPopup`'s `genrePlaylist` prop is now `CriteriaPlaylistSimple & { criteria: CriteriaMinimum }`.
+- `GenreSearch` and `useGenreSearch` are generic over the playlist type they return.
+
+### Added
+
+- `GenreTreeView` with `placement="regions"`: an expandable `overlayPanel` (one with `onExpandedChange`, e.g. an artist) takes the info panel's slot. It is compact first, and the edge tab extends, shrinks, hides and shows it like the genre panel. Requires `genre-tree-view` 4.6.0.
+- `@behindthemusictree/app-kit/genre-tree/testing` exports `makeGenreUuid` and `makeGenrePlaylistUuid` for test fixtures.
+
+### Fixed
+
+- Changing a genre's parent from the genre tree sent the genre-playlist UUID to `PUT /v1/genres/{uuid}/`, which the API rejected with 404. It now sends the genre's criteria UUID.
+
+## [19.1.0] - 2026-10-27
+
+### Added
+
+- `GenreTreeView` accepts `defaultViewport` and `onViewportChange` (and re-exports the `GenreTreeViewport` type) so a consumer can restore and persist the pan/zoom position, e.g. in the URL. Wheel, pop-core and stacked views forward them (stacked: only to the tree holding the selection); outline ignores them.
+
+## [19.0.0] - 2026-10-27
+
+### Breaking
+
+- `useGenreTreeViewState` no longer returns `requestReparent`, `cancelReparent`, `reparentingGenreUuid`, `reparent` or `isReparenting`.
+- `TreeWheel`, `TreePerRoot` and `TreeWheelRadialPopCore` no longer take `reparentingGenreUuid`, `onReparentRequest` or `onReparent`; genre-tree-view's node "Change parent" toolbar action is no longer wired.
+
+### Added
+
+- `PanelEdgeTab`: a Maps-style double edge tab (two stacked chevron buttons) for side panels.
+- `GenreTreeView` takes `collapsed` / `onCollapsedChange` (regions placement) and draws the detail panel's edge tab while a genre is selected: hide, extend, show and shrink.
+- `getReparentCandidates` lists the genres a genre can be moved under (excludes itself, its descendants and its current parent).
+
+### Changed
+
+- `PlayerPanel` drops its header expand chevron and song-list toggle in favor of an edge tab on its inner edge (extend, hide the song list leaving only the video, show it again, shrink); the panel uses the `--radius-panel` radius and a shadow instead of a border.
+- `GenreSearch` is a 3rem pill sized from the detail panel width and panel inset tokens.
+- Bumped `@behindthemusictree/brand` to 12.5.0 and `@behindthemusictree/genre-tree-view` to 4.4.0.
+- `BasePopup` takes `fitContent` to size to its content instead of filling its max width; the "Change parent" popup uses it.
+- The Parent action in `GenreTreeView` opens a "Change parent" popup with a genre search instead of picking the target in the tree.
+- `GenreActionBand` wraps its action icons onto new lines instead of scrolling horizontally, and groups the Add / Rename / Parent actions in a separate "Admin" section.
+
+### Fixed
+
+- A failed parent change shows the app's error popup through the popup context instead of leaving the "Change parent" form open with no feedback; field errors render in the form.
+- `BasePopup` leaves a gap between its content and the separator above the OK/Cancel buttons, so the last field no longer touches the line.
+
+## [18.5.2] - 2026-10-27
+
+### Changed
+
+- `PlayerPanel` width uses brand's `--layout-right-w` (the right column), shared with the app header row.
+- Bumped `@behindthemusictree/brand` to 12.4.0.
+
+## [18.5.1] - 2026-10-27
+
+### Fixed
+
+- `app-kit-ui/genre-tree/styles.css` now re-exports genre-tree-view's stylesheet instead of a copy frozen at build time, so the styles always match the installed genre-tree-view version.
+
+## [18.5.0] - 2026-10-27
+
+### Added
+
+- `GenreTreeView` takes `placement="regions"`: the info panel and its expanded/overlay modes sit in brand's left/center/right columns, and the overlay starts below the header band.
+- `PlayerPanel` takes controlled `expanded` / `onExpandedChange`; extended, it spans the center and right columns.
+
+### Changed
+
+- Bumped `@behindthemusictree/brand` to 12.3.0 and `@behindthemusictree/genre-tree-view` to 4.3.0.
+
+## [18.4.1] - 2026-10-27
+
+### Fixed
+
+- `PlayerPanel` takes its position and widths from brand's layout tokens (`--layout-gutter`, `--layout-header-h`, `--layout-player-panel-w`, `--layout-detail-panel-w`) instead of px, so it is back to 22.5rem wide and scales with the root font size.
+
+## [18.4.0] - 2026-10-27
+
+### Added
+
+- `PlayerPanel` (`app-kit-ui/genre-tree`): player panel with video, song list and a toggle that extends the panel leftwards (`extendedWidth` to stop short of a detail panel).
+
+### Changed
+
+- `GenreTreeView`: `controlsOrientation` now defaults to `"horizontal"` (was the library default, vertical), so consumers no longer need to pass it.
+
+### Fixed
+
+- `TrackItem`: render the duration column only when `renderDuration` is passed, so the genre badge sits flush right instead of leaving a 64px empty gap.
+
+## [18.3.0] - 2026-10-27
+
+### Changed
+
+- Arbitrary px/em spacing in `app-kit-ui` is replaced by Tailwind scale steps or rem (`px-[14px]` → `px-3.5`, `p-[0.8em]` → `p-3`, 13px text → `text-[0.8125rem]`, the search width, track-column widths and header insets), so the components render the same under any host root font size.
+- The tree containers no longer set `--gtv-info-panel-top`; the info panel takes its offset from brand's `--layout-gutter`.
+- Bump `@behindthemusictree/genre-tree-view` to 4.2.0 (rem spacing, brand layout tokens) and `@behindthemusictree/brand` to ^12.2.0.
+
+## [18.2.1] - 2026-10-27
+
+## [18.2.0] - 2026-10-27
+
+### Changed
+
+- Bump `@behindthemusictree/genre-tree-view` to 4.1.0: the wheel / pop-core loading skeleton now draws round node dots and radial links like the loaded wheel.
+
+### Fixed
+
+- `GenreActionBand`: drop the leftover `p-[0.8em]` button padding, which doubled the band's vertical space.
+
+## [18.1.0] - 2026-10-27
+
+### Changed
+
+- `useArtistSearch` keeps the previous results on screen while the next query is typed and loading, instead of blanking the list on every keystroke; they clear only when the text drops below two characters. Tested in `useArtistSearch.test.ts`.
+
+## [18.0.0] - 2026-10-27
+
+### Breaking
+
+- app-kit-ui buttons no longer carry overrides (`bg-transparent`, `p-0`, `border-0`, `rounded-none`, `[font-size:inherit]`) that existed to cancel a global `button { background; padding; border-radius }` rule. A consumer that still defines such a rule must remove it, or these buttons render with its fill and padding.
+
+### Changed
+
+- `GenreActionBand` items and the `TrackListSidebar` close button declare their `0.8em` padding explicitly; the `ClampedText` toggle and the `GenrePlaylistTracks` retry button no longer get stray padding.
+
+## [17.2.0] - 2026-10-26
+
+### Changed
+
+- Songs without a YouTube video show a crossed-out YouTube icon (accessible name "No video available") instead of the "No video available" text in `TrackItem` and `GenrePlaylistTracks`.
+
+## [17.1.1] - 2026-10-26
+
+### Changed
+
+- Bump `@behindthemusictree/genre-tree-view` to 4.0.0: genre counts are now shown as given (`tracksCount` is already a subtree total) instead of being rolled up again, which fixes double-counted genre counts.
+
+## [17.1.0] - 2026-10-26
+
+### Changed
+
+- Genre panel (`GenreDetailExtras`, `GenreSearch`, `GenreActionBand`, `Rating`) reads the semantic brand tokens (`--color-surface`, `--color-surface-muted`, `--color-border`, `--color-text-muted`), so it follows `data-theme="dark"`; light mode is unchanged.
+- Genre action band buttons show a focus ring on keyboard focus.
+- Genre description and default summary clamp to three lines with a "Show more" / "Show less" toggle when they overflow.
+
+## [17.0.0] - 2026-10-26
+
+### Breaking
+
+- Song unification (grow-api >= 13.2.0 required: `library/songs`, `essentialSongs`). Renamed: `RecordingDetailed` -> `SongDetailed`, `RecordingDetailedSchema` -> `SongDetailedSchema`, `isRecording` -> `isSong`, `recordingUnplayableReason` -> `songUnplayableReason`, `ArtistRecordingsOrdering` -> `ArtistSongsOrdering`, `editGenreRecordingPages` -> `editGenreSongPages`, `startRecordingUuid` -> `startSongUuid` (`PlayGenrePlaylistOptions`, `PlayArtistOptions`), `renderRecordingLeading`/`renderRecordingActions` -> `renderSongLeading`/`renderSongActions` (`GenrePlaylistTracks`, `GenreDetailExtras`, `GenreTreeView`).
+- `libraryEndpoints.reference.recordings` -> `.songs` (calls `library/songs/`), `libraryQueryKeys.reference.recordings` -> `.songs` (keys `referenceSongs`), `makeRecordingEndpoints`/`makeRecordingQueryKeys` -> `makeSongEndpoints`/`makeSongQueryKeys`.
+- Criteria `essentialTracks` -> `essentialSongs` in `CriteriaDetailed`, `CriteriaOverview`, `CriteriaCreation` and `CriteriaUpdate` payloads.
+- MusicBrainz names are unchanged: `MbRecording*`, `musicBrainzRecordingUrl`, `musicbrainzRecordingId`.
+
+## [16.1.0] - 2026-10-26
+
+### Changed
+
+- Requires `@behindthemusictree/ui` ^0.3.0, `@behindthemusictree/brand` ^12.1.0 and `@behindthemusictree/genre-tree-view` 3.1.0 (panel colors and text size follow brand tokens). Loading placeholders in the genre panel use `ui`'s `Skeleton`, the action band border uses `--color-border`, and `Rating` stars use `--color-accent-rating`.
+- `GenreTreeView`'s view-mode toggle is a `SegmentedControl` (one group, `aria-pressed`); Pop/Core and Outline stay disabled with an explanatory tooltip when the tree has no Mainstream Pop root. Requires `@behindthemusictree/ui` ^0.4.0.
+- `TrackListSidebar` sets `data-theme="dark"` and reads brand surface/text tokens instead of writing gray colors directly.
+
+## [16.0.0] - 2026-10-26
+
+### Added
+
+- `useArtistSearch(getBackendBaseUrl, text)` and `ArtistSearchResultSchema` / `ArtistSearchResultsSchema` (`@behindthemusictree/app-kit/genre-tree`): debounced `artists/search/` query (2+ characters, 8 results).
+- `GenreTreeView` searches artists by default: matches show under an "Artists" group in the search dropdown (name, disambiguation, matched alias), and the field is labelled "Search" instead of "Search a genre". `artistSearchBaseUrl` points the artist query at another backend; `artistSearch={false}` turns it off.
+
+### Breaking
+
+- `GenreTreeView`: `onArtistSelect` is required unless `artistSearch={false}`.
+- `GenreTreeView`: the `onSearchQueryChange` and `searchExtraResults` props from 14.0.0 are removed; artists are built in. `GenreSearch` keeps `onQueryChange` / `extraResults`, and labels its field "Search" when `extraResults` is set.
+
+### Changed
+
+- Genre detail panel: the description and the Summary / Essential tracks sections share the panel's 14px gutter and a 13px body text size; the Wikipedia source link sits inside the Summary section; Essential tracks render as a divided list instead of bullets. The action band uses the same gutter.
+- `GenrePlaylistTracks`: rows are at least 32px tall with a hover background, the current track is highlighted in the primary color, the play button is a 24px target and always visible on touch devices.
+- `TrackListSidebar` / `TrackItem` no longer rely on the consumer's Tailwind config (`trackListName`, `144` spacing, `.text-overflow`); the close control is a labelled `<button>`.
+- `MusicBrainzRecordingLink` inherits the surrounding text color (dimmed, full opacity on hover/focus), so it reads on both the light panel and the dark track list.
+
+## [15.0.0] - 2026-10-26
+
+### Added
+
+- `TrackNounProvider` / `useTrackNoun()` (`@behindthemusictree/app-kit/track-noun`) and a `capitalize` helper: the app supplies the noun its UI uses for tracks (`{ singular, plural }`).
+
+### Breaking
+
+- App-kit-ui components no longer hardcode "track(s)": `TrackListSidebar`, `GenreDetailExtras` (the "Essential …" heading), `GenrePlaylistTracks`, `TrackUploadPopup` and the genre tree components read the noun from `useTrackNoun()`, which throws outside a `TrackNounProvider`. Wrap the app in `<TrackNounProvider singular="song" plural="songs">` (grow) or `singular="track" plural="tracks"` (hear).
+- Requires `@behindthemusictree/genre-tree-view` 3.0.0; the tree components pass it `itemCountLabel` (e.g. "Song count").
+
+## [14.0.0] - 2026-10-26
+
+### Added
+
+- `GenreSearch` / `GenreTreeView`: optional `onQueryChange` / `onSearchQueryChange` and `extraResults` / `searchExtraResults` let the host add a second result group (e.g. artists) to the search dropdown, shown under "Genres" and the group's label. Unset, the dropdown is unchanged.
+- `GenreTreeView` (wheel, pop-core): genre-tree-view's "Previous" button now sits inside the search field, left of the genre name, and fades in sliding from the left; the field's left padding widens to make room.
+- `GenreActionBand`: Google Maps-style band under the detail panel header (icon over label) holding Play/Pause, Focus, Add, Rename, Parent and the `additionalActions`; genre-tree-view's own toolbar and its ⋮ menu are hidden.
+
+### Breaking
+
+- `GenreSearch`: `onZoomIn`, `onPlayPause` and `isPlaying` are removed; those actions moved to the detail panel's action band. The search icon now sits right of the field's text, left of the clear button.
+
+## [13.5.0] - 2026-10-26
+
+### Added
+
+- `useUpdateGenre` returns `isPending`.
+
+### Breaking
+
+- `useGenreTreeViewState` returns `requestReparent`, `reparent` and `isReparenting` in place of `setReparentingGenreUuid`. The exported tree components (`GenrePlaylistTreePerRoot` and the wheel trees) take `onReparentRequest` / `onReparent` instead of `setReparentingGenreUuid`, and no longer take `getBackendBaseUrl`. `GenreTreeView` consumers are unaffected.
+
+### Changed
+
+- `updateGenreParent` now resolves after the update and the tree refetch, and rejects when the update fails (it used to resolve at once).
+- `useCreateGenre`, `useUpdateGenre` and `useDeleteGenre` stay pending until their genre and genre-playlist invalidations have refetched, so consumers don't see the stale tree as settled. `useInvalidateAllGenrePlaylistQueries` now returns a promise of those invalidations.
+
+### Fixed
+
+- Tree drag-to-reparent leaves reparent mode when the mutation fails, not only on success, and keeps doing so after a view-mode switch mid-update. A second drop is ignored while an update is running.
+- Deleting a genre no longer refetches the deleted genre's detail and overview (which 404ed and held the delete pending).
+
+## [13.4.1] - 2026-10-26
+
+### Fixed
+
+- A failed non-GET/HEAD request now rejects with the `AppError` (after calling `handleError`) instead of resolving to `null`, so mutations reach `onError` rather than failing Zod output validation with "Expected object, received null". GET/HEAD keep resolving to `null` after `handleError`.
+
+## [13.4.0] - 2026-10-22
+
+### Added
+
+- `isUmbrella` (optional) on the tree/list criteria-playlist payload, passed to the genre tree as `umbrella` (badge in the info panel, italic labels) and flagged in `GenreSearch` results.
+
+### Changed
+
+- `@behindthemusictree/genre-tree-view` 2.8.0 → 2.9.0.
+
+## [13.3.0] - 2026-10-21
+
+### Added
+
+- `GenreTreeView`: the genre search field now holds a Zoom in button (pop-core, when the selected genre is zoomable) and a Play/Pause button for the selected genre; the detail panel's own Zoom in and Play buttons are hidden in their favor.
+- `GenreTreeView`: optional `allowWheelRotation` prop to control wheel rotation from the host (hides the built-in Rotation toggle), and `showAddRoot` (default `true`) to hide the built-in Add root button.
+- `GenreSearch`: optional `onZoomIn`, `onPlayPause` and `isPlaying` props.
+
+### Changed
+
+- `GenreTreeView`: the detail panel header sits flush under the search field with symmetric padding.
+
+## [13.2.0] - 2026-10-21
+
+### Changed
+
+- `GenreTreeView`: the detail panel header no longer repeats the selected genre's name, since the search bar floated over it already shows it (genre-tree-view 2.8.0's `hideInfoPanelTitle`, forwarded by `TreeWheel`, `TreeWheelRadialPopCore` and `TreePerRoot`). The colored header now scrolls with the panel, and a hovered wheel label takes its node's color.
+
+## [13.1.0] - 2026-10-21
+
+### Changed
+
+- `GenreTreeView`: the genre search bar now sits inside the detail panel's header, Google Maps style — the panel starts at the top of the tree and its header fill extends behind the search bar (via genre-tree-view's `--gtv-info-panel-header-inset`), in the wheel, pop-core and outline views. The search bar moves to 20px from the top-left and narrows to 264px so it keeps an 8px gutter inside the 280px panel.
+- `GenreTreeView` (pop-core): the zoom navigation is genre-tree-view 2.7.0's single breadcrumb centred at the top of the wheel (bottom-left in narrow containers), clear of the search bar and the detail panel; the Parent button is gone and long trails collapse behind "…".
+
+## [13.0.0] - 2026-10-21
+
+## [13.0.0] - 2026-10-21
+
+### Breaking
+
+- `@behindthemusictree/app-kit` is now **headless**: no styling, Tailwind, `@behindthemusictree/ui`, `lucide-react`, `react-icons`, `clsx`, `tailwind-merge` or `@behindthemusictree/genre-tree-view` dependency or peer. Every styled component moved to the new, lockstep-versioned `@behindthemusictree/app-kit-ui` package (peers on `app-kit` `^13.0.0` and `ui`).
+
+| Export | Before | Now |
+| --- | --- | --- |
+| `BasePopup`, `PopupTitle`, `PopupButtons`, `AuthPopup`, `AuthErrorPopup`, `SpotifyAuthErrorPopup`, `InternalErrorPopup`, `NetworkErrorPopup`, `TrackUploadPopup` | `app-kit/popup` | `app-kit-ui/popup` |
+| `AuthCallbackHandler` | `app-kit/auth` | `app-kit-ui/auth` |
+| `GenreTreeView`, `GenreTreeViewSkeleton`, `GenreSearch`, `TrackListSidebar`, `TrackItem`, `TrackPositionPlayPause`, `Rating`, `GenrePlaylistTracks`, `GenreDetailExtras`, `ArtistNames`, `MusicBrainzRecordingLink`, `playlist-tree/*` | `app-kit/genre-tree` | `app-kit-ui/genre-tree` |
+| `@behindthemusictree/genre-tree-view` styles | `app-kit/genre-tree` | `app-kit-ui/genre-tree/styles.css` |
+
+- `hasMainstreamPopRoot` takes `{ parentId: string | null; name: string }[]` instead of `GenreTreeNode[]`.
+- Styled components read colors from the CSS tokens listed in the `app-kit-ui` README instead of hard-coded Tailwind colors.
+
+### Added
+
+- `app-kit` headless hooks: `useAuthCallback`, `useGenreTreeViewState`, `useGenreSearch`, `useTrackUpload`.
+- `GenreTreeView` (in `app-kit-ui`) takes `className` on its root, with no default `mt-4`, and `showDisplayOptions` (default `true`).
+
+## [12.0.0] - 2026-10-21
+
+### Breaking
+
+- `@behindthemusictree/ui` is now a **peer dependency** (`^0.2.0`) instead of a bundled dependency. Apps must install it themselves, so they own the single copy of the design layer; the apps already import it directly. Add `@behindthemusictree/ui` to your `dependencies` when bumping.
+
+### Removed
+
+- Unused `@behindthemusictree/brand` dependency (it was only referenced in doc comments); apps install `brand` directly.
+
+## [11.8.0] - 2026-10-20
+
+### Changed
+
+- Bump `@behindthemusictree/genre-tree-view` to 2.5.0 (info panel mini tree with a collapsible Family section; `overlayPanel` honours `--gtv-overlay-panel-right`).
+
+## [11.7.0] - 2026-10-20
+
+### Added
+
+- `GenreTreeView` accepts `overlayPanel?: { title; content; onClose }` and forwards it to every view; it renders over the map at the expanded detail panel's size, independent of selection (requires `@behindthemusictree/genre-tree-view` 2.4.0). In the stacked view only the first root draws it.
+
+### Changed
+
+- Bump `@behindthemusictree/genre-tree-view` to 2.4.0.
+
+## [11.6.0] - 2026-10-20
+
+### Added
+
+- `CriteriaOverview` carries `description` (English Wikidata short description) and `summarySourceUrl` (Wikipedia source of the summary). The genre panel shows the description above the Summary and a "Source: Wikipedia" link after it, outside the `renderSummary` slot.
+
+## [11.5.0] - 2026-10-19
+
+### Added
+
+- `GenreTreeView` accepts a controlled selection: `selectedNodeId?: string | null` and `onSelectedNodeIdChange?: (nodeId: string | null) => void`. Without them the selection stays internal.
+
+### Fixed
+
+- `useDeleteGenre` no longer fails with "Invalid response from server" on the backend's `204 No Content`. It now bypasses the global error popup so failures reject the mutation instead of resolving as `null`; consumers handle `onError`.
+
+## [11.4.0] - 2026-10-19
+
+### Added
+
+- `GenreTreeView` (and the wheel / stacked / pop-core wrappers) pass through the genre-tree-view 2.3.1 info panel curation props: `editMode`, `onEditModeChange`, `renderTitleEditor`, `renderParentsEditor`, `renderDangerZone`, `expanded`, `onExpandedChange`.
+- Detail slots on `GenreTreeView`: `renderSummary` and `renderEssentialTracks` replace the default sections; `renderRecordingLeading`, `renderRecordingActions` and `renderTracksToolbar` decorate the recordings list.
+- `editGenreRecordingPages` helper to optimistically edit the cached genre recordings infinite query.
+- Recordings list shows title, artist and album as columns when the info panel is expanded.
+
+### Changed
+
+- Bump `@behindthemusictree/genre-tree-view` to 2.3.1: info panel edit mode (Edit/Done toggle, title / parents / danger-zone editor slots) and an expandable panel, now passed through by the wrappers (see Added).
+- Bump `@behindthemusictree/genre-tree-view` to 2.2.1: pop-core back controls keep history from the displayed focus (no stale Previous after consumer-driven focus changes or deleted nodes; Previous stays reachable after Root).
+- Bump `@behindthemusictree/genre-tree-view` to 2.2.0: any node with children is zoomable in the pop-core wheel; back controls offer Previous / Parent / Root, and `onFocusGenreChange` can now report reasons `"previous"` and `"root"`; search outside the current view refocuses on the result's top-level root.
+
+## [11.3.1] - 2026-10-15
+
+### Fixed
+
+- Bump `@behindthemusictree/genre-tree-view` to 2.1.0: root labels in the pop-core wheel are now clickable.
+
+## [11.3.0] - 2026-10-15
+
+### Changed
+
+- `GenrePlaylistTracks` (reference scope) pages recordings by keyset `cursor` (read from the `next` link) instead of `page`; requires grow-api >= 12.10.0.
+
+### Fixed
+
+- `GenrePlaylistTracks` shows an error with a Retry button when the request fails, instead of "—" (which now means a genuinely empty catalogue).
+
+## [11.2.0] - 2026-10-15
+
+### Changed
+
+- `GenrePlaylistTracks` (reference scope) requests `withTotal=false`: no `COUNT(*)` on huge genre subtrees; the `Tracks` title shows no count when the backend returns a null total.
+
+## [11.1.0] - 2026-10-14
+
+### Changed
+
+- Bump `@behindthemusictree/genre-tree-view` to 2.0.0: node actions (play, add, rename, …) now render in the node info panel instead of a hover toolbar.
+- `GenreTreeView`: removed the "Toolbar" toggle, since the actions are always available in the info panel.
+
+## [11.0.0] - 2026-10-14
+
+### Breaking
+
+- `useTrackList().playNewTrackList(tracks, startTrackUuid, origin, scope)` is removed. Use `playNewTrackListFromArtist(artist, scope, { ordering, startRecordingUuid? })`, which fetches the artist's playable recordings (`library/recordings/?artist=&playable=true&ordering=&page_size=100`, requires grow-api >= 12.8.0) and pages lazily.
+- `ArtistTrackListOriginInput` is now `{ uuid, name }` (no `type`); `TrackListOriginFromArtist` takes `(artist, scope, ordering, from?)` and `TrackListFromArtist` takes `(tracks, origin, total, nextPage)`.
+
+### Added
+
+- `playNewTrackListFromArtist` and the `ArtistRecordingsOrdering` / `PlayArtistOptions` types.
+- `ArtistMinimumSchema` gains `isSpecialPurpose` (optional boolean; grow-api >= 12.8.0 sends it, hear-api does not yet).
+
+### Changed
+
+- `loadMore` and the near-end auto-load now work for artist lists as well as genre playlists.
+
+### Security
+
+- Bump `uuid` to 11.1.1 and `next` (dev) to ^15.5.27; override `postcss`, `source-map-js`, `esbuild` and `postcss-selector-parser` to patched versions in the dev/test dependency tree.
+
+## [10.4.1] - 2026-10-14
+
+### Added
+
+- `fetchGenrePlaylistTracksPage` takes an optional `from` track uuid (server `?from=`), and `TrackListOriginFromCriteriaPlaylist` carries it as `from` so later pages keep it.
+
+### Fixed
+
+- Playing a genre-catalogue row starts the queue at that track in one request (`?from=`, requires grow-api with genre-kit ≥ 0.46.1) instead of walking the playlist page by page; the queue no longer includes earlier tracks.
+- Playing a row whose track isn't in the playlist now rejects and shows an error popup instead of silently playing the playlist's first track.
+- `useInvalidateAllGenrePlaylistQueries` also invalidates the reference recordings queries, so the genre detail panel's catalogue refreshes after a genre edit.
+
+## [10.4.0] - 2026-10-14
+
+### Breaking
+
+- `getArtistHref` (on `TrackItem`, `TrackListSidebar`, `GenreTreeView`, `GenrePlaylistTracks`, `ArtistNames`) is replaced by `renderArtistLink(artist) => ReactNode`, and the `GetArtistHref` export by `RenderArtistLink`. Return your router's link (e.g. `<Link href={`/artists/${artist.uuid}`}>{artist.name}</Link>`) so navigation stays client-side and playback isn't interrupted by a full page reload. No consumer used `getArtistHref` yet.
+
+### Changed
+
+- Artist links in track lists render through the consumer's `renderArtistLink` (replacing `getArtistHref`); link styling (e.g. hover underline) is now the consumer's.
+
+### Fixed
+
+- Tracks in an artist list played via `playNewTrackList` now refresh with fresh list-query data, like single-track and genre-playlist lists.
+
+## [10.3.0] - 2026-10-14
+
+### Added
+
+- Optional `getArtistHref(artist)` prop on `TrackItem`, `TrackListSidebar`, and `GenreTreeView` (genre detail panel track list): when set, artist names render as links. New exports `ArtistNames` and `GetArtistHref`.
+- `useTrackList().playNewTrackList(tracks, startTrackUuid, origin, scope)` plays an arbitrary track list, with an artist origin (`{ type: "artist", uuid, name }`, type `ArtistTrackListOriginInput`). New `TrackListOriginType.ARTIST`, `TrackListOriginFromArtist` and `TrackListFromArtist`; the sidebar labels it "Artist".
+- `PlayerTrackArtist` gains an optional `uuid`.
+
+### Security
+
+- Narrow the `undici` override to `undici@<8.10.2` so it only lifts vulnerable versions and no longer pins undici to 8.x for future jsdom upgrades.
+
+## [10.2.0] - 2026-10-14
+
+### Breaking
+
+- `GenrePlaylistTracks` requires a new `genreUuid` prop (`GenreDetailExtras` passes it).
+- `playNewTrackListFromGenrePlaylist(genrePlaylist, scope, seed)` third argument is now `{ startRecordingUuid?: string }`: it fetches playlist pages until that recording is found (first track if absent) and keeps the loaded pages for `loadMore`. `GenrePlaylistTracksSeed` is removed; new exported type `PlayGenrePlaylistOptions`.
+- `genrePlaylistQueryKeys.reference.tracks` is removed (the reference detail panel now caches under `libraryQueryKeys.reference.recordings.byGenre`).
+
+### Changed
+
+- Genre detail panel (reference scope) lists the genre's whole recordings catalogue via `library/recordings/?genre=<uuid>`, playable or not; unplayable rows show their reason and have no play action, and the count is the catalogue total. Playing still goes through the playable-only genre playlist. The `me` scope (hear) keeps its playlist listing.
+- New query key `libraryQueryKeys.reference.recordings.byGenre`.
+
+### Security
+
+- Override `undici` to `^8.10.2` (resolves 8.12.1) to clear Dependabot advisories on 8.10.0. Dev/test-only (pulled in by jsdom); nothing shipped to consumers changes.
+
+## [10.1.0] - 2026-10-14
+
+### Breaking
+
+- `GenreTreeView` / pop-core: `focusGenreUuid` and `onFocusGenreChange` must now be passed together or not at all (type-level only); passing just one is a type error. Existing consumers that pass both are unaffected.
+
+### Added
+
+- `onFocusGenreChange` now receives a second `reason` argument (`"zoom-in" | "back" | "search" | "rejected"`), so consumers can tell a rejected focus from the user's back action. New exported types `FocusChangeReason` and `GenreFocusProps`. Bumps `@behindthemusictree/genre-tree-view` to 1.20.0.
+
+### Fixed
+
+- `GenreTreeView` pop-core: the info panel never shows a genre that isn't drawn in the current zoom, including an unknown selection or a focus and selection change landing together (genre-tree-view 1.20.0).
+
+## [10.0.0] - 2026-10-14
+
+### Breaking
+
+- The YouTube track entity is now a MusicBrainz recording: `YoutubeTrackDetailedSchema` / `YoutubeTrackDetailed` are renamed `RecordingDetailedSchema` / `RecordingDetailed`, and the flat `youtubeVideoId` / `youtubeUnplayableReason` fields are replaced by a nested, nullable `youtubeVideo: { id, unplayableReason }`. `musicbrainzRecordingId` and `youtubeVideo.unplayableReason` are required (nullable) with no defaults, and the output-side `kind: "youtube"` stamp is removed.
+- `unplayableReasonLabel(track: object)` is replaced by the typed `recordingUnplayableReason(recording: RecordingDetailed)`, which returns `NO_VIDEO_LABEL` ("No video available") for a recording without a video. `musicBrainzRecordingUrl` now takes a `RecordingDetailed`. New `isRecording(track)` type guard.
+- `libraryEndpoints.reference.youtube` / `libraryQueryKeys.reference.youtube` are now `reference.recordings`, targeting `library/recordings/` with query keys `referenceRecordings`.
+
+### Fixed
+
+- Genre playlist track pages that contain recordings without a YouTube video now parse instead of failing the whole page; those recordings are listed greyed out as "No video available" and skipped when picking the start track.
+
+## [9.7.1] - 2026-10-13
+
+### Fixed
+
+- `GenreTreeView` pop-core: an unknown or non-zoomable `focusGenreUuid` no longer throws; the wheel shows the whole tree and calls `onFocusGenreChange(null)`, so consumers no longer need to validate it. "Zoom in" is only offered on roots with a single pop child, picking a search result outside the zoomed subtree refocuses to its nearest zoomable ancestor, and the center label has a wider click area. Bumps `@behindthemusictree/genre-tree-view` to 1.19.3.
+
+## [9.7.0] - 2026-10-13
+
+### Added
+
+- `GenreTreeView`: optional `focusGenreUuid` / `onFocusGenreChange` props control the pop-core wheel's zoom-in on a root's subtree ("Zoom in" button in the info panel, back button on the canvas). Pop-core view only; an unknown uuid throws, so consumers must validate untrusted input. Bumps `@behindthemusictree/genre-tree-view` to 1.19.1.
+
+## [9.6.0] - 2026-10-13
+
+### Added
+
+- Pop-core tree: once zoomed in, the current root's name is shown in an empty spot on the tree (map-style region label). Bumps `@behindthemusictree/genre-tree-view` to 1.18.0.
+
+## [9.5.0] - 2026-10-12
+
+### Changed
+
+- Root-genre colors in the playlist trees are now fixed per root, keyed by the genre's wikidata id (`criteria.wikidataId`, newly parsed by `CriteriaMinimumSchema`). Bumps `@behindthemusictree/genre-tree-view` to 1.17.0.
+
+## [9.4.0] - 2026-10-07
+
+### Added
+
+- **genre-tree**: `YoutubeTrackDetailedSchema` parses `musicbrainzRecordingId` (nullable UUID, defaults to `null` when absent). New `musicBrainzRecordingUrl(track)` helper returns `https://musicbrainz.org/recording/<mbid>` or `null`. `TrackItem` and `GenrePlaylistTracks` render a "View on MusicBrainz" external link for tracks that have one.
+
+## [9.3.3] - 2026-10-07
+
+### Fixed
+
+- **transport**: `fetchWrapper` checks the request with the `Request` constructor before sending it. A malformed request (invalid header value, URL, method, or a body on a GET/HEAD) now throws a `ClientError` (`CLIENT_INTERNAL_ERROR`, original `TypeError` on `cause`) without calling `fetch` or retrying. Previously `fetch`'s `TypeError` made it look like a dropped connection, so the network popup showed. The check is skipped when `Request`/`URL` globals are missing. **Behavior change for callers:** `useFetchWrapper().fetch` rethrows this `ClientError` instead of resolving `null` behind the connectivity popup — React Query surfaces it as a query/mutation error; direct callers relying on a `null` result must catch it.
+- **transport**: `createNetworkOrBackendError` maps a non-`TypeError` "Failed to fetch" error to `NETWORK_FAILED_TO_FETCH` for backend URLs too. `BACKEND_UNAVAILABLE` (`BAC2000`) is no longer produced by any code path.
+- **transport**: `CLIENT_INTERNAL_ERROR` message is now "Internal client error" (was "Internal server error").
+
+## [9.3.2] - 2026-10-06
+
+### Fixed
+
+- **transport**: `createNetworkOrBackendError` maps any `TypeError` thrown by `fetch` (Chrome "Failed to fetch", Safari "Load failed", Firefox "NetworkError when attempting to fetch resource.", React Native "Network request failed") to `NETWORK_FAILED_TO_FETCH`, including for backend URLs. Previously a dropped client connection to the backend surfaced as `BACKEND_UNAVAILABLE` (internal-error popup instead of the network one), and Safari/Firefox messages fell through to `BACKEND_INTERNAL_ERROR`/`NETWORK_UNKNOWN`. `TypeError`s whose message contains "timeout" keep their timeout codes; React Native's "Network request timed out" does not match and maps to `NETWORK_FAILED_TO_FETCH`.
+
+## [9.3.1] - 2026-10-06
+
+### Fixed
+
+- **transport**: `fetchWrapper` retries GET/HEAD requests up to twice (300ms, 900ms) when `fetch` itself throws (dropped connection, e.g. `ERR_CONNECTION_CLOSED`), before surfacing the connectivity error. Error responses, aborted requests and other methods are never retried.
+
+## [9.3.0] - 2026-10-06
+
+### Added
+
+- **genre-tree**: `CriteriaPlaylistSimpleSchema` parses a required `isUnacceptedRoot` boolean (served by the tree and list endpoints since grow-api PR #182; not on the detail endpoint, so `CriteriaPlaylistDetailedSchema` is unchanged). Code building `CriteriaPlaylistSimple` objects by hand (e.g. test fixtures) must now set it.
+
+### Changed
+
+- **genre-tree**: `GenreTreeView` hides unaccepted roots (imported top-level genres awaiting admin review) and their subtrees from the wheel, pop-core and outline views, and from `GenreSearch` in those views. The stacked view still shows everything.
+
+## [9.2.0] - 2026-10-06
+
+### Changed
+
+- **genre-tree**: bump `@behindthemusictree/genre-tree-view` to 1.16.0. Criteria-less genre playlists (Genreless) are no longer shown on the wheel or pop-core rings, nor offered by `GenreSearch` in those views; the outline lists them in a separate section after the tree (`detached` node flag).
+
+## [9.1.1] - 2026-10-05
+
+### Changed
+
+- **genre-tree**: bump `@behindthemusictree/genre-tree-view` to 1.15.0 — tree branches are now drawn at 1/6 of their child chip's height instead of as hairlines.
+
+## [9.1.0] - 2026-10-03
+
+### Added
+
+- **genre-tree**: `YoutubeTrackDetailedSchema` parses a nullable `youtubeUnplayableReason` (`not_found`, `not_embeddable`, `private`, `not_processed`, `region_whitelisted`; defaults to `null` when absent) and `unplayableReasonLabel(track)` returns its display label. Flagged tracks render greyed out with the reason in `GenrePlaylistTracks` and the track-list sidebar's `TrackItem`, can't be played, and are skipped when a genre playlist starts.
+- **player**: optional `YoutubePlayerTrack.unplayableReason`; `handleNextTrack` / `handlePreviousTrack` skip tracks that set it.
+
+### Changed
+
+- **player**: a YouTube player error now sets `playerTrackObject.loadError` ("Video not found", "Embedding disabled by the video owner", or "YouTube playback error (code N)"), stops playback and fires `onTrackEnd` to advance, instead of only logging.
+
+## [9.0.1] - 2026-10-03
+
+### Fixed
+
+- **genre-tree**: bump `@behindthemusictree/genre-tree-view` to 1.14.1 — clicking inside the genre info panel no longer pans the tree underneath it.
+
+## [9.0.0] - 2026-10-03
+
+### Breaking
+
+- **genre-tree**: `useListFullGenrePlaylists` now resolves to `CriteriaPlaylistSimple[]` for both scopes instead of a single-page paginated envelope — read `data` directly, not `data.results`.
+
+### Changed
+
+- **genre-tree**: the reference full list loads in a single `GET genre-playlists/tree/?treeName=canonical` request (grow-api ≥ 11.1.0) instead of paging through `genre-playlists/` 100 rows at a time; the `me` scope still paginates with at most 4 requests in flight.
+
+## [8.5.0] - 2026-10-03
+
+### Added
+
+- **genre-tree**: `GenreTreeView` accepts `controlsOrientation?: "horizontal" | "vertical"` (default `"vertical"`), threaded into the wheel, pop-core and stacked renderers to lay out their floating zoom/pop/fit controls; `ControlsOrientation` type re-exported.
+
+### Changed
+
+- **genre-tree**: bump `@behindthemusictree/genre-tree-view` to 1.14.0.
+
+## [8.4.4] - 2026-10-02
+
+### Changed
+
+- **genre-tree**: bump `@behindthemusictree/genre-tree-view` to 1.13.0 — in outline view the node info panel opens on the left, with the list shifted right so it stays visible.
+
+## [8.4.3] - 2026-10-02
+
+### Fixed
+
+- **genre-tree**: `useListFullGenrePlaylists` fetches the remaining pages at most 4 at a time instead of all in parallel. The canonical tree's 17 concurrent requests OOM-killed grow-front's proxy container and returned 502s.
+
+## [8.4.2] - 2026-10-02
+
+### Fixed
+
+- **genre-tree**: `useListFullGenrePlaylists` rejects with a clear `page N returned no body` error when a page comes back empty (e.g. a `handleError` callback swallowed the failure) instead of crashing with a `TypeError`.
+
+## [8.4.1] - 2026-10-02
+
+### Changed
+
+- **genre-tree**: `useListFullGenrePlaylists` requests `pageSize=100` (grow-api's max) and fetches pages 2..`totalPages` in parallel instead of one after another, so the full canonical list loads in two round-trips instead of one per page.
+
+## [8.4.0] - 2026-10-02
+
+### Added
+
+- **genre-tree**: genre info panel tracks show a play/pause button on hover, left of the title (always visible on the current track). The row text itself no longer starts playback.
 
 ## [8.3.1] - 2026-10-01
 

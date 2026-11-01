@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { getGenrePlaylistsGroupedByRoot, hasMainstreamPopRoot } from "./genre-playlist-helpers";
 import type { CriteriaPlaylistSimple } from "../schemas/criteria-playlist/simple";
-import type { GenreTreeNode } from "@behindthemusictree/genre-tree-view";
 
 const makePlaylist = (uuid: string, rootUuid: string): CriteriaPlaylistSimple =>
   ({
@@ -35,11 +34,11 @@ describe("getGenrePlaylistsGroupedByRoot", () => {
   });
 });
 
-const makeNode = (overrides: Partial<GenreTreeNode>): GenreTreeNode => ({
-  id: "id",
+type Node = { parentId: string | null; name: string };
+
+const makeNode = (overrides: Partial<Node>): Node => ({
   parentId: null,
   name: "name",
-  itemCount: 0,
   ...overrides,
 });
 
@@ -49,19 +48,19 @@ describe("hasMainstreamPopRoot", () => {
   });
 
   it("returns true when a root node is named exactly 'Mainstream Pop'", () => {
-    const nodes = [makeNode({ id: "root1", parentId: null, name: "Mainstream Pop" })];
+    const nodes = [makeNode({ parentId: null, name: "Mainstream Pop" })];
 
     expect(hasMainstreamPopRoot(nodes)).toBe(true);
   });
 
   it("returns false when 'Mainstream Pop' exists but is not a root", () => {
-    const nodes = [makeNode({ id: "child1", parentId: "root1", name: "Mainstream Pop" })];
+    const nodes = [makeNode({ parentId: "root1", name: "Mainstream Pop" })];
 
     expect(hasMainstreamPopRoot(nodes)).toBe(false);
   });
 
   it("returns false when a root exists with a different name", () => {
-    const nodes = [makeNode({ id: "root1", parentId: null, name: "Rock" })];
+    const nodes = [makeNode({ parentId: null, name: "Rock" })];
 
     expect(hasMainstreamPopRoot(nodes)).toBe(false);
   });

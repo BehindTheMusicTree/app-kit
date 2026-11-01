@@ -10,38 +10,45 @@ import { CriteriaPlaylistSimpleSchema } from "./schemas/criteria-playlist/simple
 
 import { PaginatedResponseSchema } from "../transport/lib/paginated-response";
 import { genrePlaylistEndpoints, genrePlaylistQueryKeys } from "./api/genre-playlists";
+import { libraryQueryKeys } from "./api/library";
 import { Scope } from "../transport/lib/scope";
+import type { GenrePlaylistUuid } from "./schemas/ids";
 
-const FULL_LIST_PAGE_SIZE = 1000;
+// grow-api clamps pageSize to PAGINATION_PAGE_SIZE_MAX (100); asking for more only hides the real page count.
+const FULL_LIST_PAGE_SIZE = 100;
+// An unbounded fan-out (17 parallel pages through grow-front's proxy) OOM-killed its 96m container.
+const FULL_LIST_CONCURRENCY = 4;
 
 type RawPaginatedResponse = {
-  overallTotal: number;
-  next: string | null;
-  previous: string | null;
   results: unknown[];
-  page: number;
-  pageSize: number;
   totalPages: number;
 };
 
 /**
  * Backends may clamp `pageSize` below what's requested (e.g. a server-side max page size), so a
- * single request can silently return fewer results than `overallTotal`. Follows `next` until every
- * result has been collected, so callers that need "the whole list" actually get it regardless of
- * the effective page size the backend applies.
+ * single request can silently return fewer results than `overallTotal`. Reads `totalPages` from the
+ * first page, then fetches the rest with at most FULL_LIST_CONCURRENCY requests in flight.
  */
-const fetchAllPages = async (fetchPage: (page: number) => Promise<unknown>): Promise<RawPaginatedResponse> => {
-  let page = 1;
-  let response = (await fetchPage(page)) as RawPaginatedResponse;
-  const results = [...response.results];
-
-  while (results.length < response.overallTotal && response.next) {
-    page += 1;
-    response = (await fetchPage(page)) as RawPaginatedResponse;
-    results.push(...response.results);
-  }
-
-  return { ...response, results, page: 1, pageSize: results.length, totalPages: 1 };
+const fetchAllPages = async (fetchPage: (page: number) => Promise<unknown>): Promise<unknown[]> => {
+  // fetch-wrapper resolves null (instead of throwing) when a handleError callback swallowed the failure.
+  const fetchRequiredPage = async (page: number) => {
+    const response = await fetchPage(page);
+    if (response == null) throw new Error(`Paginated list page ${page} returned no body`);
+    return response as RawPaginatedResponse;
+  };
+  const first = await fetchRequiredPage(1);
+  const remaining = Math.max(first.totalPages - 1, 0);
+  const rest: RawPaginatedResponse[] = new Array(remaining);
+  let nextIndex = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(FULL_LIST_CONCURRENCY, remaining) }, async () => {
+      while (nextIndex < remaining) {
+        const index = nextIndex++;
+        rest[index] = await fetchRequiredPage(index + 2);
+      }
+    }),
+  );
+  return [first, ...rest].flatMap((response) => response.results);
 };
 
 export const useListGenrePlaylists = (page = 1, pageSize: number | string = 50, getBackendBaseUrl: () => string) => {
@@ -77,16 +84,18 @@ export const useListFullGenrePlaylists = (scope: Scope, getBackendBaseUrl: () =>
   const query = useQueryWithParse({
     queryKey,
     queryFn: () =>
-      fetchAllPages((page) =>
-        fetch(
-          scope === "reference" ? genrePlaylistEndpoints.reference.list() : genrePlaylistEndpoints.me.list(),
-          true,
-          scope === "me",
-          {},
-          { page, pageSize: FULL_LIST_PAGE_SIZE, treeName: "canonical" },
-        ),
-      ),
-    schema: PaginatedResponseSchema(CriteriaPlaylistSimpleSchema),
+      scope === "reference"
+        ? fetch(genrePlaylistEndpoints.reference.tree(), true, false, {}, { treeName: "canonical" })
+        : fetchAllPages((page) =>
+            fetch(
+              genrePlaylistEndpoints.me.list(),
+              true,
+              true,
+              {},
+              { page, pageSize: FULL_LIST_PAGE_SIZE, treeName: "canonical" },
+            ),
+          ),
+    schema: z.array(CriteriaPlaylistSimpleSchema),
     context: "useListFullGenrePlaylists",
     enabled: scope === "reference" || (sessionRestored && !!session?.accessToken),
   });
@@ -101,14 +110,14 @@ export const useListFullGenrePlaylists = (scope: Scope, getBackendBaseUrl: () =>
   };
 };
 
-export const useFetchGenrePlaylist = <S extends z.ZodTypeAny>(
-  uuid: string,
+export const useFetchGenrePlaylist = <T>(
+  uuid: GenrePlaylistUuid,
   getBackendBaseUrl: () => string,
-  criteriaPlaylistDetailedSchema: S,
+  criteriaPlaylistDetailedSchema: z.ZodType<T, unknown>,
 ) => {
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
   const { session, sessionRestored } = useSession();
-  return useQueryWithParse<z.infer<S>>({
+  return useQueryWithParse<T>({
     queryKey: genrePlaylistQueryKeys.me.detail(uuid),
     queryFn: () => fetch(genrePlaylistEndpoints.me.detail(uuid)),
     schema: criteriaPlaylistDetailedSchema,
@@ -119,9 +128,11 @@ export const useFetchGenrePlaylist = <S extends z.ZodTypeAny>(
 
 export const useInvalidateAllGenrePlaylistQueries = () => {
   const queryClient = useQueryClient();
-  return () => {
-    queryClient.invalidateQueries({ queryKey: genrePlaylistQueryKeys.me.all });
-    queryClient.invalidateQueries({ queryKey: genrePlaylistQueryKeys.me.full });
-    queryClient.invalidateQueries({ queryKey: genrePlaylistQueryKeys.reference.all });
-  };
+  return () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: genrePlaylistQueryKeys.me.all }),
+      queryClient.invalidateQueries({ queryKey: genrePlaylistQueryKeys.me.full }),
+      queryClient.invalidateQueries({ queryKey: genrePlaylistQueryKeys.reference.all }),
+      queryClient.invalidateQueries({ queryKey: libraryQueryKeys.reference.songs.all }),
+    ]);
 };

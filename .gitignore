@@ -8,5 +8,4 @@ dist
 .local/
 coverage/
 .claude/worktrees/
-.vercel
 graphify-out/

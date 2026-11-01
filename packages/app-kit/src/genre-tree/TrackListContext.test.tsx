@@ -2,13 +2,22 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { z } from "zod";
 import type { ReactNode } from "react";
+import type { GenreUuid } from "./schemas/ids";
 
-const { fetchMock, useSessionMock, useQueryWithParseMock, loadTrackForPlayerMock, showTrackListSidebarMock } =
+const {
+  fetchMock,
+  useSessionMock,
+  useQueryWithParseMock,
+  loadTrackForPlayerMock,
+  setOnTrackEndMock,
+  showTrackListSidebarMock,
+} =
   vi.hoisted(() => ({
     fetchMock: vi.fn(),
     useSessionMock: vi.fn(),
     useQueryWithParseMock: vi.fn(),
     loadTrackForPlayerMock: vi.fn(),
+    setOnTrackEndMock: vi.fn(),
     showTrackListSidebarMock: vi.fn(),
   }));
 
@@ -25,7 +34,7 @@ vi.mock("../transport/lib/use-query-with-parse", () => ({
 }));
 
 vi.mock("../player/PlayerContext", () => ({
-  usePlayer: () => ({ loadTrackForPlayer: loadTrackForPlayerMock }),
+  usePlayer: () => ({ loadTrackForPlayer: loadTrackForPlayerMock, setOnTrackEnd: setOnTrackEndMock }),
 }));
 
 vi.mock("./TrackListSidebarVisibilityContext", () => ({
@@ -34,6 +43,8 @@ vi.mock("./TrackListSidebarVisibilityContext", () => ({
 
 import { TrackListProvider, useTrackList, useListTracks } from "./TrackListContext";
 import type { TrackBase } from "./schemas/track/base";
+import { TrackListOriginType } from "./models/TrackListOriginType";
+import { makeGenrePlaylistUuid } from "./testing";
 
 const getBackendBaseUrl = () => "https://backend.example.com";
 const listEndpoint = (page: number) => `tracks/?page=${page}`;
@@ -71,6 +82,18 @@ function makePage(tracks: TrackBase[], { page = 1, next = false, total = tracks.
   };
 }
 
+function makeArtistPage(tracks: TrackBase[], { page = 1, next = false, total = tracks.length } = {}) {
+  return {
+    overallTotal: total,
+    next: next ? `https://backend.example.com/library/songs/?page=${page + 1}` : null,
+    previous: null,
+    results: tracks,
+    page,
+    pageSize: 100,
+    totalPages: 1,
+  };
+}
+
 function makeTracks(count: number, prefix = "t") {
   return Array.from({ length: count }, (_, index) => makeTrack(`${prefix}${index}`, `Track ${index}`));
 }
@@ -85,7 +108,7 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 
-const genrePlaylist = { uuid: "p1", name: "My Playlist" };
+const genrePlaylist = { uuid: makeGenrePlaylistUuid("p1"), name: "My Playlist" };
 
 async function playGenre(result: RenderedTrackList, page: ReturnType<typeof makePage>, scope: "me" | "reference" = "me") {
   fetchMock.mockResolvedValueOnce(page);
@@ -96,12 +119,7 @@ async function playGenre(result: RenderedTrackList, page: ReturnType<typeof make
 
 function wrapper({ children }: { children: ReactNode }) {
   return (
-    <TrackListProvider
-      getBackendBaseUrl={getBackendBaseUrl}
-      schema={schema}
-      listEndpoint={listEndpoint}
-      listQueryKey={listQueryKey}
-    >
+    <TrackListProvider getBackendBaseUrl={getBackendBaseUrl} schema={schema}>
       {children}
     </TrackListProvider>
   );
@@ -145,6 +163,328 @@ describe("TrackListContext", () => {
     });
   });
 
+  describe("track navigation", () => {
+    it("moves between the selected track and skips unavailable tracks", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      const tracks = makeTracks(3);
+      await playGenre(result, makePage(tracks));
+
+      expect(result.current.hasPreviousTrack).toBe(false);
+      expect(result.current.hasNextTrack).toBe(true);
+      loadTrackForPlayerMock.mockClear();
+
+      act(() => result.current.playNextTrack());
+      expect(result.current.selectedTrack?.uuid).toBe("t1");
+      expect(result.current.hasPreviousTrack).toBe(true);
+      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t1");
+      expect(result.current.autoAdvanceScrollRequest).toMatchObject({ trackUuid: "t1" });
+
+      const trackEndHandler = setOnTrackEndMock.mock.lastCall?.[0] as
+        | ((event: { trackId: string; error: { code: number; message: string } }) => void)
+        | undefined;
+      expect(trackEndHandler).toBeTypeOf("function");
+      act(() => trackEndHandler?.({ trackId: "t1", error: { code: 2, message: "playback error" } }));
+
+      loadTrackForPlayerMock.mockClear();
+      act(() => result.current.playPreviousTrack());
+      expect(result.current.selectedTrack?.uuid).toBe("t0");
+      expect(result.current.hasPreviousTrack).toBe(false);
+      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t0");
+
+      loadTrackForPlayerMock.mockClear();
+      act(() => result.current.playNextTrack());
+      expect(result.current.selectedTrack?.uuid).toBe("t2");
+      expect(result.current.hasNextTrack).toBe(false);
+      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t2");
+    });
+
+    it("advances on completion and ignores stale or terminal events", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      await playGenre(result, makePage(makeTracks(2)));
+      const handler = () => setOnTrackEndMock.mock.lastCall?.[0] as (event?: { trackId: string }) => void;
+      act(() => handler()({ trackId: "stale" }));
+      expect(result.current.selectedTrack?.uuid).toBe("t0");
+      act(() => handler()());
+      expect(result.current.selectedTrack?.uuid).toBe("t1");
+      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t1");
+      act(() => handler()({ trackId: "t1" }));
+      expect(result.current.hasNextTrack).toBe(false);
+    });
+
+    it("advances into the next page after completion", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      const page = deferred<ReturnType<typeof makePage>>();
+      fetchMock.mockResolvedValueOnce(makePage(makeTracks(1), { next: true, total: 2 })).mockReturnValueOnce(page.promise);
+      await act(async () => { await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me"); });
+      const handler = setOnTrackEndMock.mock.lastCall?.[0] as (event: { trackId: string }) => void;
+      act(() => handler({ trackId: "t0" }));
+      await act(async () => { page.resolve(makePage([makeTrack("t1", "Next")], { page: 2, total: 2 })); await page.promise; });
+      expect(result.current.selectedTrack?.uuid).toBe("t1");
+      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t1");
+    });
+
+    it("requests the next row move to the top when an embedded video is skipped", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      await playGenre(result, makePage(makeTracks(2)));
+
+      const trackEndHandler = setOnTrackEndMock.mock.lastCall?.[0] as
+        | ((event: { trackId: string; error: { code: number; message: string } }) => void)
+        | undefined;
+      expect(trackEndHandler).toBeTypeOf("function");
+
+      act(() => trackEndHandler?.({
+        trackId: "t0",
+        error: { code: 101, message: "Embedding disabled by the video owner" },
+      }));
+
+      expect(result.current.selectedTrack?.uuid).toBe("t1");
+      expect(result.current.autoAdvanceScrollRequest?.trackUuid).toBe("t1");
+    });
+
+    it("waits for the skipped video row to reposition before loading the next track", async () => {
+      vi.useFakeTimers();
+      try {
+        const { result } = renderHook(() => useTrackList(), { wrapper });
+        await playGenre(result, makePage(makeTracks(3)));
+        loadTrackForPlayerMock.mockClear();
+
+        const trackEndHandler = setOnTrackEndMock.mock.lastCall?.[0] as
+          | ((event: { trackId: string; error: { code: number; message: string } }) => void)
+          | undefined;
+        expect(trackEndHandler).toBeTypeOf("function");
+
+        act(() => trackEndHandler?.({
+          trackId: "t0",
+          error: { code: 150, message: "Embedding disabled by the video owner" },
+        }));
+
+        expect(result.current.selectedTrack?.uuid).toBe("t1");
+        expect(result.current.autoAdvanceScrollRequest?.trackUuid).toBe("t1");
+        expect(loadTrackForPlayerMock).not.toHaveBeenCalled();
+
+        await act(async () => vi.advanceTimersByTimeAsync(999));
+        expect(loadTrackForPlayerMock).not.toHaveBeenCalled();
+
+        await act(async () => vi.advanceTimersByTimeAsync(1));
+        expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t1");
+
+        loadTrackForPlayerMock.mockClear();
+        const nextTrackEndHandler = setOnTrackEndMock.mock.lastCall?.[0] as
+          | ((event: { trackId: string; error: { code: number; message: string } }) => void)
+          | undefined;
+        expect(nextTrackEndHandler).toBeTypeOf("function");
+        act(() => nextTrackEndHandler?.({
+          trackId: "t1",
+          error: { code: 101, message: "Embedding disabled by the video owner" },
+        }));
+
+        expect(result.current.selectedTrack?.uuid).toBe("t2");
+        expect(result.current.autoAdvanceScrollRequest?.trackUuid).toBe("t2");
+        expect(loadTrackForPlayerMock).not.toHaveBeenCalled();
+
+        await act(async () => vi.advanceTimersByTimeAsync(999));
+        expect(loadTrackForPlayerMock).not.toHaveBeenCalled();
+
+        await act(async () => vi.advanceTimersByTimeAsync(1));
+        expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t2");
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
+  describe("playNewTrackListFromArtist", () => {
+    const artist = { uuid: "a1", name: "Miles Davis" };
+
+    it("fetches the first playable page, starts the artist origin, and loads lazily", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      const tracks = makeTracks(3);
+      fetchMock.mockResolvedValueOnce(makeArtistPage(tracks, { next: true, total: 5 }));
+
+      await act(async () => {
+        await result.current.playNewTrackListFromArtist(artist, "reference", { ordering: "-albumYear" });
+      });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "library/songs/",
+        true,
+        false,
+        {},
+        { artist: "a1", playable: true, ordering: "-albumYear", page: 1, pageSize: 100 },
+        false,
+        false,
+      );
+      expect(result.current.trackList?.tracks).toEqual(tracks);
+      expect(result.current.trackList?.total).toBe(5);
+      expect(result.current.trackList?.nextPage).toBe(2);
+      expect(result.current.trackList?.origin).toMatchObject({
+        type: TrackListOriginType.ARTIST,
+        label: "Miles Davis",
+        uuid: "a1",
+        scope: "reference",
+        ordering: "-albumYear",
+      });
+      expect(result.current.selectedTrack).toEqual(tracks[0]);
+      expect(showTrackListSidebarMock).toHaveBeenCalled();
+      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t0");
+    });
+
+    it("starts at the requested song with ?from= and keeps it for later pages", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      fetchMock.mockResolvedValueOnce(makeArtistPage(makeTracks(2).slice(1), { next: true }));
+
+      await act(async () => {
+        await result.current.playNewTrackListFromArtist(artist, "reference", {
+          ordering: "title",
+          startSongUuid: "t1",
+        });
+      });
+      fetchMock.mockResolvedValueOnce(makeArtistPage(makeTracks(1, "u"), { page: 2 }));
+      await act(async () => {
+        await result.current.loadMore();
+      });
+
+      expect(fetchMock.mock.calls[0][4]).toMatchObject({ from: "t1", page: 1 });
+      expect(fetchMock.mock.calls[1][4]).toMatchObject({ from: "t1", page: 2, artist: "a1", ordering: "title" });
+      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t1");
+    });
+
+    it("scopes the list to a genre with ?genre= and keeps it for later pages", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      const genreUuid = "g1" as GenreUuid;
+      fetchMock.mockResolvedValueOnce(makeArtistPage(makeTracks(20), { next: true, total: 21 }));
+
+      await act(async () => {
+        await result.current.playNewTrackListFromArtist(artist, "reference", { ordering: "title", genreUuid });
+      });
+      fetchMock.mockResolvedValueOnce(makeArtistPage(makeTracks(1, "u"), { page: 2, total: 21 }));
+      await act(async () => {
+        await result.current.loadMore();
+      });
+
+      expect(fetchMock.mock.calls[0][4]).toMatchObject({ artist: "a1", genre: "g1", playable: true, page: 1 });
+      expect(fetchMock.mock.calls[1][4]).toMatchObject({ artist: "a1", genre: "g1", page: 2 });
+      expect(result.current.trackList?.origin).toMatchObject({ type: TrackListOriginType.ARTIST, genreUuid });
+    });
+
+    it("loadMore appends page 2 and finishes paging", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      fetchMock.mockResolvedValueOnce(makeArtistPage(makeTracks(20), { next: true, total: 21 }));
+      await act(async () => {
+        await result.current.playNewTrackListFromArtist(artist, "reference", { ordering: "title" });
+      });
+      const page2 = makeTracks(1, "u");
+      fetchMock.mockResolvedValueOnce(makeArtistPage(page2, { page: 2, total: 21 }));
+
+      await act(async () => {
+        await result.current.loadMore();
+      });
+
+      expect(result.current.trackList?.tracks).toHaveLength(21);
+      expect(result.current.trackList?.tracks[20]).toEqual(page2[0]);
+      expect(result.current.trackList?.nextPage).toBeNull();
+      expect(result.current.trackList?.origin.type).toBe(TrackListOriginType.ARTIST);
+    });
+
+    it("rejects when the list does not start at the requested song", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      fetchMock.mockResolvedValueOnce(makeArtistPage(makeTracks(2)));
+
+      await act(async () => {
+        await expect(
+          result.current.playNewTrackListFromArtist(artist, "reference", { ordering: "title", startSongUuid: "t1" }),
+        ).rejects.toThrow("Artist a1 did not start at song t1");
+      });
+      expect(loadTrackForPlayerMock).not.toHaveBeenCalled();
+    });
+
+    it("skips the global error for the first page when a start song is given", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      fetchMock.mockResolvedValueOnce(makeArtistPage(makeTracks(1)));
+
+      await act(async () => {
+        await result.current.playNewTrackListFromArtist(artist, "reference", {
+          ordering: "title",
+          startSongUuid: "t0",
+        });
+      });
+
+      expect(fetchMock.mock.calls[0][6]).toBe(true);
+    });
+
+    it("drops an artist response that arrives after a newer play request", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      const slow = deferred<unknown>();
+      fetchMock.mockReturnValueOnce(slow.promise);
+      let first!: Promise<void>;
+      act(() => {
+        first = result.current.playNewTrackListFromArtist(artist, "reference", { ordering: "-albumYear" });
+      });
+
+      await playGenre(result, makePage(makeTracks(1, "new")));
+      await act(async () => {
+        slow.resolve(makeArtistPage(makeTracks(1, "old")));
+        await first;
+      });
+
+      expect(result.current.selectedTrack?.uuid).toBe("new0");
+      expect(loadTrackForPlayerMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("swallows the failure of an artist request superseded by a newer play", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      const slow = deferred<unknown>();
+      fetchMock.mockReturnValueOnce(slow.promise);
+      let first!: Promise<void>;
+      act(() => {
+        first = result.current.playNewTrackListFromArtist(artist, "reference", { ordering: "-albumYear" });
+      });
+
+      await playGenre(result, makePage(makeTracks(1, "new")));
+      await act(async () => {
+        slow.reject(new Error("offline"));
+        await expect(first).resolves.toBeUndefined();
+      });
+
+      expect(result.current.selectedTrack?.uuid).toBe("new0");
+    });
+
+    it("rejects when the first artist page fails and the request is current", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      fetchMock.mockRejectedValueOnce(new Error("offline"));
+
+      await act(async () => {
+        await expect(result.current.playNewTrackListFromArtist(artist, "reference", { ordering: "-albumYear" })).rejects.toThrow("offline");
+      });
+    });
+
+    it("warns and does nothing when the artist has no playable songs", async () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      fetchMock.mockResolvedValueOnce(makeArtistPage([]));
+
+      await act(async () => {
+        await result.current.playNewTrackListFromArtist(artist, "reference", { ordering: "-albumYear" });
+      });
+
+      expect(warnSpy).toHaveBeenCalledWith("No playable songs found for artist");
+      expect(result.current.trackList).toBeNull();
+
+      warnSpy.mockRestore();
+    });
+
+    it("rejects the me scope without fetching", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+
+      await act(async () => {
+        await expect(
+          result.current.playNewTrackListFromArtist(artist, "me", { ordering: "title" }),
+        ).rejects.toThrow("Artist track lists only support the reference scope");
+      });
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+  });
+
   describe("playNewTrackListFromGenrePlaylist", () => {
     it("fetches the first reference page, selects the first track, shows the sidebar, and loads it", async () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
@@ -152,7 +492,7 @@ describe("TrackListContext", () => {
 
       await playGenre(result, makePage([trackA, trackB], { next: true, total: 250 }), "reference");
 
-      expect(fetchMock).toHaveBeenCalledWith("genre-playlists/p1/tracks/", true, false, {}, { page: 1, pageSize: 100 });
+      expect(fetchMock).toHaveBeenCalledWith(`genre-playlists/${makeGenrePlaylistUuid("p1")}/tracks/`, true, false, {}, { page: 1, pageSize: 100 });
       expect(result.current.trackList?.tracks).toEqual([trackA, trackB]);
       expect(result.current.trackList?.total).toBe(250);
       expect(result.current.trackList?.nextPage).toBe(2);
@@ -166,33 +506,64 @@ describe("TrackListContext", () => {
 
       await playGenre(result, makePage(makeTracks(1)), "me");
 
-      expect(fetchMock).toHaveBeenCalledWith("me/genre-playlists/p1/tracks/", true, true, {}, { page: 1, pageSize: 100 });
+      expect(fetchMock).toHaveBeenCalledWith(`me/genre-playlists/${makeGenrePlaylistUuid("p1")}/tracks/`, true, true, {}, { page: 1, pageSize: 100 });
       expect(result.current.trackList?.nextPage).toBeNull();
     });
 
-    it("plays seeded tracks from startIndex without fetching, then loadMore continues from seed.nextPage", async () => {
+    it("starts the list at startSongUuid in one request and keeps `from` for later pages", async () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
-      const tracks = makeTracks(20);
+      const first = makeTracks(3, "b");
+      fetchMock
+        .mockResolvedValueOnce(makePage(first, { page: 1, next: true, total: 250 }))
+        .mockResolvedValueOnce(makePage(makeTracks(1, "u"), { page: 2, total: 250 }));
 
       await act(async () => {
-        await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", {
-          tracks,
-          total: 250,
-          nextPage: 3,
-          startIndex: 5,
-        });
+        await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", { startSongUuid: "b0" });
       });
 
-      expect(fetchMock).not.toHaveBeenCalled();
-      expect(result.current.trackList?.tracks).toEqual(tracks);
-      expect(result.current.selectedTrack).toEqual(tracks[5]);
-      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t5");
-
-      fetchMock.mockResolvedValueOnce(makePage(makeTracks(1, "u"), { page: 3, total: 250 }));
-      await act(async () => {
-        await result.current.loadMore();
+      expect(fetchMock).toHaveBeenNthCalledWith(1, `me/genre-playlists/${makeGenrePlaylistUuid("p1")}/tracks/`, true, true, {}, {
+        page: 1,
+        pageSize: 100,
+        from: "b0",
       });
-      expect(fetchMock).toHaveBeenCalledWith("me/genre-playlists/p1/tracks/", true, true, {}, { page: 3, pageSize: 100 });
+      expect(result.current.selectedTrack).toEqual(first[0]);
+      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("b0");
+      // The start track is near the end of the loaded page, so auto-load fetches page 2 with the same `from`.
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(fetchMock).toHaveBeenLastCalledWith(`me/genre-playlists/${makeGenrePlaylistUuid("p1")}/tracks/`, true, true, {}, {
+        page: 2,
+        pageSize: 100,
+        from: "b0",
+      });
+      expect(result.current.trackList?.tracks.map((track) => track.uuid)).toEqual(["b0", "b1", "b2", "u0"]);
+    });
+
+    it("rejects when the first returned track is not startSongUuid", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      fetchMock.mockResolvedValueOnce(makePage(makeTracks(2, "a")));
+
+      await expect(
+        act(async () => {
+          await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", { startSongUuid: "b0" });
+        }),
+      ).rejects.toThrow("did not start at track b0");
+
+      expect(result.current.trackList).toBeNull();
+      expect(loadTrackForPlayerMock).not.toHaveBeenCalled();
+    });
+
+    it("rejects when the playlist doesn't contain startSongUuid (404)", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      // The fetch wrapper reports a backend 404 as a connectivity error and resolves null.
+      fetchMock.mockResolvedValueOnce(null);
+
+      await expect(
+        act(async () => {
+          await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", { startSongUuid: "b0" });
+        }),
+      ).rejects.toThrow("received null response");
+
+      expect(loadTrackForPlayerMock).not.toHaveBeenCalled();
     });
 
     it("warns and does nothing when the playlist has no tracks", async () => {
@@ -201,7 +572,7 @@ describe("TrackListContext", () => {
 
       await playGenre(result, makePage([]));
 
-      expect(warnSpy).toHaveBeenCalledWith("No tracks found in genre playlist");
+      expect(warnSpy).toHaveBeenCalledWith("No playable tracks found in genre playlist");
       expect(result.current.trackList).toBeNull();
       expect(showTrackListSidebarMock).not.toHaveBeenCalled();
       expect(loadTrackForPlayerMock).not.toHaveBeenCalled();
@@ -215,7 +586,7 @@ describe("TrackListContext", () => {
       fetchMock.mockReturnValueOnce(slow.promise);
       let first!: Promise<void>;
       act(() => {
-        first = result.current.playNewTrackListFromGenrePlaylist({ uuid: "old", name: "Old" }, "me");
+        first = result.current.playNewTrackListFromGenrePlaylist({ uuid: makeGenrePlaylistUuid("old"), name: "Old" }, "me");
       });
 
       await playGenre(result, makePage(makeTracks(1, "new")));
@@ -224,7 +595,7 @@ describe("TrackListContext", () => {
         await first;
       });
 
-      expect(result.current.trackList?.origin.uuid).toBe("p1");
+      expect(result.current.trackList?.origin.uuid).toBe(makeGenrePlaylistUuid("p1"));
       expect(result.current.selectedTrack?.uuid).toBe("new0");
       expect(loadTrackForPlayerMock).toHaveBeenCalledTimes(1);
     });
@@ -257,7 +628,7 @@ describe("TrackListContext", () => {
       fetchMock.mockReturnValueOnce(slow.promise);
       let first!: Promise<void>;
       act(() => {
-        first = result.current.playNewTrackListFromGenrePlaylist({ uuid: "old", name: "Old" }, "me");
+        first = result.current.playNewTrackListFromGenrePlaylist({ uuid: makeGenrePlaylistUuid("old"), name: "Old" }, "me");
       });
 
       await playGenre(result, makePage(makeTracks(1, "new")));
@@ -318,7 +689,7 @@ describe("TrackListContext", () => {
         await result.current.loadMore();
       });
 
-      expect(fetchMock).toHaveBeenLastCalledWith("me/genre-playlists/p1/tracks/", true, true, {}, { page: 2, pageSize: 100 });
+      expect(fetchMock).toHaveBeenLastCalledWith(`me/genre-playlists/${makeGenrePlaylistUuid("p1")}/tracks/`, true, true, {}, { page: 2, pageSize: 100 });
       expect(result.current.trackList?.tracks.map((track) => track.uuid)).toEqual([
         ...firstPage.map((track) => track.uuid),
         "u0",
@@ -443,7 +814,7 @@ describe("TrackListContext", () => {
       });
 
       await vi.waitFor(() =>
-        expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to load more genre playlist tracks:", error),
+        expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to load more tracks:", error),
       );
       consoleErrorSpy.mockRestore();
     });
@@ -503,58 +874,68 @@ describe("TrackListContext", () => {
     });
   });
 
-  describe("currentTrackList refresh from query results", () => {
-    it("replaces the track with fresh data when the origin is a single track", () => {
-      const original = makeTrack("t1", "Old Title");
-      const updated = makeTrack("t1", "New Title");
-      useQueryWithParseMock.mockReturnValue({ data: { results: [updated] } });
+  describe("list query", () => {
+    it("never runs a list query when a genre playlist or artist list starts", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
 
+      await playGenre(result, makePage([makeTrack("a", "Track A")]));
+      fetchMock.mockResolvedValueOnce(makeArtistPage([makeTrack("b", "Track B")]));
+      await act(async () => {
+        await result.current.playNewTrackListFromArtist({ uuid: "ar1", name: "Artist" }, "reference", {
+          ordering: "title",
+        });
+      });
+
+      expect(useQueryWithParseMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("updateTrack", () => {
+    it("replaces a matching track on a later page and the selected track", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      const firstPage = makeTracks(20);
+      await playGenre(result, makePage(firstPage, { next: true, total: 23 }));
+      const secondPage = makeTracks(3, "u");
+      fetchMock.mockResolvedValueOnce(makePage(secondPage, { page: 2, total: 23 }));
+      await act(async () => {
+        await result.current.loadMore();
+      });
+      act(() => {
+        result.current.toTrackAtPosition(21);
+      });
+      const updated = makeTrack("u1", "Updated");
+
+      act(() => {
+        result.current.updateTrack(updated);
+      });
+
+      expect(result.current.trackList?.tracks[21]).toEqual(updated);
+      expect(result.current.trackList?.tracks).toHaveLength(23);
+      expect(result.current.trackList?.total).toBe(23);
+      expect(result.current.selectedTrack).toEqual(updated);
+    });
+
+    it("keeps the same track list when no track matches", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      await playGenre(result, makePage([makeTrack("a", "Track A")]));
+      const before = result.current.trackList;
+
+      act(() => {
+        result.current.updateTrack(makeTrack("unknown", "Unknown"));
+      });
+
+      expect(result.current.trackList).toBe(before);
+    });
+
+    it("does nothing without a track list", () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
 
       act(() => {
-        result.current.playNewTrackListFromTrackUuid(original, "me");
+        result.current.updateTrack(makeTrack("a", "Track A"));
       });
 
-      expect(result.current.trackList?.tracks).toEqual([updated]);
-    });
-
-    it("keeps the original track list when no matching fresh track is found", () => {
-      const original = makeTrack("t1", "Old Title");
-      useQueryWithParseMock.mockReturnValue({ data: { results: [makeTrack("other", "Other")] } });
-
-      const { result } = renderHook(() => useTrackList(), { wrapper });
-
-      act(() => {
-        result.current.playNewTrackListFromTrackUuid(original, "me");
-      });
-
-      expect(result.current.trackList?.tracks).toEqual([original]);
-    });
-
-    it("updates matching tracks in a genre playlist and keeps others unchanged", async () => {
-      const trackA = makeTrack("a", "Track A");
-      const trackB = makeTrack("b", "Track B");
-      const updatedB = makeTrack("b", "Track B Updated");
-      useQueryWithParseMock.mockReturnValue({ data: { results: [updatedB] } });
-
-      const { result } = renderHook(() => useTrackList(), { wrapper });
-
-      await playGenre(result, makePage([trackA, trackB], { next: true, total: 7 }));
-
-      expect(result.current.trackList?.tracks).toEqual([trackA, updatedB]);
-      expect(result.current.trackList?.total).toBe(7);
-      expect(result.current.trackList?.nextPage).toBe(2);
-    });
-
-    it("leaves the genre playlist list untouched when nothing changed", async () => {
-      const trackA = makeTrack("a", "Track A");
-      useQueryWithParseMock.mockReturnValue({ data: { results: [] } });
-
-      const { result } = renderHook(() => useTrackList(), { wrapper });
-
-      await playGenre(result, makePage([trackA]));
-
-      expect(result.current.trackList?.tracks).toEqual([trackA]);
+      expect(result.current.trackList).toBeNull();
+      expect(result.current.selectedTrack).toBeNull();
     });
   });
 

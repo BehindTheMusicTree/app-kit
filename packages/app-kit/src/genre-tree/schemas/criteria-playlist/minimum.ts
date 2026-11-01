@@ -1,8 +1,9 @@
 import { z } from "zod";
 
-import { UuidResourceSchema } from "../uuid-resource";
+import { GenrePlaylistUuidSchema } from "../ids";
 
-export const CriteriaPlaylistMinimumSchema = UuidResourceSchema.extend({
+export const CriteriaPlaylistMinimumSchema = z.object({
+  uuid: GenrePlaylistUuidSchema,
   name: z.string(),
 });
 

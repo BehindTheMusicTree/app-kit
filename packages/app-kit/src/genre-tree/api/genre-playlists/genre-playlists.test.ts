@@ -1,10 +1,11 @@
 import { describe, it, expect } from "vitest";
 
+import { makeGenrePlaylistUuid } from "../../testing";
 import { genrePlaylistEndpoints } from "./endpoints";
 import { genrePlaylistQueryKeys } from "./queryKeys";
 import { genrePlaylistEndpoints as barrelEndpoints, genrePlaylistQueryKeys as barrelQueryKeys } from "./index";
 
-const uuid = "b1e6a1c8-0e3d-4d3d-9d2e-2f6c1a2b3c4d";
+const uuid = makeGenrePlaylistUuid("b1e6a1c8-0e3d-4d3d-9d2e-2f6c1a2b3c4d");
 
 describe("genrePlaylistEndpoints", () => {
   it("builds 'me' scope URLs with the 'me/' prefix", () => {

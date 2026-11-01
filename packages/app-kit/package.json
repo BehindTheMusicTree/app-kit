@@ -1,7 +1,7 @@
 {
   "name": "@behindthemusictree/app-kit",
-  "version": "8.3.1",
-  "description": "Shared transport, auth, popup, UI, player, and genre-tree plumbing for BehindTheMusicTree React apps",
+  "version": "27.1.0",
+  "description": "Headless transport, auth, popup state, player, and genre-tree data plumbing for BehindTheMusicTree React apps",
   "repository": {
     "type": "git",
     "url": "https://github.com/BehindTheMusicTree/app-kit.git"
@@ -34,6 +34,11 @@
       "import": "./dist/popup/index.js",
       "require": "./dist/popup/index.cjs"
     },
+    "./track-noun": {
+      "types": "./dist/track-noun/index.d.ts",
+      "import": "./dist/track-noun/index.js",
+      "require": "./dist/track-noun/index.cjs"
+    },
     "./player": {
       "types": "./dist/player/index.d.ts",
       "import": "./dist/player/index.js",
@@ -44,15 +49,19 @@
       "import": "./dist/genre-tree/index.js",
       "require": "./dist/genre-tree/index.cjs"
     },
-    "./genre-tree/styles.css": "./dist/genre-tree/styles.css"
+    "./genre-tree/testing": {
+      "types": "./dist/genre-tree/testing.d.ts",
+      "import": "./dist/genre-tree/testing.js",
+      "require": "./dist/genre-tree/testing.cjs"
+    }
   },
   "files": [
     "dist"
   ],
   "scripts": {
     "dev": "tsup --watch",
-    "build": "tsup && node scripts/copy-genre-tree-css.mjs",
-    "lint": "tsc --noEmit",
+    "build": "tsup",
+    "lint": "tsc --noEmit && node scripts/check-headless.mjs",
     "test": "vitest run --coverage"
   },
   "peerDependencies": {
@@ -62,15 +71,8 @@
     "react-dom": ">=18.0.0"
   },
   "dependencies": {
-    "@behindthemusictree/brand": "catalog:",
-    "@behindthemusictree/genre-tree-view": "catalog:",
-    "@behindthemusictree/ui": "catalog:",
-    "clsx": "^2.1.1",
-    "lucide-react": "^0.487.0",
-    "react-icons": "^5.5.0",
-    "tailwind-merge": "^3.2.0",
-    "uuid": "10.0.0",
-    "zod": "^3.24.3"
+    "uuid": "11.1.1",
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@tanstack/react-query": "^5.72.2",
@@ -83,7 +85,7 @@
     "@types/youtube": "^0.3.0",
     "@vitest/coverage-v8": "^4.1.11",
     "jsdom": "^30.0.1",
-    "next": "^15.5.26",
+    "next": "^15.5.27",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tsup": "^8.0.0",

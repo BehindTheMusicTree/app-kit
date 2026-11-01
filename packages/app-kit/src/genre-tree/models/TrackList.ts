@@ -1,5 +1,9 @@
 import { TrackBase } from "../schemas/track/base";
-import TrackListOrigin, { TrackListOriginFromTrack, TrackListOriginFromCriteriaPlaylist } from "./TrackListOrigin";
+import TrackListOrigin, {
+  TrackListOriginFromTrack,
+  TrackListOriginFromCriteriaPlaylist,
+  TrackListOriginFromArtist,
+} from "./TrackListOrigin";
 
 export default class TrackList<T extends TrackBase = TrackBase> {
   constructor(
@@ -25,6 +29,17 @@ export class TrackListFromCriteriaPlaylist<T extends TrackBase = TrackBase> exte
   constructor(
     public tracks: T[],
     public origin: TrackListOriginFromCriteriaPlaylist,
+    total: number,
+    nextPage: number | null,
+  ) {
+    super(tracks, origin, total, nextPage);
+  }
+}
+
+export class TrackListFromArtist<T extends TrackBase = TrackBase> extends TrackList<T> {
+  constructor(
+    public tracks: T[],
+    public origin: TrackListOriginFromArtist,
     total: number,
     nextPage: number | null,
   ) {

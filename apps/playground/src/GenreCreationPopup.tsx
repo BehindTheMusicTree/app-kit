@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { BasePopup, CriteriaMinimum, Scope, useCreateGenre } from "@behindthemusictree/app-kit";
+import { CriteriaMinimum, Scope, useCreateGenre } from "@behindthemusictree/app-kit";
+import { BasePopup } from "@behindthemusictree/app-kit-ui/popup";
 
 type GenreCreationPopupProps = {
   parent: CriteriaMinimum | null;
@@ -10,9 +11,12 @@ type GenreCreationPopupProps = {
 
 export default function GenreCreationPopup({ parent, scope, getBackendBaseUrl, onClose }: GenreCreationPopupProps) {
   const [name, setName] = useState("");
-  const { mutate: createGenre, formErrors } = useCreateGenre(scope, getBackendBaseUrl);
+  const { mutate: createGenre, isPending, formErrors } = useCreateGenre(scope, getBackendBaseUrl);
 
-  const submit = () => createGenre({ name, parent: parent?.uuid || undefined }, { onSuccess: onClose });
+  const submit = () => {
+    if (isPending) return;
+    createGenre({ name, parent: parent?.uuid || undefined }, { onSuccess: onClose });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +30,7 @@ export default function GenreCreationPopup({ parent, scope, getBackendBaseUrl, o
       showOkButton
       showCancelButton
       okButtonText="Save"
+      okButtonDisabled={isPending}
       onClose={onClose}
       onOk={submit}
       onCancel={onClose}

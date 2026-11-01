@@ -4,6 +4,12 @@
     "jsx": "react-jsx",
     "moduleResolution": "bundler",
     "noEmit": true,
+    "paths": {
+      "@behindthemusictree/app-kit": ["../../packages/app-kit/src/index.ts"],
+      "@behindthemusictree/app-kit/*": ["../../packages/app-kit/src/*/index.ts"],
+      "@behindthemusictree/app-kit-ui": ["../../packages/app-kit-ui/src/index.ts"],
+      "@behindthemusictree/app-kit-ui/*": ["../../packages/app-kit-ui/src/*/index.ts"]
+    },
     "lib": ["ES2020", "DOM", "DOM.Iterable"]
   },
   "include": ["src"]

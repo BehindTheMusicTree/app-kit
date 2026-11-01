@@ -1,13 +1,16 @@
 import { z } from "zod";
 
-import { UuidResourceSchema } from "../uuid-resource";
+import { GenrePlaylistUuidSchema } from "../ids";
 import { CriteriaMinimumSchema } from "../criteria/minimum";
 import { CriteriaPlaylistMinimumSchema } from "./minimum";
 
 // Metadata only — tracks are paged separately via `genrePlaylistEndpoints.*.tracks(uuid)`.
-export const CriteriaPlaylistDetailedSchema = UuidResourceSchema.extend({
+export const CriteriaPlaylistDetailedSchema = z.object({
+  uuid: GenrePlaylistUuidSchema,
   name: z.string(),
   tracksCount: z.number(),
+  // Summed YouTube views of the same songs as `tracksCount`. Optional: hear-api has no view counts.
+  viewsCount: z.number().optional(),
   durationInSec: z.number().min(0).nullable().optional(),
   durationStrInHourMinSec: z.string().nullable().optional(),
   // Nullable: the "Genreless" root playlist has no criteria attached and is never updated.

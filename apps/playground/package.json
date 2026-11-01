@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@behindthemusictree/app-kit": "workspace:*",
+    "@behindthemusictree/app-kit-ui": "workspace:*",
+    "@behindthemusictree/brand": "catalog:",
     "@behindthemusictree/genre-tree-view": "catalog:",
     "@behindthemusictree/ui": "catalog:",
     "@tanstack/react-query": "^5.72.2",
@@ -19,6 +21,7 @@
   "devDependencies": {
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "@types/youtube": "^0.3.0",
     "@vitejs/plugin-react": "^5.2.0",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",

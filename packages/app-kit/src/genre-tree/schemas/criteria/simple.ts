@@ -1,9 +1,10 @@
 import { z } from "zod";
 
-import { UuidResourceSchema } from "../uuid-resource";
+import { GenreUuidSchema } from "../ids";
 import { CriteriaMinimumSchema } from "./minimum";
 
-export const CriteriaSimpleSchema = UuidResourceSchema.extend({
+export const CriteriaSimpleSchema = z.object({
+  uuid: GenreUuidSchema,
   name: z.string(),
   parent: CriteriaMinimumSchema.nullable(),
   createdOn: z.string().datetime(),

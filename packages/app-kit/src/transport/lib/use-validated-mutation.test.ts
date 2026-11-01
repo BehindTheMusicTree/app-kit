@@ -41,6 +41,25 @@ describe("useValidatedMutation", () => {
     expect(result.current.formErrors).toEqual([{ field: "name", message: expect.any(String) }]);
   });
 
+  it("stringifies symbol path keys instead of throwing", async () => {
+    const key = Symbol("secret");
+    const symbolSchema = z.object({}).superRefine((_value, ctx) => {
+      ctx.addIssue({ code: "custom", message: "bad", path: ["a", key] });
+    });
+    const mutationFn = vi.fn();
+    const { result, rerender } = renderHook(() =>
+      useValidatedMutation({ inputSchema: symbolSchema, outputSchema, mutationFn }),
+    );
+    const capturedMutationFn = useMutationMock.mock.calls[0][0].mutationFn;
+
+    await act(async () => {
+      await expect(capturedMutationFn({})).rejects.toThrow("Invalid input data");
+    });
+    rerender();
+
+    expect(result.current.formErrors).toEqual([{ field: "a.Symbol(secret)", message: "bad" }]);
+  });
+
   it("clears previous form errors when the mutation is retried", async () => {
     const mutationFn = vi.fn().mockResolvedValue({ id: "abc" });
     const { result, rerender } = renderHook(() => useValidatedMutation({ inputSchema, outputSchema, mutationFn }));
