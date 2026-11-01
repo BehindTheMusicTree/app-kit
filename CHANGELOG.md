@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [28.0.0] - 2026-11-01
+
 ### Changed
 
 - **app-kit-ui**: Anchor fixed track list sidebars below the header and let them grow toward the player.
