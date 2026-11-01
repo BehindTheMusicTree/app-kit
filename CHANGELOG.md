@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- **app-kit-ui**: Anchor fixed track list sidebars below the header and let them grow toward the player.
+
 ### Fixed
 
 - Keep tree nodes sized by song count while an artist filter is active, including while artist details load.

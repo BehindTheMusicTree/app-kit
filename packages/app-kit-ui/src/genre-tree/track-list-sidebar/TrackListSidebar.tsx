@@ -139,13 +139,13 @@ export default function TrackListSidebar<T extends TrackBase>({
   const positionClasses =
     layout === "inline"
       ? "relative w-full flex h-full flex-col"
-      : "fixed right-0 w-[50rem]";
+      : "fixed right-0 w-[50rem] flex flex-col";
 
   return trackList ? (
     <div
       data-theme="dark"
       className={`track-list-sidebar ${positionClasses} rounded-2xl bg-[var(--color-surface)] pb-1 ${className}`}
-      style={layout === "fixed" ? { bottom: "79px" /* Match player height exactly */ } : undefined}
+      style={layout === "fixed" ? { top: "63.5px", maxHeight: "calc(100vh - 63.5px - 79px)" } : undefined}
     >
       <div className="header flex h-16 items-center px-4 py-2 text-[var(--color-text)]">
         <div className="min-w-0 flex flex-1 flex-col justify-center">
@@ -187,7 +187,7 @@ export default function TrackListSidebar<T extends TrackBase>({
           className={
             layout === "inline"
               ? "track-list flex-1 min-h-0 overflow-auto list-none p-0 m-0"
-              : "track-list overflow-auto max-h-[calc(100vh-63.5px-79px-56px-3.5px)] list-none p-0 m-0"
+              : "track-list flex-1 min-h-0 overflow-auto list-none p-0 m-0"
           }
         >
           {trackList.tracks.map((track, index) => (
