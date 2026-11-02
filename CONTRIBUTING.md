@@ -26,8 +26,7 @@ Changes here affect both apps, so please keep that blast radius in mind.
 improve documentation, and participate in discussions.
 
 **Maintainers** review and merge pull requests, cut releases, and manage the publish workflow
-(`.github/workflows/publish.yml`, which stages both packages on npm through trusted publishing;
-an npm owner approves each staged version with 2FA: `npm stage list`, then `npm stage approve <id>`).
+(`.github/workflows/publish.yml`, which publishes both packages on npm through trusted publishing).
 
 ## Development Workflow
 
@@ -148,8 +147,8 @@ pnpm tag-release
 ```
 
 This tags the merge commit `vX.Y.Z` and pushes the tag, which triggers
-`.github/workflows/publish.yml` to build and stage `@behindthemusictree/app-kit` and `app-kit-ui` on
-npm (approve app-kit first, then app-kit-ui, with `npm stage approve <id>`). Then merge the companion PR into `develop` (the release branch itself isn't deleted by
+`.github/workflows/publish.yml` to build and publish `@behindthemusictree/app-kit` and `app-kit-ui` on
+npm. Then merge the companion PR into `develop` (the release branch itself isn't deleted by
 either merge, so both PRs stay valid regardless of merge order).
 
 ### 9. Hotfixing _(For Maintainers)_

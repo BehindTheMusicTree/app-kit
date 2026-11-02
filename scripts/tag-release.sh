@@ -30,5 +30,5 @@ git tag -a "$TAG" -m "$TAG"
 git push origin "$TAG"
 
 echo ""
-echo "Tagged and pushed $TAG — the publish workflow will stage both packages on npm (approve with: npm stage approve <id>)."
+echo "Tagged and pushed $TAG — the publish workflow will publish both packages on npm."
 echo "Don't forget to merge the release PR into develop if you haven't already."
