@@ -4,7 +4,6 @@ import { useCallback, useMemo, type ReactNode } from "react";
 import {
   GenreTreeOutline,
   GenreTreeWheelRadialPopCore,
-  type ControlsOrientation,
   type GenreTreeViewport,
   type GenreTreeProps,
   type FocusChangeReason,
@@ -65,9 +64,6 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   allowWheelRotation?: boolean;
   /** When false, suppresses the hover toolbar on every node. Defaults to true. */
   showToolbar?: boolean;
-  /** Layout of the wheel's floating zoom/pop/fit controls; ignored in outline mode. Defaults to
-   * "vertical". */
-  controlsOrientation?: ControlsOrientation;
   /** What node size is proportional to; defaults to the song count. */
   sizeMetric?: GenreTreeSizeMetric;
   /** Rendered in the floating controls, beside the zoom buttons. */
@@ -108,7 +104,6 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     readOnly = false,
     allowWheelRotation,
     showToolbar,
-    controlsOrientation,
     sizeMetric = "songs",
     floatingControlsLeading,
     busy,
@@ -223,7 +218,6 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     <GenreTreeWheelRadialPopCore
       {...treeProps}
       allowWheelRotation={allowWheelRotation}
-      controlsOrientation={controlsOrientation}
       floatingControlsLeading={floatingControlsLeading}
       busy={busy}
       defaultViewport={defaultViewport}

@@ -139,11 +139,6 @@ describe("GenrePlaylistTreeWheel", () => {
     expect(props.onViewportChange).toBe(onViewportChange);
   });
 
-  it("passes controlsOrientation through to GenreTreeWheel", () => {
-    renderWheel({ controlsOrientation: "horizontal" });
-    expect(genreTreeWheelPropsMock.mock.calls[0][0].controlsOrientation).toBe("horizontal");
-  });
-
   it("passes playState based on isPlaying", () => {
     usePlayerMock.mockReturnValue({ isPlaying: true, setIsPlaying: vi.fn() });
     renderWheel();

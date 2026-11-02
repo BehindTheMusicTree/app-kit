@@ -118,14 +118,6 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
       expect(genreTreeOutlinePropsMock.mock.calls[0][0]).not.toHaveProperty("viewportRestore");
     });
 
-    it("passes controlsOrientation to the wheel but not to GenreTreeOutline", () => {
-      renderWheelRadialPopCore({ controlsOrientation: "horizontal" });
-      expect(genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0].controlsOrientation).toBe("horizontal");
-
-      renderWheelRadialPopCore({ outline: true, controlsOrientation: "horizontal" });
-      expect(genreTreeOutlinePropsMock.mock.calls[0][0]).not.toHaveProperty("controlsOrientation");
-    });
-
     it("forwards focus props to the wheel as focusNodeId/onFocusChange but not to GenreTreeOutline", () => {
       const onFocusGenreChange = vi.fn();
       renderWheelRadialPopCore({ focusGenreUuid: makeGenrePlaylistUuid("gp1"), onFocusGenreChange });

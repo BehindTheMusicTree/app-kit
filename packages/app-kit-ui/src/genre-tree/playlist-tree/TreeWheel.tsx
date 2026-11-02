@@ -3,7 +3,6 @@
 import { useCallback, useMemo, type ReactNode } from "react";
 import {
   GenreTreeWheel,
-  type ControlsOrientation,
   type GenreTreeViewport,
   type GenreTreeProps,
   type GenreTreeAction,
@@ -52,8 +51,6 @@ export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
   allowWheelRotation?: boolean;
   /** When false, suppresses the hover toolbar on every node. Defaults to true. */
   showToolbar?: boolean;
-  /** Layout of the floating zoom/pop/fit controls. Defaults to "vertical". */
-  controlsOrientation?: ControlsOrientation;
   /** What node size is proportional to; defaults to the song count. */
   sizeMetric?: GenreTreeSizeMetric;
   /** Rendered in the floating controls, beside the zoom buttons. */
@@ -87,7 +84,6 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
   readOnly = false,
   allowWheelRotation,
   showToolbar,
-  controlsOrientation,
   sizeMetric = "songs",
   floatingControlsLeading,
   busy,
@@ -191,7 +187,6 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
       hideInfoPanelTitle={hideInfoPanelTitle}
       allowWheelRotation={allowWheelRotation}
       showToolbar={showToolbar}
-      controlsOrientation={controlsOrientation}
       floatingControlsLeading={floatingControlsLeading}
       busy={busy}
       defaultViewport={defaultViewport}
