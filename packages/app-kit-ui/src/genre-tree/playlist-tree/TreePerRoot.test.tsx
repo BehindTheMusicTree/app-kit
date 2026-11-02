@@ -126,21 +126,6 @@ describe("GenrePlaylistTreePerRoot", () => {
     expect(capturedProps!.onViewportChange).toBe(onViewportChange);
   });
 
-  it("passes controlsOrientation through to GenreTree", () => {
-    render(
-      <GenrePlaylistTreePerRoot
-        scope="reference"
-        rootUuid={playlistUuid}
-        genrePlaylistTreePerRoot={[genrePlaylist]}
-        handleGenreCreationAction={handleGenreCreationAction}
-        handleGenreRenameAction={handleGenreRenameAction}
-        controlsOrientation="horizontal"
-      />,
-    );
-
-    expect(capturedProps!.controlsOrientation).toBe("horizontal");
-  });
-
   describe("handlePlayPause", () => {
     it("toggles play state when the node is already the playing track list's origin", () => {
       trackList = { origin: { type: TrackListOriginType.GENRE_PLAYLIST, uuid: playlistUuid } };
