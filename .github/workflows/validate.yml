@@ -1,4 +1,3 @@
-# pnpm install needs GH_PACKAGES_TOKEN_READ: GITHUB_TOKEN cannot read @behindthemusictree/* when published from another repo (403 read_package).
 name: Validate
 
 on:
@@ -7,30 +6,15 @@ on:
   pull_request:
     branches: [main, develop]
 
-env:
-  NPM_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN_READ }}
-
 jobs:
-  ensure-packages-token:
-    name: GitHub Packages token
-    runs-on: ubuntu-latest
-    steps:
-      - name: Require GH_PACKAGES_TOKEN_READ secret
-        run: |
-          if [ -z "$NPM_TOKEN" ]; then
-            echo "::error::Repository secret GH_PACKAGES_TOKEN_READ is required (or this repo needs to be added to the org-level secret's selected repos). Add/enable a GitHub PAT with read:packages so pnpm install can install @behindthemusictree/*. GITHUB_TOKEN cannot read packages published from other repositories (403 permission_denied: read_package)."
-            exit 1
-          fi
-
   build:
     runs-on: ubuntu-latest
-    needs: [ensure-packages-token]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version-file: .nvmrc
 

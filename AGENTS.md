@@ -17,8 +17,8 @@ For ownership across BTMT packages, consult the relevant package sources and pro
 - TypeScript (strict), React — no framework of its own; consumers are Next.js apps
 - Build: tsup (ESM + CJS + `.d.ts`) — multi-entry, one output per subpath
 - Package manager: pnpm workspaces (`packages/app-kit`, `packages/app-kit-ui`, `apps/playground`)
-- The two packages publish to GitHub Packages. `.npmrc` resolves the scope from npm;
-  the lockfile still contains GitHub Packages tarballs for some dependencies.
+- The two packages publish to npmjs through trusted publishing (OIDC, stage publish: an npm owner
+  approves each version with 2FA). Installing needs no token.
 
 ## Architecture
 

@@ -18,9 +18,7 @@ staging grow-api, before opening a PR. It is not published.
 pnpm install
 ```
 
-The lockfile includes GitHub Packages tarballs for `@behindthemusictree/brand`
-and `@behindthemusictree/ui`; those require a GitHub PAT with `read:packages`,
-exported as `NPM_TOKEN` per `.npmrc`. `genre-tree-view` is fetched from npm.
+All `@behindthemusictree/*` dependencies come from npmjs; no token is needed.
 
 ## 2. Env setup (first run only)
 
