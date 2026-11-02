@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [28.0.2] - 2026-11-02
+
 ### Changed
 
 - Publish workflow: publish directly with `npm publish` instead of staging, so releases need no manual 2FA approval.
