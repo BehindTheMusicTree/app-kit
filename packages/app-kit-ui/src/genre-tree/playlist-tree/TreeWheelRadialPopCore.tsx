@@ -5,6 +5,7 @@ import {
   GenreTreeOutline,
   GenreTreeWheelRadialPopCore,
   type GenreTreeViewport,
+  type GenreTreeProps,
   type FocusChangeReason,
   type GenreTreeAction,
   type GenreTreeNode,
@@ -74,6 +75,8 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   outline?: boolean;
   /** Mount-only seed for the pan/zoom, replacing the initial fit. */
   defaultViewport?: GenreTreeViewport;
+  /** Runtime viewport restoration request. */
+  viewportRestore?: GenreTreeProps["viewportRestore"];
   /** Fires after a user-driven pan/zoom settles. */
   onViewportChange?: (viewport: GenreTreeViewport) => void;
   /** What node play buttons play; defaults to each node's whole genre playlist. */
@@ -106,6 +109,7 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     busy,
     outline = false,
     defaultViewport,
+    viewportRestore,
     onViewportChange,
     playback,
   } = props;
@@ -217,6 +221,7 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
       floatingControlsLeading={floatingControlsLeading}
       busy={busy}
       defaultViewport={defaultViewport}
+      viewportRestore={viewportRestore}
       onViewportChange={onViewportChange}
       {...(focus.onFocusGenreChange
         ? { focusNodeId: focus.focusGenreUuid, onFocusChange: focus.onFocusGenreChange }

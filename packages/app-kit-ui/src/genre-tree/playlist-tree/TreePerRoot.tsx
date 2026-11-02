@@ -5,6 +5,7 @@ import {
   GenreTree,
   getGenreTreeColor,
   type GenreTreeViewport,
+  type GenreTreeProps,
   type GenreTreeAction,
   type GenreTreeNode,
   type InfoPanelBody,
@@ -52,6 +53,8 @@ export type GenrePlaylistTreePerRootProps<T extends TrackBase> = {
   wheelZoom?: WheelZoomMode;
   /** Mount-only seed for the pan/zoom, replacing the initial fit. */
   defaultViewport?: GenreTreeViewport;
+  /** Runtime viewport restoration request. */
+  viewportRestore?: GenreTreeProps["viewportRestore"];
   /** Fires after a user-driven pan/zoom settles. */
   onViewportChange?: (viewport: GenreTreeViewport) => void;
   /** What node play buttons play; defaults to each node's whole genre playlist. */
@@ -77,6 +80,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
   showToolbar,
   wheelZoom,
   defaultViewport,
+  viewportRestore,
   onViewportChange,
   playback,
   ...infoPanelCuration
@@ -178,6 +182,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
       showToolbar={showToolbar}
       wheelZoom={wheelZoom}
       defaultViewport={defaultViewport}
+      viewportRestore={viewportRestore}
       onViewportChange={onViewportChange}
       {...infoPanelCuration}
       readOnly={readOnly}

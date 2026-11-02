@@ -11,6 +11,9 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- Support navigation-driven viewport restoration in graphical genre tree views.
 ### Removed
 
 - **Breaking:** `GenreTreeView`, `GenrePlaylistTreeWheel`, `GenrePlaylistTreePerRoot` and `GenrePlaylistTreeWheelRadialPopCore` no longer accept `controlsOrientation`, and the `ControlsOrientation` type is no longer re-exported. The floating controls always use the horizontal layout, which was already the `GenreTreeView` default.
