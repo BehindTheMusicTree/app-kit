@@ -11,7 +11,6 @@ import {
   GenreTreeViewSkeleton,
 } from "@behindthemusictree/genre-tree-view";
 import type {
-  ControlsOrientation,
   GenreTreeAction,
   GenreTreeNode,
   GenreTreeViewMode,
@@ -91,7 +90,6 @@ function GenreNodeActionBand({ genrePlaylist, scope, playback, ...bandProps }: G
 }
 
 export type {
-  ControlsOrientation,
   FocusChangeReason,
   GenreTreeViewMode,
 } from "@behindthemusictree/genre-tree-view";
@@ -146,8 +144,6 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   criteriaOverviewSchema?: z.ZodType<O, unknown>;
   /** Consumer-specific rows rendered in the info panel after Summary. */
   renderGenreDetailExtras?: (overview: O) => ReactNode;
-  /** Layout of the wheel/tree floating zoom/pop/fit controls. Defaults to "horizontal". */
-  controlsOrientation?: ControlsOrientation;
   /** Host control displayed before the size metric in the floating controls. */
   floatingControlsLeading?: ReactNode;
   /** Controlled size metric of the wheel and pop-core nodes: song count or summed song views. Uncontrolled when omitted
@@ -201,7 +197,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   allowWheelRotation: controlledAllowWheelRotation,
   criteriaOverviewSchema,
   renderGenreDetailExtras,
-  controlsOrientation = "horizontal",
   floatingControlsLeading,
   sizeMetric: controlledSizeMetric,
   onSizeMetricChange,
@@ -736,7 +731,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   selectedNodeId={selectedNodeId}
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
-                  controlsOrientation={controlsOrientation}
                   sizeMetric={isArtistFiltered || !canSizeByViews ? "songs" : deferredSizeMetric}
                   busy={busy}
                   floatingControlsLeading={
@@ -772,7 +766,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   selectedNodeId={selectedNodeId}
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
-                  controlsOrientation={controlsOrientation}
                   sizeMetric={isArtistFiltered || !canSizeByViews ? "songs" : deferredSizeMetric}
                   busy={busy}
                   floatingControlsLeading={
@@ -839,7 +832,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                           }
                           readOnly={readOnly}
                           wheelZoom="modifier"
-                          controlsOrientation={controlsOrientation}
                           defaultViewport={
                             uuid === selectedGenrePlaylist?.root.uuid ? defaultViewport : undefined
                           }

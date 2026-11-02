@@ -11,6 +11,14 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Removed
+
+- **Breaking:** `GenreTreeView`, `GenrePlaylistTreeWheel`, `GenrePlaylistTreePerRoot` and `GenrePlaylistTreeWheelRadialPopCore` no longer accept `controlsOrientation`, and the `ControlsOrientation` type is no longer re-exported. The floating controls always use the horizontal layout, which was already the `GenreTreeView` default.
+
+### Changed
+
+- Requires `@behindthemusictree/genre-tree-view` 7.0.0 and `@behindthemusictree/ui` ^0.11.0 (peer range).
+
 ## [28.0.2] - 2026-11-02
 
 ### Changed

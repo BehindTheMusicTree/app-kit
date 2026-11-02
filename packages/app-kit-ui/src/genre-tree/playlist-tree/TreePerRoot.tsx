@@ -4,7 +4,6 @@ import { useCallback, useMemo } from "react";
 import {
   GenreTree,
   getGenreTreeColor,
-  type ControlsOrientation,
   type GenreTreeViewport,
   type GenreTreeAction,
   type GenreTreeNode,
@@ -51,8 +50,6 @@ export type GenrePlaylistTreePerRootProps<T extends TrackBase> = {
   /** When false, suppresses the hover toolbar on every node. Defaults to true. */
   showToolbar?: boolean;
   wheelZoom?: WheelZoomMode;
-  /** Layout of the floating zoom/pop/fit controls. Defaults to "vertical". */
-  controlsOrientation?: ControlsOrientation;
   /** Mount-only seed for the pan/zoom, replacing the initial fit. */
   defaultViewport?: GenreTreeViewport;
   /** Fires after a user-driven pan/zoom settles. */
@@ -79,7 +76,6 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
   readOnly = false,
   showToolbar,
   wheelZoom,
-  controlsOrientation,
   defaultViewport,
   onViewportChange,
   playback,
@@ -181,7 +177,6 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
       hideInfoPanelTitle={hideInfoPanelTitle}
       showToolbar={showToolbar}
       wheelZoom={wheelZoom}
-      controlsOrientation={controlsOrientation}
       defaultViewport={defaultViewport}
       onViewportChange={onViewportChange}
       {...infoPanelCuration}
