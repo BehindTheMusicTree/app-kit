@@ -1,16 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { screen, fireEvent, act, cleanup, waitFor } from "@testing-library/react";
+import { screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
 import { render } from "../test-utils";
-import { z } from "zod";
 import { GenreTreeView } from "./GenreTreeView";
 
 const {
   useListFullGenrePlaylistsMock,
   useFetchGenreOverviewMock,
   prefetchGenreOverviewMock,
-  treePerRootPropsMock,
-  treeWheelPropsMock,
-  treeWheelRadialPopCorePropsMock,
   setIsPlayingMock,
   trackListState,
   playNewTrackListFromGenrePlaylistMock,
@@ -25,9 +21,6 @@ const {
   useListFullGenrePlaylistsMock: vi.fn(),
   useFetchGenreOverviewMock: vi.fn(),
   prefetchGenreOverviewMock: vi.fn(),
-  treePerRootPropsMock: vi.fn(),
-  treeWheelPropsMock: vi.fn(),
-  treeWheelRadialPopCorePropsMock: vi.fn(),
   setIsPlayingMock: vi.fn(),
   trackListState: { value: null as unknown },
   playNewTrackListFromGenrePlaylistMock: vi.fn(() => Promise.resolve()),
@@ -127,4 +120,28 @@ describe("GenreTreeView with the real renderer", () => {
     await waitFor(() => expect(screen.getByRole("textbox", { name: "Search a genre" })).toHaveValue(""));
     expect(view.container.querySelector(".gtv-info-panel")).toBeNull();
   });
+  it.each(["wheel", "pop-core"] as const)("restores mounted %s silently and accepts a later selection", async (viewMode) => {
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({ x: 0, y: 0, left: 0, top: 0, right: 800, bottom: 600, width: 800, height: 600, toJSON() {} });
+    const onViewportChange = vi.fn();
+    const onSelectedNodeIdChange = vi.fn();
+    const props = { scope: "me" as const, viewMode, artistSearch: false as const, handleGenreCreationAction: vi.fn(), handleGenreRenameAction: vi.fn(), getBackendBaseUrl: () => "", onSelectedNodeIdChange, onViewportChange, focusGenreUuid: null, onFocusGenreChange: vi.fn() };
+    const view = render(<GenreTreeView {...props} selectedNodeId={null} />);
+    const viewport = view.container.querySelector(".gtv-wheel-container")!;
+    const stage = viewport.querySelector<HTMLElement>(":scope > div[style*='transform']")!;
+    const first = { viewport: { x: 30, y: 40, zoom: 2 }, revision: "back-1" };
+    view.rerender(<GenreTreeView {...props} selectedNodeId="pop" viewportRestore={first} />);
+    await waitFor(() => expect(stage.style.transform).toContain("scale(2)"));
+    expect(view.container.querySelector(".gtv-wheel-container")).toBe(viewport);
+    expect(screen.getByRole("textbox", { name: "Search a genre" })).toHaveValue("Mainstream Pop");
+    const second = { viewport: { x: 50, y: 60, zoom: 3 }, revision: "back-2" };
+    view.rerender(<GenreTreeView {...props} selectedNodeId="pop" viewportRestore={second} />);
+    await waitFor(() => expect(stage.style.transform).toContain("scale(3)"));
+    expect(onViewportChange).not.toHaveBeenCalled();
+    fireEvent.click(view.container.querySelector("#group-rock")!);
+    await waitFor(() => expect(onSelectedNodeIdChange).toHaveBeenCalledWith("rock"));
+    view.rerender(<GenreTreeView {...props} selectedNodeId="rock" viewportRestore={second} />);
+    await waitFor(() => expect(screen.getByRole("textbox", { name: "Search a genre" })).toHaveValue("Rock"));
+    expect(view.container.querySelector(".gtv-info-panel")).not.toBeNull();
+  });
+
 });
