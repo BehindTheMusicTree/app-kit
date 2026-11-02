@@ -273,6 +273,22 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     artistUuid,
   });
 
+  // Renderer revision tracking is per instance: bind a navigation to one stacked root so a
+  // later user selection cannot replay the same request in another renderer.
+  const restoreRevision = viewportRestore?.revision;
+  const [stackedRestoreOwner, setStackedRestoreOwner] = useState<{
+    revision: string | number | undefined;
+    rootUuid: string | undefined;
+  }>({ revision: restoreRevision, rootUuid: selectedGenrePlaylist?.root.uuid });
+  let restoreRootUuid = stackedRestoreOwner.rootUuid;
+  if (stackedRestoreOwner.revision !== restoreRevision) {
+    restoreRootUuid = selectedGenrePlaylist?.root.uuid;
+    setStackedRestoreOwner({ revision: restoreRevision, rootUuid: restoreRootUuid });
+  } else if (restoreRootUuid === undefined && selectedGenrePlaylist) {
+    restoreRootUuid = selectedGenrePlaylist.root.uuid;
+    setStackedRestoreOwner({ revision: restoreRevision, rootUuid: restoreRootUuid });
+  }
+
   const isGenreUpdating = useIsMutating({ mutationKey: genreUpdateMutationKey }) > 0;
   const { mutate: updateGenre } = useUpdateGenre(scope, getBackendBaseUrl);
   const busy = deferredSizeMetric !== sizeMetric || isTreeFetching || isGenreUpdating;
@@ -844,7 +860,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                             uuid === selectedGenrePlaylist?.root.uuid ? defaultViewport : undefined
                           }
                           viewportRestore={
-                            uuid === selectedGenrePlaylist?.root.uuid ? viewportRestore : undefined
+                            uuid === selectedGenrePlaylist?.root.uuid && uuid === restoreRootUuid ? viewportRestore : undefined
                           }
                           onViewportChange={
                             uuid === selectedGenrePlaylist?.root.uuid ? onViewportChange : undefined

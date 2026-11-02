@@ -317,6 +317,12 @@ describe("GenreTreeView", () => {
     const [first, second] = treePerRootPropsMock.mock.calls.slice(-2).map(([p]) => p);
     expect(first.viewportRestore).toBeUndefined();
     expect(second.viewportRestore).toBe(viewportRestore);
+    view.rerender(<GenreTreeView {...props} selectedNodeId="gp1" />);
+    expect(treePerRootPropsMock.mock.calls.slice(-2).every(([p]) => p.viewportRestore === undefined)).toBe(true);
+    const next = { ...viewportRestore, revision: 8 };
+    view.rerender(<GenreTreeView {...props} selectedNodeId="gp1" viewportRestore={next} />);
+    expect(treePerRootPropsMock.mock.calls.at(-2)?.[0].viewportRestore).toBe(next);
+
   });
 
   describe("floating host control", () => {
