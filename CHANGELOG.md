@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [28.0.1] - 2026-11-02
+
 ### Changed
 
 - Share project and playground guidance across Claude and Codex, with CI checking adapter consistency.
