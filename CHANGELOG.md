@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- Publish workflow: publish directly with `npm publish` instead of staging, so releases need no manual 2FA approval.
+
 ### Fixed
 
 - Publish workflow: drop setup-node's `registry-url`, whose placeholder token made `npm stage publish` fail with E401 instead of using trusted publishing (the `v28.0.1` tag was never published to npm).
