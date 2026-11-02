@@ -59,6 +59,6 @@ pnpm release patch   # or minor / major
 Cuts a `release/X.Y.Z` branch off `develop`, bumps both package versions, moves `CHANGELOG.md`'s
 `[Unreleased]` section under the new version, then merges into both `main` (tagged) and
 `develop` and pushes — the tag push triggers `.github/workflows/publish.yml` to build and
-stage them on npm (an npm owner then approves each with 2FA).
+publish them on npm.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow, including hotfixes.
