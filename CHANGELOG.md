@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- Publish workflow: drop setup-node's `registry-url`, whose placeholder token made `npm stage publish` fail with E401 instead of using trusted publishing (the `v28.0.1` tag was never published to npm).
+
 ## [28.0.1] - 2026-11-02
 
 ### Changed
