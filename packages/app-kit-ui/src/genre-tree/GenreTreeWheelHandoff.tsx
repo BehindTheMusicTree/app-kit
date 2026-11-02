@@ -19,8 +19,8 @@ export type GenreTreeWheelHandoffProps = {
  * first paint — unfit, `translate(0,0) scale(1)` — is briefly visible the instant the skeleton is
  * swapped out, which reads as a flash/jump right as loading finishes. Two nested
  * `requestAnimationFrame` calls reliably span that effect's own render-commit-paint cycle, so
- * `children` is already laid out and stable by the time it's revealed — the skeleton itself never
- * changes, it just stays up until the real graph is ready underneath it.
+ * `children` has had time to begin layout before it is revealed. Viewport restoration waits for
+ * measurable geometry independently of this visual handoff.
  *
  * Remounting this component (e.g. via a `key` change, or the parent unmounting/remounting the
  * branch that renders it) restarts the handoff, which is what's wanted any time `children` itself

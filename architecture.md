@@ -92,6 +92,10 @@ matching entry to `tsup.config.ts` and the `exports` map in `packages/app-kit/pa
 is built on `@behindthemusictree/genre-tree-view`, a separately published, presentational D3 tree
 component maintained in its own repo. Its version is pinned once in the `pnpm-workspace.yaml`
 catalog and consumed by `app-kit-ui` as `catalog:` — bump it there (not per-package) to pick up releases.
+`GenreTreeView` forwards runtime viewport restoration to graphical renderers; in stacked mode only
+the root containing the resolved selected genre receives it. Hosts provide a fresh revision for each
+navigation and update focus, selection, and restoration together. Restoration is silent and user
+interaction supersedes a pending request; outline ignores it.
 
 ## Cross-module coupling (why splitting is on)
 
@@ -116,7 +120,7 @@ the one known gap (a CJS consumer mixing subpath imports of the same shared cont
 
 - Build: `tsup` (per package; `app-kit-ui` also copies the genre-tree-view stylesheet) — one entry per module (`src/<module>/index.ts`) plus the root barrel, emitting
   ESM + CJS + `.d.ts` per entry into `dist/`.
-- Registry: npmjs (`https://registry.npmjs.org`, scope `@behindthemusictree`), trusted publishing with provenance; versions are published directly by the workflow.
+- Registry: GitHub Packages (`https://npm.pkg.github.com`, scope `@behindthemusictree`).
 - Release pipeline: `scripts/release.sh` (invoked as `pnpm release <bump>`) → git tag →
   `.github/workflows/publish.yml` builds and publishes app-kit, then app-kit-ui, on tag push. `release.sh` sets both versions and app-kit-ui's peer on app-kit to `^X.Y.Z`. Never `npm publish` directly.
 - Branching model: strict Gitflow — see `CONTRIBUTING.md` § Branching (Gitflow) and the

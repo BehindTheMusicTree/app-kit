@@ -16,6 +16,7 @@ import type {
   GenreTreeNode,
   GenreTreeViewMode,
   GenreTreeViewport,
+  GenreTreeProps,
   InfoPanelBody,
   InfoPanelSections,
 } from "@behindthemusictree/genre-tree-view";
@@ -129,6 +130,10 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   onSelectedNodeIdChange?: (nodeId: string | null) => void;
   /** Mount-only seed for the pan/zoom (wheel, pop-core and stacked views), replacing the initial fit. */
   defaultViewport?: GenreTreeViewport;
+  /** Restore silently after layout; use a new revision for each navigation. Supply focus, selection,
+   * and restoration together. User interaction supersedes a pending request. In stacked view,
+   * the selected genre must resolve to a root; outline ignores restoration. */
+  viewportRestore?: GenreTreeProps["viewportRestore"];
   /** Fires after a user-driven pan/zoom settles. In stacked view, only the tree holding the selection reports. */
   onViewportChange?: (viewport: GenreTreeViewport) => void;
   /** When true, hides the "Add root" button and suppresses per-node
@@ -193,6 +198,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   selectedNodeId: controlledSelectedNodeId,
   onSelectedNodeIdChange,
   defaultViewport,
+  viewportRestore,
   onViewportChange,
   readOnly = false,
   className,
@@ -748,6 +754,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                     ) : undefined
                   }
                   defaultViewport={defaultViewport}
+                  viewportRestore={viewportRestore}
                   onViewportChange={onViewportChange}
                   {...infoPanelCuration}
                 />
@@ -784,6 +791,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                     ) : undefined
                   }
                   defaultViewport={defaultViewport}
+                  viewportRestore={viewportRestore}
                   onViewportChange={onViewportChange}
                   {...infoPanelCuration}
                   {...focus}
@@ -842,6 +850,9 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                           controlsOrientation={controlsOrientation}
                           defaultViewport={
                             uuid === selectedGenrePlaylist?.root.uuid ? defaultViewport : undefined
+                          }
+                          viewportRestore={
+                            uuid === selectedGenrePlaylist?.root.uuid ? viewportRestore : undefined
                           }
                           onViewportChange={
                             uuid === selectedGenrePlaylist?.root.uuid ? onViewportChange : undefined

@@ -5,6 +5,7 @@ import {
   GenreTreeWheel,
   type ControlsOrientation,
   type GenreTreeViewport,
+  type GenreTreeProps,
   type GenreTreeAction,
   type GenreTreeNode,
   type InfoPanelBody,
@@ -61,6 +62,8 @@ export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
   busy?: boolean;
   /** Mount-only seed for the pan/zoom, replacing the initial fit. */
   defaultViewport?: GenreTreeViewport;
+  /** Runtime viewport restoration request. */
+  viewportRestore?: GenreTreeProps["viewportRestore"];
   /** Fires after a user-driven pan/zoom settles. */
   onViewportChange?: (viewport: GenreTreeViewport) => void;
   /** What node play buttons play; defaults to each node's whole genre playlist. */
@@ -89,6 +92,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
   floatingControlsLeading,
   busy,
   defaultViewport,
+  viewportRestore,
   onViewportChange,
   playback,
   ...infoPanelCuration
@@ -191,6 +195,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
       floatingControlsLeading={floatingControlsLeading}
       busy={busy}
       defaultViewport={defaultViewport}
+      viewportRestore={viewportRestore}
       onViewportChange={onViewportChange}
       {...infoPanelCuration}
       readOnly={readOnly}

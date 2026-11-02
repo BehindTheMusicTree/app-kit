@@ -131,9 +131,11 @@ describe("GenrePlaylistTreeWheel", () => {
   it("passes defaultViewport and onViewportChange through to GenreTreeWheel", () => {
     const viewport = { x: 10, y: 20, zoom: 1.5 };
     const onViewportChange = vi.fn();
-    renderWheel({ defaultViewport: viewport, onViewportChange });
+    const viewportRestore = { viewport, revision: "navigation-1" };
+    renderWheel({ defaultViewport: viewport, onViewportChange, viewportRestore });
     const props = genreTreeWheelPropsMock.mock.calls[0][0];
     expect(props.defaultViewport).toBe(viewport);
+    expect(props.viewportRestore).toBe(viewportRestore);
     expect(props.onViewportChange).toBe(onViewportChange);
   });
 
