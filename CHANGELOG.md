@@ -11,6 +11,13 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [28.0.1] - 2026-11-02
+
+### Changed
+
+- Share project and playground guidance across Claude and Codex, with CI checking adapter consistency.
+- Publish `app-kit` and `app-kit-ui` to the public npm registry (trusted publishing, with provenance) instead of GitHub Packages: installing them no longer needs a token.
+
 ## [28.0.0] - 2026-11-01
 
 ### Changed
