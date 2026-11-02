@@ -12,7 +12,7 @@ Use app-kit alone to build a different design; add app-kit-ui for the BTMT one.
 
 ## app-kit
 
-Published to GitHub Packages, with a subpath per module (also re-exported from the root):
+Published to npm, with a subpath per module (also re-exported from the root):
 
 ```tsx
 import { useFetchWrapper } from "@behindthemusictree/app-kit/transport";
@@ -59,6 +59,6 @@ pnpm release patch   # or minor / major
 Cuts a `release/X.Y.Z` branch off `develop`, bumps both package versions, moves `CHANGELOG.md`'s
 `[Unreleased]` section under the new version, then merges into both `main` (tagged) and
 `develop` and pushes — the tag push triggers `.github/workflows/publish.yml` to build and
-publish to GitHub Packages.
+stage them on npm (an npm owner then approves each with 2FA).
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow, including hotfixes.
