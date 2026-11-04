@@ -14,6 +14,7 @@ export function SizeMetricToggle({
 }) {
   return (
     <SegmentedControl
+      variant="floating"
       aria-label="Size nodes by"
       value={value}
       onChange={onChange}
