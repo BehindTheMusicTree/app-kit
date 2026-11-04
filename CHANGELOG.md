@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [29.1.0] - 2026-11-04
+
 ### Changed
 
 - The size-metric toggle in the floating controls uses the floating `SegmentedControl` style, matching the zoom controls' height. Requires `@behindthemusictree/ui` ^0.13.0 (peer range); bumps `@behindthemusictree/genre-tree-view` to 7.1.2, which accepts it.
