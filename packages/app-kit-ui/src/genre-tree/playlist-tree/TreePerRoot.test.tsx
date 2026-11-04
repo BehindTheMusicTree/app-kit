@@ -110,6 +110,7 @@ describe("GenrePlaylistTreePerRoot", () => {
   it("passes defaultViewport and onViewportChange through to GenreTree", () => {
     const viewport = { x: 10, y: 20, zoom: 1.5 };
     const onViewportChange = vi.fn();
+    const viewportRestore = { viewport, revision: "stacked" };
     render(
       <GenrePlaylistTreePerRoot
         scope="reference"
@@ -118,27 +119,14 @@ describe("GenrePlaylistTreePerRoot", () => {
         handleGenreCreationAction={handleGenreCreationAction}
         handleGenreRenameAction={handleGenreRenameAction}
         defaultViewport={viewport}
+        viewportRestore={viewportRestore}
         onViewportChange={onViewportChange}
       />,
     );
 
     expect(capturedProps!.defaultViewport).toBe(viewport);
+    expect(capturedProps!.viewportRestore).toBe(viewportRestore);
     expect(capturedProps!.onViewportChange).toBe(onViewportChange);
-  });
-
-  it("passes controlsOrientation through to GenreTree", () => {
-    render(
-      <GenrePlaylistTreePerRoot
-        scope="reference"
-        rootUuid={playlistUuid}
-        genrePlaylistTreePerRoot={[genrePlaylist]}
-        handleGenreCreationAction={handleGenreCreationAction}
-        handleGenreRenameAction={handleGenreRenameAction}
-        controlsOrientation="horizontal"
-      />,
-    );
-
-    expect(capturedProps!.controlsOrientation).toBe("horizontal");
   });
 
   describe("handlePlayPause", () => {

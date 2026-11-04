@@ -92,6 +92,10 @@ matching entry to `tsup.config.ts` and the `exports` map in `packages/app-kit/pa
 is built on `@behindthemusictree/genre-tree-view`, a separately published, presentational D3 tree
 component maintained in its own repo. Its version is pinned once in the `pnpm-workspace.yaml`
 catalog and consumed by `app-kit-ui` as `catalog:` — bump it there (not per-package) to pick up releases.
+`GenreTreeView` forwards runtime viewport restoration to graphical renderers; in stacked mode only
+the root containing the resolved selected genre receives it. Hosts provide a fresh revision for each
+navigation and update focus, selection, and restoration together. Restoration is silent and user
+interaction supersedes a pending request; outline ignores it.
 
 ## Cross-module coupling (why splitting is on)
 

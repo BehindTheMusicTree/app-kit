@@ -11,11 +11,11 @@ import {
   GenreTreeViewSkeleton,
 } from "@behindthemusictree/genre-tree-view";
 import type {
-  ControlsOrientation,
   GenreTreeAction,
   GenreTreeNode,
   GenreTreeViewMode,
   GenreTreeViewport,
+  GenreTreeProps,
   InfoPanelBody,
   InfoPanelSections,
 } from "@behindthemusictree/genre-tree-view";
@@ -29,9 +29,8 @@ import {
 import { CriteriaOverview } from "@behindthemusictree/app-kit/genre-tree";
 import { Scope } from "@behindthemusictree/app-kit/transport";
 import { useGenreTreeViewState, useArtist, useUpdateGenre, genreUpdateMutationKey } from "@behindthemusictree/app-kit/genre-tree";
-import { usePlayer } from "@behindthemusictree/app-kit/player";
 import { usePopup } from "@behindthemusictree/app-kit/popup";
-import { GenreDetailExtras, type GenreDetailSlots } from "./GenreDetailExtras";
+import type { GenreDetailSlots } from "./GenreDetailExtras";
 import type { GenrePlaylistTracksSlots } from "./GenrePlaylistTracks";
 import type { InfoPanelCurationProps } from "./playlist-tree/infoPanelCurationProps";
 import type { RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
@@ -41,8 +40,9 @@ import GenrePlaylistTreeWheel from "./playlist-tree/TreeWheel";
 import GenrePlaylistTreeWheelRadialPopCore, { type GenreFocusProps } from "./playlist-tree/TreeWheelRadialPopCore";
 import { GenreTreeWheelHandoff } from "./GenreTreeWheelHandoff";
 import GenreSearch, { type GenreSearchProps } from "./GenreSearch";
-import GenreActionBand from "./GenreActionBand";
+import { GenreInfoPanelBody } from "./GenreInfoPanelBody";
 import PanelEdgeTab from "./PanelEdgeTab";
+import { useLeftDetailPanelLayout } from "./useLeftDetailPanelLayout";
 import ChangeParentPopup, { type ParentChange } from "./ChangeParentPopup";
 import { useArtistPanel } from "./artist/useArtistPanel";
 import { SizeMetricToggle } from "./SizeMetricToggle";
@@ -63,35 +63,7 @@ const PREVIOUS_BUTTON_CSS = `
 }
 `;
 
-type GenreNodeActionBandProps = Omit<ComponentProps<typeof GenreActionBand>, "onPlayPause" | "isPlaying"> & {
-  genrePlaylist: CriteriaPlaylistSimple;
-  scope: Scope;
-  playback: GenrePlaylistPlayback;
-};
-
-function GenreNodeActionBand({ genrePlaylist, scope, playback, ...bandProps }: GenreNodeActionBandProps) {
-  const { isPlaying, setIsPlaying } = usePlayer();
-  const isCurrentTrackList = playback.playingNodeId === genrePlaylist.uuid;
-  const handlePlayPause = () => {
-    if (isCurrentTrackList) {
-      setIsPlaying(!isPlaying);
-      return;
-    }
-    playback.play(genrePlaylist).catch((error) => {
-      console.error("Failed to load genre playlist tracks:", error);
-    });
-  };
-  return (
-    <GenreActionBand
-      {...bandProps}
-      onPlayPause={genrePlaylist.tracksCount > 0 ? handlePlayPause : undefined}
-      isPlaying={isCurrentTrackList && isPlaying}
-    />
-  );
-}
-
 export type {
-  ControlsOrientation,
   FocusChangeReason,
   GenreTreeViewMode,
 } from "@behindthemusictree/genre-tree-view";
@@ -129,6 +101,10 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   onSelectedNodeIdChange?: (nodeId: string | null) => void;
   /** Mount-only seed for the pan/zoom (wheel, pop-core and stacked views), replacing the initial fit. */
   defaultViewport?: GenreTreeViewport;
+  /** Restore silently after layout; use a new revision for each navigation. Supply focus, selection,
+   * and restoration together. User interaction supersedes a pending request. In stacked view,
+   * the selected genre must resolve to a root; outline ignores restoration. */
+  viewportRestore?: GenreTreeProps["viewportRestore"];
   /** Fires after a user-driven pan/zoom settles. In stacked view, only the tree holding the selection reports. */
   onViewportChange?: (viewport: GenreTreeViewport) => void;
   /** When true, hides the "Add root" button and suppresses per-node
@@ -146,8 +122,6 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   criteriaOverviewSchema?: z.ZodType<O, unknown>;
   /** Consumer-specific rows rendered in the info panel after Summary. */
   renderGenreDetailExtras?: (overview: O) => ReactNode;
-  /** Layout of the wheel/tree floating zoom/pop/fit controls. Defaults to "horizontal". */
-  controlsOrientation?: ControlsOrientation;
   /** Host control displayed before the size metric in the floating controls. */
   floatingControlsLeading?: ReactNode;
   /** Controlled size metric of the wheel and pop-core nodes: song count or summed song views. Uncontrolled when omitted
@@ -193,6 +167,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   selectedNodeId: controlledSelectedNodeId,
   onSelectedNodeIdChange,
   defaultViewport,
+  viewportRestore,
   onViewportChange,
   readOnly = false,
   className,
@@ -201,7 +176,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   allowWheelRotation: controlledAllowWheelRotation,
   criteriaOverviewSchema,
   renderGenreDetailExtras,
-  controlsOrientation = "horizontal",
   floatingControlsLeading,
   sizeMetric: controlledSizeMetric,
   onSizeMetricChange,
@@ -272,6 +246,22 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     artistUuid,
   });
 
+  // Renderer revision tracking is per instance: bind a navigation to one stacked root so a
+  // later user selection cannot replay the same request in another renderer.
+  const restoreRevision = viewportRestore?.revision;
+  const [stackedRestoreOwner, setStackedRestoreOwner] = useState<{
+    revision: string | number | undefined;
+    rootUuid: string | undefined;
+  }>({ revision: restoreRevision, rootUuid: selectedGenrePlaylist?.root.uuid });
+  let restoreRootUuid = stackedRestoreOwner.rootUuid;
+  if (stackedRestoreOwner.revision !== restoreRevision) {
+    restoreRootUuid = selectedGenrePlaylist?.root.uuid;
+    setStackedRestoreOwner({ revision: restoreRevision, rootUuid: restoreRootUuid });
+  } else if (restoreRootUuid === undefined && selectedGenrePlaylist) {
+    restoreRootUuid = selectedGenrePlaylist.root.uuid;
+    setStackedRestoreOwner({ revision: restoreRevision, rootUuid: restoreRootUuid });
+  }
+
   const isGenreUpdating = useIsMutating({ mutationKey: genreUpdateMutationKey }) > 0;
   const { mutate: updateGenre } = useUpdateGenre(scope, getBackendBaseUrl);
   const busy = deferredSizeMetric !== sizeMetric || isTreeFetching || isGenreUpdating;
@@ -341,14 +331,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
 
   // The brand layout tokens derive the center column from this variable.
   const isDetailHidden = isCollapsed || (!hasSelectedGenreNode && !activeOverlayPanel);
-  useEffect(() => {
-    if (placement !== "regions" || !isDetailHidden) return undefined;
-    const root = document.documentElement;
-    root.style.setProperty("--layout-left-w", "0px");
-    return () => {
-      root.style.removeProperty("--layout-left-w");
-    };
-  }, [placement, isDetailHidden]);
+  useLeftDetailPanelLayout(!isDetailHidden, placement === "regions");
 
   // An expandable overlay (e.g. an artist) takes the info panel's slot, so the edge tab drives it instead.
   const detailOverlay =
@@ -482,19 +465,23 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           : undefined;
       return {
         primary: (
-        <>
-          {toolbar}
-          <GenreNodeActionBand
-            node={node}
+          <GenreInfoPanelBody<O>
+            toolbar={toolbar}
+            family={family}
+            genreUuid={genreUuid}
             genrePlaylist={genrePlaylist}
+            wikidataId={criteria.wikidataId}
             scope={scope}
-            shareTarget={shareUrl ? shareTarget : undefined}
-            shareUrl={shareUrl}
-            onZoomIn={zoomInRef.current}
-            onAddChild={readOnly ? undefined : () => handleGenreCreationAction(criteria)}
-            onRename={readOnly ? undefined : () => handleGenreRenameAction(criteria)}
-            onChangeParent={
-              readOnly
+            getBackendBaseUrl={getBackendBaseUrl}
+            playback={playback}
+            band={{
+              node,
+              shareTarget: shareUrl ? shareTarget : undefined,
+              shareUrl,
+              onZoomIn: zoomInRef.current,
+              onAddChild: readOnly ? undefined : () => handleGenreCreationAction(criteria),
+              onRename: readOnly ? undefined : () => handleGenreRenameAction(criteria),
+              onChangeParent: readOnly
                 ? undefined
                 : () =>
                     showPopup(
@@ -506,39 +493,28 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                         onClose={hidePopup}
                         onParentChanged={onParentChanged}
                       />,
-                    )
-            }
-            side={side}
-            onToggleSide={
-              canToggleSide
+                    ),
+              side,
+              onToggleSide: canToggleSide
                 ? () => updateGenre({ uuid: genreUuid, data: { side: side === "pop" ? "core" : "pop" } })
-                : undefined
-            }
-            toggleSideDisabledReason={
-              popSibling ? `${popSibling.name} is already the pop side of ${parentPlaylist?.name}` : undefined
-            }
-            additionalActions={additionalActions}
-            playback={playback}
+                : undefined,
+              toggleSideDisabledReason: popSibling
+                ? `${popSibling.name} is already the pop side of ${parentPlaylist?.name}`
+                : undefined,
+              additionalActions,
+            }}
+            extras={{
+              criteriaOverviewSchema,
+              renderGenreDetailExtras,
+              renderArtistLink,
+              artist: filterArtist,
+              renderSummary,
+              renderEssentialTracks,
+              renderSongLeading,
+              renderSongActions,
+              renderTracksToolbar,
+            }}
           />
-        <GenreDetailExtras<O>
-          key={genreUuid}
-          family={family}
-          genreUuid={genreUuid}
-          genrePlaylist={genrePlaylist}
-          wikidataId={criteria.wikidataId}
-          scope={scope}
-          getBackendBaseUrl={getBackendBaseUrl}
-          criteriaOverviewSchema={criteriaOverviewSchema}
-          renderGenreDetailExtras={renderGenreDetailExtras}
-          renderArtistLink={renderArtistLink}
-          artist={filterArtist}
-          renderSummary={renderSummary}
-          renderEssentialTracks={renderEssentialTracks}
-          renderSongLeading={renderSongLeading}
-          renderSongActions={renderSongActions}
-          renderTracksToolbar={renderTracksToolbar}
-        />
-        </>
         ),
         aside: ancestors,
       };
@@ -736,7 +712,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   selectedNodeId={selectedNodeId}
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
-                  controlsOrientation={controlsOrientation}
                   sizeMetric={isArtistFiltered || !canSizeByViews ? "songs" : deferredSizeMetric}
                   busy={busy}
                   floatingControlsLeading={
@@ -748,6 +723,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                     ) : undefined
                   }
                   defaultViewport={defaultViewport}
+                  viewportRestore={viewportRestore}
                   onViewportChange={onViewportChange}
                   {...infoPanelCuration}
                 />
@@ -772,7 +748,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   selectedNodeId={selectedNodeId}
                   readOnly={readOnly}
                   allowWheelRotation={allowWheelRotation}
-                  controlsOrientation={controlsOrientation}
                   sizeMetric={isArtistFiltered || !canSizeByViews ? "songs" : deferredSizeMetric}
                   busy={busy}
                   floatingControlsLeading={
@@ -784,6 +759,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                     ) : undefined
                   }
                   defaultViewport={defaultViewport}
+                  viewportRestore={viewportRestore}
                   onViewportChange={onViewportChange}
                   {...infoPanelCuration}
                   {...focus}
@@ -839,9 +815,11 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                           }
                           readOnly={readOnly}
                           wheelZoom="modifier"
-                          controlsOrientation={controlsOrientation}
                           defaultViewport={
                             uuid === selectedGenrePlaylist?.root.uuid ? defaultViewport : undefined
+                          }
+                          viewportRestore={
+                            uuid === selectedGenrePlaylist?.root.uuid && uuid === restoreRootUuid ? viewportRestore : undefined
                           }
                           onViewportChange={
                             uuid === selectedGenrePlaylist?.root.uuid ? onViewportChange : undefined

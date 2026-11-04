@@ -4,8 +4,8 @@ import { useCallback, useMemo, type ReactNode } from "react";
 import {
   GenreTreeOutline,
   GenreTreeWheelRadialPopCore,
-  type ControlsOrientation,
   type GenreTreeViewport,
+  type GenreTreeProps,
   type FocusChangeReason,
   type GenreTreeAction,
   type GenreTreeNode,
@@ -64,9 +64,6 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   allowWheelRotation?: boolean;
   /** When false, suppresses the hover toolbar on every node. Defaults to true. */
   showToolbar?: boolean;
-  /** Layout of the wheel's floating zoom/pop/fit controls; ignored in outline mode. Defaults to
-   * "vertical". */
-  controlsOrientation?: ControlsOrientation;
   /** What node size is proportional to; defaults to the song count. */
   sizeMetric?: GenreTreeSizeMetric;
   /** Rendered in the floating controls, beside the zoom buttons. */
@@ -78,6 +75,8 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   outline?: boolean;
   /** Mount-only seed for the pan/zoom, replacing the initial fit. */
   defaultViewport?: GenreTreeViewport;
+  /** Runtime viewport restoration request. */
+  viewportRestore?: GenreTreeProps["viewportRestore"];
   /** Fires after a user-driven pan/zoom settles. */
   onViewportChange?: (viewport: GenreTreeViewport) => void;
   /** What node play buttons play; defaults to each node's whole genre playlist. */
@@ -105,12 +104,12 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     readOnly = false,
     allowWheelRotation,
     showToolbar,
-    controlsOrientation,
     sizeMetric = "songs",
     floatingControlsLeading,
     busy,
     outline = false,
     defaultViewport,
+    viewportRestore,
     onViewportChange,
     playback,
   } = props;
@@ -219,10 +218,10 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     <GenreTreeWheelRadialPopCore
       {...treeProps}
       allowWheelRotation={allowWheelRotation}
-      controlsOrientation={controlsOrientation}
       floatingControlsLeading={floatingControlsLeading}
       busy={busy}
       defaultViewport={defaultViewport}
+      viewportRestore={viewportRestore}
       onViewportChange={onViewportChange}
       {...(focus.onFocusGenreChange
         ? { focusNodeId: focus.focusGenreUuid, onFocusChange: focus.onFocusGenreChange }

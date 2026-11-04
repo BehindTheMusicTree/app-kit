@@ -106,21 +106,16 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
     it("passes defaultViewport and onViewportChange to the wheel but not to GenreTreeOutline", () => {
       const viewport = { x: 10, y: 20, zoom: 1.5 };
       const onViewportChange = vi.fn();
-      renderWheelRadialPopCore({ defaultViewport: viewport, onViewportChange });
+      const viewportRestore = { viewport, revision: 42 };
+      renderWheelRadialPopCore({ defaultViewport: viewport, onViewportChange, viewportRestore });
       const props = genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0];
       expect(props.defaultViewport).toBe(viewport);
+      expect(props.viewportRestore).toBe(viewportRestore);
       expect(props.onViewportChange).toBe(onViewportChange);
 
-      renderWheelRadialPopCore({ outline: true, defaultViewport: viewport, onViewportChange });
+      renderWheelRadialPopCore({ outline: true, defaultViewport: viewport, onViewportChange, viewportRestore });
       expect(genreTreeOutlinePropsMock.mock.calls[0][0]).not.toHaveProperty("defaultViewport");
-    });
-
-    it("passes controlsOrientation to the wheel but not to GenreTreeOutline", () => {
-      renderWheelRadialPopCore({ controlsOrientation: "horizontal" });
-      expect(genreTreeWheelRadialPopCorePropsMock.mock.calls[0][0].controlsOrientation).toBe("horizontal");
-
-      renderWheelRadialPopCore({ outline: true, controlsOrientation: "horizontal" });
-      expect(genreTreeOutlinePropsMock.mock.calls[0][0]).not.toHaveProperty("controlsOrientation");
+      expect(genreTreeOutlinePropsMock.mock.calls[0][0]).not.toHaveProperty("viewportRestore");
     });
 
     it("forwards focus props to the wheel as focusNodeId/onFocusChange but not to GenreTreeOutline", () => {

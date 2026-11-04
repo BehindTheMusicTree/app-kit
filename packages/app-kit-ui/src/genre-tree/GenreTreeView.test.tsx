@@ -290,6 +290,41 @@ describe("GenreTreeView", () => {
     expect(second.onViewportChange).toBe(onViewportChange);
   });
 
+  it.each(["wheel", "pop-core"] as const)("forwards navigation updates in %s", (viewMode) => {
+    useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" } })], isPending: false });
+    const viewportRestore = { viewport: { x: 10, y: 20, zoom: 2 }, revision: "first" };
+    const onFocusGenreChange = vi.fn();
+    const base = { scope: "me" as const, handleGenreCreationAction: vi.fn(), handleGenreRenameAction: vi.fn(), getBackendBaseUrl, artistSearch: false as const, viewMode, onFocusGenreChange };
+    const view = render(<GenreTreeView {...base} focusGenreUuid={null} selectedNodeId={null} viewportRestore={viewportRestore} />);
+    const calls = viewMode === "wheel" ? treeWheelPropsMock : treeWheelRadialPopCorePropsMock;
+    expect(calls.mock.calls.at(-1)?.[0].viewportRestore).toBe(viewportRestore);
+    const next = { viewport: { x: 3, y: 4, zoom: 1 }, revision: "second" };
+    view.rerender(<GenreTreeView {...base} focusGenreUuid="gp1" selectedNodeId="gp1" viewportRestore={next} />);
+    const props = calls.mock.calls.at(-1)?.[0];
+    expect(props.viewportRestore).toBe(next);
+    expect(props.selectedNodeId).toBe("gp1");
+    if (viewMode === "pop-core") expect(props.focusGenreUuid).toBe("gp1");
+  });
+
+  it("keeps a stacked request pending until its selected root resolves", () => {
+    const viewportRestore = { viewport: { x: 1, y: 2, zoom: 1 }, revision: 7 };
+    const props = { scope: "me" as const, handleGenreCreationAction: vi.fn(), handleGenreRenameAction: vi.fn(), getBackendBaseUrl, artistSearch: false as const, viewMode: "stacked" as const, selectedNodeId: "gp2", viewportRestore };
+    useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist({ uuid: "gp1", root: { uuid: "root1" } })], isPending: false });
+    const view = render(<GenreTreeView {...props} />);
+    expect(treePerRootPropsMock.mock.calls.at(-1)?.[0].viewportRestore).toBeUndefined();
+    useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist({ uuid: "gp1", root: { uuid: "root1" } }), makePlaylist({ uuid: "gp2", root: { uuid: "root2" } })], isPending: false });
+    view.rerender(<GenreTreeView {...props} />);
+    const [first, second] = treePerRootPropsMock.mock.calls.slice(-2).map(([p]) => p);
+    expect(first.viewportRestore).toBeUndefined();
+    expect(second.viewportRestore).toBe(viewportRestore);
+    view.rerender(<GenreTreeView {...props} selectedNodeId="gp1" />);
+    expect(treePerRootPropsMock.mock.calls.slice(-2).every(([p]) => p.viewportRestore === undefined)).toBe(true);
+    const next = { ...viewportRestore, revision: 8 };
+    view.rerender(<GenreTreeView {...props} selectedNodeId="gp1" viewportRestore={next} />);
+    expect(treePerRootPropsMock.mock.calls.at(-2)?.[0].viewportRestore).toBe(next);
+
+  });
+
   describe("floating host control", () => {
     it.each(["wheel", "pop-core"] as const)("renders before the size selector in %s view", (viewMode) => {
       useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" }, parent: null })], isPending: false });
@@ -769,40 +804,6 @@ describe("GenreTreeView", () => {
         "modifier",
       );
     });
-  });
-
-  it("defaults controlsOrientation to horizontal on the pop-core, wheel and stacked views", () => {
-    useListFullGenrePlaylistsMock.mockReturnValue({
-      data: [makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" }, parent: null })],
-      isPending: false,
-    });
-    renderView();
-
-    fireEvent.click(screen.getByRole("button", { name: "Pop/Core" }));
-    expect(treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0].controlsOrientation).toBe("horizontal");
-
-    fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
-    expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].controlsOrientation).toBe("horizontal");
-
-    fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
-    expect(treePerRootPropsMock.mock.calls.at(-1)?.[0].controlsOrientation).toBe("horizontal");
-  });
-
-  it("passes controlsOrientation through to the pop-core, wheel and stacked views", () => {
-    useListFullGenrePlaylistsMock.mockReturnValue({
-      data: [makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" }, parent: null })],
-      isPending: false,
-    });
-    renderView({ controlsOrientation: "vertical" });
-
-    fireEvent.click(screen.getByRole("button", { name: "Pop/Core" }));
-    expect(treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0].controlsOrientation).toBe("vertical");
-
-    fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
-    expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].controlsOrientation).toBe("vertical");
-
-    fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
-    expect(treePerRootPropsMock.mock.calls.at(-1)?.[0].controlsOrientation).toBe("vertical");
   });
 
   it("passes focus props to the pop-core view only, not to outline", () => {
