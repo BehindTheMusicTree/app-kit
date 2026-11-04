@@ -11,6 +11,8 @@ export const CriteriaDetailedSchema = z.object({
   uuid: GenreUuidSchema,
   name: z.string(),
   summary: z.string().nullable(),
+  // Optional until every deployed API serves it.
+  wikidataId: z.string().nullable().optional(),
   parent: CriteriaMinimumSchema.nullable(),
   ascendants: z.array(CriteriaLineageRelWithoutDescendantSchema),
   descendants: z.array(CriteriaLineageRelWithoutAscendantSchema),

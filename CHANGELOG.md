@@ -14,12 +14,16 @@ easy to spot when bumping.
 ### Added
 
 - Support navigation-driven viewport restoration in graphical genre tree views.
+- `GenreDetailPanel`, a standalone genre detail panel driven by one genre uuid (no tree index needed), plus `GenreInfoPanelBody`, `GenreNodeActionBand`, `useLeftDetailPanelLayout` and `useGenrePlaylistPlayback` exports.
+- `useGenreByWikidataId` hook and `wikidataId` on the detailed criteria schema.
 ### Removed
 
 - **Breaking:** `GenreTreeView`, `GenrePlaylistTreeWheel`, `GenrePlaylistTreePerRoot` and `GenrePlaylistTreeWheelRadialPopCore` no longer accept `controlsOrientation`, and the `ControlsOrientation` type is no longer re-exported. The floating controls always use the horizontal layout, which was already the `GenreTreeView` default.
 
 ### Changed
 
+- `GenreTreeView` renders its detail panel body through the shared `GenreInfoPanelBody` (no behaviour change).
+- `GenreDetailPanel` requires `InfoPanel` from a `@behindthemusictree/genre-tree-view` release newer than 7.0.0 (not yet published; the catalog pin is bumped with that release).
 - Requires `@behindthemusictree/genre-tree-view` 7.0.0 and `@behindthemusictree/ui` ^0.11.0 (peer range).
 
 ## [28.0.2] - 2026-11-02

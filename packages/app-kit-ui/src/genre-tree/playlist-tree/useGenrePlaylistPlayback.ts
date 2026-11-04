@@ -4,16 +4,20 @@ import { useCallback, useMemo } from "react";
 import {
   TrackListOriginType,
   useTrackList,
+  type CriteriaPlaylistMinimum,
   type CriteriaPlaylistSimple,
   type TrackBase,
   type TrackListOriginFromArtist,
 } from "@behindthemusictree/app-kit/genre-tree";
 import type { Scope } from "@behindthemusictree/app-kit/transport";
 
+/** What a play button needs of a playlist; `criteria` is only read when playing one artist's songs in the genre. */
+export type PlayableGenrePlaylistInput = CriteriaPlaylistMinimum & { criteria?: CriteriaPlaylistSimple["criteria"] };
+
 /** What a tree node's play button plays, and which node is the one currently playing. */
 export type GenrePlaylistPlayback = {
   playingNodeId: string | null;
-  play: (genrePlaylist: CriteriaPlaylistSimple) => Promise<void>;
+  play: (genrePlaylist: PlayableGenrePlaylistInput) => Promise<void>;
 };
 
 export type UseGenrePlaylistPlaybackOptions = {
@@ -40,7 +44,7 @@ export function useGenrePlaylistPlayback<T extends TrackBase = TrackBase>({
   }, [origin, artist, genrePlaylists]);
 
   const play = useCallback(
-    async (genrePlaylist: CriteriaPlaylistSimple) => {
+    async (genrePlaylist: PlayableGenrePlaylistInput) => {
       if (!artist) return playNewTrackListFromGenrePlaylist(genrePlaylist, scope);
       // Genre-less songs have no genre to filter on.
       if (!genrePlaylist.criteria) return;
