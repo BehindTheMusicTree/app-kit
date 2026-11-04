@@ -12,6 +12,7 @@ import { useValidatedMutation } from "../transport/lib/use-validated-mutation";
 import { Scope } from "../transport/lib/scope";
 import { CriteriaDetailedSchema, CriteriaDetailed } from "./schemas/criteria/detailed";
 import { CriteriaOverviewSchema, CriteriaOverview } from "./schemas/criteria/overview";
+import { CriteriaMinimumSchema } from "./schemas/criteria/minimum";
 import { CriteriaSimpleSchema } from "./schemas/criteria/simple";
 import { CriteriaCreationSchema } from "./schemas/criteria/creation";
 import { CriteriaUpdateSchema } from "./schemas/criteria/update";
@@ -70,6 +71,23 @@ export function useFetchGenreDetail<D extends CriteriaDetailed = CriteriaDetaile
     context: "useFetchGenreDetail",
     enabled: id !== null,
   });
+}
+
+const GenreByWikidataIdSchema = PaginatedResponseSchema(CriteriaMinimumSchema);
+
+/** The genre carrying a Wikidata item id: `undefined` while loading or disabled, `null` when the API has none. */
+export function useGenreByWikidataId(qid: string | null, scope: Scope, getBackendBaseUrl: () => string) {
+  const { fetch } = useFetchWrapper(getBackendBaseUrl);
+  const queryKeys = scope === "reference" ? genreQueryKeys.reference : genreQueryKeys.me;
+  const endpoints = scope === "reference" ? genreEndpoints.reference : genreEndpoints.me;
+  const { data, ...rest } = useQueryWithParse({
+    queryKey: queryKeys.byWikidataId(qid ?? ""),
+    queryFn: () => fetch(endpoints.list(), true, scope === "me", {}, { wikidataId: qid ?? "", pageSize: 1 }),
+    schema: GenreByWikidataIdSchema,
+    context: "useGenreByWikidataId",
+    enabled: qid !== null,
+  });
+  return { ...rest, data: data === undefined ? undefined : (data.results[0] ?? null) };
 }
 
 const GENRE_OVERVIEW_STALE_TIME_MS = 60_000;

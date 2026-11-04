@@ -66,6 +66,7 @@ import {
   useListGenres,
   useFetchGenre,
   useFetchGenreDetail,
+  useGenreByWikidataId,
   useFetchGenreOverview,
   usePrefetchGenreOverview,
   useCreateGenre,
@@ -176,6 +177,40 @@ describe("useGenre", () => {
 
     it("disables the query when there is no selected id", () => {
       renderHook(() => useFetchGenreDetail(null, "me", getBackendBaseUrl));
+
+      expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
+    });
+  });
+
+  describe("useGenreByWikidataId", () => {
+    it("looks the genre up by Wikidata id on the reference list endpoint", () => {
+      useQueryWithParseMock.mockReturnValue({ data: undefined });
+      renderHook(() => useGenreByWikidataId("Q672134", "reference", getBackendBaseUrl));
+      const { queryKey, enabled, queryFn } = useQueryWithParseMock.mock.calls[0][0];
+
+      expect(queryKey).toEqual(["referenceGenres", "byWikidataId", "Q672134"]);
+      expect(enabled).toBe(true);
+
+      queryFn();
+      expect(fetchMock).toHaveBeenCalledWith("genres/", true, false, {}, { wikidataId: "Q672134", pageSize: 1 });
+    });
+
+    it("returns the first result, null when there is none, undefined while loading", () => {
+      const lookup = () => renderHook(() => useGenreByWikidataId("Q1", "reference", getBackendBaseUrl)).result.current;
+
+      useQueryWithParseMock.mockReturnValueOnce({ data: { results: [{ uuid: "g1", name: "Music of France" }] } });
+      expect(lookup().data).toEqual({ uuid: "g1", name: "Music of France" });
+
+      useQueryWithParseMock.mockReturnValueOnce({ data: { results: [] } });
+      expect(lookup().data).toBeNull();
+
+      useQueryWithParseMock.mockReturnValueOnce({ data: undefined });
+      expect(lookup().data).toBeUndefined();
+    });
+
+    it("is disabled without an id", () => {
+      useQueryWithParseMock.mockReturnValue({ data: undefined });
+      renderHook(() => useGenreByWikidataId(null, "reference", getBackendBaseUrl));
 
       expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
     });
