@@ -2347,6 +2347,15 @@ describe("GenreTreeView", () => {
       expect(onSongUuidChange).toHaveBeenCalledWith(null);
     });
 
+    it("closes the song when a genre node is selected in the tree", () => {
+      const onSongUuidChange = vi.fn();
+      render(<GenreTreeView {...baseProps()} songUuid={hit.uuid} onSongUuidChange={onSongUuidChange} />);
+
+      act(() => wheelProps().onSelectedNodeChange({ id: "gp1" }));
+
+      expect(onSongUuidChange).toHaveBeenCalledWith(null);
+    });
+
     it("does not search songs when songSearch is false", () => {
       render(<GenreTreeView {...baseProps()} songSearch={false} />);
 

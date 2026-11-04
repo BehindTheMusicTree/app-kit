@@ -535,6 +535,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     : undefined;
   const extraGroups = [artistGroup, songGroup].filter((group): group is GenreSearchExtraGroup => group !== undefined);
   const handleSelectedNodeChange = (node: { id: string } | null) => {
+    if (node !== null && songUuid !== null) changeSong(null);
     selectNode(node);
   };
   const handleGenreSearchClear = clearSelection;

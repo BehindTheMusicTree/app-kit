@@ -14,6 +14,8 @@ easy to spot when bumping.
 ### Breaking
 
 - `GenreSearch` is built on the `@behindthemusictree/ui` `Combobox` (peer range now `^0.14.0`): its `extraResults` prop and the `GenreSearchExtraResults` type are replaced by `extraGroups` / `GenreSearchExtraGroup`. Its input is now a `combobox`, and options are picked on mouse-down.
+- `TrackBaseSchema.genre` (and so `SongDetailed` and track items) is nullable: songs without a genre are listed. Read `track.genre?.name`.
+- `GenreTreeShareTarget` gains a `kind: "song"` member; a `getShareUrl` that switches exhaustively on `kind` must handle it.
 
 ### Added
 
