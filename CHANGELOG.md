@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [29.0.0] - 2026-11-04
+
 ### Added
 
 - Support navigation-driven viewport restoration in graphical genre tree views.
