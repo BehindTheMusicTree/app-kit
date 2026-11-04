@@ -64,8 +64,9 @@ describe("useArtistSearch", () => {
     expect(queryKey).toEqual(["artistSearch", "taylor"]);
     expect(enabled).toBe(true);
     expect(schema).toBe(ArtistSearchResultsSchema);
-    queryFn();
-    expect(fetchMock).toHaveBeenCalledWith("artists/search/", true, false, {}, { q: "taylor", limit: 8 });
+    const signal = new AbortController().signal;
+    queryFn({ signal });
+    expect(fetchMock).toHaveBeenCalledWith("artists/search/", true, false, { signal }, { q: "taylor", limit: 8 });
     expect(result.current.artists).toEqual([swift]);
     expect(result.current.settled).toBe(true);
     expect(result.current.pending).toBe(false);

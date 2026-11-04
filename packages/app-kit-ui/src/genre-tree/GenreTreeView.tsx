@@ -24,7 +24,11 @@ import {
   CriteriaMinimum,
   CriteriaPlaylistSimple,
   useArtistSearch,
+  useSongSearch,
+  isSongSearchResultPlayable,
   type ArtistSearchResult,
+  type RenderSongLink,
+  type SongSearchResult,
 } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaOverview } from "@behindthemusictree/app-kit/genre-tree";
 import { Scope } from "@behindthemusictree/app-kit/transport";
@@ -39,12 +43,13 @@ import GenrePlaylistTreePerRoot from "./playlist-tree/TreePerRoot";
 import GenrePlaylistTreeWheel from "./playlist-tree/TreeWheel";
 import GenrePlaylistTreeWheelRadialPopCore, { type GenreFocusProps } from "./playlist-tree/TreeWheelRadialPopCore";
 import { GenreTreeWheelHandoff } from "./GenreTreeWheelHandoff";
-import GenreSearch, { type GenreSearchProps } from "./GenreSearch";
+import GenreSearch, { type GenreSearchExtraGroup } from "./GenreSearch";
 import { GenreInfoPanelBody } from "./GenreInfoPanelBody";
 import PanelEdgeTab from "./PanelEdgeTab";
 import { useLeftDetailPanelLayout } from "./useLeftDetailPanelLayout";
 import ChangeParentPopup, { type ParentChange } from "./ChangeParentPopup";
 import { useArtistPanel } from "./artist/useArtistPanel";
+import { useSongPanel } from "./song/useSongPanel";
 import { SizeMetricToggle } from "./SizeMetricToggle";
 import { hasViewsCount, type GenreTreeSizeMetric } from "./playlist-tree/size-metric";
 import { useGenrePlaylistPlayback, type GenrePlaylistPlayback } from "./playlist-tree/useGenrePlaylistPlayback";
@@ -141,7 +146,21 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   /** Controlled expanded state of the artist panel. Uncontrolled, it resets to compact on each artist. */
   artistExpanded?: boolean;
   onArtistExpandedChange?: (expanded: boolean) => void;
-  /** Resolves a selected genre or artist to a share URL using the host app's routes. */
+  /** Controlled song panel (a song uuid). Like the artist panel it shares the info panel's slot: opening a song clears
+   * the selected genre and the artist; selecting a genre closes it. A host `overlayPanel` takes precedence. */
+  songUuid?: string | null;
+  /** Called when the user opens a song (search pick, title link) or closes its panel. */
+  onSongUuidChange?: (uuid: string | null) => void;
+  /** Controlled expanded state of the song panel. Uncontrolled, it resets to compact on each song. */
+  songExpanded?: boolean;
+  onSongExpandedChange?: (expanded: boolean) => void;
+  /** Songs are searched by default; picking one opens its panel. */
+  songSearch?: boolean;
+  onSongSelect?: (song: SongSearchResult) => void;
+  /** When set, song titles in the info panel's track list render through it (e.g. a router `Link` to the song).
+   * By default they are buttons that open the song panel. */
+  renderSongLink?: RenderSongLink;
+  /** Resolves a selected genre, artist or song to a share URL using the host app's routes. */
   getShareUrl?: GetGenreTreeShareUrl;
 } & ArtistSearchProps &
   GenreDetailSlots<O> &
@@ -188,6 +207,13 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   artistSearch = true,
   onArtistSelect,
   artistSearchBaseUrl,
+  songUuid: controlledSongUuid,
+  onSongUuidChange,
+  songExpanded: controlledSongExpanded,
+  onSongExpandedChange,
+  songSearch = true,
+  onSongSelect,
+  renderSongLink,
   renderSummary,
   renderEssentialTracks,
   renderSongLeading,
@@ -207,6 +233,13 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const [internalArtistUuid, setInternalArtistUuid] = useState<string | null>(null);
   const isArtistControlled = controlledArtistUuid !== undefined;
   const artistUuid = isArtistControlled ? controlledArtistUuid : internalArtistUuid;
+  const [internalSongUuid, setInternalSongUuid] = useState<string | null>(null);
+  const isSongControlled = controlledSongUuid !== undefined;
+  const songUuid = isSongControlled ? controlledSongUuid : internalSongUuid;
+  const changeSong = (uuid: string | null) => {
+    if (!isSongControlled) setInternalSongUuid(uuid);
+    onSongUuidChange?.(uuid);
+  };
   const [internalSizeMetric, setInternalSizeMetric] = useState<GenreTreeSizeMetric>("songs");
   const sizeMetric = controlledSizeMetric ?? internalSizeMetric;
   const deferredSizeMetric = useDeferredValue(sizeMetric);
@@ -280,11 +313,32 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const playback = useGenrePlaylistPlayback({ scope, genrePlaylists: visibleGenrePlaylists, artist: filterArtist });
   const openArtist = (uuid: string) => {
     if (selectedNodeId !== null) clearSelection();
+    if (songUuid !== null) changeSong(null);
     changeArtist(uuid);
   };
+  const openSong = (uuid: string) => {
+    if (selectedNodeId !== null) clearSelection();
+    changeSong(uuid);
+  };
+  // Kept stable: it feeds the memoized info panel body, which must not rebuild on every render.
+  const openSongRef = useRef(openSong);
+  openSongRef.current = openSong;
+  const resolvedRenderSongLink = useCallback<RenderSongLink>(
+    (song) =>
+      renderSongLink ? (
+        renderSongLink(song)
+      ) : (
+        <button type="button" onClick={() => openSongRef.current(song.uuid)} className="hover:underline">
+          {song.title}
+        </button>
+      ),
+    [renderSongLink],
+  );
+  const [expandedSongUuid, setExpandedSongUuid] = useState<string | null>(null);
   // Keyed by artist, so switching artists (including a host's back/forward) starts compact.
   const [expandedArtistUuid, setExpandedArtistUuid] = useState<string | null>(null);
   const artistBaseUrl = artistSearchBaseUrl ?? getBackendBaseUrl;
+  const songBaseUrl = getBackendBaseUrl;
   const artistPanel = useArtistPanel({
     uuid: artistUuid,
     scope,
@@ -305,13 +359,54 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       if (controlledArtistExpanded === undefined) setExpandedArtistUuid(on ? artistUuid : null);
       onArtistExpandedChange?.(on);
     },
+    renderSongLink: resolvedRenderSongLink,
     onClose: () => changeArtist(null),
+  });
+  const resolvedRenderArtistLink: RenderArtistLink =
+    renderArtistLink ??
+    ((artist) =>
+      artist.isSpecialPurpose ? (
+        artist.name
+      ) : (
+        <button type="button" onClick={() => openArtist(artist.uuid)} className="hover:underline">
+          {artist.name}
+        </button>
+      ));
+  const getGenrePath = (genre: CriteriaMinimum): CriteriaPlaylistSimple[] => {
+    const path: CriteriaPlaylistSimple[] = [];
+    let current = visibleGenrePlaylists.find((playlist) => playlist.criteria?.uuid === genre.uuid);
+    while (current) {
+      path.unshift(current);
+      const parentUuid: string | undefined = current.parent?.uuid;
+      current = parentUuid ? visibleGenrePlaylists.find((playlist) => playlist.uuid === parentUuid) : undefined;
+    }
+    return path;
+  };
+  const songPanel = useSongPanel({
+    uuid: songUuid,
+    scope,
+    getBackendBaseUrl: songBaseUrl,
+    getShareUrl: getShareUrlRef.current,
+    renderArtistLink: resolvedRenderArtistLink,
+    getGenrePath,
+    onSelectGenre: (genrePlaylist) => {
+      changeSong(null);
+      selectGenrePlaylist(genrePlaylist);
+    },
+    expanded: controlledSongExpanded ?? (songUuid !== null && expandedSongUuid === songUuid),
+    onExpandedChange: (on) => {
+      if (controlledSongExpanded === undefined) setExpandedSongUuid(on ? songUuid : null);
+      onSongExpandedChange?.(on);
+    },
+    onClose: () => changeSong(null),
   });
   // Like a genre, the built-in artist panel shows its name in the search field and closes from its clear button.
   // A selected genre shows its own panel instead; the artist stays active as a filter.
-  const builtInArtistPanel = overlayPanel || hasSelectedGenreNode ? undefined : artistPanel;
-  const activeOverlayPanel =
-    overlayPanel ?? (builtInArtistPanel && { ...builtInArtistPanel, hideTitle: true, hideClose: true });
+  // A song, like a genre, replaces the artist panel; the artist stays active as a filter.
+  const builtInSongPanel = overlayPanel || hasSelectedGenreNode ? undefined : songPanel;
+  const builtInArtistPanel = overlayPanel || hasSelectedGenreNode || builtInSongPanel ? undefined : artistPanel;
+  const builtInPanel = builtInSongPanel ?? builtInArtistPanel;
+  const activeOverlayPanel = overlayPanel ?? (builtInPanel && { ...builtInPanel, hideTitle: true, hideClose: true });
 
   const [uncontrolledCollapsed, setUncontrolledCollapsed] = useState(false);
   const [uncontrolledExpanded, setUncontrolledExpanded] = useState(false);
@@ -327,7 +422,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   };
   useEffect(() => {
     setUncontrolledCollapsed(false);
-  }, [selectedNodeId, artistUuid]);
+  }, [selectedNodeId, artistUuid, songUuid]);
 
   // The brand layout tokens derive the center column from this variable.
   const isDetailHidden = isCollapsed || (!hasSelectedGenreNode && !activeOverlayPanel);
@@ -374,8 +469,9 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const { showPopup, hidePopup } = usePopup();
   const [searchText, setSearchText] = useState("");
   const artistSearchResult = useArtistSearch(artistBaseUrl, artistSearch ? searchText : "");
-  const artistExtraResults: GenreSearchProps["extraResults"] = artistSearch
+  const artistGroup: GenreSearchExtraGroup | undefined = artistSearch
     ? {
+        key: "artists",
         label: "Artists",
         items: artistSearchResult.artists.map((artist) => ({
           key: artist.uuid,
@@ -407,11 +503,44 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
         loading: artistSearchResult.pending,
       }
     : undefined;
+  const songSearchResult = useSongSearch(songBaseUrl, songSearch ? searchText : "");
+  const songGroup: GenreSearchExtraGroup | undefined = songSearch
+    ? {
+        key: "songs",
+        label: "Songs",
+        items: songSearchResult.songs.map((song) => ({
+          key: song.uuid,
+          content: (
+            <span className={isSongSearchResultPlayable(song) ? undefined : "opacity-60"}>
+              <span className="block truncate font-medium">{song.title}</span>
+              <span className="block truncate text-xs text-[var(--color-neutral-500)]">
+                {[song.artists.map((artist) => artist.name).join(", "), song.genre?.name ?? "No genre"]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </span>
+            </span>
+          ),
+          onSelect: () => {
+            openSong(song.uuid);
+            onSongSelect?.(song);
+          },
+        })),
+        status: songSearchResult.isError
+          ? "Search failed"
+          : songSearchResult.settled && songSearchResult.songs.length === 0
+            ? "No songs found"
+            : "",
+        loading: songSearchResult.pending,
+      }
+    : undefined;
+  const extraGroups = [artistGroup, songGroup].filter((group): group is GenreSearchExtraGroup => group !== undefined);
   const handleSelectedNodeChange = (node: { id: string } | null) => {
+    if (node !== null && songUuid !== null) changeSong(null);
     selectNode(node);
   };
   const handleGenreSearchClear = clearSelection;
   const handleGenreSearchSelect = (genrePlaylist: CriteriaPlaylistSimple) => {
+    if (songUuid !== null) changeSong(null);
     selectGenrePlaylist(genrePlaylist);
   };
 
@@ -507,6 +636,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
               criteriaOverviewSchema,
               renderGenreDetailExtras,
               renderArtistLink,
+              renderSongLink: resolvedRenderSongLink,
               artist: filterArtist,
               renderSummary,
               renderEssentialTracks,
@@ -524,6 +654,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       scope, getBackendBaseUrl, criteriaOverviewSchema,
       renderGenreDetailExtras,
       renderArtistLink,
+      resolvedRenderSongLink,
       renderSummary,
       renderEssentialTracks,
       renderSongLeading,
@@ -590,11 +721,17 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
         <GenreSearch
           genrePlaylists={visibleGenrePlaylists}
           onSelect={handleGenreSearchSelect}
-          selectedName={selectedGenrePlaylist?.name ?? builtInArtistPanel?.title ?? null}
-          onClear={builtInArtistPanel ? () => changeArtist(null) : handleGenreSearchClear}
+          selectedName={selectedGenrePlaylist?.name ?? builtInPanel?.title ?? null}
+          onClear={
+            builtInSongPanel
+              ? () => changeSong(null)
+              : builtInArtistPanel
+                ? () => changeArtist(null)
+                : handleGenreSearchClear
+          }
           onPrevious={handlePrevious}
-          onQueryChange={artistSearch ? setSearchText : undefined}
-          extraResults={artistExtraResults}
+          onQueryChange={artistSearch || songSearch ? setSearchText : undefined}
+          extraGroups={extraGroups}
         />
       )}
       {!isLoading && filterArtist && (

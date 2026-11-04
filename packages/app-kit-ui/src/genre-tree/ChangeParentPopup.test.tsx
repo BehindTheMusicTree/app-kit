@@ -75,15 +75,15 @@ describe("ChangeParentPopup", () => {
     fireEvent.change(screen.getByPlaceholderText("Search a new parent…"), { target: { value: "o" } });
     const dialog = screen.getByRole("dialog");
 
-    expect(within(dialog).getByRole("button", { name: "Soul" })).toBeInTheDocument();
-    expect(within(dialog).queryByRole("button", { name: "Rock" })).not.toBeInTheDocument();
+    expect(within(dialog).getByRole("option", { name: "Soul" })).toBeInTheDocument();
+    expect(within(dialog).queryByRole("option", { name: "Rock" })).not.toBeInTheDocument();
   });
 
   it("moves the genre under the picked parent and closes on success", () => {
     const { onClose } = renderPopup();
 
     fireEvent.change(screen.getByPlaceholderText("Search a new parent…"), { target: { value: "Bl" } });
-    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Blues" }));
+    fireEvent.mouseDown(within(screen.getByRole("dialog")).getByRole("option", { name: "Blues" }));
 
     expect(useUpdateGenreMock).toHaveBeenCalledWith("reference", getBackendBaseUrl);
     expect(mutateMock).toHaveBeenCalledWith(
@@ -97,7 +97,7 @@ describe("ChangeParentPopup", () => {
   describe("onParentChanged", () => {
     const pickBlues = () => {
       fireEvent.change(screen.getByPlaceholderText("Search a new parent…"), { target: { value: "Bl" } });
-      fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Blues" }));
+      fireEvent.mouseDown(within(screen.getByRole("dialog")).getByRole("option", { name: "Blues" }));
     };
 
     it("reports genre uuids, not playlist uuids, once the update succeeds", () => {
@@ -115,7 +115,7 @@ describe("ChangeParentPopup", () => {
       const onParentChanged = vi.fn();
       renderPopup({ genrePlaylist: blues, onParentChanged });
       fireEvent.change(screen.getByPlaceholderText("Search a new parent…"), { target: { value: "So" } });
-      fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Soul" }));
+      fireEvent.mouseDown(within(screen.getByRole("dialog")).getByRole("option", { name: "Soul" }));
       mutateMock.mock.calls[0][1].onSuccess();
 
       expect(onParentChanged).toHaveBeenCalledWith({ genre: "c-blues", from: null, to: "c-soul" });

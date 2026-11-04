@@ -7,6 +7,7 @@ import TrackItem from "./TrackItem";
 import { useTrackList } from "@behindthemusictree/app-kit/genre-tree";
 import { TrackListOriginType } from "@behindthemusictree/app-kit/genre-tree";
 import { TrackBase } from "@behindthemusictree/app-kit/genre-tree";
+import type { RenderSongLink } from "@behindthemusictree/app-kit/genre-tree";
 import { RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
 import { useTrackNoun } from "@behindthemusictree/app-kit/track-noun";
 
@@ -22,6 +23,8 @@ export interface TrackListSidebarProps<T extends TrackBase> {
   onMinimize?: () => void;
   /** When set, artist names render through it (e.g. a router `Link`). */
   renderArtistLink?: RenderArtistLink;
+  /** When set, song titles render through it (e.g. open the song panel). */
+  renderSongLink?: RenderSongLink;
 }
 
 export default function TrackListSidebar<T extends TrackBase>({
@@ -33,6 +36,7 @@ export default function TrackListSidebar<T extends TrackBase>({
   onExpand,
   onMinimize,
   renderArtistLink,
+  renderSongLink,
 }: TrackListSidebarProps<T>) {
   const { trackList, loadMore, autoAdvanceScrollRequest } = useTrackList<T>();
   const trackNoun = useTrackNoun();
@@ -198,6 +202,7 @@ export default function TrackListSidebar<T extends TrackBase>({
                 renderDuration={renderDuration}
                 renderActions={renderActions}
                 renderArtistLink={renderArtistLink}
+                renderSongLink={renderSongLink}
               />
             </li>
           ))}

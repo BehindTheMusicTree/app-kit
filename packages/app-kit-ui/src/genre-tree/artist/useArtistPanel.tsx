@@ -2,7 +2,7 @@
 
 import { Skeleton } from "@behindthemusictree/ui";
 import type { GenreTreeOverlayPanel } from "@behindthemusictree/genre-tree-view";
-import { useArtist, type RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
+import { useArtist, type RenderArtistLink, type RenderSongLink } from "@behindthemusictree/app-kit/genre-tree";
 import ArtistHeader from "./ArtistHeader";
 import ArtistPhoto from "./ArtistPhoto";
 import ArtistMembers from "./ArtistMembers";
@@ -19,6 +19,7 @@ export interface ArtistPanelOptions {
   getShareUrl?: GetGenreTreeShareUrl;
   /** Renders member and song artist names. */
   renderArtistLink: RenderArtistLink;
+  renderSongLink?: RenderSongLink;
   expanded: boolean;
   onExpandedChange: (expanded: boolean) => void;
   onClose: () => void;
@@ -31,6 +32,7 @@ export function useArtistPanel({
   getBackendBaseUrl,
   getShareUrl,
   renderArtistLink,
+  renderSongLink,
   expanded,
   onExpandedChange,
   onClose,
@@ -95,6 +97,7 @@ export function useArtistPanel({
                 artist={{ uuid: artist.uuid, name: artist.name }}
                 getBackendBaseUrl={getBackendBaseUrl}
                 renderArtistLink={renderArtistLink}
+                renderSongLink={renderSongLink}
               />
             )}
           </>
