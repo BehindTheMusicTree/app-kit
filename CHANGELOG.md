@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [29.0.1] - 2026-11-04
+
 ### Changed
 
 - The genre tree background shows the default arrow cursor instead of the open hand; only interactive elements show the pointer (`@behindthemusictree/genre-tree-view` 7.1.1).
