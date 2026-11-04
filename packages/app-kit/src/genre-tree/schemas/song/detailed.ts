@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CriteriaMinimumSchema } from "../criteria/minimum";
 import { TrackBase, TrackBaseSchema } from "../track/base";
 
 export const YOUTUBE_UNPLAYABLE_REASON_LABELS = {
@@ -24,10 +25,13 @@ export const SongDetailedSchema = TrackBaseSchema.extend({
       id: z.string(),
       // null = playable
       unplayableReason: z.enum(YOUTUBE_UNPLAYABLE_REASONS).nullable(),
+      viewCount: z.number().int().nullable().optional(),
     })
     .nullable(),
   // null for hand-made/admin songs
   musicbrainzRecordingId: z.string().uuid().nullable(),
+  firstReleaseYear: z.number().int().nullable().optional(),
+  essentialGenres: z.array(CriteriaMinimumSchema).optional(),
 });
 
 export type SongDetailed = z.infer<typeof SongDetailedSchema>;

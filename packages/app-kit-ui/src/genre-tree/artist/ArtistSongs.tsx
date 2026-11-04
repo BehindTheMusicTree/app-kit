@@ -11,6 +11,7 @@ import {
   songUnplayableReason,
   useTrackList,
   type RenderArtistLink,
+  type RenderSongLink,
   type SongDetailed,
 } from "@behindthemusictree/app-kit/genre-tree";
 import { PaginatedResponseSchema, useFetchWrapper, useQueryWithParse } from "@behindthemusictree/app-kit/transport";
@@ -28,9 +29,10 @@ interface ArtistSongsProps {
   artist: { uuid: string; name: string };
   getBackendBaseUrl: () => string;
   renderArtistLink: RenderArtistLink;
+  renderSongLink?: RenderSongLink;
 }
 
-export default function ArtistSongs({ artist, getBackendBaseUrl, renderArtistLink }: ArtistSongsProps) {
+export default function ArtistSongs({ artist, getBackendBaseUrl, renderArtistLink, renderSongLink }: ArtistSongsProps) {
   const [page, setPage] = useState(1);
   const [ordering, setOrdering] = useState<Ordering>("title");
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
@@ -107,6 +109,7 @@ export default function ArtistSongs({ artist, getBackendBaseUrl, renderArtistLin
                   track={song}
                   position={(page - 1) * data.pageSize + index + 1}
                   renderArtistLink={renderArtistLink}
+                  renderSongLink={renderSongLink}
                 />
               </li>
             ))}

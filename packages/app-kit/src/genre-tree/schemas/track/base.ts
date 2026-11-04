@@ -12,7 +12,8 @@ export const TrackBaseSchema = UuidResourceSchema.extend({
   artists: z.array(ArtistMinimumSchema).nullable().optional(),
   album: AlbumMinimumSchema.nullable().optional(),
   trackNumber: z.number().nullable().optional(),
-  genre: CriteriaMinimumSchema,
+  // null for a song not yet linked to a genre.
+  genre: CriteriaMinimumSchema.nullable(),
   rating: z.number().min(0).max(10).nullable().optional(),
   language: z.string().nullable().optional(),
   playCount: z.number().min(0),

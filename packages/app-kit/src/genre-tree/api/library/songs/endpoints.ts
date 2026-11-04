@@ -2,6 +2,8 @@
 // self-hosted audio and play via an embedded YouTube video when one is linked.
 export const makeSongEndpoints = () => ({
   list: () => "library/songs/",
+  search: () => "library/songs/search/",
+  history: (uuid: string) => `library/songs/${uuid}/history/`,
   detail: (uuid: string) => `library/songs/${uuid}/`,
   delete: (uuid: string) => `library/songs/${uuid}/`,
 });

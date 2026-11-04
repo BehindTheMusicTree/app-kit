@@ -11,6 +11,19 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Breaking
+
+- `GenreSearch` is built on the `@behindthemusictree/ui` `Combobox` (peer range now `^0.14.0`): its `extraResults` prop and the `GenreSearchExtraResults` type are replaced by `extraGroups` / `GenreSearchExtraGroup`. Its input is now a `combobox`, and options are picked on mouse-down.
+
+### Added
+
+- Song search and a song detail panel in `GenreTreeView`: the search box lists genres, artists and songs; a song opens a panel with play/pause, share, artists, genre lineage, year, views, plays, links, the genres it is essential in and its history. New props `songUuid`, `onSongUuidChange`, `songExpanded`, `onSongExpandedChange`, `songSearch`, `onSongSelect` and `renderSongLink` (also on `TrackItem`, `TrackListSidebar`, `PlayerPanel`, `ArtistSongs` and `GenreDetailExtras`).
+- `useSong`, `useSongSearch`, `useSongHistory` and their schemas, endpoints and query keys; a `song` share target.
+
+### Changed
+
+- `useArtistSearch` forwards the query's abort `signal`.
+
 ## [29.1.0] - 2026-11-04
 
 ### Changed

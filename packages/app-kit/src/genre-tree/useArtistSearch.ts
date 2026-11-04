@@ -33,7 +33,7 @@ export function useArtistSearch(getBackendBaseUrl: () => string, text: string): 
   const enabled = query.length >= MIN_QUERY_LENGTH;
   const { data, isFetching, isError } = useQueryWithParse({
     queryKey: artistQueryKeys.search(query),
-    queryFn: () => fetch(artistEndpoints.search(), true, false, {}, { q: query, limit: RESULT_LIMIT }),
+    queryFn: ({ signal }) => fetch(artistEndpoints.search(), true, false, { signal }, { q: query, limit: RESULT_LIMIT }),
     schema: ArtistSearchResultsSchema,
     context: "useArtistSearch",
     enabled,

@@ -10,6 +10,7 @@ import { useFetchGenreOverview } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaPlaylistMinimum, type GenreUuid } from "@behindthemusictree/app-kit/genre-tree";
 import { ClampedText } from "./ClampedText";
 import { GenrePlaylistTracks, type GenrePlaylistTracksSlots } from "./GenrePlaylistTracks";
+import type { RenderSongLink } from "@behindthemusictree/app-kit/genre-tree";
 import { RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
 import { useTrackNoun } from "@behindthemusictree/app-kit/track-noun";
 import { SiWikidata, SiWikipedia } from "react-icons/si";
@@ -30,6 +31,7 @@ export type GenreDetailExtrasProps<O extends CriteriaOverview> = GenreDetailSlot
   criteriaOverviewSchema?: z.ZodType<O, unknown>;
   renderGenreDetailExtras?: (overview: O) => ReactNode;
   renderArtistLink?: RenderArtistLink;
+  renderSongLink?: RenderSongLink;
   /** When set, the tracks list shows only this artist's songs in the genre. */
   artist?: { uuid: string; name: string } | null;
   /** genre-tree-view's Family section, placed right after the Summary. */
@@ -47,6 +49,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
   criteriaOverviewSchema,
   renderGenreDetailExtras,
   renderArtistLink,
+  renderSongLink,
   renderSummary,
   renderEssentialTracks,
   family,
@@ -143,6 +146,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
         scope={scope}
         getBackendBaseUrl={getBackendBaseUrl}
         renderArtistLink={renderArtistLink}
+        renderSongLink={renderSongLink}
         {...trackSlots}
       />
     </>

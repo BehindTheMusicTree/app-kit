@@ -32,3 +32,16 @@ describe("index barrel", () => {
     expect(barrelMakeQueryKeys).toBe(makeSongQueryKeys);
   });
 });
+
+describe("song search and history contracts", () => {
+  it("builds search and history URLs and keys", () => {
+    expect(makeSongEndpoints().search()).toBe("library/songs/search/");
+    expect(makeSongEndpoints().history(uuid)).toBe(`library/songs/${uuid}/history/`);
+    expect(makeSongQueryKeys("reference").history(uuid)).toEqual(["referenceSongs", "history", uuid]);
+    expect(makeSongQueryKeys("reference").search({ q: "ab", limit: 8 })).toEqual([
+      "referenceSongs",
+      "search",
+      { q: "ab", limit: 8 },
+    ]);
+  });
+});

@@ -22,21 +22,19 @@ describe("GenreSearch", () => {
 
   it("renders no results before typing", () => {
     render(<GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} />);
-    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.queryByRole("option")).not.toBeInTheDocument();
   });
 
-  it("asks mobile keyboards for a search key without autocomplete", () => {
+  it("turns browser autocomplete off", () => {
     render(<GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} />);
-    const input = screen.getByRole("textbox");
-    expect(input).toHaveAttribute("inputmode", "search");
-    expect(input).toHaveAttribute("enterkeyhint", "search");
+    const input = screen.getByRole("combobox");
     expect(input).toHaveAttribute("autocomplete", "off");
   });
 
   it("shows matching results as the user types", () => {
     render(<GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} />);
 
-    fireEvent.change(screen.getByRole("textbox"), { target: { value: "hou" } });
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "hou" } });
 
     expect(screen.getByText("Deep House")).toBeInTheDocument();
     expect(screen.queryByText("Ambient")).not.toBeInTheDocument();
@@ -46,7 +44,7 @@ describe("GenreSearch", () => {
     const umbrella = { ...makeGenrePlaylist("Techno"), isUmbrella: true };
     render(<GenreSearch genrePlaylists={[umbrella, makeGenrePlaylist("Technoid")]} onSelect={vi.fn()} />);
 
-    fireEvent.change(screen.getByRole("textbox"), { target: { value: "techno" } });
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "techno" } });
 
     expect(screen.getAllByText("umbrella")).toHaveLength(1);
   });
@@ -55,8 +53,8 @@ describe("GenreSearch", () => {
     const onSelect = vi.fn();
     render(<GenreSearch genrePlaylists={genrePlaylists} onSelect={onSelect} />);
 
-    fireEvent.change(screen.getByRole("textbox"), { target: { value: "amb" } });
-    fireEvent.click(screen.getByText("Ambient"));
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "amb" } });
+    fireEvent.mouseDown(screen.getByText("Ambient"));
 
     expect(onSelect).toHaveBeenCalledWith(genrePlaylists[1]);
   });
@@ -64,10 +62,10 @@ describe("GenreSearch", () => {
   it("clears the query and results after a selection", () => {
     render(<GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} />);
 
-    fireEvent.change(screen.getByRole("textbox"), { target: { value: "amb" } });
-    fireEvent.click(screen.getByText("Ambient"));
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "amb" } });
+    fireEvent.mouseDown(screen.getByText("Ambient"));
 
-    expect(screen.getByRole("textbox")).toHaveValue("");
+    expect(screen.getByRole("combobox")).toHaveValue("");
     expect(screen.queryByText("Ambient")).not.toBeInTheDocument();
   });
 
@@ -81,7 +79,7 @@ describe("GenreSearch", () => {
     );
 
     expect(screen.getByLabelText("Search a genre")).toHaveValue("Ambient");
-    expect(screen.queryByRole("list")).not.toBeInTheDocument();
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
 
   it("shows results when typing over the selected name", () => {
@@ -91,7 +89,7 @@ describe("GenreSearch", () => {
 
     fireEvent.change(screen.getByLabelText("Search a genre"), { target: { value: "hou" } });
 
-    expect(screen.getByRole("button", { name: "Deep House" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Deep House" })).toBeInTheDocument();
   });
 
   it("empties the input and calls onClear when ✕ is clicked", () => {
@@ -106,58 +104,59 @@ describe("GenreSearch", () => {
     expect(screen.getByLabelText("Search a genre")).toHaveValue("");
   });
 
-  describe("extraResults", () => {
-    const extra = (onSelect = vi.fn()) => ({
+  describe("extraGroups", () => {
+    const extra = (onSelect = vi.fn()) => [{
+      key: "artists",
       label: "Artists",
       items: [{ key: "a", content: "Taylor Swift", onSelect }],
       status: "1 artist found",
-    });
+    }];
 
     it("groups genres and extra results under headings", () => {
-      render(<GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} extraResults={extra()} />);
+      render(<GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} extraGroups={extra()} />);
 
-      fireEvent.change(screen.getByRole("textbox"), { target: { value: "amb" } });
+      fireEvent.change(screen.getByRole("combobox"), { target: { value: "amb" } });
 
       expect(screen.getByText("Genres")).toBeInTheDocument();
       expect(screen.getByText("Artists")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Taylor Swift" })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: "Taylor Swift" })).toBeInTheDocument();
       expect(screen.getByRole("status")).toHaveTextContent("1 artist found");
     });
 
     it("labels the input Search with extras and Search a genre without", () => {
       const { unmount } = render(
-        <GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} extraResults={extra()} />,
+        <GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} extraGroups={extra()} />,
       );
-      expect(screen.getByRole("textbox", { name: "Search" })).toHaveAttribute("placeholder", "Search…");
+      expect(screen.getByRole("combobox", { name: "Search" })).toHaveAttribute("placeholder", "Search…");
       unmount();
 
       render(<GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} />);
-      expect(screen.getByRole("textbox", { name: "Search a genre" })).toHaveAttribute("placeholder", "Search a genre…");
+      expect(screen.getByRole("combobox", { name: "Search a genre" })).toHaveAttribute("placeholder", "Search a genre…");
     });
 
     it("shows the spinner and marks the input busy while extra results load", () => {
       const { container, rerender } = render(
-        <GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} extraResults={{ ...extra(), loading: true }} />,
+        <GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} extraGroups={[{ ...extra()[0], loading: true }]} />,
       );
       const slot = () => container.querySelector("[data-loading]");
 
       expect(slot()).toHaveAttribute("data-loading", "false");
 
-      fireEvent.change(screen.getByRole("textbox"), { target: { value: "amb" } });
+      fireEvent.change(screen.getByRole("combobox"), { target: { value: "amb" } });
       expect(slot()).toHaveAttribute("data-loading", "true");
-      expect(screen.getByRole("textbox")).toHaveAttribute("aria-busy", "true");
+      expect(screen.getByRole("listbox")).toHaveAttribute("aria-busy", "true");
 
       rerender(
-        <GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} extraResults={{ ...extra(), loading: false }} />,
+        <GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} extraGroups={[{ ...extra()[0], loading: false }]} />,
       );
       expect(slot()).toHaveAttribute("data-loading", "false");
-      expect(screen.getByRole("textbox")).toHaveAttribute("aria-busy", "false");
+      expect(screen.getByRole("listbox")).toHaveAttribute("aria-busy", "false");
     });
 
     it("shows no headings without extra results", () => {
       render(<GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} />);
 
-      fireEvent.change(screen.getByRole("textbox"), { target: { value: "amb" } });
+      fireEvent.change(screen.getByRole("combobox"), { target: { value: "amb" } });
 
       expect(screen.queryByText("Genres")).not.toBeInTheDocument();
     });
@@ -170,17 +169,17 @@ describe("GenreSearch", () => {
           genrePlaylists={genrePlaylists}
           onSelect={vi.fn()}
           onQueryChange={onQueryChange}
-          extraResults={extra(onSelect)}
+          extraGroups={extra(onSelect)}
         />,
       );
 
-      fireEvent.change(screen.getByRole("textbox"), { target: { value: "tay" } });
+      fireEvent.change(screen.getByRole("combobox"), { target: { value: "tay" } });
       expect(onQueryChange).toHaveBeenLastCalledWith("tay");
-      fireEvent.click(screen.getByRole("button", { name: "Taylor Swift" }));
+      fireEvent.mouseDown(screen.getByRole("option", { name: "Taylor Swift" }));
 
       expect(onSelect).toHaveBeenCalledOnce();
       expect(onQueryChange).toHaveBeenLastCalledWith("");
-      expect(screen.getByRole("textbox")).toHaveValue("");
+      expect(screen.getByRole("combobox")).toHaveValue("");
     });
 
     it("does not report the query when the selected name refills the input", () => {

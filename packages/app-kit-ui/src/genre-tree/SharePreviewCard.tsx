@@ -1,6 +1,6 @@
 "use client";
 
-import { Music2, UserRound } from "lucide-react";
+import { Music, Music2, UserRound } from "lucide-react";
 import type { GenreTreeShareTarget } from "./share";
 
 type SharePreviewCardProps = {
@@ -9,8 +9,8 @@ type SharePreviewCardProps = {
 };
 
 export default function SharePreviewCard({ target, url }: SharePreviewCardProps) {
-  const Icon = target.kind === "genre" ? Music2 : UserRound;
-  const typeLabel = target.kind === "genre" ? "Genre" : "Artist";
+  const Icon = { genre: Music2, artist: UserRound, song: Music }[target.kind];
+  const typeLabel = { genre: "Genre", artist: "Artist", song: "Song" }[target.kind];
 
   return (
     <div className="rounded-3xl bg-[var(--color-surface-muted)] p-4">

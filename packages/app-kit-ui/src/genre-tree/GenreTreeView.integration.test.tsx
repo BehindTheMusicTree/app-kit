@@ -71,6 +71,12 @@ vi.mock("../../../app-kit/src/genre-tree/useArtist", () => ({
   useArtist: (uuid: string | null, getBaseUrl: () => string) => useArtistMock(uuid, getBaseUrl),
 }));
 
+vi.mock("../../../app-kit/src/genre-tree/useSong", () => ({ useSong: () => ({ status: "idle" }) }));
+
+vi.mock("../../../app-kit/src/genre-tree/useSongSearch", () => ({
+  useSongSearch: () => ({ songs: [], isError: false, settled: false, pending: false }),
+}));
+
 vi.mock("./artist/ArtistSongs", () => ({ default: () => <p>Songs list</p> }));
 
 vi.mock("../../../app-kit/src/genre-tree/useGenre", async (importOriginal) => ({
@@ -106,25 +112,25 @@ describe("GenreTreeView with the real renderer", () => {
 
   it("keeps the controlled selection and search in agreement", async () => {
     const onSelectedNodeIdChange = vi.fn();
-    const props = { scope: "me" as const, viewMode: "wheel" as const, artistSearch: false as const, handleGenreCreationAction: vi.fn(), handleGenreRenameAction: vi.fn(), getBackendBaseUrl: () => "", onSelectedNodeIdChange };
+    const props = { scope: "me" as const, viewMode: "wheel" as const, artistSearch: false as const, songSearch: false, handleGenreCreationAction: vi.fn(), handleGenreRenameAction: vi.fn(), getBackendBaseUrl: () => "", onSelectedNodeIdChange };
     const view = render(<GenreTreeView {...props} selectedNodeId={null} />);
     const node = await screen.findByText("Mainstream Pop");
     fireEvent.click(node);
     expect(onSelectedNodeIdChange).toHaveBeenCalledWith("pop");
-    expect(screen.getByRole("textbox", { name: "Search a genre" })).toHaveValue("");
+    expect(screen.getByRole("combobox", { name: "Search a genre" })).toHaveValue("");
     expect(view.container.querySelector(".gtv-info-panel")).toBeNull();
     view.rerender(<GenreTreeView {...props} selectedNodeId="pop" />);
-    await waitFor(() => expect(screen.getByRole("textbox", { name: "Search a genre" })).toHaveValue("Mainstream Pop"));
+    await waitFor(() => expect(screen.getByRole("combobox", { name: "Search a genre" })).toHaveValue("Mainstream Pop"));
     await waitFor(() => expect(view.container.querySelector(".gtv-info-panel")).not.toBeNull());
     view.rerender(<GenreTreeView {...props} selectedNodeId={null} />);
-    await waitFor(() => expect(screen.getByRole("textbox", { name: "Search a genre" })).toHaveValue(""));
+    await waitFor(() => expect(screen.getByRole("combobox", { name: "Search a genre" })).toHaveValue(""));
     expect(view.container.querySelector(".gtv-info-panel")).toBeNull();
   });
   it.each(["wheel", "pop-core"] as const)("restores mounted %s silently and accepts a later selection", async (viewMode) => {
     vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({ x: 0, y: 0, left: 0, top: 0, right: 800, bottom: 600, width: 800, height: 600, toJSON() {} });
     const onViewportChange = vi.fn();
     const onSelectedNodeIdChange = vi.fn();
-    const props = { scope: "me" as const, viewMode, artistSearch: false as const, handleGenreCreationAction: vi.fn(), handleGenreRenameAction: vi.fn(), getBackendBaseUrl: () => "", onSelectedNodeIdChange, onViewportChange, focusGenreUuid: null, onFocusGenreChange: vi.fn() };
+    const props = { scope: "me" as const, viewMode, artistSearch: false as const, songSearch: false, handleGenreCreationAction: vi.fn(), handleGenreRenameAction: vi.fn(), getBackendBaseUrl: () => "", onSelectedNodeIdChange, onViewportChange, focusGenreUuid: null, onFocusGenreChange: vi.fn() };
     const view = render(<GenreTreeView {...props} selectedNodeId={null} />);
     const viewport = view.container.querySelector(".gtv-wheel-container")!;
     const stage = viewport.querySelector<HTMLElement>(":scope > div[style*='transform']")!;
@@ -132,7 +138,7 @@ describe("GenreTreeView with the real renderer", () => {
     view.rerender(<GenreTreeView {...props} selectedNodeId="pop" viewportRestore={first} />);
     await waitFor(() => expect(stage.style.transform).toContain("scale(2)"));
     expect(view.container.querySelector(".gtv-wheel-container")).toBe(viewport);
-    expect(screen.getByRole("textbox", { name: "Search a genre" })).toHaveValue("Mainstream Pop");
+    expect(screen.getByRole("combobox", { name: "Search a genre" })).toHaveValue("Mainstream Pop");
     const second = { viewport: { x: 50, y: 60, zoom: 3 }, revision: "back-2" };
     view.rerender(<GenreTreeView {...props} selectedNodeId="pop" viewportRestore={second} />);
     await waitFor(() => expect(stage.style.transform).toContain("scale(3)"));
@@ -140,7 +146,7 @@ describe("GenreTreeView with the real renderer", () => {
     fireEvent.click(view.container.querySelector("#group-rock")!);
     await waitFor(() => expect(onSelectedNodeIdChange).toHaveBeenCalledWith("rock"));
     view.rerender(<GenreTreeView {...props} selectedNodeId="rock" viewportRestore={second} />);
-    await waitFor(() => expect(screen.getByRole("textbox", { name: "Search a genre" })).toHaveValue("Rock"));
+    await waitFor(() => expect(screen.getByRole("combobox", { name: "Search a genre" })).toHaveValue("Rock"));
     expect(view.container.querySelector(".gtv-info-panel")).not.toBeNull();
   });
 

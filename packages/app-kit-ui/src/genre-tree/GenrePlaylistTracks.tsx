@@ -23,7 +23,7 @@ import { TrackBase } from "@behindthemusictree/app-kit/genre-tree";
 import { isSong, songUnplayableReason, SongDetailedSchema } from "@behindthemusictree/app-kit/genre-tree";
 import { GenrePlaylistTracksPage, useTrackList } from "@behindthemusictree/app-kit/genre-tree";
 import { MusicBrainzRecordingLink } from "./MusicBrainzRecordingLink";
-import { ArtistNames, RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
+import { ArtistNames, RenderArtistLink, type RenderSongLink } from "@behindthemusictree/app-kit/genre-tree";
 import { capitalize, useTrackNoun } from "@behindthemusictree/app-kit/track-noun";
 
 const CATALOGUE_PAGE_SIZE = 100;
@@ -67,6 +67,8 @@ export type GenrePlaylistTracksProps = GenrePlaylistTracksSlots & {
   getBackendBaseUrl: () => string;
   /** When set, artist names render through it (e.g. a router `Link`). */
   renderArtistLink?: RenderArtistLink;
+  /** When set, song titles render through it (e.g. open the song panel) instead of linking to MusicBrainz. */
+  renderSongLink?: RenderSongLink;
   /** When set, lists and plays only this artist's songs in the genre. */
   artist?: { uuid: string; name: string } | null;
 };
@@ -82,6 +84,7 @@ export function GenrePlaylistTracks({
   scope,
   getBackendBaseUrl,
   renderArtistLink,
+  renderSongLink,
   renderSongLeading,
   renderSongActions,
   renderTracksToolbar,
@@ -173,7 +176,9 @@ export function GenrePlaylistTracks({
             const text = (
               <span className={TEXT_CELL}>
                 <span className={TITLE_CELL}>
-                  {isSong(track) ? (
+                  {renderSongLink ? (
+                    renderSongLink(track)
+                  ) : isSong(track) ? (
                     <MusicBrainzRecordingLink song={track} className="hover:underline focus-visible:underline">
                       {track.title}
                     </MusicBrainzRecordingLink>
