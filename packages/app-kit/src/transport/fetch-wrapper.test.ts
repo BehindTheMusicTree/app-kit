@@ -293,13 +293,47 @@ describe("fetchWrapper", () => {
     expect(createNetworkOrBackendErrorMock).not.toHaveBeenCalled();
   });
 
+  it("rethrows a caller abort with a custom reason without reporting it", async () => {
+    const controller = new AbortController();
+    const reason = new Error("superseded");
+    controller.abort(reason);
+    vi.mocked(fetch).mockRejectedValue(reason);
+    const handleError = vi.fn();
+
+    await expect(
+      fetchWrapper("things/", false, { signal: controller.signal }, undefined, undefined, undefined, handleError),
+    ).rejects.toBe(reason);
+
+    expect(handleError).not.toHaveBeenCalled();
+  });
+
+  it("reports a timeout signal as a failure", async () => {
+    const controller = new AbortController();
+    controller.abort(new DOMException("Timed out", "TimeoutError"));
+    vi.mocked(fetch).mockRejectedValue(new DOMException("Timed out", "TimeoutError"));
+    createNetworkOrBackendErrorMock.mockReturnValue(new AppError(ErrorCode.NETWORK_TIMEOUT));
+    const handleError = vi.fn();
+
+    await fetchWrapper("things/", false, { signal: controller.signal }, undefined, undefined, undefined, handleError);
+
+    expect(handleError).toHaveBeenCalled();
+  });
+
   it("still reports an AbortError when the caller's signal was not aborted", async () => {
     vi.mocked(fetch).mockRejectedValue(new DOMException("Aborted", "AbortError"));
     createNetworkOrBackendErrorMock.mockReturnValue(new AppError(ErrorCode.NETWORK_ABORT_ERROR));
     const handleError = vi.fn();
 
     await expect(
-      fetchWrapper("things/", false, { method: "POST" }, undefined, undefined, undefined, handleError),
+      fetchWrapper(
+        "things/",
+        false,
+        { method: "POST", signal: new AbortController().signal },
+        undefined,
+        undefined,
+        undefined,
+        handleError,
+      ),
     ).rejects.toBeInstanceOf(AppError);
 
     expect(handleError).toHaveBeenCalled();

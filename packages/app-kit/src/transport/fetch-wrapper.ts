@@ -41,8 +41,10 @@ const assertWellFormedRequest = (url: string, options: RequestInit) => {
   }
 };
 
+// fetch rejects with the signal's reason, so a custom reason is still the caller's abort;
+// AbortSignal.timeout() is the exception: it is a real failure to report.
 const isCallerAbort = (error: unknown, signal: RequestInit["signal"]) =>
-  !!signal?.aborted && (error as { name?: unknown } | null)?.name === "AbortError";
+  !!signal?.aborted && (error as { name?: unknown } | null)?.name !== "TimeoutError";
 
 export const fetchWrapper = async <T>(
   url: string,
