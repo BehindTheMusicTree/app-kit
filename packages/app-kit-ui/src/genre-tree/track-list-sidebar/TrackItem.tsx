@@ -8,6 +8,7 @@ import TrackPositionPlayPause from "../TrackPositionPlayPause";
 import { TrackBase } from "@behindthemusictree/app-kit/genre-tree";
 import { isSong, songUnplayableReason } from "@behindthemusictree/app-kit/genre-tree";
 import { MusicBrainzRecordingLink } from "../MusicBrainzRecordingLink";
+import type { RenderSongLink } from "@behindthemusictree/app-kit/genre-tree";
 import { ArtistNames, RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
 
 export interface TrackItemProps<T extends TrackBase> {
@@ -17,6 +18,8 @@ export interface TrackItemProps<T extends TrackBase> {
   renderActions?: (track: T) => ReactNode;
   /** When set, artist names render through it (e.g. a router `Link`). */
   renderArtistLink?: RenderArtistLink;
+  /** When set, a song title renders through it (e.g. opens the song panel) instead of linking to MusicBrainz. */
+  renderSongLink?: RenderSongLink;
 }
 
 export default function TrackItem<T extends TrackBase>({
@@ -25,6 +28,7 @@ export default function TrackItem<T extends TrackBase>({
   renderDuration,
   renderActions,
   renderArtistLink,
+  renderSongLink,
 }: TrackItemProps<T>) {
   const { handlePlayPauseAction, playerTrackObject, loadTrackForPlayer } = usePlayer();
   const { trackList, selectedTrack, toTrackAtPosition, runtimeUnplayableTrackIds } = useTrackList<T>();
@@ -69,7 +73,9 @@ export default function TrackItem<T extends TrackBase>({
       <div className="title-artist-container flex flex-col items-start justify-center min-w-0 flex-1">
         <div className="flex max-w-full items-center gap-2">
           <div className="title text-lg font-bold text-[var(--color-text)] max-w-full truncate">
-            {isSong(track) ? (
+            {renderSongLink ? (
+              renderSongLink(track)
+            ) : isSong(track) ? (
               <MusicBrainzRecordingLink song={track} className="hover:underline focus-visible:underline">
                 {track.title}
               </MusicBrainzRecordingLink>

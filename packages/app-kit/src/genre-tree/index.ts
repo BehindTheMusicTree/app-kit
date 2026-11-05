@@ -3,6 +3,9 @@ export * from "./useGenre";
 export * from "./useGenrePlaylist";
 export * from "./useArtist";
 export * from "./useArtistSearch";
+export * from "./useSong";
+export * from "./useSongHistory";
+export * from "./useSongSearch";
 export * from "./useArtistGenreCounts";
 export * from "./useGenreSearch";
 export * from "./useGenreTreeViewState";
@@ -13,7 +16,7 @@ export * from "./TrackListContext";
 export * from "./TrackListSidebarVisibilityContext";
 export { ArtistNames } from "./ArtistNames";
 export type { RenderArtistLink } from "./ArtistNames";
-
+export type { RenderSongLink } from "./song-link";
 // Models
 export {
   default as TrackList,
@@ -38,6 +41,8 @@ export * from "./schemas/artist-search";
 export * from "./schemas/artist-detailed";
 export * from "./schemas/artist-genre-count";
 export * from "./schemas/album-minimum";
+export * from "./schemas/song-search";
+export * from "./schemas/song-history";
 export * from "./schemas/mb-artist";
 export * from "./schemas/mb-recording";
 export * from "./schemas/criteria/minimum";

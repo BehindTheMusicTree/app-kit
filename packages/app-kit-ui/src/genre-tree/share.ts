@@ -17,6 +17,13 @@ export type GenreTreeShareTarget =
       uuid: string;
       name: string;
       scope: Scope;
+    }
+  | {
+      kind: "song";
+      uuid: string;
+      /** The song title. */
+      name: string;
+      scope: Scope;
     };
 
 /** Host applications own routing and return an absolute or relative URL for this target. */

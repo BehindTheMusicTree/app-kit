@@ -9,6 +9,7 @@ import {
 import {
   useTrackListSidebarVisibility,
   type RenderArtistLink,
+  type RenderSongLink,
 } from "@behindthemusictree/app-kit/genre-tree";
 import PanelEdgeTab from "./PanelEdgeTab";
 import PlayerControls from "./PlayerControls";
@@ -26,6 +27,8 @@ export interface PlayerPanelProps {
   /** Width once extended, e.g. to stop short of a left-hand detail panel. */
   extendedWidth?: string;
   renderArtistLink?: RenderArtistLink;
+  /** When set, song titles in the tracklist render through it (e.g. open the song panel). */
+  renderSongLink?: RenderSongLink;
 }
 
 const PANEL_ID = "player-panel";
@@ -41,6 +44,7 @@ export default function PlayerPanel({
   onExpandedChange,
   extendedWidth = DEFAULT_EXTENDED_WIDTH,
   renderArtistLink,
+  renderSongLink,
 }: PlayerPanelProps) {
   const { playerTrackObject } = usePlayer();
   const { toggleTrackListSidebar, isTrackListSidebarVisible } =
@@ -131,6 +135,7 @@ export default function PlayerPanel({
             isExtended && "border-l border-zinc-800",
           )}
           renderArtistLink={renderArtistLink}
+          renderSongLink={renderSongLink}
         />
       </div>
     </div>

@@ -1,13 +1,14 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { ArrowLeft, LoaderCircle, Search, X } from "lucide-react";
-import { Input } from "@behindthemusictree/ui";
+import { Combobox } from "@behindthemusictree/ui";
 
 import { CriteriaPlaylistSimple, useGenreSearch } from "@behindthemusictree/app-kit/genre-tree";
 
-export type GenreSearchExtraResults = {
-  /** Heading of this group; genre matches then get a "Genres" heading above it. */
+export type GenreSearchExtraGroup = {
+  key: string;
+  /** Heading of this group; genre matches then get a "Genres" heading too. */
   label: string;
   items: { key: string; content: ReactNode; onSelect: () => void }[];
   /** Announced politely, e.g. "No artists found". */
@@ -28,8 +29,8 @@ export type GenreSearchProps<T extends CriteriaPlaylistSimple = CriteriaPlaylist
   placeholder?: string;
   /** Called with what the user types, and with "" on clear or pick; never when `selectedName` refills the input. */
   onQueryChange?: (query: string) => void;
-  /** A second result group (e.g. artists) the host resolves from `onQueryChange`. */
-  extraResults?: GenreSearchExtraResults;
+  /** Further result groups (artists, songs) the host resolves from `onQueryChange`. */
+  extraGroups?: GenreSearchExtraGroup[];
 };
 
 export default function GenreSearch<T extends CriteriaPlaylistSimple = CriteriaPlaylistSimple>({
@@ -40,7 +41,7 @@ export default function GenreSearch<T extends CriteriaPlaylistSimple = CriteriaP
   onPrevious,
   placeholder,
   onQueryChange,
-  extraResults,
+  extraGroups = [],
 }: GenreSearchProps<T>) {
   const { query, setQuery, results, canClear, clear, select } = useGenreSearch({
     genrePlaylists,
@@ -48,12 +49,52 @@ export default function GenreSearch<T extends CriteriaPlaylistSimple = CriteriaP
     selectedName,
     onClear,
   });
+  const [open, setOpen] = useState(false);
 
-  const extraItems = query !== "" && query !== selectedName ? (extraResults?.items ?? []) : [];
-  const label = extraResults ? "Search" : "Search a genre";
-  const loading = query !== "" && query !== selectedName && (extraResults?.loading ?? false);
-  const showList = results.length > 0 || extraItems.length > 0;
-  const heading = "px-3 pt-2 pb-1 text-xs font-medium uppercase text-[var(--color-text-muted)]";
+  const active = query !== "" && query !== selectedName;
+  const hasExtras = extraGroups.length > 0;
+  const label = hasExtras ? "Search" : "Search a genre";
+  const loading = active && extraGroups.some((group) => group.loading);
+  const status = active ? extraGroups.map((group) => group.status).filter(Boolean).join(". ") : "";
+
+  const groups = [
+    {
+      key: "genres",
+      label: hasExtras ? "Genres" : undefined,
+      options: results.map((genrePlaylist) => ({
+        key: genrePlaylist.uuid,
+        content: (
+          <>
+            {genrePlaylist.name}
+            {genrePlaylist.isUmbrella && (
+              <span className="ml-2 text-xs italic text-[var(--color-text-muted)]">umbrella</span>
+            )}
+          </>
+        ),
+      })),
+    },
+    ...extraGroups.map((group) => ({
+      key: group.key,
+      label: group.label,
+      options: active ? group.items.map((item) => ({ key: item.key, content: item.content })) : [],
+    })),
+  ];
+
+  const handlePick = (groupKey: string, optionKey: string) => {
+    setOpen(false);
+    if (groupKey === "genres") {
+      const genrePlaylist = results.find((result) => result.uuid === optionKey);
+      if (!genrePlaylist) return;
+      select(genrePlaylist);
+      onQueryChange?.("");
+      return;
+    }
+    const item = extraGroups.find((group) => group.key === groupKey)?.items.find((entry) => entry.key === optionKey);
+    if (!item) return;
+    setQuery("");
+    onQueryChange?.("");
+    item.onSelect();
+  };
 
   return (
     <div className="genre-search relative w-[calc(var(--layout-detail-panel-w,25.5rem)-2*var(--layout-panel-inset,1rem))] shrink-0 max-md:w-full">
@@ -68,92 +109,53 @@ export default function GenreSearch<T extends CriteriaPlaylistSimple = CriteriaP
           <ArrowLeft aria-hidden="true" className="w-4 h-4" />
         </button>
       )}
-      <Input
-        type="text"
+      <Combobox
+        ariaLabel={label}
+        listLabel={`${label} results`}
         value={query}
-        onChange={(event) => {
-          setQuery(event.target.value);
-          onQueryChange?.(event.target.value);
-        }}
         placeholder={placeholder ?? `${label}…`}
-        aria-label={label}
-        aria-busy={loading}
-        inputMode="search"
-        enterKeyHint="search"
-        autoComplete="off"
-        className="h-[var(--layout-search-h,3rem)] pl-6 pr-20 text-base transition-[padding] duration-200 ease-out motion-reduce:transition-none bg-[var(--color-surface)] border-[var(--color-border)] rounded-full shadow-md"
+        groups={groups}
+        open={open}
+        onOpenChange={setOpen}
+        onValueChange={(value) => {
+          setQuery(value);
+          onQueryChange?.(value);
+        }}
+        onPick={handlePick}
+        status={status}
+        loading={loading ? "Searching…" : undefined}
+        inputClassName="h-[var(--layout-search-h,3rem)] pl-6 pr-20 text-base transition-[padding] duration-200 ease-out motion-reduce:transition-none bg-[var(--color-surface)] border-[var(--color-border)] rounded-full shadow-md"
+        className="genre-search-results z-40 rounded-xl shadow-md"
+        listClassName="max-h-[min(20rem,50dvh)]"
+        optionClassName="[@media(pointer:coarse)]:min-h-[var(--layout-touch-target)]"
       />
       <div className="absolute right-3 top-1/2 flex items-center -translate-y-1/2">
-          <span
-            data-loading={loading}
-            className="relative p-2 text-[var(--color-text-muted)] pointer-events-none"
+        <span data-loading={loading} className="relative p-2 text-[var(--color-text-muted)] pointer-events-none">
+          <Search
+            aria-hidden="true"
+            className={`w-6 h-6 transition-opacity duration-200 motion-reduce:transition-none ${loading ? "opacity-0" : ""}`}
+          />
+          <LoaderCircle
+            aria-hidden="true"
+            className={`absolute inset-2 w-6 h-6 transition-opacity duration-200 motion-reduce:transition-none ${
+              loading ? "opacity-100 delay-300 animate-spin motion-reduce:animate-none" : "opacity-0"
+            }`}
+          />
+        </span>
+        {canClear && (
+          <button
+            type="button"
+            aria-label="Clear search"
+            className="flex items-center justify-center p-2 [@media(pointer:coarse)]:min-h-[var(--layout-touch-target)] [@media(pointer:coarse)]:min-w-[var(--layout-touch-target)] text-[var(--color-text-muted)] rounded-full hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
+            onClick={() => {
+              clear();
+              onQueryChange?.("");
+            }}
           >
-            <Search
-              aria-hidden="true"
-              className={`w-6 h-6 transition-opacity duration-200 motion-reduce:transition-none ${loading ? "opacity-0" : ""}`}
-            />
-            <LoaderCircle
-              aria-hidden="true"
-              className={`absolute inset-2 w-6 h-6 transition-opacity duration-200 motion-reduce:transition-none ${
-                loading ? "opacity-100 delay-300 animate-spin motion-reduce:animate-none" : "opacity-0"
-              }`}
-            />
-          </span>
-          {canClear && (
-            <button
-              type="button"
-              aria-label="Clear search"
-              className="flex items-center justify-center p-2 [@media(pointer:coarse)]:min-h-[var(--layout-touch-target)] [@media(pointer:coarse)]:min-w-[var(--layout-touch-target)] text-[var(--color-text-muted)] rounded-full hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
-              onClick={() => {
-                clear();
-                onQueryChange?.("");
-              }}
-            >
-              <X aria-hidden="true" className="w-6 h-6" />
-            </button>
-          )}
+            <X aria-hidden="true" className="w-6 h-6" />
+          </button>
+        )}
       </div>
-      {extraResults?.status && (
-        <p role="status" aria-live="polite" className="sr-only">
-          {extraResults.status}
-        </p>
-      )}
-      {showList && (
-        <ul className="genre-search-results absolute z-40 w-full max-h-[min(16rem,50dvh)] mt-1 overflow-y-auto bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-md">
-          {extraResults && results.length > 0 && <li className={heading}>Genres</li>}
-          {results.map((genrePlaylist) => (
-            <li key={genrePlaylist.uuid}>
-              <button
-                type="button"
-                className="w-full px-3 py-1.5 [@media(pointer:coarse)]:min-h-[var(--layout-touch-target)] text-left hover:bg-[var(--color-surface-muted)]"
-                onClick={() => {
-                  select(genrePlaylist);
-                  onQueryChange?.("");
-                }}
-              >
-                {genrePlaylist.name}
-                {genrePlaylist.isUmbrella && <span className="ml-2 text-xs italic text-[var(--color-text-muted)]">umbrella</span>}
-              </button>
-            </li>
-          ))}
-          {extraResults && extraItems.length > 0 && <li className={heading}>{extraResults.label}</li>}
-          {extraItems.map((item) => (
-            <li key={item.key}>
-              <button
-                type="button"
-                className="w-full px-3 py-1.5 [@media(pointer:coarse)]:min-h-[var(--layout-touch-target)] text-left hover:bg-[var(--color-surface-muted)]"
-                onClick={() => {
-                  setQuery("");
-                  onQueryChange?.("");
-                  item.onSelect();
-                }}
-              >
-                {item.content}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 }
