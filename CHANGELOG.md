@@ -11,6 +11,14 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Breaking
+
+- `renderSummary` and `renderEssentialTracks` (`GenreDetailSlots`) now render the **body** of the Summary / Essential section: `GenreDetailExtras` wraps it in a titled `PanelSection`. A slot that rendered its own heading or frame must drop it.
+
+### Fixed
+
+- The Links, Summary, Essential and Songs sections of the genre panel lost their horizontal padding and border in 31.0.0, because they relied on the `gtv-info-panel-children` class that `genre-tree-view` 8.0.0 removed. They are now `PanelSection`s from `@behindthemusictree/ui`, like the artist and song panels. A test fails if a `gtv-info-panel-*` class is reintroduced in `app-kit-ui`.
+
 ## [31.0.0] - 2026-11-05
 
 ### Breaking

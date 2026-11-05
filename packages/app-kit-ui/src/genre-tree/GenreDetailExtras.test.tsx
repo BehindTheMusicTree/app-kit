@@ -91,7 +91,7 @@ describe("GenreDetailExtras", () => {
     });
   });
 
-  it("replaces both default sections with the slots, passing the overview", () => {
+  it("replaces the body of both default sections with the slots, passing the overview", () => {
     const renderSummary = vi.fn(() => <p>Custom summary</p>);
     const renderEssentialTracks = vi.fn(() => <p>Custom essentials</p>);
     renderExtras({ renderSummary, renderEssentialTracks });
@@ -99,7 +99,9 @@ describe("GenreDetailExtras", () => {
     expect(screen.getByText("Custom summary")).toBeInTheDocument();
     expect(screen.getByText("Custom essentials")).toBeInTheDocument();
     expect(screen.queryByText("Default summary text")).not.toBeInTheDocument();
-    expect(screen.queryByText("Essential tracks")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Essential tracks" }).closest("section")).toContainElement(
+      screen.getByText("Custom essentials"),
+    );
     expect(renderSummary).toHaveBeenCalledWith(overview);
     expect(renderEssentialTracks).toHaveBeenCalledWith(overview);
   });
@@ -139,9 +141,8 @@ describe("GenreDetailExtras", () => {
     });
     renderExtras({ wikidataId: "Q123" });
 
-    const linksTitle = screen.getByText("Links");
-    const linksSection = linksTitle.closest(".gtv-info-panel-children");
-    const summarySection = screen.getByText("Default summary text").closest(".gtv-info-panel-children");
+    const linksSection = screen.getByRole("button", { name: "Links" }).closest("section");
+    const summarySection = screen.getByText("Default summary text").closest("section");
     expect(screen.getByRole("link", { name: /wikipedia/i })).toHaveAttribute(
       "href",
       "https://en.wikipedia.org/wiki/Jazz",
@@ -152,6 +153,14 @@ describe("GenreDetailExtras", () => {
     );
     expect(linksSection).not.toContainElement(screen.getByText("Default summary text"));
     expect(linksSection!.compareDocumentPosition(summarySection!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("renders the renderSummary slot as the body of the titled Summary section", () => {
+    useFetchGenreOverviewMock.mockReturnValue({ data: overview, isPending: false });
+    renderExtras({ renderSummary: () => <p>Custom summary</p> });
+
+    const section = screen.getByRole("button", { name: "Summary" }).closest("section");
+    expect(section).toContainElement(screen.getByText("Custom summary"));
   });
 
   it("forwards the track slots to GenrePlaylistTracks", () => {

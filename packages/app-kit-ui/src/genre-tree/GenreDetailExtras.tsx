@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Skeleton } from "@behindthemusictree/ui";
+import { PanelSection, Skeleton } from "@behindthemusictree/ui";
 import { z } from "zod";
 
 import { CriteriaOverview } from "@behindthemusictree/app-kit/genre-tree";
@@ -16,9 +16,9 @@ import { useTrackNoun } from "@behindthemusictree/app-kit/track-noun";
 import { SiWikidata, SiWikipedia } from "react-icons/si";
 
 export type GenreDetailSlots<O extends CriteriaOverview> = {
-  /** Replaces the default Summary section. */
+  /** Replaces the body of the default Summary section; the title and frame stay. */
   renderSummary?: (overview: O) => ReactNode;
-  /** Replaces the default Essential section (e.g. "Essential songs"). */
+  /** Replaces the body of the default Essential section (e.g. "Essential songs"); the title and frame stay. */
   renderEssentialTracks?: (overview: O) => ReactNode;
 };
 
@@ -66,10 +66,11 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
   if (isPending) {
     return (
       <>
-        <div className="gtv-info-panel-children" aria-busy="true" data-testid="genre-detail-extras-skeleton">
-          <span className="gtv-info-panel-children-title">Summary</span>
-          <Skeleton className="h-4 w-3/4" />
-        </div>
+        <PanelSection title="Summary">
+          <div aria-busy="true" data-testid="genre-detail-extras-skeleton">
+            <Skeleton className="h-4 w-3/4" />
+          </div>
+        </PanelSection>
         {family}
       </>
     );
@@ -82,9 +83,8 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
   return (
     <>
       {(summarySourceUrl || wikidataUrl) && (
-        <div className="gtv-info-panel-children text-[0.8125rem] leading-[1.45] text-[var(--color-text)]">
-          <span className="gtv-info-panel-children-title">Links</span>
-          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+        <PanelSection title="Links">
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-[var(--color-text)]">
             {summarySourceUrl && (
               <a
                 href={summarySourceUrl}
@@ -108,26 +108,25 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
               </a>
             )}
           </div>
-        </div>
+        </PanelSection>
       )}
-      {renderSummary ? (
-        renderSummary(overview)
-      ) : (
-        <div className="gtv-info-panel-children text-[0.8125rem] leading-[1.45] text-[var(--color-text)]">
-          <span className="gtv-info-panel-children-title">Summary</span>
-          <ClampedText key={genreUuid} className="mt-1">{summary ?? "—"}</ClampedText>
-        </div>
-      )}
+      <PanelSection title="Summary">
+        {renderSummary ? (
+          renderSummary(overview)
+        ) : (
+          <ClampedText key={genreUuid} className="text-[0.8125rem] leading-[1.45] text-[var(--color-text)]">
+            {summary ?? "—"}
+          </ClampedText>
+        )}
+      </PanelSection>
       {family}
       {renderGenreDetailExtras?.(overview)}
-      {renderEssentialTracks ? (
-        renderEssentialTracks(overview)
-      ) : (
-        essentialSongs && (
-        <div className="gtv-info-panel-children text-[0.8125rem] leading-[1.45] text-[var(--color-text)]">
-          <span className="gtv-info-panel-children-title">Essential {trackNoun.plural}</span>
-          {essentialSongs.length > 0 ? (
-            <ul className="mt-1 divide-y divide-[var(--color-border)]">
+      {(renderEssentialTracks || essentialSongs) && (
+        <PanelSection title={`Essential ${trackNoun.plural}`}>
+          {renderEssentialTracks ? (
+            renderEssentialTracks(overview)
+          ) : essentialSongs && essentialSongs.length > 0 ? (
+            <ul className="text-[0.8125rem] leading-[1.45] text-[var(--color-text)]">
               {essentialSongs.map((track) => (
                 <li key={track.uuid} className="py-1">
                   {track.title}
@@ -135,10 +134,9 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
               ))}
             </ul>
           ) : (
-            <p className="mt-1">—</p>
+            <p className="text-[0.8125rem] leading-[1.45] text-[var(--color-text)]">—</p>
           )}
-        </div>
-        )
+        </PanelSection>
       )}
       <GenrePlaylistTracks
         genreUuid={genreUuid}
