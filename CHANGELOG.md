@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [32.0.2] - 2026-11-05
+
 ### Changed
 
 - Bump `@behindthemusictree/genre-tree-view` to 8.2.0 (wheel breadcrumb now the shared ui `Breadcrumb`; its current item opens the focused genre's panel) and `@behindthemusictree/ui` to ^0.17.0.
