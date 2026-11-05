@@ -102,7 +102,6 @@ describe("GenrePlaylistTreeWheel", () => {
 
     const props = genreTreeWheelPropsMock.mock.calls[0][0];
     expect(props.nodes[0].itemCount).toBe(900);
-    expect(props.itemCountLabel).toBe("Views");
   });
 
   it("has no playing node when there is no track list", () => {

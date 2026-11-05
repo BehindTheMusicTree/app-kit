@@ -1,7 +1,6 @@
 "use client";
 
 import { Skeleton } from "@behindthemusictree/ui";
-import type { GenreTreeOverlayPanel } from "@behindthemusictree/genre-tree-view";
 import {
   useSong,
   type CriteriaMinimum,
@@ -11,6 +10,7 @@ import {
 import type { Scope } from "@behindthemusictree/app-kit/transport";
 import type { GetGenreTreeShareUrl } from "../share";
 import SongPanelContent from "./SongPanelContent";
+import type { OverlayPanel } from "../overlayPanel";
 
 export interface SongPanelOptions {
   uuid: string | null;
@@ -38,7 +38,7 @@ export function useSongPanel({
   expanded,
   onExpandedChange,
   onClose,
-}: SongPanelOptions): GenreTreeOverlayPanel | undefined {
+}: SongPanelOptions): OverlayPanel | undefined {
   const result = useSong(uuid, getBackendBaseUrl);
 
   const panel = { expanded, onExpandedChange, onClose };

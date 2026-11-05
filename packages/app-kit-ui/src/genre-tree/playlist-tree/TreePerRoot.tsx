@@ -8,8 +8,6 @@ import {
   type GenreTreeProps,
   type GenreTreeAction,
   type GenreTreeNode,
-  type InfoPanelBody,
-  type InfoPanelSections,
   type WheelZoomMode,
 } from "@behindthemusictree/genre-tree-view";
 
@@ -23,9 +21,8 @@ import { TrackBase } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaPlaylistSimple } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaMinimum } from "@behindthemusictree/app-kit/genre-tree";
 import { Scope } from "@behindthemusictree/app-kit/transport";
-import type { InfoPanelCurationProps } from "./infoPanelCurationProps";
+import type { HostPanelProps } from "./hostPanelProps";
 import { useGenrePlaylistPlayback, type GenrePlaylistPlayback } from "./useGenrePlaylistPlayback";
-import { capitalize, useTrackNoun } from "@behindthemusictree/app-kit/track-noun";
 
 export type GenrePlaylistTreePerRootProps<T extends TrackBase> = {
   scope: Scope;
@@ -37,19 +34,12 @@ export type GenrePlaylistTreePerRootProps<T extends TrackBase> = {
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   onNodeClick?: (node: GenreTreeNode) => void;
   onNodeHover?: (node: GenreTreeNode) => void;
-  renderInfoPanelBody?: (node: GenreTreeNode, sections: InfoPanelSections) => InfoPanelBody;
   /** Overrides which node is shown highlighted, e.g. from a search selection. */
   selectedNodeId?: string | null;
   /** Fires when a user action changes the info panel's node, or `null` when it is closed. */
   onSelectedNodeChange?: (node: GenreTreeNode | null) => void;
-  /** Hides the info panel's header close button. */
-  hideInfoPanelClose?: boolean;
-  /** Hides the info panel header's node name. */
-  hideInfoPanelTitle?: boolean;
   /** When true, suppresses per-node create/rename affordances. Defaults to false. */
   readOnly?: boolean;
-  /** When false, suppresses the hover toolbar on every node. Defaults to true. */
-  showToolbar?: boolean;
   wheelZoom?: WheelZoomMode;
   /** Mount-only seed for the pan/zoom, replacing the initial fit. */
   defaultViewport?: GenreTreeViewport;
@@ -59,7 +49,7 @@ export type GenrePlaylistTreePerRootProps<T extends TrackBase> = {
   onViewportChange?: (viewport: GenreTreeViewport) => void;
   /** What node play buttons play; defaults to each node's whole genre playlist. */
   playback?: GenrePlaylistPlayback;
-} & InfoPanelCurationProps;
+} & HostPanelProps;
 
 export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
   scope,
@@ -71,24 +61,19 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
   additionalActions,
   onNodeClick,
   onNodeHover,
-  renderInfoPanelBody,
   selectedNodeId,
   onSelectedNodeChange,
-  hideInfoPanelClose,
-  hideInfoPanelTitle,
   readOnly = false,
-  showToolbar,
   wheelZoom,
   defaultViewport,
   viewportRestore,
   onViewportChange,
   playback,
-  ...infoPanelCuration
+  ...hostPanel
 }: GenrePlaylistTreePerRootProps<T>) {
   const { isPlaying, setIsPlaying } = usePlayer();
   const defaultPlayback = useGenrePlaylistPlayback<T>({ scope, genrePlaylists: genrePlaylistTreePerRoot });
   const { playingNodeId, play } = playback ?? defaultPlayback;
-  const trackNoun = useTrackNoun();
   const { showPopup } = usePopup();
 
   const nodes: GenreTreeNode[] = useMemo(
@@ -163,7 +148,6 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
     <GenreTree
       className={className}
       nodes={nodes}
-      itemCountLabel={`${capitalize(trackNoun.singular)} count`}
       rootColor={getGenreTreeColor(rootUuid)}
       playingNodeId={playingNodeId}
       playState={isPlaying ? "playing" : "paused"}
@@ -174,18 +158,13 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
       additionalActions={additionalActions}
       onNodeClick={onNodeClick}
       onNodeHover={onNodeHover}
-      renderInfoPanelBody={renderInfoPanelBody}
       selectedNodeId={selectedNodeId}
       onSelectedNodeChange={onSelectedNodeChange}
-      hideInfoPanelClose={hideInfoPanelClose}
-      hideInfoPanelTitle={hideInfoPanelTitle}
-      showToolbar={showToolbar}
       wheelZoom={wheelZoom}
       defaultViewport={defaultViewport}
       viewportRestore={viewportRestore}
       onViewportChange={onViewportChange}
-      {...infoPanelCuration}
-      readOnly={readOnly}
+      {...hostPanel}
     />
   );
 }
