@@ -219,7 +219,7 @@ function AppContent() {
       renderInternalErrorPopup: (errorCode) => <InternalErrorPopup errorCode={errorCode} />,
       renderSpotifyAuthErrorPopup: () => null,
       renderGoogleAuthErrorPopup: () => null,
-      renderNetworkErrorPopup: () => <NetworkErrorPopup />,
+      renderNetworkErrorPopup: (errorCode) => <NetworkErrorPopup errorCode={errorCode} />,
     },
   });
   const [loading, setLoading] = useState(false);

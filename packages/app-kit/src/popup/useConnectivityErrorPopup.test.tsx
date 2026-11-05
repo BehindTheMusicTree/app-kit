@@ -173,6 +173,7 @@ describe("useConnectivityErrorPopup", () => {
     setError(new NetworkError(ErrorCode.NETWORK_ERROR));
 
     expect(renderers.renderNetworkErrorPopup).toHaveBeenCalledTimes(1);
+    expect(renderers.renderNetworkErrorPopup).toHaveBeenCalledWith(ErrorCode.NETWORK_ERROR);
   });
 
   it("does not redisplay the popup when the same error class repeats and is not in the always-redisplay list", () => {

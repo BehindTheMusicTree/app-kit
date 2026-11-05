@@ -271,9 +271,38 @@ describe("fetchWrapper", () => {
     vi.mocked(fetch).mockRejectedValue(new DOMException("Aborted", "AbortError"));
     createNetworkOrBackendErrorMock.mockReturnValue(new AppError(ErrorCode.BACKEND_AUTH_ERROR));
 
-    await fetchWrapper("things/", false, { signal: controller.signal }, undefined, undefined, undefined, vi.fn());
+    await expect(
+      fetchWrapper("things/", false, { signal: controller.signal }, undefined, undefined, undefined, vi.fn()),
+    ).rejects.toMatchObject({ name: "AbortError" });
 
     expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
+  });
+
+  it("rethrows a caller abort without reporting it as a connectivity error", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const abortError = new DOMException("Aborted", "AbortError");
+    vi.mocked(fetch).mockRejectedValue(abortError);
+    const handleError = vi.fn();
+
+    await expect(
+      fetchWrapper("things/", false, { signal: controller.signal }, undefined, undefined, undefined, handleError),
+    ).rejects.toBe(abortError);
+
+    expect(handleError).not.toHaveBeenCalled();
+    expect(createNetworkOrBackendErrorMock).not.toHaveBeenCalled();
+  });
+
+  it("still reports an AbortError when the caller's signal was not aborted", async () => {
+    vi.mocked(fetch).mockRejectedValue(new DOMException("Aborted", "AbortError"));
+    createNetworkOrBackendErrorMock.mockReturnValue(new AppError(ErrorCode.NETWORK_ABORT_ERROR));
+    const handleError = vi.fn();
+
+    await expect(
+      fetchWrapper("things/", false, { method: "POST" }, undefined, undefined, undefined, handleError),
+    ).rejects.toBeInstanceOf(AppError);
+
+    expect(handleError).toHaveBeenCalled();
   });
 
   it("does not retry a GET that gets an error response", async () => {
