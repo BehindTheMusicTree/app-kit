@@ -72,6 +72,14 @@ describe("GenreDetailPanel", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("could not be loaded");
   });
 
+  it("hangs the host's edge tab off the panel", () => {
+    const onClick = vi.fn();
+    renderPanel({ edgeTab: { edge: { label: "Hide panel", onClick }, center: null } });
+
+    fireEvent.click(screen.getByRole("button", { name: "Hide panel" }));
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
   it("renders the genre's name", () => {
     renderPanel();
 

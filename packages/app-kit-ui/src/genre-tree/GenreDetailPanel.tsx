@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type ComponentProps } from "react";
 import {
   ACCENT_TEXT_COLOR,
   GenreNodeAncestors,
@@ -41,6 +41,8 @@ export type GenreDetailPanelProps<O extends CriteriaOverview> = {
   collapsed?: boolean;
   expanded?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
+  /** Tab on the panel's inner edge, for hosts that hide and show the panel. */
+  edgeTab?: ComponentProps<typeof DetailPanel>["edgeTab"];
   extras?: GenreInfoPanelBodyProps<O>["extras"];
 };
 
@@ -71,6 +73,7 @@ export function GenreDetailPanel<O extends CriteriaOverview>({
   collapsed,
   expanded,
   onExpandedChange,
+  edgeTab,
   extras,
 }: GenreDetailPanelProps<O>) {
   const { data: detail, isPending, isError } = useFetchGenreDetail(genreUuid, scope, getBackendBaseUrl);
@@ -156,6 +159,7 @@ export function GenreDetailPanel<O extends CriteriaOverview>({
       collapsed={collapsed}
       expanded={expanded}
       onExpandedChange={onExpandedChange}
+      edgeTab={edgeTab}
       aside={ancestors}
     >
       <GenreInfoPanelBody<O>
