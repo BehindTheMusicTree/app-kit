@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [32.0.1] - 2026-11-05
+
 ### Changed
 
 - Bump `@behindthemusictree/genre-tree-view` to 8.1.0 (pointer cursor and contrast halo on labels) and `@behindthemusictree/ui` to ^0.16.0.
