@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [31.0.0] - 2026-11-05
+
 ### Breaking
 
 - `GenreTreeView` renders one `DetailPanel` from `@behindthemusictree/ui` (peer range `^0.15.0`) for the genre, artist, song and `overlayPanel` content, with the same sheet and edge tab in every view. Removed exports: `useLeftDetailPanelLayout`, `InfoPanelCurationProps` and `PanelEdgeTab` (import `PanelEdgeTab` from `@behindthemusictree/ui`).
