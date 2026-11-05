@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [30.0.0] - 2026-11-05
+
 ### Breaking
 
 - `GenreSearch` is built on the `@behindthemusictree/ui` `Combobox` (peer range now `^0.14.0`): its `extraResults` prop and the `GenreSearchExtraResults` type are replaced by `extraGroups` / `GenreSearchExtraGroup`. Its input is now a `combobox`, and options are picked on mouse-down.
