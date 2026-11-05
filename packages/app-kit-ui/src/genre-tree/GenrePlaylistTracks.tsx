@@ -4,7 +4,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { FaPlay, FaPause } from "react-icons/fa";
-import { RingLoader, Skeleton } from "@behindthemusictree/ui";
+import { PanelSection, RingLoader, Skeleton } from "@behindthemusictree/ui";
 
 import { useSession } from "@behindthemusictree/app-kit/auth";
 import { useFetchWrapper } from "@behindthemusictree/app-kit/transport";
@@ -151,8 +151,8 @@ export function GenrePlaylistTracks({
   };
 
   return (
-    <div className="gtv-info-panel-children">
-      <span className="gtv-info-panel-children-title">{capitalize(trackNoun.plural)}{total !== undefined && ` (${total})`}</span>
+    <PanelSection title={`${capitalize(trackNoun.plural)}${total !== undefined ? ` (${total})` : ""}`}>
+      <div>
       {renderTracksToolbar?.()}
       {isPending ? (
         <Skeleton className="h-4 w-3/4" aria-busy="true" />
@@ -244,6 +244,7 @@ export function GenrePlaylistTracks({
           {hasNextPage && <li ref={sentinelRef} aria-hidden="true" className="h-4" />}
         </ul>
       )}
-    </div>
+      </div>
+    </PanelSection>
   );
 }
