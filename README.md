@@ -50,15 +50,15 @@ branch for PRs. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full model.
 
 ## Release
 
-_(For maintainers, run from a clean, up-to-date `develop`)_
+_(For maintainers, run on a clean `release/*` branch from current `develop`, or a `hotfix/*` branch from `main`)_
 
 ```bash
 pnpm release patch   # or minor / major
 ```
 
-Cuts a `release/X.Y.Z` branch off `develop`, bumps both package versions, moves `CHANGELOG.md`'s
-`[Unreleased]` section under the new version, then merges into both `main` (tagged) and
-`develop` and pushes — the tag push triggers `.github/workflows/publish.yml` to build and
-publish them on npm.
+Prepares both package versions, their peer constraint, the lockfile and non-empty release notes.
+Review and commit the files, push the branch and open a PR into `main`. CI creates the annotated
+tag and publishes both packages through the existing OIDC workflow. After publication,
+integrate `main` back into `develop` through a PR. Do not create or push release tags locally.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow, including hotfixes.

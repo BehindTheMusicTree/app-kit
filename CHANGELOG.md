@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- Release preparation edits both package versions and their peer constraint without publishing; CI owns validated tags and resumable npm publication.
+
 ## [32.0.0] - 2026-11-05
 
 ### Breaking
