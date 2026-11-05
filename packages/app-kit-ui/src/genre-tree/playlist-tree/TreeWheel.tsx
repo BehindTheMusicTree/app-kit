@@ -7,8 +7,6 @@ import {
   type GenreTreeProps,
   type GenreTreeAction,
   type GenreTreeNode,
-  type InfoPanelBody,
-  type InfoPanelSections,
 } from "@behindthemusictree/genre-tree-view";
 
 import { usePlayer } from "@behindthemusictree/app-kit/player";
@@ -21,10 +19,9 @@ import { TrackBase } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaPlaylistSimple } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaMinimum } from "@behindthemusictree/app-kit/genre-tree";
 import { Scope } from "@behindthemusictree/app-kit/transport";
-import type { InfoPanelCurationProps } from "./infoPanelCurationProps";
+import type { HostPanelProps } from "./hostPanelProps";
 import { useGenrePlaylistPlayback, type GenrePlaylistPlayback } from "./useGenrePlaylistPlayback";
 import { genrePlaylistSize, type GenreTreeSizeMetric } from "./size-metric";
-import { capitalize, useTrackNoun } from "@behindthemusictree/app-kit/track-noun";
 
 export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
   scope: Scope;
@@ -35,22 +32,15 @@ export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   onNodeClick?: (node: GenreTreeNode) => void;
   onNodeHover?: (node: GenreTreeNode) => void;
-  renderInfoPanelBody?: (node: GenreTreeNode, sections: InfoPanelSections) => InfoPanelBody;
   /** Overrides which node is shown highlighted, e.g. from a search selection. */
   selectedNodeId?: string | null;
   /** Fires when a user action changes the info panel's node, or `null` when it is closed. */
   onSelectedNodeChange?: (node: GenreTreeNode | null) => void;
-  /** Hides the info panel's header close button. */
-  hideInfoPanelClose?: boolean;
-  /** Hides the info panel header's node name. */
-  hideInfoPanelTitle?: boolean;
   /** When true, suppresses per-node create/rename affordances. Defaults to false. */
   readOnly?: boolean;
   /** When false, clicking a chip still selects its root, but the wheel doesn't spin to the
    * anchor. Defaults to true. */
   allowWheelRotation?: boolean;
-  /** When false, suppresses the hover toolbar on every node. Defaults to true. */
-  showToolbar?: boolean;
   /** What node size is proportional to; defaults to the song count. */
   sizeMetric?: GenreTreeSizeMetric;
   /** Rendered in the floating controls, beside the zoom buttons. */
@@ -65,7 +55,7 @@ export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
   onViewportChange?: (viewport: GenreTreeViewport) => void;
   /** What node play buttons play; defaults to each node's whole genre playlist. */
   playback?: GenrePlaylistPlayback;
-} & InfoPanelCurationProps;
+} & HostPanelProps;
 
 export default function GenrePlaylistTreeWheel<T extends TrackBase>({
   scope,
@@ -76,14 +66,10 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
   additionalActions,
   onNodeClick,
   onNodeHover,
-  renderInfoPanelBody,
   selectedNodeId,
   onSelectedNodeChange,
-  hideInfoPanelClose,
-  hideInfoPanelTitle,
   readOnly = false,
   allowWheelRotation,
-  showToolbar,
   sizeMetric = "songs",
   floatingControlsLeading,
   busy,
@@ -91,12 +77,11 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
   viewportRestore,
   onViewportChange,
   playback,
-  ...infoPanelCuration
+  ...hostPanel
 }: GenrePlaylistTreeWheelProps<T>) {
   const { isPlaying, setIsPlaying } = usePlayer();
   const defaultPlayback = useGenrePlaylistPlayback<T>({ scope, genrePlaylists });
   const { playingNodeId, play } = playback ?? defaultPlayback;
-  const trackNoun = useTrackNoun();
   const { showPopup } = usePopup();
 
   const nodes: GenreTreeNode[] = useMemo(
@@ -170,7 +155,6 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
     <GenreTreeWheel
       className={className}
       nodes={nodes}
-      itemCountLabel={sizeMetric === "views" ? "Views" : `${capitalize(trackNoun.singular)} count`}
       playingNodeId={playingNodeId}
       playState={isPlaying ? "playing" : "paused"}
       onPlayPause={handlePlayPause}
@@ -180,20 +164,15 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
       additionalActions={additionalActions}
       onNodeClick={onNodeClick}
       onNodeHover={onNodeHover}
-      renderInfoPanelBody={renderInfoPanelBody}
       selectedNodeId={selectedNodeId}
       onSelectedNodeChange={onSelectedNodeChange}
-      hideInfoPanelClose={hideInfoPanelClose}
-      hideInfoPanelTitle={hideInfoPanelTitle}
       allowWheelRotation={allowWheelRotation}
-      showToolbar={showToolbar}
       floatingControlsLeading={floatingControlsLeading}
       busy={busy}
       defaultViewport={defaultViewport}
       viewportRestore={viewportRestore}
       onViewportChange={onViewportChange}
-      {...infoPanelCuration}
-      readOnly={readOnly}
+      {...hostPanel}
     />
   );
 }

@@ -9,8 +9,6 @@ import {
   type FocusChangeReason,
   type GenreTreeAction,
   type GenreTreeNode,
-  type InfoPanelBody,
-  type InfoPanelSections,
 } from "@behindthemusictree/genre-tree-view";
 
 import { usePlayer } from "@behindthemusictree/app-kit/player";
@@ -20,10 +18,10 @@ import { TrackBase } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaPlaylistSimple } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaMinimum } from "@behindthemusictree/app-kit/genre-tree";
 import { Scope } from "@behindthemusictree/app-kit/transport";
-import type { InfoPanelCurationProps } from "./infoPanelCurationProps";
+import type { HostPanelProps } from "./hostPanelProps";
 import { useGenrePlaylistPlayback, type GenrePlaylistPlayback } from "./useGenrePlaylistPlayback";
-import { genrePlaylistSize, type GenreTreeSizeMetric } from "./size-metric";
-import { capitalize, useTrackNoun } from "@behindthemusictree/app-kit/track-noun";
+import type { GenreTreeSizeMetric } from "./size-metric";
+import { toTreeNodes } from "./toTreeNodes";
 
 /** Pop-core focus is controlled-only: pass both props or neither. Ignored in outline mode. */
 export type GenreFocusProps =
@@ -48,22 +46,15 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   onNodeClick?: (node: GenreTreeNode) => void;
   onNodeHover?: (node: GenreTreeNode) => void;
-  renderInfoPanelBody?: (node: GenreTreeNode, sections: InfoPanelSections) => InfoPanelBody;
   /** Overrides which node is shown highlighted, e.g. from a search selection. */
   selectedNodeId?: string | null;
   /** Fires when a user action changes the info panel's node, or `null` when it is closed. */
   onSelectedNodeChange?: (node: GenreTreeNode | null) => void;
-  /** Hides the info panel's header close button. */
-  hideInfoPanelClose?: boolean;
-  /** Hides the info panel header's node name. */
-  hideInfoPanelTitle?: boolean;
   /** When true, suppresses per-node create/rename affordances. Defaults to false. */
   readOnly?: boolean;
   /** When false, clicking a chip still selects its root, but the ring doesn't spin to the
    * landing angle. Defaults to true. */
   allowWheelRotation?: boolean;
-  /** When false, suppresses the hover toolbar on every node. Defaults to true. */
-  showToolbar?: boolean;
   /** What node size is proportional to; defaults to the song count. */
   sizeMetric?: GenreTreeSizeMetric;
   /** Rendered in the floating controls, beside the zoom buttons. */
@@ -82,7 +73,7 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   /** What node play buttons play; defaults to each node's whole genre playlist. */
   playback?: GenrePlaylistPlayback;
 } & GenreFocusProps &
-  InfoPanelCurationProps;
+  HostPanelProps;
 
 export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>(
   props: GenrePlaylistTreeWheelRadialPopCoreProps<T>,
@@ -96,14 +87,10 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     additionalActions,
     onNodeClick,
     onNodeHover,
-    renderInfoPanelBody,
     selectedNodeId,
     onSelectedNodeChange,
-    hideInfoPanelClose,
-    hideInfoPanelTitle,
     readOnly = false,
     allowWheelRotation,
-    showToolbar,
     sizeMetric = "songs",
     floatingControlsLeading,
     busy,
@@ -114,35 +101,15 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     playback,
   } = props;
   const focus: GenreFocusProps = props;
-  const infoPanelCuration: InfoPanelCurationProps = {
-    renderDangerZone: props.renderDangerZone,
-    expanded: props.expanded,
-    onExpandedChange: props.onExpandedChange,
-    collapsed: props.collapsed,
-    hideExpandButton: props.hideExpandButton,
-    overlayPanel: props.overlayPanel,
+  const hostPanel: HostPanelProps = {
+    obscuredInset: props.obscuredInset,
+    onNodeStyleResolverChange: props.onNodeStyleResolverChange,
   };
   const { isPlaying, setIsPlaying } = usePlayer();
   const defaultPlayback = useGenrePlaylistPlayback<T>({ scope, genrePlaylists });
   const { playingNodeId, play } = playback ?? defaultPlayback;
-  const trackNoun = useTrackNoun();
 
-  const nodes: GenreTreeNode[] = useMemo(
-    () =>
-      genrePlaylists.map((genrePlaylist) => ({
-        id: genrePlaylist.uuid,
-        parentId: genrePlaylist.parent?.uuid ?? null,
-        name: genrePlaylist.name,
-        itemCount: genrePlaylistSize(genrePlaylist, sizeMetric),
-        actionable: Boolean(genrePlaylist.criteria),
-        detached: !genrePlaylist.criteria,
-        side: genrePlaylist.criteria?.side ?? undefined,
-        wikidataId: genrePlaylist.criteria?.wikidataId ?? null,
-        umbrella: genrePlaylist.isUmbrella,
-        scene: genrePlaylist.scene ?? undefined,
-      })),
-    [genrePlaylists, sizeMetric],
-  );
+  const nodes = useMemo(() => toTreeNodes(genrePlaylists, sizeMetric), [genrePlaylists, sizeMetric]);
 
   const handlePlayPause = useCallback(
     (nodeId: string) => {
@@ -192,7 +159,6 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
   const treeProps = {
     className,
     nodes,
-    itemCountLabel: sizeMetric === "views" ? "Views" : `${capitalize(trackNoun.singular)} count`,
     playingNodeId,
     playState: isPlaying ? ("playing" as const) : ("paused" as const),
     onPlayPause: handlePlayPause,
@@ -202,14 +168,9 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
     additionalActions,
     onNodeClick,
     onNodeHover,
-    renderInfoPanelBody,
     selectedNodeId,
     onSelectedNodeChange,
-    hideInfoPanelClose,
-    hideInfoPanelTitle,
-    showToolbar,
-    ...infoPanelCuration,
-    readOnly,
+    ...hostPanel,
   };
 
   return outline ? (

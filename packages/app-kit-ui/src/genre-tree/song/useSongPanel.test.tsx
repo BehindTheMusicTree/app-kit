@@ -49,7 +49,7 @@ function Harness({ uuid, onSelectGenre = vi.fn(), genrePath = [rock, alt] }: { u
     onClose: vi.fn(),
   });
   if (!panel) return <p>No panel</p>;
-  return <section aria-label={panel.title}>{panel.content}</section>;
+  return <section aria-label={typeof panel.title === "string" ? panel.title : undefined}>{panel.content}</section>;
 }
 
 describe("useSongPanel", () => {

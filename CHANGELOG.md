@@ -11,6 +11,19 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Breaking
+
+- `GenreTreeView` renders one `DetailPanel` from `@behindthemusictree/ui` (peer range `^0.15.0`) for the genre, artist, song and `overlayPanel` content, with the same sheet and edge tab in every view. Removed exports: `useLeftDetailPanelLayout`, `InfoPanelCurationProps` and `PanelEdgeTab` (import `PanelEdgeTab` from `@behindthemusictree/ui`).
+- Requires `@behindthemusictree/genre-tree-view` 8 and `@behindthemusictree/brand` ^12.10.0: the tree no longer draws its own panel, the host-owned panel contract replaces it.
+
+### Added
+
+- `GenreDetailPanel` takes an `edgeTab` prop for hosts that hide and show the panel.
+
+### Changed
+
+- `GenreSearch` shows a visible "Previous" button when `onPrevious` is set.
+
 ## [30.0.0] - 2026-11-05
 
 ### Breaking
