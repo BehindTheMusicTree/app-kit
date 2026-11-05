@@ -1975,14 +1975,14 @@ describe("GenreTreeView", () => {
       const onArtistSelect = vi.fn();
       render(<GenreTreeView {...baseProps()} onArtistSelect={onArtistSelect} />);
 
-      expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
+      expect(screen.queryByRole("complementary", { name: /.+/ })).not.toBeInTheDocument();
       pickSuggestion();
 
       expect(screen.getByRole("complementary", { name: "Band" })).toBeInTheDocument();
       expect(onArtistSelect).toHaveBeenCalledWith(suggestion);
 
       fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
-      expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
+      expect(screen.queryByRole("complementary", { name: /.+/ })).not.toBeInTheDocument();
     });
 
     it("loads the artist from artistSearchBaseUrl, falling back to getBackendBaseUrl", () => {
@@ -2257,12 +2257,12 @@ describe("GenreTreeView", () => {
 
       fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
       expect(onSongUuidChange).toHaveBeenLastCalledWith(null);
-      expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
+      expect(screen.queryByRole("complementary", { name: /.+/ })).not.toBeInTheDocument();
     });
 
     it("follows a controlled songUuid", () => {
       const { rerender } = render(<GenreTreeView {...baseProps()} songUuid={null} />);
-      expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
+      expect(screen.queryByRole("complementary", { name: /.+/ })).not.toBeInTheDocument();
 
       rerender(<GenreTreeView {...baseProps()} songUuid={hit.uuid} />);
       expect(screen.getByRole("complementary", { name: "Karma Police" })).toBeInTheDocument();

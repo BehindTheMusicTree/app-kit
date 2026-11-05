@@ -171,6 +171,8 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
 const REGIONS_CLASS =
   "[--gtv-center-left:var(--layout-center-left)] [--gtv-center-right:var(--layout-center-right)] [--gtv-center-top:var(--layout-band-top)]";
 
+const noop = () => {};
+
 export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   scope,
   handleGenreCreationAction,
@@ -1001,33 +1003,32 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
               )}
             </div>
           )}
-          {activePanel && (
-            <DetailPanel
-              ref={panelRef}
-              side="left"
-              title={activePanel.title}
-              hideTitle={activePanel.compact}
-              hideClose={activePanel.compact}
-              headerAccent={activePanel.headerAccent}
-              headerActions={expandButton}
-              onClose={activePanel.onClose}
-              collapsed={isCollapsed || !isTreeReady}
-              expanded={activePanel.expanded}
-              onExpandedChange={activePanel.onExpandedChange}
-              aside={activePanel.aside}
-              edgeTab={detailTab}
-              headerClassName={activePanel.compact ? "pt-[calc(var(--layout-search-h)+var(--layout-panel-inset)+0.5rem)]" : undefined}
-            >
-              {activePanel.aside && !activePanel.expanded ? (
-                <>
-                  {activePanel.content}
-                  {activePanel.aside}
-                </>
-              ) : (
-                activePanel.content
-              )}
-            </DetailPanel>
-          )}
+          {/* Always mounted: useObscuredInset observes the node once, so it must exist when the host mounts. */}
+          <DetailPanel
+            ref={panelRef}
+            side="left"
+            title={activePanel?.title ?? ""}
+            hideTitle={activePanel?.compact}
+            hideClose={activePanel?.compact}
+            headerAccent={activePanel?.headerAccent}
+            headerActions={expandButton}
+            onClose={activePanel?.onClose ?? noop}
+            collapsed={isCollapsed || !isTreeReady || !activePanel}
+            expanded={activePanel?.expanded}
+            onExpandedChange={activePanel?.onExpandedChange}
+            aside={activePanel?.aside}
+            edgeTab={detailTab}
+            headerClassName={activePanel?.compact ? "pt-[calc(var(--layout-search-h)+var(--layout-panel-inset)+0.5rem)]" : undefined}
+          >
+            {activePanel?.aside && !activePanel.expanded ? (
+              <>
+                {activePanel.content}
+                {activePanel.aside}
+              </>
+            ) : (
+              activePanel?.content
+            )}
+          </DetailPanel>
         </div>
       </div>
     </div>
