@@ -54,6 +54,7 @@ const songsPage = (results: unknown[], { next = false, total = results.length as
 
 describe("GenrePlaylistTracks", () => {
   let observerCallback: IntersectionObserverCallback;
+  const observe = vi.fn();
   const fetchGenrePlaylistTracksPage = vi.fn();
   const playNewTrackListFromGenrePlaylist = vi.fn().mockResolvedValue(undefined);
   const playNewTrackListFromArtist = vi.fn().mockResolvedValue(undefined);
@@ -67,7 +68,7 @@ describe("GenrePlaylistTracks", () => {
       "IntersectionObserver",
       vi.fn(function (this: unknown, callback: IntersectionObserverCallback) {
         observerCallback = callback;
-        return { observe: vi.fn(), disconnect: vi.fn() };
+        return { observe, disconnect: vi.fn() };
       }),
     );
   });
@@ -115,6 +116,28 @@ describe("GenrePlaylistTracks", () => {
     expect(fetchMock).toHaveBeenLastCalledWith("library/songs/", true, false, {}, { genre: makeGenreUuid("g1"), pageSize: 100, withTotal: false, cursor: "CUR2" });
     expect(fetchGenrePlaylistTracksPage).not.toHaveBeenCalled();
     expect(playNewTrackListFromGenrePlaylist).toHaveBeenCalledWith(genrePlaylist, "reference", { startSongUuid: "b0" });
+  });
+
+  it("keeps loading further pages after the section is collapsed and reopened", async () => {
+    fetchMock
+      .mockResolvedValueOnce(songsPage(makeTracks(2, "a"), { next: true, total: 250 }))
+      .mockResolvedValueOnce(songsPage(makeTracks(2, "b"), { next: true, total: 250 }));
+
+    renderTracks();
+    await screen.findByRole("button", { name: "Play Song a1" });
+
+    const toggle = screen.getByRole("button", { name: "Tracks (250)" });
+    fireEvent.click(toggle);
+    fireEvent.click(toggle);
+    await screen.findByRole("button", { name: "Play Song a1" });
+
+    const observed = observe.mock.calls.at(-1)?.[0] as HTMLElement;
+    expect(observed.isConnected).toBe(true);
+
+    await act(async () => {
+      observerCallback([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver);
+    });
+    expect(await screen.findByRole("button", { name: "Play Song b0" })).toBeInTheDocument();
   });
 
   it("lists and plays only the artist's songs in the genre when an artist is set", async () => {
