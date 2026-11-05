@@ -11,6 +11,11 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- Release preparation edits files only; CI owns annotated tags, validated npm publication and safe retries.
+
+
 ## [32.0.2] - 2026-11-05
 
 ### Changed

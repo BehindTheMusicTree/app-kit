@@ -59,7 +59,7 @@ pnpm install
 
 This repo follows strict [Gitflow](https://nvie.com/posts/a-successful-git-branching-model/):
 
-- **`main`** — always reflects the latest released version. Every commit on `main` is tagged
+- **`main`** — always reflects the latest released version. CI tags validated version increases on `main`
   (`vX.Y.Z`). Nothing merges here except `release/*` and `hotfix/*` branches. This is also the
   GitHub default branch's *sibling of record* for releases, but PRs target `develop` by default.
 - **`develop`** — integration branch, always reflects the latest delivered development changes.
@@ -68,7 +68,7 @@ This repo follows strict [Gitflow](https://nvie.com/posts/a-successful-git-branc
 - **`feature/<short-description>`** — any non-release, non-hotfix work (features, fixes,
   chores); branch from `develop`, merge back into `develop` via PR.
 - **`release/<version>`** — branched from `develop` when it's ready to ship (created
-  automatically by `pnpm release`, see [§8](#8-releasing-for-maintainers)). Only version bump and
+  before running `pnpm release`, see [§8](#8-releasing-for-maintainers)). Only version bump and
   changelog commits belong here. Merged into both `main` (tagged) and `develop`, then deleted.
 - **`hotfix/<short-description>`** — branched from `main` for urgent production fixes that can't
   wait for the next `develop` → `release` cycle (see [§9](#9-hotfixing-for-maintainers)). Merged
@@ -130,42 +130,32 @@ the change being clearly described.
 
 ### 8. Releasing _(For Maintainers)_
 
-From a clean, up-to-date `develop`:
+Create a `release/*` branch from current `develop`, then run:
 
 ```bash
 pnpm release patch   # or minor / major
 ```
 
-This creates a `release/X.Y.Z` branch off `develop`, bumps `packages/app-kit/package.json`'s
-version, moves the `CHANGELOG.md` `[Unreleased]` section under the new version heading, commits,
-pushes the branch, and opens two PRs: `release/X.Y.Z` → `main` and `release/X.Y.Z` → `develop`.
+Preparation requires a clean release or hotfix branch and non-empty Unreleased notes. It
+updates both package versions, app-kit-ui's app-kit peer constraint, the lockfile and the dated
+changelog section without committing, pushing or tagging. Review and commit those files,
+push the branch and open a PR into `main`.
 
-Once the `main` PR is reviewed and merged, check out `main`, pull, and run:
+CI validates the merged commit, creates its annotated tag and triggers the existing
+`publish.yml` OIDC workflow. The publisher validates the exact tag, main ancestry and release
+notes, builds and packs both packages, then publishes app-kit before app-kit-ui. Each existing
+npm version is skipped only if its SHA-512 integrity matches the packed artifact. The GitHub
+Release is created after both packages succeed. Do not create or push release tags locally.
+After publication, integrate `main` back into `develop` through a PR.
 
-```bash
-pnpm tag-release
-```
-
-This tags the merge commit `vX.Y.Z` and pushes the tag, which triggers
-`.github/workflows/publish.yml` to build and publish `@behindthemusictree/app-kit` and `app-kit-ui` on
-npm. Then merge the companion PR into `develop` (the release branch itself isn't deleted by
-either merge, so both PRs stay valid regardless of merge order).
+Activate the shared App credentials and tag rulesets separately once the contract reaches
+`main`. Initial activation does not publish the existing version.
 
 ### 9. Hotfixing _(For Maintainers)_
 
-For an urgent fix to what's already released, without pulling in unreleased `develop` work:
-
-```bash
-git checkout -b hotfix/<short-description> main
-# fix, commit, add a CHANGELOG.md entry
-```
-
-Push the hotfix branch and open two PRs, same pattern as [§8](#8-releasing-for-maintainers):
-`hotfix/<short-description>` → `main` and `hotfix/<short-description>` → `develop`. Once the
-`main` PR merges, check out `main`, pull, and run `pnpm tag-release` (tag `vX.Y.Z` per
-[semver](https://semver.org/) — typically a patch bump) to push the tag and trigger the publish
-workflow, then merge the companion `develop` PR. There is no script to cut the hotfix branch
-itself yet — create it with plain `git checkout -b`.
+Create `hotfix/*` from current `main`, commit the fix and add Unreleased notes. Run the same
+preparation command on the clean hotfix branch, review and commit the prepared files, and open
+a PR into `main`. CI owns tagging and publication; integrate `main` back into `develop` afterward.
 
 ## License & Attribution
 

@@ -1,0 +1,24 @@
+{
+  "release_branch": "main",
+  "version": {
+    "path": "packages/app-kit/package.json",
+    "format": "json",
+    "key": "version"
+  },
+  "mirrors": [
+    {
+      "path": "packages/app-kit-ui/package.json",
+      "format": "json",
+      "key": "version"
+    }
+  ],
+  "tag_prefix": "v",
+  "changelog": "CHANGELOG.md",
+  "outputs": {
+    "github_release": true,
+    "packages": [
+      "@behindthemusictree/app-kit",
+      "@behindthemusictree/app-kit-ui"
+    ]
+  }
+}
