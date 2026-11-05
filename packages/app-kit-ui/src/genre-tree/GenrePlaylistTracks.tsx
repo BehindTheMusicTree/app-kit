@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { FaPlay, FaPause } from "react-icons/fa";
-import { RingLoader, Skeleton } from "@behindthemusictree/ui";
+import { PanelSection, RingLoader, Skeleton } from "@behindthemusictree/ui";
 
 import { useSession } from "@behindthemusictree/app-kit/auth";
 import { useFetchWrapper } from "@behindthemusictree/app-kit/transport";
@@ -123,9 +123,10 @@ export function GenrePlaylistTracks({
     enabled: scope !== "me" || (sessionRestored && !!session?.accessToken),
   });
 
-  const sentinelRef = useRef<HTMLLIElement>(null);
+  // State, not a ref object: PanelSection unmounts its body when collapsed, so the observer must
+  // re-attach when the sentinel remounts.
+  const [sentinel, setSentinel] = useState<HTMLLIElement | null>(null);
   useEffect(() => {
-    const sentinel = sentinelRef.current;
     if (!hasNextPage || isFetchingNextPage || !sentinel) return;
     const observer = new IntersectionObserver((entries) => {
       if (entries.some((entry) => entry.isIntersecting)) {
@@ -134,7 +135,7 @@ export function GenrePlaylistTracks({
     });
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, sentinel]);
 
   const pages = data?.pages ?? [];
   const tracks = pages.flatMap((page) => page.tracks);
@@ -151,8 +152,8 @@ export function GenrePlaylistTracks({
   };
 
   return (
-    <div className="gtv-info-panel-children">
-      <span className="gtv-info-panel-children-title">{capitalize(trackNoun.plural)}{total !== undefined && ` (${total})`}</span>
+    <PanelSection title={`${capitalize(trackNoun.plural)}${total !== undefined ? ` (${total})` : ""}`}>
+      <div>
       {renderTracksToolbar?.()}
       {isPending ? (
         <Skeleton className="h-4 w-3/4" aria-busy="true" />
@@ -241,9 +242,10 @@ export function GenrePlaylistTracks({
               </li>
             );
           })}
-          {hasNextPage && <li ref={sentinelRef} aria-hidden="true" className="h-4" />}
+          {hasNextPage && <li ref={setSentinel} aria-hidden="true" className="h-4" />}
         </ul>
       )}
-    </div>
+      </div>
+    </PanelSection>
   );
 }
