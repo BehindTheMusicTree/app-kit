@@ -566,7 +566,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   };
   // The overview fetch lives in GenreDetailExtras, so its loading states re-render only the panel, never the tree.
   // The count row is left out: the tracks section title carries it.
-  const renderGenreBody = (relation: GenreNodeRelations): { primary: ReactNode; aside: ReactNode } => {
+  const renderGenreBody = (relation: GenreNodeRelations): { primary: ReactNode } => {
       const { node } = relation;
       const family = (
         <GenreNodeFamily
@@ -581,7 +581,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       const ancestors = <GenreNodeAncestors ancestorNodes={relation.ancestorNodes} onSelectNode={selectGenreFromPanel} />;
       const genrePlaylist = genrePlaylistByNodeId.get(node.id);
       const criteria = genrePlaylist?.criteria;
-      if (!genrePlaylist || !criteria) return { primary: family, aside: ancestors };
+      if (!genrePlaylist || !criteria) return { primary: <>{family}{ancestors}</> };
       const genreUuid = criteria.uuid;
       // The API only accepts a side on a root's direct child, and at most one pop child per root.
       const parentPlaylist = visibleGenrePlaylists.find(({ uuid }) => uuid === genrePlaylist.parent?.uuid);
@@ -608,7 +608,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
         primary: (
           <>
           <GenreInfoPanelBody<O>
-            family={family}
+            family={<>{family}{ancestors}</>}
             genreUuid={genreUuid}
             genrePlaylist={genrePlaylist}
             wikidataId={criteria.wikidataId}
@@ -660,7 +660,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           {renderDangerZone?.(node)}
           </>
         ),
-        aside: ancestors,
       };
   };
 
@@ -690,11 +689,10 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       compact: false,
     };
   } else if (relations) {
-    const { primary, aside } = renderGenreBody(relations);
+    const { primary } = renderGenreBody(relations);
     activePanel = {
       title: relations.node.name,
       content: primary,
-      aside,
       expanded: isExpanded,
       onExpandedChange: changeExpanded,
       onClose: clearSelection,
