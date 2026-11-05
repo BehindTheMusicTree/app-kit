@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [32.0.0] - 2026-11-05
+
 ### Breaking
 
 - `renderSummary` and `renderEssentialTracks` (`GenreDetailSlots`) now render the **body** of the Summary / Essential section: `GenreDetailExtras` wraps it in a titled `PanelSection`. A slot that rendered its own heading or frame must drop it.
