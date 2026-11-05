@@ -1,7 +1,6 @@
 "use client";
 
 import { Skeleton } from "@behindthemusictree/ui";
-import type { GenreTreeOverlayPanel } from "@behindthemusictree/genre-tree-view";
 import { useArtist, type RenderArtistLink, type RenderSongLink } from "@behindthemusictree/app-kit/genre-tree";
 import ArtistHeader from "./ArtistHeader";
 import ArtistPhoto from "./ArtistPhoto";
@@ -11,6 +10,7 @@ import ArtistSongs from "./ArtistSongs";
 import ShareActionButton from "../ShareActionButton";
 import type { GetGenreTreeShareUrl } from "../share";
 import type { Scope } from "@behindthemusictree/app-kit/transport";
+import type { OverlayPanel } from "../overlayPanel";
 
 export interface ArtistPanelOptions {
   uuid: string | null;
@@ -36,7 +36,7 @@ export function useArtistPanel({
   expanded,
   onExpandedChange,
   onClose,
-}: ArtistPanelOptions): GenreTreeOverlayPanel | undefined {
+}: ArtistPanelOptions): OverlayPanel | undefined {
   const result = useArtist(uuid, getBackendBaseUrl);
 
   const panel = { expanded, onExpandedChange, onClose };

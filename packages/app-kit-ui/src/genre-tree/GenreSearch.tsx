@@ -22,7 +22,7 @@ export type GenreSearchProps<T extends CriteriaPlaylistSimple = CriteriaPlaylist
   onSelect: (genrePlaylist: T) => void;
   /** Name of the currently selected genre; fills the input whenever it changes. */
   selectedName?: string | null;
-  /** When set, renders a "Previous" button left of the text; shown only when the host's CSS reveals `.genre-search-previous`. */
+  /** When set, renders a "Previous" button left of the text and makes room for it. */
   onPrevious?: () => void;
   /** Called by the clear button, after it empties the input. */
   onClear?: () => void;
@@ -103,7 +103,7 @@ export default function GenreSearch<T extends CriteriaPlaylistSimple = CriteriaP
           type="button"
           aria-label="Previous"
           title="Previous"
-          className="genre-search-previous absolute left-2 top-1/2 z-10 hidden items-center justify-center p-1.5 [@media(pointer:coarse)]:min-h-[var(--layout-touch-target)] [@media(pointer:coarse)]:min-w-[var(--layout-touch-target)] text-[var(--color-text-muted)] rounded-full -translate-y-1/2 hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
+          className="genre-search-previous absolute left-2 top-1/2 z-10 flex items-center justify-center p-1.5 [@media(pointer:coarse)]:min-h-[var(--layout-touch-target)] [@media(pointer:coarse)]:min-w-[var(--layout-touch-target)] text-[var(--color-text-muted)] rounded-full -translate-y-1/2 hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
           onClick={onPrevious}
         >
           <ArrowLeft aria-hidden="true" className="w-4 h-4" />
@@ -124,7 +124,7 @@ export default function GenreSearch<T extends CriteriaPlaylistSimple = CriteriaP
         onPick={handlePick}
         status={status}
         loading={loading ? "Searching…" : undefined}
-        inputClassName="h-[var(--layout-search-h,3rem)] pl-6 pr-20 text-base transition-[padding] duration-200 ease-out motion-reduce:transition-none bg-[var(--color-surface)] border-[var(--color-border)] rounded-full shadow-md"
+        inputClassName={`h-[var(--layout-search-h,3rem)] ${onPrevious ? "pl-11" : "pl-6"} pr-20 text-base transition-[padding] duration-200 ease-out motion-reduce:transition-none bg-[var(--color-surface)] border-[var(--color-border)] rounded-full shadow-md`}
         className="genre-search-results z-40 rounded-xl shadow-md"
         listClassName="max-h-[min(20rem,50dvh)]"
         optionClassName="[@media(pointer:coarse)]:min-h-[var(--layout-touch-target)]"

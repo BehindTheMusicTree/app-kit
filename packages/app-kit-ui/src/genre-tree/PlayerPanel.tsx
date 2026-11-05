@@ -11,7 +11,7 @@ import {
   type RenderArtistLink,
   type RenderSongLink,
 } from "@behindthemusictree/app-kit/genre-tree";
-import PanelEdgeTab from "./PanelEdgeTab";
+import { PanelEdgeTab } from "@behindthemusictree/ui";
 import PlayerControls from "./PlayerControls";
 import TrackListSidebar from "./track-list-sidebar/TrackListSidebar";
 

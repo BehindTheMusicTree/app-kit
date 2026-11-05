@@ -8,7 +8,6 @@ describe("genre-tree barrel", () => {
     expect(genreTree.GenreTreeSkeleton).toBeTypeOf("function");
     expect(genreTree.GenrePlaylistTreePerRoot).toBeTypeOf("function");
     expect(genreTree.GenreSearch).toBeTypeOf("function");
-    expect(genreTree.PanelEdgeTab).toBeTypeOf("function");
   });
 
   it("re-exports track-list components", () => {

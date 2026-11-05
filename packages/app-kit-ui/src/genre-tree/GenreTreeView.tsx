@@ -4,11 +4,15 @@ import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, ty
 import { useIsMutating } from "@tanstack/react-query";
 import { z } from "zod";
 import { Plus } from "lucide-react";
-import { IconTextButton, Button, SegmentedControl } from "@behindthemusictree/ui";
+import { Maximize2, Minimize2 } from "lucide-react";
+import { IconTextButton, IconButton, Button, SegmentedControl, DetailPanel, useObscuredInset } from "@behindthemusictree/ui";
 
 import {
+  GenreNodeAncestors,
+  GenreNodeFamily,
   GenreTreeWheelSkeleton,
   GenreTreeViewSkeleton,
+  useGenreNodeRelations,
 } from "@behindthemusictree/genre-tree-view";
 import type {
   GenreTreeAction,
@@ -16,8 +20,8 @@ import type {
   GenreTreeViewMode,
   GenreTreeViewport,
   GenreTreeProps,
-  InfoPanelBody,
-  InfoPanelSections,
+  GenreNodeRelations,
+  GenreNodeStyleResolver,
 } from "@behindthemusictree/genre-tree-view";
 
 import {
@@ -36,7 +40,8 @@ import { useGenreTreeViewState, useArtist, useUpdateGenre, genreUpdateMutationKe
 import { usePopup } from "@behindthemusictree/app-kit/popup";
 import type { GenreDetailSlots } from "./GenreDetailExtras";
 import type { GenrePlaylistTracksSlots } from "./GenrePlaylistTracks";
-import type { InfoPanelCurationProps } from "./playlist-tree/infoPanelCurationProps";
+import type { HostOverlayPanel } from "./overlayPanel";
+import { toTreeNodes } from "./playlist-tree/toTreeNodes";
 import type { RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
 
 import GenrePlaylistTreePerRoot from "./playlist-tree/TreePerRoot";
@@ -45,8 +50,6 @@ import GenrePlaylistTreeWheelRadialPopCore, { type GenreFocusProps } from "./pla
 import { GenreTreeWheelHandoff } from "./GenreTreeWheelHandoff";
 import GenreSearch, { type GenreSearchExtraGroup } from "./GenreSearch";
 import { GenreInfoPanelBody } from "./GenreInfoPanelBody";
-import PanelEdgeTab from "./PanelEdgeTab";
-import { useLeftDetailPanelLayout } from "./useLeftDetailPanelLayout";
 import ChangeParentPopup, { type ParentChange } from "./ChangeParentPopup";
 import { useArtistPanel } from "./artist/useArtistPanel";
 import { useSongPanel } from "./song/useSongPanel";
@@ -54,19 +57,6 @@ import { SizeMetricToggle } from "./SizeMetricToggle";
 import { hasViewsCount, type GenreTreeSizeMetric } from "./playlist-tree/size-metric";
 import { useGenrePlaylistPlayback, type GenrePlaylistPlayback } from "./playlist-tree/useGenrePlaylistPlayback";
 import type { GetGenreTreeShareUrl, GenreTreeShareTarget } from "./share";
-
-// genre-tree-view's "previous" button (back to the last selected genre) renders inside the info panel, which sits
-// under the floating search bar. It is hidden and its click is proxied by the search field's own button, which
-// appears (fading in, sliding from the left) whenever the original exists; the field makes room for it.
-const PREVIOUS_BUTTON_CSS = `
-.genre-tree-view .search-overlay .gtv-info-panel-previous { display: none; }
-.genre-tree-view:has(.search-overlay .gtv-info-panel-previous) .genre-search input { padding-left: 2.75rem; }
-.genre-tree-view:has(.search-overlay .gtv-info-panel-previous) .genre-search-previous { display: flex; }
-@keyframes genre-tree-view-previous-in { from { opacity: 0; transform: translate(-0.5rem, -50%); } to { opacity: 1; transform: translate(0, -50%); } }
-@media (prefers-reduced-motion: no-preference) {
-  .genre-search-previous { animation: genre-tree-view-previous-in 200ms ease-out; }
-}
-`;
 
 export type {
   FocusChangeReason,
@@ -165,15 +155,21 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
 } & ArtistSearchProps &
   GenreDetailSlots<O> &
   GenrePlaylistTracksSlots &
-  InfoPanelCurationProps &
   GenreFocusProps & {
+    /** Appended to a selected genre's panel, e.g. destructive actions. */
+    renderDangerZone?: (node: GenreTreeNode) => ReactNode;
+    /** Controlled expanded state of the genre panel. Uncontrolled when omitted. */
+    expanded?: boolean;
+    onExpandedChange?: (expanded: boolean) => void;
+    /** A host panel rendered in the detail panel's slot; it takes precedence over the genre, song and artist panels. */
+    overlayPanel?: HostOverlayPanel;
     /** Hides the info panel behind its edge tab; uncontrolled when omitted. Only applies with `placement="regions"`. */
     collapsed?: boolean;
     onCollapsedChange?: (collapsed: boolean) => void;
   };
 
 const REGIONS_CLASS =
-  "[--gtv-center-left:var(--layout-center-left)] [--gtv-center-right:var(--layout-center-right)] [--gtv-center-top:var(--layout-band-top)] [&_.gtv-info-panel--overlay]:[--gtv-info-panel-header-inset:0px]";
+  "[--gtv-center-left:var(--layout-center-left)] [--gtv-center-right:var(--layout-center-right)] [--gtv-center-top:var(--layout-band-top)]";
 
 export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   scope,
@@ -406,7 +402,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const builtInSongPanel = overlayPanel || hasSelectedGenreNode ? undefined : songPanel;
   const builtInArtistPanel = overlayPanel || hasSelectedGenreNode || builtInSongPanel ? undefined : artistPanel;
   const builtInPanel = builtInSongPanel ?? builtInArtistPanel;
-  const activeOverlayPanel = overlayPanel ?? (builtInPanel && { ...builtInPanel, hideTitle: true, hideClose: true });
 
   const [uncontrolledCollapsed, setUncontrolledCollapsed] = useState(false);
   const [uncontrolledExpanded, setUncontrolledExpanded] = useState(false);
@@ -424,47 +419,48 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     setUncontrolledCollapsed(false);
   }, [selectedNodeId, artistUuid, songUuid]);
 
-  // The brand layout tokens derive the center column from this variable.
-  const isDetailHidden = isCollapsed || (!hasSelectedGenreNode && !activeOverlayPanel);
-  useLeftDetailPanelLayout(!isDetailHidden, placement === "regions");
-
-  // An expandable overlay (e.g. an artist) takes the info panel's slot, so the edge tab drives it instead.
-  const detailOverlay =
-    placement === "regions" && activeOverlayPanel?.onExpandedChange ? activeOverlayPanel : undefined;
-  const detailExpanded = detailOverlay ? !!detailOverlay.expanded : isExpanded;
-  const onDetailExpandedChange = detailOverlay ? detailOverlay.onExpandedChange : changeExpanded;
-  const infoPanelCuration: InfoPanelCurationProps = {
-    renderDangerZone,
-    expanded: placement === "regions" ? isExpanded : expanded,
-    onExpandedChange: placement === "regions" ? changeExpanded : onExpandedChange,
-    collapsed: placement === "regions" ? isCollapsed : undefined,
-    hideExpandButton: placement === "regions" ? true : undefined,
-    overlayPanel: detailOverlay ? { ...detailOverlay, collapsed: isCollapsed, hideExpandButton: true } : activeOverlayPanel,
-  };
-
   const [isWheelRevealed, setIsWheelRevealed] = useState(false);
   const usesHandoff = viewMode === "wheel" || viewMode === "pop-core";
-  // The edge tab controls a panel drawn by the tree, so it shows only once the tree does.
+  // The panel stands beside a tree that fades in, so it waits for the tree.
   const isTreeReady = !isLoading && (!usesHandoff || isWheelRevealed);
 
-  const rootRef = useRef<HTMLDivElement>(null);
-  const handlePrevious = () => {
-    rootRef.current?.querySelector<HTMLButtonElement>(".search-overlay .gtv-info-panel-previous")?.click();
-  };
+  // The tree publishes how it draws each node; the panel header and family chips reuse it.
+  const [resolveStyle, setResolveStyle] = useState<GenreNodeStyleResolver | null>(null);
+  const handleNodeStyleResolverChange = useCallback(
+    (resolver: GenreNodeStyleResolver) => setResolveStyle(() => resolver),
+    [],
+  );
+  const panelRef = useRef<HTMLDivElement>(null);
+  const obscuredInset = useObscuredInset(panelRef);
+  const hostPanel = { obscuredInset, onNodeStyleResolverChange: handleNodeStyleResolverChange };
 
-  useEffect(() => {
-    if (!isTreeReady || viewMode !== "pop-core" || !hasSelectedGenreNode || !selectedGenrePlaylist) return;
+  const nodeMetric: GenreTreeSizeMetric = isArtistFiltered || !canSizeByViews ? "songs" : deferredSizeMetric;
+  const treeNodes = useMemo(() => toTreeNodes(visibleGenrePlaylists, nodeMetric), [visibleGenrePlaylists, nodeMetric]);
+  const relations = useGenreNodeRelations(
+    treeNodes,
+    !overlayPanel && hasSelectedGenreNode ? selectedNodeId : null,
+    resolveStyle,
+  );
 
-    const root = rootRef.current;
-    const centerChip = root?.querySelector<HTMLButtonElement>(".gtv-wheel-center-node .gtv-wheel-chip");
-    if (!centerChip || centerChip.getAttribute("aria-label") !== selectedGenrePlaylist.name) return;
-
-    // The dependency's URL-selection effect looks up #group-<id>, but this center chip is outside the SVG
-    // and has no such id. Use its own click handler so URL selection opens the same info panel as a user click.
-    const panelTitle = root?.querySelector<HTMLElement>(".gtv-info-panel-title");
-    if (panelTitle?.textContent?.trim().startsWith(selectedGenrePlaylist.name)) return;
-    centerChip.click();
-  }, [hasSelectedGenreNode, isTreeReady, selectedGenrePlaylist, viewMode]);
+  // "Previous" returns to the genre selected before the current one.
+  const [selectionHistory, setSelectionHistory] = useState<{ current: string | null; previous: string | null }>({
+    current: selectedNodeId,
+    previous: null,
+  });
+  if (selectionHistory.current !== selectedNodeId) {
+    setSelectionHistory({
+      current: selectedNodeId,
+      previous: selectionHistory.current ?? selectionHistory.previous,
+    });
+  }
+  const previousPlaylist =
+    selectionHistory.previous !== null && selectionHistory.previous !== selectedNodeId
+      ? genrePlaylistByNodeId.get(selectionHistory.previous)
+      : undefined;
+  const handlePrevious =
+    previousPlaylist && visibleGenrePlaylists.includes(previousPlaylist)
+      ? () => handleGenreSearchSelect(previousPlaylist)
+      : undefined;
 
   const { showPopup, hidePopup } = usePopup();
   const [searchText, setSearchText] = useState("");
@@ -562,14 +558,28 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const zoomInRef = useRef<(() => void) | undefined>(undefined);
   zoomInRef.current = canZoomIn ? handleGenreSearchZoomIn : undefined;
 
-  // Stable across selections: the overview fetch lives in GenreDetailExtras, so its loading
-  // states re-render only the info panel, never the tree. The count row is left out: the tracks
-  // section title carries it.
-  const renderInfoPanelBody = useCallback(
-    (node: GenreTreeNode, { toolbar, ancestors, family }: InfoPanelSections): InfoPanelBody => {
+  const selectGenreFromPanel = (nodeId: string) => {
+    const genrePlaylist = genrePlaylistByNodeId.get(nodeId);
+    if (genrePlaylist) handleGenreSearchSelect(genrePlaylist);
+  };
+  // The overview fetch lives in GenreDetailExtras, so its loading states re-render only the panel, never the tree.
+  // The count row is left out: the tracks section title carries it.
+  const renderGenreBody = (relation: GenreNodeRelations): { primary: ReactNode; aside: ReactNode } => {
+      const { node } = relation;
+      const family = (
+        <GenreNodeFamily
+          node={node}
+          fill={relation.fill}
+          textColor={relation.textColor}
+          parentNode={relation.parentNode}
+          childNodes={relation.childNodes}
+          onSelectNode={selectGenreFromPanel}
+        />
+      );
+      const ancestors = <GenreNodeAncestors ancestorNodes={relation.ancestorNodes} onSelectNode={selectGenreFromPanel} />;
       const genrePlaylist = genrePlaylistByNodeId.get(node.id);
       const criteria = genrePlaylist?.criteria;
-      if (!genrePlaylist || !criteria) return { primary: <>{toolbar}{family}</>, aside: ancestors };
+      if (!genrePlaylist || !criteria) return { primary: family, aside: ancestors };
       const genreUuid = criteria.uuid;
       // The API only accepts a side on a root's direct child, and at most one pop child per root.
       const parentPlaylist = visibleGenrePlaylists.find(({ uuid }) => uuid === genrePlaylist.parent?.uuid);
@@ -594,8 +604,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           : undefined;
       return {
         primary: (
+          <>
           <GenreInfoPanelBody<O>
-            toolbar={toolbar}
             family={family}
             genreUuid={genreUuid}
             genrePlaylist={genrePlaylist}
@@ -645,48 +655,94 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
               renderTracksToolbar,
             }}
           />
+          {renderDangerZone?.(node)}
+          </>
         ),
         aside: ancestors,
       };
-    },
-    [genrePlaylistByNodeId, additionalActions, readOnly, handleGenreCreationAction, handleGenreRenameAction,
-      showPopup, hidePopup, onParentChanged, visibleGenrePlaylists, updateGenre, playback, filterArtist,
-      scope, getBackendBaseUrl, criteriaOverviewSchema,
-      renderGenreDetailExtras,
-      renderArtistLink,
-      resolvedRenderSongLink,
-      renderSummary,
-      renderEssentialTracks,
-      renderSongLeading,
-      renderSongActions,
-      renderTracksToolbar,
-    ],
-  );
+  };
 
   const isRotationControlled = controlledAllowWheelRotation !== undefined;
   const allowWheelRotation = controlledAllowWheelRotation ?? internalAllowWheelRotation;
 
+  type ActivePanel = {
+    title: ReactNode;
+    content: ReactNode;
+    aside?: ReactNode;
+    expanded: boolean;
+    onExpandedChange?: (expanded: boolean) => void;
+    onClose: () => void;
+    // A genre's or built-in panel's name lives in the search field, and the search field clears it.
+    compact: boolean;
+    headerAccent?: { background: string; color: string };
+  };
+  let activePanel: ActivePanel | null = null;
+  if (overlayPanel) {
+    activePanel = {
+      title: overlayPanel.title,
+      content: overlayPanel.content,
+      aside: overlayPanel.extraContent,
+      expanded: overlayPanel.expanded ?? false,
+      onExpandedChange: overlayPanel.onExpandedChange,
+      onClose: overlayPanel.onClose,
+      compact: false,
+    };
+  } else if (relations) {
+    const { primary, aside } = renderGenreBody(relations);
+    activePanel = {
+      title: relations.node.name,
+      content: primary,
+      aside,
+      expanded: isExpanded,
+      onExpandedChange: changeExpanded,
+      onClose: clearSelection,
+      compact: true,
+      headerAccent: { background: relations.fill, color: relations.textColor },
+    };
+  } else if (builtInPanel) {
+    activePanel = {
+      title: builtInPanel.title,
+      content: builtInPanel.content,
+      aside: builtInPanel.extraContent,
+      expanded: builtInPanel.expanded,
+      onExpandedChange: builtInPanel.onExpandedChange,
+      onClose: builtInPanel.onClose,
+      compact: true,
+    };
+  }
+  const isPanelShown = isTreeReady && activePanel !== null;
+
   const detailTab =
-    placement === "regions" && (hasSelectedGenreNode || detailOverlay) ? (
-      <PanelEdgeTab
-        side="left"
-        edge={
-          detailExpanded
-            ? { label: "Shrink panel", onClick: () => onDetailExpandedChange?.(false) }
+    placement === "regions" && activePanel?.onExpandedChange
+      ? {
+          edge: activePanel.expanded
+            ? { label: "Shrink panel", onClick: () => activePanel.onExpandedChange?.(false) }
             : isCollapsed
               ? null
-              : { label: "Hide panel", onClick: () => changeCollapsed(true) }
-        }
-        center={
-          detailExpanded
+              : { label: "Hide panel", onClick: () => changeCollapsed(true) },
+          center: activePanel.expanded
             ? null
             : isCollapsed
               ? { label: "Show panel", onClick: () => changeCollapsed(false) }
-              : onDetailExpandedChange
-                ? { label: "Extend panel", onClick: () => onDetailExpandedChange(true) }
-                : null
+              : activePanel.onExpandedChange
+                ? { label: "Extend panel", onClick: () => activePanel.onExpandedChange?.(true) }
+                : null,
         }
-      />
+      : undefined;
+
+  const expandButton =
+    placement === "default" && activePanel?.onExpandedChange ? (
+      <IconButton
+        aria-label={activePanel.expanded ? "Shrink panel" : "Extend panel"}
+        style={activePanel.headerAccent && { color: "inherit" }}
+        onClick={() => activePanel.onExpandedChange?.(!activePanel.expanded)}
+      >
+        {activePanel.expanded ? (
+          <Minimize2 aria-hidden="true" className="h-4 w-4" />
+        ) : (
+          <Maximize2 aria-hidden="true" className="h-4 w-4" />
+        )}
+      </IconButton>
     ) : null;
 
   const renderArtistFilter = () => {
@@ -721,7 +777,10 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
         <GenreSearch
           genrePlaylists={visibleGenrePlaylists}
           onSelect={handleGenreSearchSelect}
-          selectedName={selectedGenrePlaylist?.name ?? builtInPanel?.title ?? null}
+          selectedName={
+            selectedGenrePlaylist?.name ??
+            (typeof builtInPanel?.title === "string" ? builtInPanel.title : null)
+          }
           onClear={
             builtInSongPanel
               ? () => changeSong(null)
@@ -781,12 +840,11 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
 
   return (
     <div
-      ref={rootRef}
+      data-left-panel={isPanelShown && !isCollapsed ? undefined : "hidden"}
       className={["genre-tree-view relative flex flex-col h-full", placement === "regions" && REGIONS_CLASS, className]
         .filter(Boolean)
         .join(" ")}
     >
-      <style>{PREVIOUS_BUTTON_CSS}</style>
       <div
         className={`actions-container absolute z-30 flex items-center gap-2 ${
           placement === "regions"
@@ -805,21 +863,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           {renderArtistFilter()}
         </div>
       )}
-      {detailTab && (
-        <div
-          className={`absolute top-1/2 z-30 -translate-y-1/2 max-md:hidden transition-[opacity,visibility] duration-150 ease-out ${
-            isTreeReady ? "opacity-100" : "pointer-events-none invisible opacity-0"
-          } ${
-            detailExpanded
-              ? "right-[calc(var(--layout-center-right)-var(--layout-edge-tab-w))]"
-              : isCollapsed
-                ? "left-0"
-                : "left-[calc(var(--layout-gutter)+var(--layout-left-w))]"
-          }`}
-        >
-          {detailTab}
-        </div>
-      )}
       <div className="content-container flex-1 min-h-0 flex flex-row gap-4">
         <div className="tree-view-container relative flex-1 min-w-0 flex flex-col h-full">
           {!isLoading && viewMode === "outline" && floatingControlsLeading && (
@@ -832,7 +875,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             // and the header inset (the bar's height plus that inset) extends the header's fill behind the bar,
             // Google Maps style; the 8px bottom padding mirrors the inset above the bar, and the hidden title's height is zeroed.
             // The panel's own Zoom in button is hidden: the search bar carries it.
-            <div className="tree-container search-overlay relative flex-1 w-full min-h-0 [--gtv-info-panel-header-inset:calc(var(--layout-search-h,2.5rem)+var(--layout-panel-inset,0.5rem))] [&_.gtv-info-panel-header]:pb-2 [&_.gtv-info-panel-title--hidden]:h-0 [&_.gtv-toolbar]:hidden">
+            <div className="tree-container search-overlay relative flex-1 w-full min-h-0 ">
               <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />} onRevealedChange={setIsWheelRevealed}>
                 <GenrePlaylistTreeWheel
                   scope={scope}
@@ -841,10 +884,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   handleGenreRenameAction={handleGenreRenameAction}
                   additionalActions={additionalActions}
                   onSelectedNodeChange={handleSelectedNodeChange}
-                  hideInfoPanelClose
-                  hideInfoPanelTitle
-                  onNodeHover={handleNodeHover}
-                  renderInfoPanelBody={renderInfoPanelBody}
+                                                      onNodeHover={handleNodeHover}
+                  {...hostPanel}
                   playback={playback}
                   selectedNodeId={selectedNodeId}
                   readOnly={readOnly}
@@ -862,13 +903,12 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   defaultViewport={defaultViewport}
                   viewportRestore={viewportRestore}
                   onViewportChange={onViewportChange}
-                  {...infoPanelCuration}
                 />
               </GenreTreeWheelHandoff>
             </div>
           ) : viewMode === "pop-core" ? (
             // Same as the wheel: the header inset extends its fill behind the floating search bar, Google Maps style.
-            <div className="tree-container search-overlay relative flex-1 w-full min-h-0 [--gtv-info-panel-header-inset:calc(var(--layout-search-h,2.5rem)+var(--layout-panel-inset,0.5rem))] [&_.gtv-info-panel-header]:pb-2 [&_.gtv-info-panel-title--hidden]:h-0 [&_.gtv-toolbar]:hidden [&_.gtv-info-panel-zoom-in]:hidden">
+            <div className="tree-container search-overlay relative flex-1 w-full min-h-0 ">
               <GenreTreeWheelHandoff skeleton={<GenreTreeWheelSkeleton />} onRevealedChange={setIsWheelRevealed}>
                 <GenrePlaylistTreeWheelRadialPopCore
                   scope={scope}
@@ -877,10 +917,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   handleGenreRenameAction={handleGenreRenameAction}
                   additionalActions={additionalActions}
                   onSelectedNodeChange={handleSelectedNodeChange}
-                  hideInfoPanelClose
-                  hideInfoPanelTitle
-                  onNodeHover={handleNodeHover}
-                  renderInfoPanelBody={renderInfoPanelBody}
+                                                      onNodeHover={handleNodeHover}
+                  {...hostPanel}
                   playback={playback}
                   selectedNodeId={selectedNodeId}
                   readOnly={readOnly}
@@ -898,13 +936,12 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                   defaultViewport={defaultViewport}
                   viewportRestore={viewportRestore}
                   onViewportChange={onViewportChange}
-                  {...infoPanelCuration}
                   {...focus}
                 />
               </GenreTreeWheelHandoff>
             </div>
           ) : viewMode === "outline" ? (
-            <div className="tree-container flex-1 min-h-0 w-full overflow-y-auto relative [--gtv-info-panel-header-inset:calc(var(--layout-search-h,2.5rem)+var(--layout-panel-inset,0.5rem)+0.75rem)] [&_.gtv-toolbar]:hidden">
+            <div className="tree-container flex-1 min-h-0 w-full overflow-y-auto relative">
               <GenrePlaylistTreeWheelRadialPopCore
                 outline
                 scope={scope}
@@ -913,20 +950,17 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                 handleGenreRenameAction={handleGenreRenameAction}
                 additionalActions={additionalActions}
                 onSelectedNodeChange={handleSelectedNodeChange}
-                hideInfoPanelClose
-                hideInfoPanelTitle
-                onNodeHover={handleNodeHover}
-                renderInfoPanelBody={renderInfoPanelBody}
+                                                onNodeHover={handleNodeHover}
+                {...hostPanel}
                 playback={playback}
                 selectedNodeId={selectedNodeId}
                 readOnly={readOnly}
-                {...infoPanelCuration}
               />
             </div>
           ) : (
-            <div className="tree-container relative flex flex-col gap-4 w-full pt-14 overflow-x-auto overflow-y-auto text-[var(--color-text)] [&_.gtv-toolbar]:hidden">
+            <div className="tree-container relative flex flex-col gap-4 w-full pt-14 overflow-x-auto overflow-y-auto text-[var(--color-text)]">
               {Object.entries(groupedGenrePlaylistsByRoot).map(
-                ([uuid, genrePlaylistTreePerRoot], rootIndex) => {
+                ([uuid, genrePlaylistTreePerRoot]) => {
                   return (
                     <div
                       key={uuid}
@@ -941,10 +975,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                           handleGenreRenameAction={handleGenreRenameAction}
                           additionalActions={additionalActions}
                           onSelectedNodeChange={handleSelectedNodeChange}
-                          hideInfoPanelClose
-                          hideInfoPanelTitle
-                          onNodeHover={handleNodeHover}
-                          renderInfoPanelBody={renderInfoPanelBody}
+                                                                              onNodeHover={handleNodeHover}
+                          {...hostPanel}
                           playback={playback}
                           // Each root has its own panel; null closes the one not holding the selection.
                           selectedNodeId={
@@ -961,9 +993,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                           onViewportChange={
                             uuid === selectedGenrePlaylist?.root.uuid ? onViewportChange : undefined
                           }
-                          {...infoPanelCuration}
-                          // Every tree draws its own overlay; render it once, not per root.
-                          overlayPanel={rootIndex === 0 ? activeOverlayPanel : undefined}
                         />
                       </div>
                     </div>
@@ -971,6 +1000,33 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                 },
               )}
             </div>
+          )}
+          {activePanel && (
+            <DetailPanel
+              ref={panelRef}
+              side="left"
+              title={activePanel.title}
+              hideTitle={activePanel.compact}
+              hideClose={activePanel.compact}
+              headerAccent={activePanel.headerAccent}
+              headerActions={expandButton}
+              onClose={activePanel.onClose}
+              collapsed={isCollapsed || !isTreeReady}
+              expanded={activePanel.expanded}
+              onExpandedChange={activePanel.onExpandedChange}
+              aside={activePanel.aside}
+              edgeTab={detailTab}
+              headerClassName={activePanel.compact ? "pt-[calc(var(--layout-search-h)+var(--layout-panel-inset)+0.5rem)]" : undefined}
+            >
+              {activePanel.aside && !activePanel.expanded ? (
+                <>
+                  {activePanel.content}
+                  {activePanel.aside}
+                </>
+              ) : (
+                activePanel.content
+              )}
+            </DetailPanel>
           )}
         </div>
       </div>

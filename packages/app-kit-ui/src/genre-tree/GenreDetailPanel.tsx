@@ -1,17 +1,18 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { useMemo } from "react";
 import {
   ACCENT_TEXT_COLOR,
+  GenreNodeAncestors,
+  GenreNodeFamily,
   getGenreTreeColor,
-  InfoPanel,
   TEXT_COLOR,
   tintSurface,
   type GenreTreeNode,
   type InfoPanelChild,
 } from "@behindthemusictree/genre-tree-view";
-import { Skeleton } from "@behindthemusictree/ui";
+import { DetailPanel, IconButton, Skeleton } from "@behindthemusictree/ui";
+import { Maximize2, Minimize2 } from "lucide-react";
 
 import {
   useFetchGenreDetail,
@@ -43,7 +44,6 @@ export type GenreDetailPanelProps<O extends CriteriaOverview> = {
   extras?: GenreInfoPanelBodyProps<O>["extras"];
 };
 
-const ITEM_COUNT_LABEL = "Songs";
 // Relatives from the detail endpoint carry no song count, so the family dots share one size.
 const RELATIVE_ITEM_COUNT = 1;
 
@@ -119,41 +119,57 @@ export function GenreDetailPanel<O extends CriteriaOverview>({
     );
   }
 
-  const renderBody = (node: GenreTreeNode, sections: { toolbar: ReactNode; family: ReactNode }) => ({
-    primary: (
+  const selectGenre = (nodeId: string) => onSelectGenre(nodeId as GenreUuid);
+  const family = (
+    <GenreNodeFamily
+      node={view.node}
+      fill={view.fill}
+      textColor={ACCENT_TEXT_COLOR}
+      parentNode={view.parentNode}
+      childNodes={view.childNodes}
+      onSelectNode={selectGenre}
+    />
+  );
+  const ancestors = <GenreNodeAncestors ancestorNodes={view.ancestorNodes} onSelectNode={selectGenre} />;
+
+  return (
+    <DetailPanel
+      side="left"
+      title={view.node.name}
+      headerAccent={{ background: view.fill, color: ACCENT_TEXT_COLOR }}
+      headerActions={
+        onExpandedChange ? (
+          <IconButton
+            aria-label={expanded ? "Shrink panel" : "Extend panel"}
+            style={{ color: "inherit" }}
+            onClick={() => onExpandedChange(!expanded)}
+          >
+            {expanded ? (
+              <Minimize2 aria-hidden="true" className="h-4 w-4" />
+            ) : (
+              <Maximize2 aria-hidden="true" className="h-4 w-4" />
+            )}
+          </IconButton>
+        ) : undefined
+      }
+      onClose={onClose}
+      collapsed={collapsed}
+      expanded={expanded}
+      onExpandedChange={onExpandedChange}
+      aside={ancestors}
+    >
       <GenreInfoPanelBody<O>
-        toolbar={sections.toolbar}
-        family={sections.family}
+        family={family}
         genreUuid={detail.uuid}
         genrePlaylist={{ ...detail.criteriaPlaylist, tracksCount: detail.tracksCount }}
         wikidataId={detail.wikidataId}
         scope={scope}
         getBackendBaseUrl={getBackendBaseUrl}
         playback={playback}
-        band={{ node, onZoomIn, shareUrl, shareTarget: shareUrl ? shareTarget : undefined }}
+        band={{ node: view.node, onZoomIn, shareUrl, shareTarget: shareUrl ? shareTarget : undefined }}
         extras={extras}
       />
-    ),
-    aside: null,
-  });
-
-  return (
-    <InfoPanel
-      node={view.node}
-      fill={view.fill}
-      textColor={ACCENT_TEXT_COLOR}
-      parentNode={view.parentNode}
-      childNodes={view.childNodes}
-      ancestorNodes={view.ancestorNodes}
-      side="left"
-      onClose={onClose}
-      onSelectNode={(nodeId) => onSelectGenre(nodeId as GenreUuid)}
-      itemCountLabel={ITEM_COUNT_LABEL}
-      renderInfoPanelBody={renderBody}
-      expanded={expanded}
-      onExpandedChange={onExpandedChange}
-      collapsed={collapsed}
-      hideExpandButton={onExpandedChange === undefined}
-    />
+      {!expanded && ancestors}
+    </DetailPanel>
   );
 }

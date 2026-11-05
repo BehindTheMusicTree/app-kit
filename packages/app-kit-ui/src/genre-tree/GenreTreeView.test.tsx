@@ -1,8 +1,11 @@
+import { useEffect } from "react";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { screen, fireEvent, act, cleanup, waitFor, within } from "@testing-library/react";
 import { render } from "../test-utils";
 import { z } from "zod";
 import ChangeParentPopup from "./ChangeParentPopup";
+
+const nodeStyleResolver = () => ({ fill: "#336699", textColor: "#ffffff" });
 
 const {
   useListFullGenrePlaylistsMock,
@@ -110,22 +113,28 @@ vi.mock("./GenrePlaylistTracks", () => ({
 }));
 
 vi.mock("./playlist-tree/TreePerRoot", () => ({
-  default: (props: unknown) => {
+  default: (props: { onNodeStyleResolverChange?: (resolver: typeof nodeStyleResolver) => void }) => {
     treePerRootPropsMock(props);
+    // The real tree publishes how it draws each node; the host's panel waits for it.
+    useEffect(() => props.onNodeStyleResolverChange?.(nodeStyleResolver), [props.onNodeStyleResolverChange]);
     return <div data-testid="tree-per-root" />;
   },
 }));
 
 vi.mock("./playlist-tree/TreeWheel", () => ({
-  default: (props: unknown) => {
+  default: (props: { onNodeStyleResolverChange?: (resolver: typeof nodeStyleResolver) => void }) => {
     treeWheelPropsMock(props);
+    // The real tree publishes how it draws each node; the host's panel waits for it.
+    useEffect(() => props.onNodeStyleResolverChange?.(nodeStyleResolver), [props.onNodeStyleResolverChange]);
     return <div data-testid="tree-wheel" />;
   },
 }));
 
 vi.mock("./playlist-tree/TreeWheelRadialPopCore", () => ({
-  default: (props: unknown) => {
+  default: (props: { onNodeStyleResolverChange?: (resolver: typeof nodeStyleResolver) => void }) => {
     treeWheelRadialPopCorePropsMock(props);
+    // The real tree publishes how it draws each node; the host's panel waits for it.
+    useEffect(() => props.onNodeStyleResolverChange?.(nodeStyleResolver), [props.onNodeStyleResolverChange]);
     return <div data-testid="tree-wheel-radial-pop-core" />;
   },
 }));
@@ -195,13 +204,6 @@ function renderView(overrides: Partial<Omit<GenreTreeViewProps, keyof GenreFocus
   render(<GenreTreeView {...props} />);
   return props;
 }
-
-const PANEL_SECTIONS = {
-  toolbar: <p>Toolbar</p>,
-  ancestors: <p>Ancestors</p>,
-  family: <p>Family</p>,
-  itemCount: <p>Count</p>,
-};
 
 describe("GenreTreeView", () => {
   beforeEach(() => {
@@ -517,36 +519,38 @@ describe("GenreTreeView", () => {
     expect(treeWheelPropsMock.mock.calls[0][0].readOnly).toBe(true);
   });
 
-  it("passes the info panel curation props through to the stacked and wheel trees", () => {
-    useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist()], isPending: false });
-    const curation = {
-      renderDangerZone: vi.fn(),
-      expanded: true,
-      onExpandedChange: vi.fn(),
-    };
-    renderView({ ...curation });
-    fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
-    expect(treePerRootPropsMock.mock.calls.at(-1)?.[0]).toMatchObject(curation);
+  it("renders the danger zone and the expanded state in the genre panel", () => {
+    useListFullGenrePlaylistsMock.mockReturnValue({
+      data: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } })],
+      isPending: false,
+    });
+    const onExpandedChange = vi.fn();
+    const renderDangerZone = vi.fn(() => <p>Danger zone</p>);
+    renderView({ renderDangerZone, expanded: true, onExpandedChange });
     fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
-    expect(treeWheelPropsMock.mock.calls.at(-1)?.[0]).toMatchObject(curation);
+    act(() => {
+      treeWheelPropsMock.mock.calls.at(-1)?.[0].onSelectedNodeChange({ id: "gp1" });
+    });
+
+    expect(screen.getByText("Danger zone")).toBeInTheDocument();
+    expect(renderDangerZone).toHaveBeenCalledWith(expect.objectContaining({ id: "gp1" }));
+    fireEvent.click(screen.getByRole("button", { name: "Shrink panel" }));
+    expect(onExpandedChange).toHaveBeenCalledWith(false);
   });
 
-  it("forwards overlayPanel to every view", () => {
+  it("shows the overlayPanel in every view", () => {
     useListFullGenrePlaylistsMock.mockReturnValue({
       data: [makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" }, parent: null })],
       isPending: false,
     });
-    const overlayPanel = { title: "About", content: <p>About body</p>, onClose: vi.fn() };
-    renderView({ overlayPanel });
-    fireEvent.click(screen.getByRole("button", { name: "Pop/Core" }));
-    expect(treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0].overlayPanel).toBe(overlayPanel);
-    fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
-    expect(treePerRootPropsMock.mock.calls.at(-1)?.[0].overlayPanel).toBe(overlayPanel);
-    fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
-    expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].overlayPanel).toBe(overlayPanel);
+    renderView({ overlayPanel: { title: "About", content: <p>About body</p>, onClose: vi.fn() } });
+    for (const view of ["Pop/Core", "Stacked", "Wheel"]) {
+      fireEvent.click(screen.getByRole("button", { name: view }));
+      expect(screen.getByRole("complementary", { name: "About" })).toHaveTextContent("About body");
+    }
   });
 
-  it("hands overlayPanel to a single root in the stacked view", () => {
+  it("shows the overlayPanel once in the stacked view with several roots", () => {
     useListFullGenrePlaylistsMock.mockReturnValue({
       data: [
         makePlaylist({ uuid: "a", name: "A", root: { uuid: "a" }, parent: null }),
@@ -554,15 +558,9 @@ describe("GenreTreeView", () => {
       ],
       isPending: false,
     });
-    const overlayPanel = { title: "About", content: <p>About body</p>, onClose: vi.fn() };
-    renderView({ overlayPanel });
-    fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
-    treePerRootPropsMock.mockClear();
-    cleanup();
-    renderView({ overlayPanel, viewMode: "stacked" });
-    const withOverlay = treePerRootPropsMock.mock.calls.filter(([props]) => props.overlayPanel);
-    expect(treePerRootPropsMock.mock.calls.length).toBeGreaterThan(1);
-    expect(new Set(withOverlay.map(([props]) => props.rootUuid)).size).toBe(1);
+    renderView({ overlayPanel: { title: "About", content: <p>About body</p>, onClose: vi.fn() }, viewMode: "stacked" });
+
+    expect(screen.getAllByText("About body")).toHaveLength(1);
   });
 
   describe("layout props", () => {
@@ -623,7 +621,7 @@ describe("GenreTreeView", () => {
 
       describe("readiness", () => {
         const tabWrapper = () =>
-          screen.getByLabelText("Hide panel").closest(".panel-edge-tab")?.parentElement as HTMLElement;
+          screen.getByLabelText("Hide panel").closest("[data-detail-panel]") as HTMLElement;
 
         afterEach(() => {
           vi.unstubAllGlobals();
@@ -638,18 +636,17 @@ describe("GenreTreeView", () => {
         it("fades in with the wheel only after its handoff reveals it", () => {
           const raf = stubRaf();
           renderView({ ...tabProps, viewMode: "wheel" });
-          expect(tabWrapper()).toHaveClass("invisible", "opacity-0");
+          expect(tabWrapper()).toHaveAttribute("data-collapsed", "true");
           act(() => {
             raf.flush();
             raf.flush();
           });
-          expect(tabWrapper()).toHaveClass("opacity-100");
-          expect(tabWrapper()).not.toHaveClass("invisible");
+          expect(tabWrapper()).toHaveAttribute("data-collapsed", "false");
         });
 
         it("shows right away in a view without a handoff", () => {
           renderView({ ...tabProps, viewMode: "stacked" });
-          expect(tabWrapper()).toHaveClass("opacity-100");
+          expect(tabWrapper()).toHaveAttribute("data-collapsed", "false");
         });
       });
 
@@ -665,17 +662,14 @@ describe("GenreTreeView", () => {
         expect(screen.getByRole("button", { name: "Hide panel" })).toBeInTheDocument();
       });
 
-      it("sets --layout-left-w to 0px on the document only while hidden in regions placement", () => {
-        const root = document.documentElement;
-        renderView(tabProps);
-        expect(root.style.getPropertyValue("--layout-left-w")).toBe("");
+      it("marks the left column hidden only while the panel is collapsed", () => {
+        const column = () => screen.getByRole("complementary", { hidden: true }).closest(".genre-tree-view");
+        renderView({ ...tabProps, viewMode: "stacked" });
+        expect(column()).not.toHaveAttribute("data-left-panel");
         fireEvent.click(screen.getByRole("button", { name: "Hide panel" }));
-        expect(root.style.getPropertyValue("--layout-left-w")).toBe("0px");
+        expect(column()).toHaveAttribute("data-left-panel", "hidden");
         fireEvent.click(screen.getByRole("button", { name: "Show panel" }));
-        expect(root.style.getPropertyValue("--layout-left-w")).toBe("");
-        cleanup();
-        renderView({ selectedNodeId: "gp1", collapsed: true });
-        expect(root.style.getPropertyValue("--layout-left-w")).toBe("");
+        expect(column()).not.toHaveAttribute("data-left-panel");
       });
 
       it("hides or extends the panel from the default state", () => {
@@ -1245,7 +1239,7 @@ describe("GenreTreeView", () => {
     });
   });
 
-  describe("renderInfoPanelBody", () => {
+  describe("genre panel body", () => {
     function selectGenre(id = "gp1") {
       fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
       act(() => {
@@ -1253,21 +1247,17 @@ describe("GenreTreeView", () => {
       });
     }
 
-    function renderBodyFor(id: string) {
-      const output = treeWheelPropsMock.mock.calls.at(-1)?.[0].renderInfoPanelBody({ id }, PANEL_SECTIONS);
-      render(
-        <>
-          {output.primary}
-          <aside>{output.aside}</aside>
-        </>,
-      );
-      return output;
-    }
-
     function sectionOrder() {
-      const labels = ["Essential tracks", "Summary", "Family", "Count"];
+      const labels = ["Essential tracks", "Summary", "Family"];
+      // A PanelSection title sits in a button next to its chevron icon; the other titles are plain leaves.
       return Array.from(document.body.querySelectorAll("*"))
-        .filter((el) => el.children.length === 0 && labels.includes(el.textContent ?? ""))
+        .filter((el) => {
+          const ownText = Array.from(el.childNodes)
+            .filter((node) => node.nodeType === Node.TEXT_NODE)
+            .map((node) => node.textContent)
+            .join("");
+          return labels.includes(ownText);
+        })
         .map((el) => el.textContent);
     }
 
@@ -1294,41 +1284,29 @@ describe("GenreTreeView", () => {
       renderView();
       selectGenre();
 
-      renderBodyFor("gp1");
-
       expect(useFetchGenreOverviewMock).toHaveBeenCalledWith("c1");
     });
 
-    it("keeps the built-in toolbar, Family and Ancestors for a node with no associated criteria", () => {
+    it("keeps Family and Ancestors for a genre with no overview", () => {
       renderView();
-      selectGenre("gp3");
+      selectGenre("gp2");
 
-      renderBodyFor("gp3");
-
-      expect(screen.getByText("Toolbar")).toBeInTheDocument();
       expect(screen.getByText("Family")).toBeInTheDocument();
-      expect(screen.getByRole("complementary")).toHaveTextContent("Ancestors");
-      expect(screen.queryByText("Count")).not.toBeInTheDocument();
+      expect(screen.queryByText("Summary")).not.toBeInTheDocument();
     });
 
-    it("places Family right after the Summary, Ancestors in the aside, and drops the count row", () => {
+    it("places Family right after the Summary", () => {
       mockOverview({ c1: { summary: "Loud guitars", essentialSongs: [] } });
       renderView();
       selectGenre();
 
-      renderBodyFor("gp1");
-
       expect(sectionOrder()).toEqual(["Summary", "Family", "Essential tracks"]);
-      expect(screen.getByRole("complementary")).toHaveTextContent("Ancestors");
-      expect(screen.getByRole("complementary")).not.toHaveTextContent("Family");
     });
 
     it("shows Family after the Summary skeleton while the overview loads", () => {
       useFetchGenreOverviewMock.mockReturnValue({ data: undefined, isPending: true });
       renderView();
       selectGenre();
-
-      renderBodyFor("gp1");
 
       expect(sectionOrder()).toEqual(["Summary", "Family"]);
     });
@@ -1348,8 +1326,6 @@ describe("GenreTreeView", () => {
       });
       selectGenre();
 
-      renderBodyFor("gp1");
-
       expect(screen.getByText("Track One")).toBeInTheDocument();
       expect(screen.getByText("Track Two")).toBeInTheDocument();
       expect(screen.getByText("Extra for Jazz")).toBeInTheDocument();
@@ -1360,8 +1336,6 @@ describe("GenreTreeView", () => {
       renderView();
       selectGenre();
 
-      renderBodyFor("gp1");
-
       expect(screen.getByText("Loud guitars")).toBeInTheDocument();
       expect(screen.queryByText("Essential tracks")).not.toBeInTheDocument();
     });
@@ -1371,17 +1345,13 @@ describe("GenreTreeView", () => {
       renderView();
       selectGenre();
 
-      renderBodyFor("gp1");
-
       expect(screen.getByText("Improvised music with swung rhythms.")).toBeInTheDocument();
     });
 
     it("renders the overview of whichever node the panel shows (e.g. info-panel chip navigation)", () => {
       mockOverview({ c1: { summary: "Jazz summary" }, c2: { summary: "Blues summary" } });
       renderView();
-      selectGenre("gp1");
-
-      renderBodyFor("gp2");
+      selectGenre("gp2");
 
       expect(screen.getByText("Blues summary")).toBeInTheDocument();
       expect(screen.queryByText("Jazz summary")).not.toBeInTheDocument();
@@ -1392,16 +1362,12 @@ describe("GenreTreeView", () => {
       renderView();
       selectGenre();
 
-      renderBodyFor("gp1");
-
       expect(screen.getByTestId("genre-detail-extras-skeleton")).toBeInTheDocument();
     });
 
     it("renders only Family when the overview failed to load", () => {
       renderView();
       selectGenre();
-
-      renderBodyFor("gp1");
 
       expect(screen.queryByText("Summary")).not.toBeInTheDocument();
       expect(screen.getByText("Family")).toBeInTheDocument();
@@ -1412,28 +1378,16 @@ describe("GenreTreeView", () => {
       renderView();
       selectGenre();
 
-      renderBodyFor("gp1");
-
       expect(screen.getByText("Summary")).toBeInTheDocument();
       expect(screen.getByText("Essential tracks")).toBeInTheDocument();
       expect(screen.getAllByText("—")).toHaveLength(2);
     });
 
-    // Perf regression guard: a selection must not hand the tree a new renderInfoPanelBody, and the
-    // tree must not own the overview fetch — otherwise every fetch state change re-renders it.
-    it("keeps renderInfoPanelBody stable across selections and never fetches from the tree's render", () => {
+    // Perf regression guard: the tree never owns the overview fetch, otherwise every fetch state change re-renders it.
+    it("never fetches the overview from the tree's render", () => {
       renderView();
       fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
-      const before = treeWheelPropsMock.mock.calls.at(-1)?.[0].renderInfoPanelBody;
 
-      act(() => {
-        treeWheelPropsMock.mock.calls.at(-1)?.[0].onSelectedNodeChange({ id: "gp1" });
-      });
-      act(() => {
-        treeWheelPropsMock.mock.calls.at(-1)?.[0].onSelectedNodeChange({ id: "gp2" });
-      });
-
-      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].renderInfoPanelBody).toBe(before);
       expect(useFetchGenreOverviewMock).not.toHaveBeenCalled();
     });
   });
@@ -1542,13 +1496,9 @@ describe("GenreTreeView", () => {
       fireEvent.change(screen.getByRole("combobox", { name: "Search" }), {
         target: { value: "Jazz" },
       });
-      fireEvent.click(screen.getByText("Jazz"));
+      fireEvent.mouseDown(screen.getByRole("option", { name: "Jazz" }));
 
       fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
-      const output = treeWheelPropsMock.mock.calls.at(-1)?.[0].renderInfoPanelBody({
-        id: "gp1",
-      }, PANEL_SECTIONS);
-      render(<>{output.primary}</>);
 
       expect(screen.getByText("Improvised music with swung rhythms.")).toBeInTheDocument();
     });
@@ -1582,8 +1532,7 @@ describe("GenreTreeView", () => {
       fireEvent.mouseDown(screen.getByRole("option", { name: "Jazz" }));
 
       expect(input).toHaveValue("Jazz");
-      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].hideInfoPanelClose).toBe(true);
-      expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].hideInfoPanelTitle).toBe(true);
+      expect(screen.queryByRole("button", { name: "Close" })).not.toBeInTheDocument();
 
       fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
 
@@ -1592,8 +1541,9 @@ describe("GenreTreeView", () => {
     });
 
     function openBand(id: string) {
-      const output = treeWheelPropsMock.mock.calls.at(-1)?.[0].renderInfoPanelBody({ id }, PANEL_SECTIONS);
-      render(<>{output.primary}</>);
+      act(() => {
+        treeWheelPropsMock.mock.calls.at(-1)?.[0].onSelectedNodeChange({ id });
+      });
     }
 
     it("plays the selected genre from the action band's Play button", () => {
@@ -1659,8 +1609,6 @@ describe("GenreTreeView", () => {
 
       fireEvent.change(screen.getByRole("combobox", { name: "Search" }), { target: { value: "Main" } });
       fireEvent.mouseDown(screen.getByRole("option", { name: "Mainstream Pop" }));
-      const output = treeWheelRadialPopCorePropsMock.mock.calls.at(-1)?.[0].renderInfoPanelBody({ id: "gp1" }, PANEL_SECTIONS);
-      render(<>{output.primary}</>);
       fireEvent.click(screen.getByRole("button", { name: "Focus" }));
 
       expect(onFocusGenreChange).toHaveBeenCalledWith("gp1", "zoom-in");
@@ -1806,23 +1754,23 @@ describe("GenreTreeView", () => {
       expect(screen.queryByRole("button", { name: "Parent" })).not.toBeInTheDocument();
     });
 
-    it("proxies the search field's Previous button to genre-tree-view's own previous button", () => {
-      useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist()], isPending: false });
-      const { container } = render(
-        <GenreTreeView scope="me" handleGenreCreationAction={vi.fn()} handleGenreRenameAction={vi.fn()} getBackendBaseUrl={getBackendBaseUrl} artistSearch={false} />,
-      );
-      const libPrevious = document.createElement("button");
-      libPrevious.className = "gtv-info-panel-previous";
-      const onClick = vi.fn();
-      libPrevious.addEventListener("click", onClick);
-      const overlay = document.createElement("div");
-      overlay.className = "search-overlay";
-      overlay.appendChild(libPrevious);
-      container.querySelector(".genre-tree-view")?.appendChild(overlay);
+    it("returns to the previously selected genre from the search field's Previous button", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: [
+          makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } }),
+          makePlaylist({ uuid: "gp2", name: "Blues", criteria: { uuid: "c2", name: "Blues" } }),
+        ],
+        isPending: false,
+      });
+      renderView();
+      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+      expect(screen.queryByRole("button", { name: "Previous" })).not.toBeInTheDocument();
 
-      fireEvent.click(screen.getByRole("button", { name: "Previous", hidden: true }));
+      openBand("gp1");
+      openBand("gp2");
+      fireEvent.click(screen.getByRole("button", { name: "Previous" }));
 
-      expect(onClick).toHaveBeenCalledOnce();
+      expect(screen.getByRole("combobox", { name: "Search" })).toHaveValue("Jazz");
     });
 
     it("follows a controlled selectedNodeId and reports user selections without owning them", () => {
@@ -2027,14 +1975,14 @@ describe("GenreTreeView", () => {
       const onArtistSelect = vi.fn();
       render(<GenreTreeView {...baseProps()} onArtistSelect={onArtistSelect} />);
 
-      expect(wheelProps().overlayPanel).toBeUndefined();
+      expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
       pickSuggestion();
 
-      expect(wheelProps().overlayPanel.title).toBe("Band");
+      expect(screen.getByRole("complementary", { name: "Band" })).toBeInTheDocument();
       expect(onArtistSelect).toHaveBeenCalledWith(suggestion);
 
-      act(() => wheelProps().overlayPanel.onClose());
-      expect(wheelProps().overlayPanel).toBeUndefined();
+      fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
+      expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
     });
 
     it("loads the artist from artistSearchBaseUrl, falling back to getBackendBaseUrl", () => {
@@ -2055,11 +2003,11 @@ describe("GenreTreeView", () => {
 
       pickSuggestion();
       expect(wheelProps().selectedNodeId).toBeNull();
-      expect(wheelProps().overlayPanel.title).toBe("Band");
+      expect(screen.getByRole("complementary", { name: "Band" })).toBeInTheDocument();
 
       act(() => wheelProps().onSelectedNodeChange({ id: "gp2" }));
       expect(wheelProps().selectedNodeId).toBe("gp2");
-      expect(wheelProps().overlayPanel).toBeUndefined();
+      expect(screen.queryByRole("complementary", { name: "Band" })).not.toBeInTheDocument();
     });
 
     it("clears the artist when a genre is picked from the search", () => {
@@ -2070,7 +2018,7 @@ describe("GenreTreeView", () => {
       fireEvent.mouseDown(screen.getByRole("option", { name: "Jazz" }));
 
       expect(wheelProps().selectedNodeId).toBe("gp1");
-      expect(wheelProps().overlayPanel).toBeUndefined();
+      expect(screen.queryByRole("complementary", { name: "Band" })).not.toBeInTheDocument();
     });
 
     it("follows a controlled artistUuid and keeps it as a filter while a genre is selected", () => {
@@ -2088,10 +2036,10 @@ describe("GenreTreeView", () => {
       pickSuggestion();
       expect(onSelectedNodeIdChange).toHaveBeenCalledWith(null);
       expect(onArtistUuidChange).toHaveBeenCalledWith(suggestion.uuid);
-      expect(wheelProps().overlayPanel).toBeUndefined();
+      expect(screen.queryByRole("complementary", { name: "Band" })).not.toBeInTheDocument();
 
       rerender(<GenreTreeView {...props} selectedNodeId={null} artistUuid={suggestion.uuid} />);
-      expect(wheelProps().overlayPanel.title).toBe("Band");
+      expect(screen.getByRole("complementary", { name: "Band" })).toBeInTheDocument();
 
       onArtistUuidChange.mockClear();
       onSelectedNodeIdChange.mockClear();
@@ -2100,7 +2048,7 @@ describe("GenreTreeView", () => {
       expect(onSelectedNodeIdChange).toHaveBeenCalledWith("gp2");
 
       rerender(<GenreTreeView {...props} selectedNodeId="gp2" artistUuid={suggestion.uuid} />);
-      expect(wheelProps().overlayPanel).toBeUndefined();
+      expect(screen.queryByRole("complementary", { name: "Band" })).not.toBeInTheDocument();
       expect(screen.getAllByRole("button", { name: "Clear artist filter Band" })[0]).toBeDefined();
       fireEvent.click(screen.getAllByRole("button", { name: "Clear artist filter Band" })[0]);
       expect(onArtistUuidChange).toHaveBeenCalledWith(null);
@@ -2127,18 +2075,17 @@ describe("GenreTreeView", () => {
       const overlayPanel = { title: "About", content: "x", onClose: vi.fn() };
       render(<GenreTreeView {...baseProps()} overlayPanel={overlayPanel} artistUuid={suggestion.uuid} />);
 
-      expect(wheelProps().overlayPanel).toBe(overlayPanel);
+      expect(screen.getByRole("complementary", { name: "About" })).toBeInTheDocument();
+      expect(screen.queryByRole("complementary", { name: "Band" })).not.toBeInTheDocument();
     });
 
     it("switches the panel to a member from its default name button", () => {
       render(<GenreTreeView {...baseProps()} />);
       pickSuggestion();
 
-      const { unmount } = render(<>{wheelProps().overlayPanel.content}</>);
       fireEvent.click(screen.getByRole("button", { name: "Alice" }));
-      unmount();
 
-      expect(wheelProps().overlayPanel.title).toBe("Alice");
+      expect(screen.getByRole("complementary", { name: "Alice" })).toBeInTheDocument();
     });
 
     it("renders a special-purpose member as plain text by default", () => {
@@ -2152,7 +2099,6 @@ describe("GenreTreeView", () => {
       });
       render(<GenreTreeView {...baseProps()} artistUuid={suggestion.uuid} />);
 
-      render(<>{wheelProps().overlayPanel.content}</>);
       expect(screen.getByText("[unknown]")).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "[unknown]" })).not.toBeInTheDocument();
     });
@@ -2166,7 +2112,6 @@ describe("GenreTreeView", () => {
         />,
       );
 
-      render(<>{wheelProps().overlayPanel.content}</>);
       expect(screen.getByRole("link", { name: "Alice" })).toHaveAttribute("href", `/artists/${member.uuid}`);
     });
 
@@ -2174,24 +2119,22 @@ describe("GenreTreeView", () => {
       render(<GenreTreeView {...baseProps()} />);
       pickSuggestion();
 
-      act(() => wheelProps().overlayPanel.onExpandedChange(true));
-      expect(wheelProps().overlayPanel.expanded).toBe(true);
-      act(() => wheelProps().overlayPanel.onExpandedChange(false));
-      expect(wheelProps().overlayPanel.expanded).toBe(false);
-      act(() => wheelProps().overlayPanel.onExpandedChange(true));
+      fireEvent.click(screen.getByRole("button", { name: "Extend panel" }));
+      expect(screen.getByRole("button", { name: "Shrink panel" })).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "Shrink panel" }));
+      fireEvent.click(screen.getByRole("button", { name: "Extend panel" }));
 
-      const { unmount } = render(<>{wheelProps().overlayPanel.content}</>);
       fireEvent.click(screen.getByRole("button", { name: "Alice" }));
-      unmount();
 
-      expect(wheelProps().overlayPanel.expanded).toBe(false);
+      expect(screen.getByRole("button", { name: "Extend panel" })).toBeInTheDocument();
     });
 
     it("shows the artist's name in the search field, whose clear button closes it", () => {
       const onArtistUuidChange = vi.fn();
       render(<GenreTreeView {...baseProps()} artistUuid={suggestion.uuid} onArtistUuidChange={onArtistUuidChange} />);
 
-      expect(wheelProps().overlayPanel).toMatchObject({ title: "Band", hideTitle: true, hideClose: true });
+      expect(screen.getByRole("complementary", { name: "Band" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Close" })).not.toBeInTheDocument();
       expect(screen.getByRole("combobox", { name: "Search" })).toHaveValue("Band");
 
       fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
@@ -2202,7 +2145,7 @@ describe("GenreTreeView", () => {
       const overlayPanel = { title: "About", content: "x", onClose: vi.fn() };
       render(<GenreTreeView {...baseProps()} overlayPanel={overlayPanel} artistUuid={suggestion.uuid} />);
 
-      expect(wheelProps().overlayPanel).not.toHaveProperty("hideClose");
+      expect(screen.getByRole("button", { name: "Close" })).toBeInTheDocument();
       expect(screen.getByRole("combobox", { name: "Search" })).toHaveValue("");
     });
 
@@ -2213,7 +2156,7 @@ describe("GenreTreeView", () => {
 
       expect(screen.getByRole("button", { name: "Hide panel" })).toBeInTheDocument();
       fireEvent.click(screen.getByRole("button", { name: "Extend panel" }));
-      expect(wheelProps().overlayPanel).toMatchObject({ expanded: true, hideExpandButton: true });
+      expect(screen.getByRole("button", { name: "Shrink panel" })).toBeInTheDocument();
     });
 
     it("follows a controlled artistExpanded", () => {
@@ -2226,12 +2169,12 @@ describe("GenreTreeView", () => {
       };
       const { rerender } = render(<GenreTreeView {...props} />);
 
-      act(() => wheelProps().overlayPanel.onExpandedChange(true));
+      fireEvent.click(screen.getByRole("button", { name: "Extend panel" }));
       expect(onArtistExpandedChange).toHaveBeenCalledWith(true);
-      expect(wheelProps().overlayPanel.expanded).toBe(false);
+      expect(screen.getByRole("button", { name: "Extend panel" })).toBeInTheDocument();
 
       rerender(<GenreTreeView {...props} artistExpanded />);
-      expect(wheelProps().overlayPanel.expanded).toBe(true);
+      expect(screen.getByRole("button", { name: "Shrink panel" })).toBeInTheDocument();
     });
   });
 
@@ -2309,29 +2252,28 @@ describe("GenreTreeView", () => {
       pickSong();
 
       expect(onSongUuidChange).toHaveBeenLastCalledWith(hit.uuid);
-      expect(wheelProps().overlayPanel.title).toBe("Karma Police");
+      expect(screen.getByRole("complementary", { name: "Karma Police" })).toBeInTheDocument();
       expect(screen.getByRole("combobox", { name: "Search" })).toHaveValue("Karma Police");
 
       fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
       expect(onSongUuidChange).toHaveBeenLastCalledWith(null);
-      expect(wheelProps().overlayPanel).toBeUndefined();
+      expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
     });
 
     it("follows a controlled songUuid", () => {
       const { rerender } = render(<GenreTreeView {...baseProps()} songUuid={null} />);
-      expect(wheelProps().overlayPanel).toBeUndefined();
+      expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
 
       rerender(<GenreTreeView {...baseProps()} songUuid={hit.uuid} />);
-      expect(wheelProps().overlayPanel.title).toBe("Karma Police");
+      expect(screen.getByRole("complementary", { name: "Karma Police" })).toBeInTheDocument();
     });
 
     it("selects a genre from the song's lineage and closes the song", () => {
       const onSongUuidChange = vi.fn();
       const onSelectedNodeIdChange = vi.fn();
       render(<GenreTreeView {...baseProps()} songUuid={hit.uuid} onSongUuidChange={onSongUuidChange} onSelectedNodeIdChange={onSelectedNodeIdChange} />);
-      const { container } = render(<div>{wheelProps().overlayPanel.content}</div>);
 
-      fireEvent.click(within(container).getByRole("button", { name: "Blues" }));
+      fireEvent.click(within(screen.getByRole("complementary")).getByRole("button", { name: "Blues" }));
 
       expect(onSongUuidChange).toHaveBeenCalledWith(null);
       expect(onSelectedNodeIdChange).toHaveBeenCalledWith("gp2");
@@ -2370,7 +2312,8 @@ describe("GenreTreeView", () => {
         <GenreTreeView {...baseProps()} songUuid={hit.uuid} overlayPanel={{ title: "Host", content: <p>Host body</p>, onClose: vi.fn() }} />,
       );
 
-      expect(wheelProps().overlayPanel.title).toBe("Host");
+      expect(screen.getByRole("complementary", { name: "Host" })).toBeInTheDocument();
+      expect(screen.queryByRole("complementary", { name: "Karma Police" })).not.toBeInTheDocument();
     });
   });
 });

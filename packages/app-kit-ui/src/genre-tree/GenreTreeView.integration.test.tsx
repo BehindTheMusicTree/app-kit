@@ -118,13 +118,13 @@ describe("GenreTreeView with the real renderer", () => {
     fireEvent.click(node);
     expect(onSelectedNodeIdChange).toHaveBeenCalledWith("pop");
     expect(screen.getByRole("combobox", { name: "Search a genre" })).toHaveValue("");
-    expect(view.container.querySelector(".gtv-info-panel")).toBeNull();
+    expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
     view.rerender(<GenreTreeView {...props} selectedNodeId="pop" />);
     await waitFor(() => expect(screen.getByRole("combobox", { name: "Search a genre" })).toHaveValue("Mainstream Pop"));
-    await waitFor(() => expect(view.container.querySelector(".gtv-info-panel")).not.toBeNull());
+    await waitFor(() => expect(screen.queryByRole("complementary")).toBeInTheDocument());
     view.rerender(<GenreTreeView {...props} selectedNodeId={null} />);
     await waitFor(() => expect(screen.getByRole("combobox", { name: "Search a genre" })).toHaveValue(""));
-    expect(view.container.querySelector(".gtv-info-panel")).toBeNull();
+    expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
   });
   it.each(["wheel", "pop-core"] as const)("restores mounted %s silently and accepts a later selection", async (viewMode) => {
     vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({ x: 0, y: 0, left: 0, top: 0, right: 800, bottom: 600, width: 800, height: 600, toJSON() {} });
@@ -147,7 +147,7 @@ describe("GenreTreeView with the real renderer", () => {
     await waitFor(() => expect(onSelectedNodeIdChange).toHaveBeenCalledWith("rock"));
     view.rerender(<GenreTreeView {...props} selectedNodeId="rock" viewportRestore={second} />);
     await waitFor(() => expect(screen.getByRole("combobox", { name: "Search a genre" })).toHaveValue("Rock"));
-    expect(view.container.querySelector(".gtv-info-panel")).not.toBeNull();
+    expect(screen.queryByRole("complementary")).toBeInTheDocument();
   });
 
 });
