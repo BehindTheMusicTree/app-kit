@@ -13,7 +13,20 @@ easy to spot when bumping.
 
 ### Changed
 
-- Release preparation edits both package versions and their peer constraint without publishing; CI owns validated tags and resumable npm publication.
+- Release preparation edits files only; CI owns annotated tags, validated npm publication and safe retries.
+
+
+## [32.0.2] - 2026-11-05
+
+### Changed
+
+- Bump `@behindthemusictree/genre-tree-view` to 8.2.0 (wheel breadcrumb now the shared ui `Breadcrumb`; its current item opens the focused genre's panel) and `@behindthemusictree/ui` to ^0.17.0.
+
+## [32.0.1] - 2026-11-05
+
+### Changed
+
+- Bump `@behindthemusictree/genre-tree-view` to 8.1.0 (pointer cursor and contrast halo on labels) and `@behindthemusictree/ui` to ^0.16.0.
 
 ## [32.0.0] - 2026-11-05
 
