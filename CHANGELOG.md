@@ -11,6 +11,14 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [32.0.3] - 2026-11-05
+
+### Changed
+
+- Release preparation edits files only; CI owns annotated tags, validated npm publication and safe retries.
+- Bump `@behindthemusictree/genre-tree-view` to 8.3.0 (sector boundaries no longer stair-step while panning or zooming, and the wheel backdrop moves with the stage without repainting).
+
+
 ## [32.0.2] - 2026-11-05
 
 ### Changed
