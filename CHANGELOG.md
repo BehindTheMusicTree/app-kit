@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [33.0.0] - 2026-11-05
+
 ### Breaking
 
 - `NetworkErrorPopup` (app-kit-ui) requires an `errorCode` prop, and `renderNetworkErrorPopup` receives the `ErrorCode`: pass it through (`renderNetworkErrorPopup: (errorCode) => <NetworkErrorPopup errorCode={errorCode} />`).
