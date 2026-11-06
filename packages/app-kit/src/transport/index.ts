@@ -9,3 +9,5 @@ export * from "./lib/paginated-response";
 export * from "./lib/scope";
 export * from "./lib/use-query-with-parse";
 export * from "./lib/use-validated-mutation";
+
+export { PlaybackContextProvider, PlaybackContextSchema, usePlaybackContext } from "./PlaybackContext";
