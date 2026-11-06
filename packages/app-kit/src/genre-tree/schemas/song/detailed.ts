@@ -17,12 +17,19 @@ const YOUTUBE_UNPLAYABLE_REASONS = Object.keys(YOUTUBE_UNPLAYABLE_REASON_LABELS)
   ...YoutubeUnplayableReason[],
 ];
 
+export const YoutubeAvailabilitySchema = z.object({
+  status: z.enum(["eligible", "blocked", "unknown"]),
+  reason: z.string().nullable(),
+  country: z.string().nullable(),
+});
+
 // A song, keyed on a MusicBrainz recording. `youtubeVideo` is null when no YouTube video is linked yet — the
 // song is still listed, just unplayable.
 export const SongDetailedSchema = TrackBaseSchema.extend({
   youtubeVideo: z
     .object({
       id: z.string(),
+      availability: YoutubeAvailabilitySchema.optional(),
       // null = playable
       unplayableReason: z.enum(YOUTUBE_UNPLAYABLE_REASONS).nullable(),
       viewCount: z.number().int().nullable().optional(),
@@ -46,6 +53,7 @@ export function isSong(track: TrackBase): track is SongDetailed {
 /** Human-readable reason a song can't be played, or null when it's playable. */
 export function songUnplayableReason(song: SongDetailed): string | null {
   if (!song.youtubeVideo) return NO_VIDEO_LABEL;
+  if (song.youtubeVideo.availability?.status === "blocked" && song.youtubeVideo.availability.reason === "region_blocked") return "Unavailable in your country";
   const reason = song.youtubeVideo.unplayableReason;
   return reason ? YOUTUBE_UNPLAYABLE_REASON_LABELS[reason] : null;
 }

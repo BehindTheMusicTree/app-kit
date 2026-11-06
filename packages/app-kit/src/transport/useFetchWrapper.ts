@@ -1,5 +1,6 @@
 "use client";
 
+import { usePlaybackContext } from "./PlaybackContext";
 import { useCallback } from "react";
 import { useConnectivityError } from "./connectivity-error-context";
 import { useSession } from "../auth/SessionContext";
@@ -13,6 +14,7 @@ import { ErrorCode } from "./app-errors/app-error-codes";
  * this package's `buildBackendBaseUrl`) rather than imported here, so this hook stays app-agnostic.
  */
 export const useFetchWrapper = (getBackendBaseUrl: () => string) => {
+  const playback = usePlaybackContext();
   const { setConnectivityError } = useConnectivityError();
   const { clearSession, session, sessionRestored } = useSession();
 
@@ -45,7 +47,7 @@ export const useFetchWrapper = (getBackendBaseUrl: () => string) => {
     setConnectivityError(createAppErrorFromErrorCode(ErrorCode.SESSION_REQUIRED));
   };
 
-  const fetch = useCallback(<T>(
+  const fetch = useCallback(<T,>(
     backendEndpointOrUrl: string,
     fromBackend: boolean = true,
     requiresAuth: boolean = true,
@@ -53,6 +55,7 @@ export const useFetchWrapper = (getBackendBaseUrl: () => string) => {
     queryParams?: Record<string, string | number | boolean>,
     expectBinary: boolean = false,
     skipGlobalError: boolean = false,
+    acceptRefreshedContext: boolean = false,
   ) => {
     const baseUrl = getBackendBaseUrl().replace(/\/+$/, "");
     const endpointPath = String(backendEndpointOrUrl);
@@ -60,7 +63,16 @@ export const useFetchWrapper = (getBackendBaseUrl: () => string) => {
       throw new Error(`Endpoint path must be relative (no leading slash). Got: "${endpointPath}".`);
     }
     const url = fromBackend ? (endpointPath ? `${baseUrl}/${endpointPath}` : baseUrl) : backendEndpointOrUrl;
-    return rawFetch<T>(
+    const perform = async (retryContextChange: boolean): Promise<T | null> => {
+    const contextual = playback.key !== null && fromBackend && /^(?:me\/)?(library\/songs|genre-playlists|playlists|manual-playlists)\//.test(endpointPath);
+    let requestContext = { key: playback.key, country: playback.country };
+    if (contextual) {
+      await playback.refresh();
+      if (acceptRefreshedContext) requestContext = playback.snapshot();
+      if (!playback.isCurrent(requestContext.key)) throw new DOMException("Playback context changed", "AbortError");
+    }
+    try {
+    const result = await rawFetch<T>(
       url,
       requiresAuth,
       options,
@@ -70,8 +82,27 @@ export const useFetchWrapper = (getBackendBaseUrl: () => string) => {
       skipGlobalError ? undefined : handleError,
       expectBinary,
       baseUrl,
+      contextual ? async (response) => {
+        const responseCountry = response.headers.get("x-playback-country");
+        if (responseCountry !== null && responseCountry !== (requestContext.country ?? "unknown")) {
+          await playback.refresh(true);
+          throw new DOMException("Playback context changed", "AbortError");
+        }
+        if (!playback.isCurrent(requestContext.key)) throw new DOMException("Playback context changed", "AbortError");
+      } : undefined,
     );
-  }, [session?.accessToken, handleError, getBackendBaseUrl, sessionRestored, setConnectivityError]);
+    if (contextual && !playback.isCurrent(requestContext.key)) throw new DOMException("Playback context changed", "AbortError");
+    return result;
+    } catch (error) {
+      if (retryContextChange && contextual && error instanceof DOMException && error.name === "AbortError"
+        && !playback.isCurrent(requestContext.key)) {
+        return perform(false);
+      }
+      throw error;
+    }
+    };
+    return perform(acceptRefreshedContext);
+  }, [session?.accessToken, handleError, getBackendBaseUrl, sessionRestored, setConnectivityError, playback]);
 
   return { fetch };
 };

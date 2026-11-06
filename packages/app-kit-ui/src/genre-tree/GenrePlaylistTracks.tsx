@@ -7,7 +7,7 @@ import { FaPlay, FaPause } from "react-icons/fa";
 import { PanelSection, RingLoader, Skeleton } from "@behindthemusictree/ui";
 
 import { useSession } from "@behindthemusictree/app-kit/auth";
-import { useFetchWrapper } from "@behindthemusictree/app-kit/transport";
+import { usePlaybackContext, useFetchWrapper } from "@behindthemusictree/app-kit/transport";
 import { PaginatedResponseSchema } from "@behindthemusictree/app-kit/transport";
 import { parseWithLog } from "@behindthemusictree/app-kit/transport";
 import { usePlayer } from "@behindthemusictree/app-kit/player";
@@ -98,14 +98,16 @@ export function GenrePlaylistTracks({
   const { uuid } = genrePlaylist;
 
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
+  const playback = usePlaybackContext();
 
   const { data, isPending, isError, refetch, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery({
-    queryKey:
+    queryKey: [...(
       scope === "me"
         ? genrePlaylistQueryKeys.me.tracks(uuid)
         : artist
           ? [...libraryQueryKeys.reference.songs.byGenre(getBackendBaseUrl(), genreUuid), "artist", artist.uuid]
-          : libraryQueryKeys.reference.songs.byGenre(getBackendBaseUrl(), genreUuid),
+          : libraryQueryKeys.reference.songs.byGenre(getBackendBaseUrl(), genreUuid)
+    ), ...(playback.key ? [playback.key] : [])],
     queryFn: async ({ pageParam }): Promise<Omit<GenrePlaylistTracksPage<TrackBase>, "total" | "nextPage"> & { total: number | null; nextPage: number | string | null }> => {
       if (scope === "me") return fetchGenrePlaylistTracksPage(uuid, scope, Number(pageParam));
       const response = await fetch(
@@ -120,7 +122,7 @@ export function GenrePlaylistTracks({
     },
     initialPageParam: scope === "me" ? 1 : "",
     getNextPageParam: (lastPage) => lastPage.nextPage ?? undefined,
-    enabled: scope !== "me" || (sessionRestored && !!session?.accessToken),
+    enabled: playback.ready && (scope !== "me" || (sessionRestored && !!session?.accessToken)),
   });
 
   // State, not a ref object: PanelSection unmounts its body when collapsed, so the observer must

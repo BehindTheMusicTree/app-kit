@@ -12,8 +12,10 @@ import {
   PlayerVideoSurface,
   useCurrentTime,
   type PlayerTrack,
+  type YoutubePlayerTrack,
 } from "./PlayerContext";
 import { PlayStates } from "./PlayStates";
+import { PlaybackContextProvider, usePlaybackContext } from "../transport/PlaybackContext";
 
 class FakeAudio {
   src: string;
@@ -63,7 +65,7 @@ function makeAudioTrack(id = "audio-1"): PlayerTrack {
   return { id, kind: "audio", title: "Audio Track", streamUrl: `https://example.com/${id}.mp3` };
 }
 
-function makeYoutubeTrack(id = "yt-1"): PlayerTrack {
+function makeYoutubeTrack(id = "yt-1"): YoutubePlayerTrack {
   return { id, kind: "youtube", title: "YouTube Track", youtubeVideoId: id };
 }
 
@@ -233,7 +235,10 @@ describe("PlayerProvider - loadTrackForPlayer (audio)", () => {
 
     expect(result.current.playState).toBe(PlayStates.STOPPED);
     expect(result.current.isPlaying).toBe(false);
-    expect(onTrackEnd).toHaveBeenCalled();
+    expect(onTrackEnd).toHaveBeenCalledTimes(1);
+    act(() => result.current.handlePlayPauseAction());
+    act(() => audioInstances[0].dispatch("ended"));
+    expect(onTrackEnd).toHaveBeenCalledTimes(2);
   });
 
   it("logs an error when the audio element fires an error event", async () => {
@@ -336,6 +341,53 @@ describe("PlayerProvider - loadTrackForPlayer (audio)", () => {
 });
 
 describe("PlayerProvider - loadTrackForPlayer (youtube)", () => {
+  it.each([false, true])("revalidates country changes even after a regional block (%s)", async (blocked) => {
+    const loadContext = vi.fn().mockResolvedValueOnce({ country: "FR" }).mockResolvedValueOnce({ country: "AL" }).mockResolvedValue({ country: "FR" });
+    loadTrackMock.mockResolvedValueOnce(makeYoutubeTrack()).mockResolvedValueOnce({
+      ...makeYoutubeTrack(), availability: { status: blocked ? "blocked" : "eligible", reason: blocked ? "region_blocked" : null, country: "AL" },
+    }).mockResolvedValue(makeYoutubeTrack());
+    function Harness() {
+      const context = usePlaybackContext();
+      const player = usePlayer();
+      return <><PlayerVideoSurface /><span>{context.country}</span><button onClick={() => player.loadTrackForPlayer("yt-1")}>load</button></>;
+    }
+    render(<PlaybackContextProvider loadContext={loadContext}><PlayerProvider loadTrack={loadTrackMock}><Harness /></PlayerProvider></PlaybackContextProvider>);
+    await screen.findByText("FR");
+    await act(async () => { screen.getByRole("button", { name: "load" }).click(); });
+    await waitFor(() => expect(ytPlayers).toHaveLength(1));
+    act(() => { ytPlayers[0].config.events.onReady(); });
+    await act(async () => { window.dispatchEvent(new Event("focus")); });
+    await screen.findByText("AL");
+    await waitFor(() => expect(loadTrackMock).toHaveBeenCalledTimes(2));
+    expect(loadTrackMock).toHaveBeenLastCalledWith("yt-1");
+    await act(async () => { window.dispatchEvent(new Event("focus")); });
+    await screen.findByText("FR");
+    await waitFor(() => expect(loadTrackMock).toHaveBeenCalledTimes(3));
+  });
+
+  it("keeps an error terminal when YouTube reports it before ready", async () => {
+    loadTrackMock.mockResolvedValue(makeYoutubeTrack());
+    let player: ReturnType<typeof usePlayer>;
+    function Harness() {
+      player = usePlayer();
+      return <PlayerVideoSurface />;
+    }
+    render(<PlayerProvider loadTrack={loadTrackMock}><Harness /></PlayerProvider>);
+    const ended = vi.fn();
+    act(() => { player.setOnTrackEnd(ended); });
+    await act(async () => { player.loadTrackForPlayer("yt-1"); });
+    await act(async () => { ytPlayers[0].config.events.onError({ data: 150 }); });
+    act(() => {
+      ytPlayers[0].config.events.onReady();
+      ytPlayers[0].config.events.onError({ data: 150 });
+      ytPlayers[0].config.events.onStateChange({ data: 0 });
+    });
+    expect(player!.isLoading).toBe(false);
+    expect(player!.isPlaying).toBe(false);
+    expect(player!.playerTrackObject?.loadError).toBe("Embedding disabled by the video owner");
+    expect(ended).toHaveBeenCalledTimes(1);
+  });
+
   it("throws if PlayerVideoSurface has not mounted a container", async () => {
     loadTrackMock.mockResolvedValue(makeYoutubeTrack());
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -399,7 +451,7 @@ describe("PlayerProvider - loadTrackForPlayer (youtube)", () => {
     expect(screen.getByTestId("confirmedTrackId").textContent).toBe("yt-1");
   });
 
-  it("reuses an existing player via loadVideoById on subsequent loads", async () => {
+  it("recreates the player so late events keep their original track identity", async () => {
     loadTrackMock.mockResolvedValue(makeYoutubeTrack("yt-1"));
 
     function Harness() {
@@ -436,9 +488,10 @@ describe("PlayerProvider - loadTrackForPlayer (youtube)", () => {
       await Promise.resolve();
     });
 
-    expect(ytPlayerCtor).toHaveBeenCalledTimes(1);
-    expect(ytPlayers[0].loadVideoById).toHaveBeenCalledWith("yt-2");
-    expect(ytPlayers[0].playVideo).not.toHaveBeenCalled();
+    expect(ytPlayerCtor).toHaveBeenCalledTimes(2);
+    expect(ytPlayers[0].destroy).toHaveBeenCalledOnce();
+    act(() => { ytPlayers[0].config.events.onError({ data: 150 }); });
+    expect(ytPlayers[1].destroy).not.toHaveBeenCalled();
   });
 
   it("stops playback and fires onTrackEnd when the YouTube state changes to ENDED", async () => {
@@ -485,6 +538,7 @@ describe("PlayerProvider - loadTrackForPlayer (youtube)", () => {
     [101, "Embedding disabled by the video owner"],
     [100, "Video not found"],
     [2, "YouTube playback error (code 2)"],
+    [153, "YouTube player configuration error. Retry playback."],
   ])("on YouTube error %i, shows the error and fires onTrackEnd to advance", async (code, message) => {
     loadTrackMock.mockResolvedValue(makeYoutubeTrack());
     const onTrackEnd = vi.fn();

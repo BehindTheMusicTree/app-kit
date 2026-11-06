@@ -11,6 +11,15 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [33.1.0] - 2026-11-06
+
+### Added
+
+- Scope song and playlist queries to verified playback context, discard stale responses, and recover from YouTube failures with bounded video-level exclusions and explicit retry.
+
+### Changed
+
+- `GenreSearch` (app-kit-ui): the search input no longer shows the focus ring.
 ## [33.0.0] - 2026-11-05
 
 ### Breaking

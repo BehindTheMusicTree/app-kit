@@ -3,8 +3,9 @@ import { screen, fireEvent, act } from "@testing-library/react";
 import { render } from "../test-utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-const { useTrackListMock, usePlayerMock, fetchMock, showPopupMock } = vi.hoisted(() => ({
+const { useTrackListMock, usePlayerMock, fetchMock, showPopupMock, playbackMock } = vi.hoisted(() => ({
   showPopupMock: vi.fn(),
+  playbackMock: vi.fn(),
   useTrackListMock: vi.fn(),
   usePlayerMock: vi.fn(),
   fetchMock: vi.fn(),
@@ -21,6 +22,7 @@ vi.mock("@behindthemusictree/app-kit/player", async (importOriginal) => ({
 vi.mock("@behindthemusictree/app-kit/transport", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useFetchWrapper: () => ({ fetch: fetchMock }),
+  usePlaybackContext: playbackMock,
   parseWithLog: (_schema: unknown, data: unknown) => data,
 }));
 
@@ -62,6 +64,7 @@ describe("GenrePlaylistTracks", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    playbackMock.mockReturnValue({ key: null, ready: true });
     useTrackListMock.mockReturnValue({ fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist, playNewTrackListFromArtist });
     usePlayerMock.mockReturnValue({ playerTrackObject: null, playState: PlayStates.STOPPED, handlePlayPauseAction });
     vi.stubGlobal(
@@ -116,6 +119,21 @@ describe("GenrePlaylistTracks", () => {
     expect(fetchMock).toHaveBeenLastCalledWith("library/songs/", true, false, {}, { genre: makeGenreUuid("g1"), pageSize: 100, withTotal: false, cursor: "CUR2" });
     expect(fetchGenrePlaylistTracksPage).not.toHaveBeenCalled();
     expect(playNewTrackListFromGenrePlaylist).toHaveBeenCalledWith(genrePlaylist, "reference", { startSongUuid: "b0" });
+  });
+
+  it("restarts the catalogue when playback context changes", async () => {
+    playbackMock.mockReturnValue({ key: "FR:1", ready: true });
+    fetchMock.mockResolvedValueOnce(songsPage(makeTracks(1, "old")))
+      .mockResolvedValueOnce(songsPage(makeTracks(1, "new")));
+    const { rerender } = renderTracks();
+    expect(await screen.findByRole("button", { name: "Play Song old0" })).toBeInTheDocument();
+    playbackMock.mockReturnValue({ key: "AL:2", ready: true });
+    rerender(<GenrePlaylistTracks
+      genreUuid={makeGenreUuid("g1")} genrePlaylist={genrePlaylist}
+      scope="reference" getBackendBaseUrl={() => "https://b"}
+    />);
+    expect(await screen.findByRole("button", { name: "Play Song new0" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Play Song old0" })).not.toBeInTheDocument();
   });
 
   it("keeps loading further pages after the section is collapsed and reopened", async () => {
