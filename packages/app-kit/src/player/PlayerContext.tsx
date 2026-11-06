@@ -293,11 +293,12 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
               const trackId = currentTrackIdRef.current;
               setPlaybackConfirmedTrackId(null);
               setPlayerTrackObject((prev) =>
-                prev?.track.id === trackId ? { ...prev, loadError } : prev,
+                prev?.track.id === trackId ? { ...prev, loadError } : { track, isReady: false, loadError },
               );
               setPlayState(PlayStates.STOPPED);
               setIsPlaying(false);
               if (trackId) onTrackEndRef.current?.({ trackId, videoId: track.youtubeVideoId, error: { code: event.data, message: loadError } });
+              resolve();
             },
           },
         });

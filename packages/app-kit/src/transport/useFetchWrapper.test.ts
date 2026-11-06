@@ -52,7 +52,7 @@ describe("useFetchWrapper", () => {
     useSessionState = { clearSession: clearSessionMock, session: { accessToken: "token" }, sessionRestored: true };
   });
 
-  it.each(["library/songs/", "genre-playlists/example/tracks/", "manual-playlists/example/tracks/"])("discards a changed-country response from %s", async (endpoint) => {
+  it.each(["library/songs/", "genre-playlists/example/tracks/", "manual-playlists/example/tracks/", "me/genre-playlists/example/tracks/", "me/manual-playlists/example/tracks/"])("discards a changed-country response from %s", async (endpoint) => {
     playbackState.key = "FR:1";
     playbackState.country = "FR";
     rawFetchMock.mockImplementationOnce(async (...args: unknown[]) => {

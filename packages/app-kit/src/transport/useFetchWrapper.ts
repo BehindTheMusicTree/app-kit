@@ -63,7 +63,7 @@ export const useFetchWrapper = (getBackendBaseUrl: () => string) => {
     }
     const url = fromBackend ? (endpointPath ? `${baseUrl}/${endpointPath}` : baseUrl) : backendEndpointOrUrl;
     return (async () => {
-    const contextual = playback.key !== null && fromBackend && /^(library\/songs|genre-playlists|playlists|manual-playlists)\//.test(endpointPath);
+    const contextual = playback.key !== null && fromBackend && /^(?:me\/)?(library\/songs|genre-playlists|playlists|manual-playlists)\//.test(endpointPath);
     if (contextual) {
       await playback.refresh();
       if (!playback.isCurrent(playback.key)) throw new DOMException("Playback context changed", "AbortError");

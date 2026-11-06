@@ -12,6 +12,7 @@ import {
   PlayerVideoSurface,
   useCurrentTime,
   type PlayerTrack,
+  type YoutubePlayerTrack,
 } from "./PlayerContext";
 import { PlayStates } from "./PlayStates";
 import { PlaybackContextProvider, usePlaybackContext } from "../transport/PlaybackContext";
@@ -64,7 +65,7 @@ function makeAudioTrack(id = "audio-1"): PlayerTrack {
   return { id, kind: "audio", title: "Audio Track", streamUrl: `https://example.com/${id}.mp3` };
 }
 
-function makeYoutubeTrack(id = "yt-1"): PlayerTrack {
+function makeYoutubeTrack(id = "yt-1"): YoutubePlayerTrack {
   return { id, kind: "youtube", title: "YouTube Track", youtubeVideoId: id };
 }
 
@@ -359,6 +360,29 @@ describe("PlayerProvider - loadTrackForPlayer (youtube)", () => {
     await act(async () => { window.dispatchEvent(new Event("focus")); });
     await screen.findByText("FR");
     await waitFor(() => expect(loadTrackMock).toHaveBeenCalledTimes(3));
+  });
+
+  it("keeps an error terminal when YouTube reports it before ready", async () => {
+    loadTrackMock.mockResolvedValue(makeYoutubeTrack());
+    let player: ReturnType<typeof usePlayer>;
+    function Harness() {
+      player = usePlayer();
+      return <PlayerVideoSurface />;
+    }
+    render(<PlayerProvider loadTrack={loadTrackMock}><Harness /></PlayerProvider>);
+    const ended = vi.fn();
+    act(() => { player.setOnTrackEnd(ended); });
+    await act(async () => { player.loadTrackForPlayer("yt-1"); });
+    await act(async () => { ytPlayers[0].config.events.onError({ data: 150 }); });
+    act(() => {
+      ytPlayers[0].config.events.onReady();
+      ytPlayers[0].config.events.onError({ data: 150 });
+      ytPlayers[0].config.events.onStateChange({ data: 0 });
+    });
+    expect(player!.isLoading).toBe(false);
+    expect(player!.isPlaying).toBe(false);
+    expect(player!.playerTrackObject?.loadError).toBe("Embedding disabled by the video owner");
+    expect(ended).toHaveBeenCalledTimes(1);
   });
 
   it("throws if PlayerVideoSurface has not mounted a container", async () => {
