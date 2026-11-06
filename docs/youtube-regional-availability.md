@@ -9,3 +9,5 @@ The player creates a new YouTube instance per selected video and guards callback
 `app-kit-ui` displays the contextual regional reason and a retry control. Applications should display the provider error and a context retry control when initial context loading fails. Country is a playback hint, not an authorization claim or a playback guarantee.
 
 Consumers need the matching app-kit and app-kit-ui package versions after a separately authorized release. Before publication, build this worktree and link its package directories into the consumer's ignored node_modules for validation; do not change published version pins to an unreleased version.
+
+On a country change, the active playlist or artist list restarts pagination at the selected track when it remains eligible. A filtered-out anchor returns 404 and restarts the list at its head. Single-track lists refresh their selected song without issuing a second playback request; audio tracks remain listed without a country-dependent fetch.

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import { z } from "zod";
 import type { ReactNode } from "react";
 import type { GenreUuid } from "./schemas/ids";
@@ -45,6 +45,11 @@ import { TrackListProvider, useTrackList, useListTracks } from "./TrackListConte
 import type { TrackBase } from "./schemas/track/base";
 import { TrackListOriginType } from "./models/TrackListOriginType";
 import { makeGenrePlaylistUuid } from "./testing";
+
+const playback = vi.hoisted(() => ({ key: null as string | null, ready: true, snapshot: () => ({ key: playback.key, country: null }) }));
+vi.mock("../transport/PlaybackContext", () => ({ usePlaybackContext: () => playback }));
+import { BackendError } from "../transport/app-errors/app-error";
+import { ErrorCode } from "../transport/app-errors/app-error-codes";
 
 const getBackendBaseUrl = () => "https://backend.example.com";
 const listEndpoint = (page: number) => `tracks/?page=${page}`;
@@ -128,6 +133,7 @@ function wrapper({ children }: { children: ReactNode }) {
 describe("TrackListContext", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    playback.key = null;
     useSessionMock.mockReturnValue({ session: { accessToken: "token" }, sessionRestored: true });
     useQueryWithParseMock.mockReturnValue({ data: undefined });
   });
@@ -161,6 +167,62 @@ describe("TrackListContext", () => {
       expect(showTrackListSidebarMock).toHaveBeenCalled();
       expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t1");
     });
+  });
+
+  it("keeps the first play request when its preflight changes country", async () => {
+    playback.key = "FR:1";
+    const { result, rerender } = renderHook(() => useTrackList(), { wrapper });
+    await playGenre(result, makePage([makeTrack("old", "Old")]));
+    let resolve!: (page: ReturnType<typeof makePage>) => void;
+    fetchMock.mockReturnValueOnce(new Promise((done) => { resolve = done; }));
+    let request!: Promise<void>;
+    act(() => { request = result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me"); });
+    playback.key = "AL:2";
+    rerender();
+    expect(result.current.trackList).toBeNull();
+    await act(async () => {
+      resolve(makePage([makeTrack("new", "New")]));
+      await request;
+    });
+    expect(result.current.selectedTrack?.uuid).toBe("new");
+    expect(loadTrackForPlayerMock).toHaveBeenLastCalledWith("new");
+  });
+
+  it("preserves the selected song when country changes and drops old pages", async () => {
+    playback.key = "FR:1";
+    const { result, rerender } = renderHook(() => useTrackList(), { wrapper });
+    await playGenre(result, makePage(makeTracks(3)));
+    act(() => result.current.playNextTrack());
+    fetchMock.mockResolvedValueOnce(makePage([makeTrack("t1", "Refreshed"), makeTrack("t2", "Next")]));
+    playback.key = "AL:2";
+    rerender();
+    await waitFor(() => expect(result.current.selectedTrack?.title).toBe("Refreshed"));
+    expect(result.current.trackList?.tracks.map((track) => track.uuid)).toEqual(["t1", "t2"]);
+    expect(fetchMock).toHaveBeenLastCalledWith(expect.any(String), true, true, {}, {
+      page: 1, pageSize: 100, from: "t1",
+    }, false, true, true);
+  });
+
+  it("restarts at the list head when the selected anchor becomes blocked", async () => {
+    playback.key = "FR:1";
+    const { result, rerender } = renderHook(() => useTrackList(), { wrapper });
+    await playGenre(result, makePage(makeTracks(3)));
+    fetchMock.mockRejectedValueOnce(new BackendError(ErrorCode.BACKEND_NOT_FOUND))
+      .mockResolvedValueOnce(makePage([makeTrack("t2", "Available")]));
+    playback.key = "AL:2";
+    rerender();
+    await waitFor(() => expect(result.current.selectedTrack?.uuid).toBe("t2"));
+    expect(fetchMock).toHaveBeenLastCalledWith(expect.any(String), true, true, {}, { page: 1, pageSize: 100 }, false, false, true);
+  });
+
+  it("keeps a single audio track listed across country changes", async () => {
+    playback.key = "FR:1";
+    const { result, rerender } = renderHook(() => useTrackList(), { wrapper });
+    act(() => result.current.playNewTrackListFromTrackUuid(makeTrack("audio", "Audio"), "me"));
+    playback.key = "AL:2";
+    rerender();
+    await waitFor(() => expect(result.current.selectedTrack?.uuid).toBe("audio"));
+    expect(loadTrackForPlayerMock).toHaveBeenCalledTimes(1);
   });
 
   describe("track navigation", () => {
@@ -313,6 +375,7 @@ describe("TrackListContext", () => {
         { artist: "a1", playable: true, ordering: "-albumYear", page: 1, pageSize: 100 },
         false,
         false,
+        true,
       );
       expect(result.current.trackList?.tracks).toEqual(tracks);
       expect(result.current.trackList?.total).toBe(5);
@@ -492,7 +555,7 @@ describe("TrackListContext", () => {
 
       await playGenre(result, makePage([trackA, trackB], { next: true, total: 250 }), "reference");
 
-      expect(fetchMock).toHaveBeenCalledWith(`genre-playlists/${makeGenrePlaylistUuid("p1")}/tracks/`, true, false, {}, { page: 1, pageSize: 100 });
+      expect(fetchMock).toHaveBeenCalledWith(`genre-playlists/${makeGenrePlaylistUuid("p1")}/tracks/`, true, false, {}, { page: 1, pageSize: 100 }, false, false, true);
       expect(result.current.trackList?.tracks).toEqual([trackA, trackB]);
       expect(result.current.trackList?.total).toBe(250);
       expect(result.current.trackList?.nextPage).toBe(2);
@@ -506,7 +569,7 @@ describe("TrackListContext", () => {
 
       await playGenre(result, makePage(makeTracks(1)), "me");
 
-      expect(fetchMock).toHaveBeenCalledWith(`me/genre-playlists/${makeGenrePlaylistUuid("p1")}/tracks/`, true, true, {}, { page: 1, pageSize: 100 });
+      expect(fetchMock).toHaveBeenCalledWith(`me/genre-playlists/${makeGenrePlaylistUuid("p1")}/tracks/`, true, true, {}, { page: 1, pageSize: 100 }, false, false, true);
       expect(result.current.trackList?.nextPage).toBeNull();
     });
 
@@ -525,7 +588,7 @@ describe("TrackListContext", () => {
         page: 1,
         pageSize: 100,
         from: "b0",
-      });
+      }, false, true, true);
       expect(result.current.selectedTrack).toEqual(first[0]);
       expect(loadTrackForPlayerMock).toHaveBeenCalledWith("b0");
       // The start track is near the end of the loaded page, so auto-load fetches page 2 with the same `from`.
@@ -534,7 +597,7 @@ describe("TrackListContext", () => {
         page: 2,
         pageSize: 100,
         from: "b0",
-      });
+      }, false, true, false);
       expect(result.current.trackList?.tracks.map((track) => track.uuid)).toEqual(["b0", "b1", "b2", "u0"]);
     });
 
@@ -689,7 +752,7 @@ describe("TrackListContext", () => {
         await result.current.loadMore();
       });
 
-      expect(fetchMock).toHaveBeenLastCalledWith(`me/genre-playlists/${makeGenrePlaylistUuid("p1")}/tracks/`, true, true, {}, { page: 2, pageSize: 100 });
+      expect(fetchMock).toHaveBeenLastCalledWith(`me/genre-playlists/${makeGenrePlaylistUuid("p1")}/tracks/`, true, true, {}, { page: 2, pageSize: 100 }, false, false, false);
       expect(result.current.trackList?.tracks.map((track) => track.uuid)).toEqual([
         ...firstPage.map((track) => track.uuid),
         "u0",

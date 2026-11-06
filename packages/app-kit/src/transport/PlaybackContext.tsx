@@ -11,6 +11,7 @@ const unmanaged = {
   ready: true,
   error: null as string | null,
   isCurrent: (_key: string | null) => true,
+  snapshot: () => ({ key: null as string | null, country: null as string | null }),
   refresh: async (_force = false) => null as string | null,
 };
 const PlaybackContext = createContext(unmanaged);
@@ -77,11 +78,16 @@ export function PlaybackContextProvider({ children, loadContext }: {
     (key: string | null) => key === `${current.current.country ?? "unknown"}:${current.current.revision}`,
     [],
   );
+  const snapshot = useCallback(() => ({
+    key: `${current.current.country ?? "unknown"}:${current.current.revision}`,
+    country: current.current.country,
+  }), []);
   const value = useMemo(() => ({
     ...state,
     isCurrent,
+    snapshot,
     key: `${state.country ?? "unknown"}:${state.revision}`,
     refresh,
-  }), [state, refresh, isCurrent]);
+  }), [state, refresh, isCurrent, snapshot]);
   return <PlaybackContext.Provider value={value}>{children}</PlaybackContext.Provider>;
 }

@@ -235,7 +235,10 @@ describe("PlayerProvider - loadTrackForPlayer (audio)", () => {
 
     expect(result.current.playState).toBe(PlayStates.STOPPED);
     expect(result.current.isPlaying).toBe(false);
-    expect(onTrackEnd).toHaveBeenCalled();
+    expect(onTrackEnd).toHaveBeenCalledTimes(1);
+    act(() => result.current.handlePlayPauseAction());
+    act(() => audioInstances[0].dispatch("ended"));
+    expect(onTrackEnd).toHaveBeenCalledTimes(2);
   });
 
   it("logs an error when the audio element fires an error event", async () => {

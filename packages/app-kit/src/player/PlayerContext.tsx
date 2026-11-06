@@ -442,6 +442,7 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
       setPlayState(PlayStates.PAUSED);
       setIsPlaying(false);
     } else {
+      terminal.current = false;
       mediaController.play();
       setPlayState(PlayStates.PLAYING);
       setIsPlaying(true);

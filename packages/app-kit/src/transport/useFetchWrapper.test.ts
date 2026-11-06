@@ -18,7 +18,8 @@ const {
 const playbackState = vi.hoisted(() => ({
   key: null as string | null,
   country: null as string | null,
-  refresh: vi.fn(async (_force?: boolean) => null),
+  snapshot: () => ({ key: playbackState.key, country: playbackState.country }),
+  refresh: vi.fn(async (_force?: boolean) => null as string | null),
   isCurrent: vi.fn(() => true),
 }));
 vi.mock("./PlaybackContext", () => ({ usePlaybackContext: () => playbackState }));
@@ -50,6 +51,24 @@ describe("useFetchWrapper", () => {
     playbackState.country = null;
     playbackState.isCurrent.mockReturnValue(true);
     useSessionState = { clearSession: clearSessionMock, session: { accessToken: "token" }, sessionRestored: true };
+  });
+
+  it("uses the refreshed context for an explicit play request", async () => {
+    playbackState.key = "FR:1";
+    playbackState.country = "FR";
+    playbackState.refresh.mockImplementationOnce(async () => {
+      playbackState.key = "AL:2";
+      playbackState.country = "AL";
+      return "AL";
+    });
+    playbackState.isCurrent.mockImplementation((...args: unknown[]) => args[0] === playbackState.key);
+    rawFetchMock.mockImplementationOnce(async (...args: unknown[]) => {
+      await (args[9] as (response: Response) => Promise<void>)(new Response(null, { headers: { "X-Playback-Country": "AL" } }));
+      return { results: ["new"] };
+    });
+    const { result } = renderHook(() => useFetchWrapper(() => "https://api.example.com"));
+    await expect(result.current.fetch("library/songs/", true, false, {}, undefined, false, false, true))
+      .resolves.toEqual({ results: ["new"] });
   });
 
   it.each(["library/songs/", "genre-playlists/example/tracks/", "manual-playlists/example/tracks/", "me/genre-playlists/example/tracks/", "me/manual-playlists/example/tracks/"])("discards a changed-country response from %s", async (endpoint) => {

@@ -55,6 +55,7 @@ export const useFetchWrapper = (getBackendBaseUrl: () => string) => {
     queryParams?: Record<string, string | number | boolean>,
     expectBinary: boolean = false,
     skipGlobalError: boolean = false,
+    acceptRefreshedContext: boolean = false,
   ) => {
     const baseUrl = getBackendBaseUrl().replace(/\/+$/, "");
     const endpointPath = String(backendEndpointOrUrl);
@@ -64,9 +65,11 @@ export const useFetchWrapper = (getBackendBaseUrl: () => string) => {
     const url = fromBackend ? (endpointPath ? `${baseUrl}/${endpointPath}` : baseUrl) : backendEndpointOrUrl;
     return (async () => {
     const contextual = playback.key !== null && fromBackend && /^(?:me\/)?(library\/songs|genre-playlists|playlists|manual-playlists)\//.test(endpointPath);
+    let requestContext = { key: playback.key, country: playback.country };
     if (contextual) {
       await playback.refresh();
-      if (!playback.isCurrent(playback.key)) throw new DOMException("Playback context changed", "AbortError");
+      if (acceptRefreshedContext) requestContext = playback.snapshot();
+      if (!playback.isCurrent(requestContext.key)) throw new DOMException("Playback context changed", "AbortError");
     }
     const result = await rawFetch<T>(
       url,
@@ -80,14 +83,14 @@ export const useFetchWrapper = (getBackendBaseUrl: () => string) => {
       baseUrl,
       contextual ? async (response) => {
         const responseCountry = response.headers.get("x-playback-country");
-        if (responseCountry !== null && responseCountry !== (playback.country ?? "unknown")) {
+        if (responseCountry !== null && responseCountry !== (requestContext.country ?? "unknown")) {
           await playback.refresh(true);
           throw new DOMException("Playback context changed", "AbortError");
         }
-        if (!playback.isCurrent(playback.key)) throw new DOMException("Playback context changed", "AbortError");
+        if (!playback.isCurrent(requestContext.key)) throw new DOMException("Playback context changed", "AbortError");
       } : undefined,
     );
-    if (contextual && !playback.isCurrent(playback.key)) throw new DOMException("Playback context changed", "AbortError");
+    if (contextual && !playback.isCurrent(requestContext.key)) throw new DOMException("Playback context changed", "AbortError");
     return result;
     })();
   }, [session?.accessToken, handleError, getBackendBaseUrl, sessionRestored, setConnectivityError, playback]);
