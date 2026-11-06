@@ -63,7 +63,7 @@ export const useFetchWrapper = (getBackendBaseUrl: () => string) => {
       throw new Error(`Endpoint path must be relative (no leading slash). Got: "${endpointPath}".`);
     }
     const url = fromBackend ? (endpointPath ? `${baseUrl}/${endpointPath}` : baseUrl) : backendEndpointOrUrl;
-    return (async () => {
+    const perform = async (retryContextChange: boolean): Promise<T | null> => {
     const contextual = playback.key !== null && fromBackend && /^(?:me\/)?(library\/songs|genre-playlists|playlists|manual-playlists)\//.test(endpointPath);
     let requestContext = { key: playback.key, country: playback.country };
     if (contextual) {
@@ -71,6 +71,7 @@ export const useFetchWrapper = (getBackendBaseUrl: () => string) => {
       if (acceptRefreshedContext) requestContext = playback.snapshot();
       if (!playback.isCurrent(requestContext.key)) throw new DOMException("Playback context changed", "AbortError");
     }
+    try {
     const result = await rawFetch<T>(
       url,
       requiresAuth,
@@ -92,7 +93,15 @@ export const useFetchWrapper = (getBackendBaseUrl: () => string) => {
     );
     if (contextual && !playback.isCurrent(requestContext.key)) throw new DOMException("Playback context changed", "AbortError");
     return result;
-    })();
+    } catch (error) {
+      if (retryContextChange && contextual && error instanceof DOMException && error.name === "AbortError"
+        && !playback.isCurrent(requestContext.key)) {
+        return perform(false);
+      }
+      throw error;
+    }
+    };
+    return perform(acceptRefreshedContext);
   }, [session?.accessToken, handleError, getBackendBaseUrl, sessionRestored, setConnectivityError, playback]);
 
   return { fetch };
