@@ -46,7 +46,7 @@ export default function PlayerPanel({
   renderArtistLink,
   renderSongLink,
 }: PlayerPanelProps) {
-  const { playerTrackObject } = usePlayer();
+  const { playerTrackObject, retryPlayback } = usePlayer();
   const { toggleTrackListSidebar, isTrackListSidebarVisible } =
     useTrackListSidebarVisibility();
   const [lastLoadedTrackTitle, setLastLoadedTrackTitle] = useState("");
@@ -120,6 +120,7 @@ export default function PlayerPanel({
             {playerTrackObject?.loadError && (
               <span className="absolute bottom-2 left-2 right-2 text-xs text-red-400">
                 {playerTrackObject.loadError}
+                <button type="button" className="ml-2 underline" onClick={() => { void retryPlayback(); }}>Retry</button>
               </span>
             )}
           </div>

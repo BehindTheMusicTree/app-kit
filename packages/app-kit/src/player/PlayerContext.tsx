@@ -22,6 +22,8 @@
  */
 
 import { createContext, useContext, useState, ReactNode, useRef, useEffect, useCallback, useMemo } from "react";
+import { PlaybackFailures } from "./PlaybackFailures";
+import { usePlaybackContext } from "../transport/PlaybackContext";
 import { PlayStates } from "./PlayStates";
 import { MediaController, AudioMediaController, YoutubeMediaController } from "./MediaController";
 import { loadYoutubeIframeApi } from "./youtubeIframeApi";
@@ -48,6 +50,7 @@ export interface YoutubePlayerTrack extends PlayerTrackBase {
   youtubeVideoId: string;
   /** Set when the video can't be embedded/played; next/previous navigation skips the track. */
   unplayableReason?: string | null;
+  availability?: { status: "eligible" | "blocked" | "unknown"; reason: string | null; country: string | null };
 }
 
 /** Minimal shape the player needs to play a track and identify it. Extend as needed per app. */
@@ -55,14 +58,16 @@ export type PlayerTrack = AudioPlayerTrack | YoutubePlayerTrack;
 
 export interface PlayerTrackEndEvent {
   trackId: string;
+  videoId?: string;
   error?: { code: number; message: string };
 }
 
 export type PlayerTrackEndHandler = (event?: PlayerTrackEndEvent) => void;
 
-const isPlayable = (track: PlayerTrack) => track.kind !== "youtube" || !track.unplayableReason;
+const isPlayable = (track: PlayerTrack) => track.kind !== "youtube" || !track.unplayableReason && track.availability?.status !== "blocked";
 
 function youtubeErrorMessage(code: number): string {
+  if (code === 153) return "YouTube player configuration error. Retry playback.";
   if (code === 100) return "Video not found";
   if (code === 101 || code === 150) return "Embedding disabled by the video owner";
   return `YouTube playback error (code ${code})`;
@@ -77,6 +82,8 @@ interface PlayerTrackObject {
 
 interface PlayerContextType {
   playerTrackObject: PlayerTrackObject | null;
+  hasPlaybackFailure: (videoId: string) => boolean;
+  retryPlayback: () => Promise<void>;
   /** Track id confirmed by the media source's actual playing event. */
   playbackConfirmedTrackId: string | null;
   isPlaying: boolean;
@@ -117,6 +124,12 @@ interface PlayerProviderProps {
 }
 
 export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
+  const playback = usePlaybackContext();
+  const failures = useRef(new PlaybackFailures());
+  const generation = useRef(0);
+  const loadedPlaybackKey = useRef(playback.key);
+  const terminal = useRef(false);
+  const hasPlaybackFailure = useCallback((videoId: string) => failures.current.has(videoId, playback.key), [playback.key]);
   const [playerTrackObject, setPlayerTrackObject] = useState<PlayerTrackObject | null>(null);
   const [playbackConfirmedTrackId, setPlaybackConfirmedTrackId] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -215,6 +228,8 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
       });
 
       audio.addEventListener("ended", () => {
+        if (audioElementRef.current !== audio || terminal.current) return;
+        terminal.current = true;
         if (currentTrackIdRef.current === track.id) setPlaybackConfirmedTrackId(null);
         setPlayState(PlayStates.STOPPED);
         setIsPlaying(false);
@@ -239,37 +254,41 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
 
   const loadYoutubeTrack = useCallback(
     async (track: YoutubePlayerTrack) => {
-      if (youtubePlayerRef.current) {
-        const player = youtubePlayerRef.current;
-        // loadVideoById loads and starts playback itself; don't issue a redundant playVideo call.
-        player.loadVideoById(track.youtubeVideoId);
-        setPlayerTrackObject({ track, mediaController: new YoutubeMediaController(player), isReady: true, loadError: undefined });
-        setPlayState(PlayStates.PLAYING);
-        setIsPlaying(true);
-        return;
-      }
-
+      const request = generation.current;
+      youtubePlayerRef.current?.destroy();
+      youtubePlayerRef.current = null;
       const container = videoContainerRef.current;
       if (!container) {
         throw new Error("PlayerVideoSurface must be rendered before a YouTube track can be loaded");
       }
 
       const YT = await loadYoutubeIframeApi();
+      if (request !== generation.current) return;
+      const mount = document.createElement("div");
+      container.replaceChildren(mount);
 
       await new Promise<void>((resolve) => {
-        const player = new YT.Player(container, {
+        const player = new YT.Player(mount, {
           videoId: track.youtubeVideoId,
           playerVars: { autoplay: 1, controls: 0 },
           events: {
             onReady: () => {
+              if (request !== generation.current || terminal.current) { player.destroy(); resolve(); return; }
               youtubePlayerRef.current = player;
               setPlayerTrackObject({ track, mediaController: new YoutubeMediaController(player), isReady: true, loadError: undefined });
               setPlayState(PlayStates.PLAYING);
               setIsPlaying(true);
               resolve();
             },
-            onStateChange: handleYoutubeStateChange,
+            onStateChange: (event: YT.OnStateChangeEvent) => {
+              if (request !== generation.current || terminal.current) return;
+              if (event.data === window.YT.PlayerState.ENDED) terminal.current = true;
+              handleYoutubeStateChange(event);
+            },
             onError: (event: YT.OnErrorEvent) => {
+              if (request !== generation.current || terminal.current) return;
+              terminal.current = true;
+              if ([100, 101, 150].includes(event.data)) failures.current.add(track.youtubeVideoId, playback.key);
               const loadError = youtubeErrorMessage(event.data);
               const trackId = currentTrackIdRef.current;
               setPlaybackConfirmedTrackId(null);
@@ -278,17 +297,21 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
               );
               setPlayState(PlayStates.STOPPED);
               setIsPlaying(false);
-              if (trackId) onTrackEndRef.current?.({ trackId, error: { code: event.data, message: loadError } });
+              if (trackId) onTrackEndRef.current?.({ trackId, videoId: track.youtubeVideoId, error: { code: event.data, message: loadError } });
             },
           },
         });
       });
     },
-    [handleYoutubeStateChange],
+    [handleYoutubeStateChange, playback.key],
   );
 
   const loadTrackForPlayer = useCallback(
     (trackId: string) => {
+      const request = ++generation.current;
+      loadedPlaybackKey.current = playback.key;
+      let resolvedTrack: PlayerTrack | null = null;
+      terminal.current = false;
       currentTrackIdRef.current = trackId;
       setPlaybackConfirmedTrackId(null);
       currentTimeRef.current = 0;
@@ -307,23 +330,58 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
       setPlayState(PlayStates.LOADING);
 
       loadTrack(trackId)
-        .then((track) => (track.kind === "youtube" ? loadYoutubeTrack(track) : loadAudioTrack(track)))
+        .then((track) => {
+          if (request !== generation.current) return;
+          resolvedTrack = track;
+          if (!isPlayable(track)) throw new Error(track.kind === "youtube" && track.availability?.reason === "region_blocked" ? "Unavailable in your country" : "Video unavailable");
+          return track.kind === "youtube" ? loadYoutubeTrack(track) : loadAudioTrack(track);
+        })
         .catch((error) => {
-          console.error("Error loading track:", error);
+          if (request !== generation.current) return;
           setPlaybackConfirmedTrackId(null);
           setPlayState(PlayStates.STOPPED);
           setPlayerTrackObject({
-            track: { id: trackId, kind: "audio", streamUrl: "", title: "" },
+            track: resolvedTrack ?? { id: trackId, kind: "audio", streamUrl: "", title: "" },
             isReady: false,
             loadError: error?.message ?? "Failed to load track",
           });
         })
         .finally(() => {
-          setIsLoading(false);
+          if (request === generation.current) setIsLoading(false);
         });
     },
-    [loadTrack, loadAudioTrack, loadYoutubeTrack],
+    [loadTrack, loadAudioTrack, loadYoutubeTrack, playback.key],
   );
+
+  const previousPlaybackKey = useRef(playback.key);
+  useEffect(() => {
+    if (previousPlaybackKey.current === playback.key) return;
+    previousPlaybackKey.current = playback.key;
+    failures.current.clear();
+    if (currentTrackIdRef.current && loadedPlaybackKey.current !== playback.key && playerTrackObject?.track.kind !== "audio") {
+      loadTrackForPlayer(currentTrackIdRef.current);
+    }
+  }, [playback.key, loadTrackForPlayer, playerTrackObject]);
+
+  const [retryTrackId, setRetryTrackId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!retryTrackId) return;
+    setRetryTrackId(null);
+    loadTrackForPlayer(retryTrackId);
+  }, [retryTrackId, loadTrackForPlayer]);
+
+  const retryPlayback = useCallback(async () => {
+    try {
+      await playback.refresh(true);
+      failures.current.clear();
+      setRetryTrackId(currentTrackIdRef.current);
+    } catch (error: unknown) {
+      setPlayerTrackObject((previous) => previous && ({
+        ...previous,
+        loadError: error instanceof Error ? error.message : "Unable to refresh playback context",
+      }));
+    }
+  }, [playback]);
 
   const handleNextTrack = useCallback(
     (trackList: PlayerTrack[], currentTrack: PlayerTrack, onTrackChange: (track: PlayerTrack) => void) => {
@@ -332,13 +390,13 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
       const currentIndex = trackList.findIndex((track) => track.id === currentTrack.id);
       if (currentIndex === -1) return;
 
-      const nextTrack = trackList.slice(currentIndex + 1).find(isPlayable);
+      const nextTrack = trackList.slice(currentIndex + 1).find((track) => isPlayable(track) && (track.kind !== "youtube" || !hasPlaybackFailure(track.youtubeVideoId)));
       if (nextTrack) {
         onTrackChange(nextTrack);
         loadTrackForPlayer(nextTrack.id);
       }
     },
-    [loadTrackForPlayer],
+    [loadTrackForPlayer, hasPlaybackFailure],
   );
 
   const handlePreviousTrack = useCallback(
@@ -348,13 +406,13 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
       const currentIndex = trackList.findIndex((track) => track.id === currentTrack.id);
       if (currentIndex === -1) return;
 
-      const previousTrack = trackList.slice(0, currentIndex).reverse().find(isPlayable);
+      const previousTrack = trackList.slice(0, currentIndex).reverse().find((track) => isPlayable(track) && (track.kind !== "youtube" || !hasPlaybackFailure(track.youtubeVideoId)));
       if (previousTrack) {
         onTrackChange(previousTrack);
         loadTrackForPlayer(previousTrack.id);
       }
     },
-    [loadTrackForPlayer],
+    [loadTrackForPlayer, hasPlaybackFailure],
   );
 
   // Cleanup media on unmount
@@ -392,6 +450,8 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
   const contextValue = useMemo(
     () => ({
       playerTrackObject,
+      hasPlaybackFailure,
+      retryPlayback,
       playbackConfirmedTrackId,
       isPlaying,
       setIsPlaying,
@@ -414,6 +474,8 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
     }),
     [
       playerTrackObject,
+      hasPlaybackFailure,
+      retryPlayback,
       playbackConfirmedTrackId,
       isPlaying,
       duration,

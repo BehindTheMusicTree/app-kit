@@ -1,8 +1,10 @@
 "use client";
 
 import { keepPreviousData } from "@tanstack/react-query";
+
 import { useEffect, useState } from "react";
 
+import { usePlaybackContext } from "../transport/PlaybackContext";
 import { useFetchWrapper } from "../transport/useFetchWrapper";
 import { useQueryWithParse } from "../transport/lib/use-query-with-parse";
 import { SongSearchResultsSchema, type SongSearchResult } from "./schemas/song-search";
@@ -22,6 +24,7 @@ export interface UseSongSearchResult {
 }
 
 export function useSongSearch(getBackendBaseUrl: () => string, text: string): UseSongSearchResult {
+  const playback = usePlaybackContext();
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
   const trimmed = text.trim();
   const [query, setQuery] = useState("");
@@ -30,15 +33,15 @@ export function useSongSearch(getBackendBaseUrl: () => string, text: string): Us
     return () => clearTimeout(timer);
   }, [trimmed]);
 
-  const enabled = query.length >= MIN_QUERY_LENGTH;
+  const enabled = query.length >= MIN_QUERY_LENGTH && playback.ready;
   const { data, isFetching, isError } = useQueryWithParse({
-    queryKey: libraryQueryKeys.reference.songs.search({ q: query, limit: RESULT_LIMIT }),
+    queryKey: [...libraryQueryKeys.reference.songs.search({ q: query, limit: RESULT_LIMIT }), ...(playback.key ? [playback.key] : [])],
     queryFn: ({ signal }) =>
       fetch(libraryEndpoints.reference.songs.search(), true, false, { signal }, { q: query, limit: RESULT_LIMIT }),
     schema: SongSearchResultsSchema,
     context: "useSongSearch",
     enabled,
-    placeholderData: keepPreviousData,
+    placeholderData: playback.key === null ? keepPreviousData : undefined,
   });
 
   const settled = enabled && !isFetching && query === trimmed;

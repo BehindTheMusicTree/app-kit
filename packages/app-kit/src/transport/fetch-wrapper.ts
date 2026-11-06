@@ -51,6 +51,7 @@ export const fetchWrapper = async <T>(
   handleError?: (error: Error) => void,
   expectBinary: boolean = false,
   backendBaseUrl?: string,
+  onResponse?: (response: Response) => void | Promise<void>,
 ): Promise<T | null> => {
   const urlWithParams = queryParams
     ? `${url}${url.includes("?") ? "&" : "?"}${new URLSearchParams(
@@ -79,6 +80,7 @@ export const fetchWrapper = async <T>(
   try {
     assertWellFormedRequest(finalUrl, finalOptions);
     const result = await fetchWithNetworkRetry(finalUrl, finalOptions);
+    await onResponse?.(result);
 
     if (!result.ok) {
       const appError = await createAppErrorFromResult(result, backendBaseUrl);
@@ -95,6 +97,7 @@ export const fetchWrapper = async <T>(
       return result.json();
     }
   } catch (caughtError: unknown) {
+    if (caughtError instanceof DOMException && caughtError.name === "AbortError") throw caughtError;
     let appError: AppError | null = null;
     if (caughtError instanceof AppError) {
       appError = caughtError;

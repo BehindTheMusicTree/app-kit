@@ -10,6 +10,7 @@
 
 import { createContext, useState, useContext, ReactNode, useCallback, useEffect, useMemo, useRef } from "react";
 import { z } from "zod";
+import { usePlaybackContext } from "../transport/PlaybackContext";
 import { useFetchWrapper } from "../transport/useFetchWrapper";
 import { useSession } from "../auth/SessionContext";
 import { useQueryWithParse } from "../transport/lib/use-query-with-parse";
@@ -43,10 +44,17 @@ const AUTO_LOAD_REMAINING_TRACKS = 10;
 // Keep each blocked embed visible long enough for the row reposition and dim state to register.
 const AUTO_SKIP_DELAY_MS = 1_000;
 
-function isTrackPlayable<T extends TrackBase>(track: T, runtimeUnplayableTrackIds: ReadonlySet<string>) {
+function isTrackPlayable<T extends TrackBase>(
+  track: T,
+  runtimeUnplayableTrackIds: ReadonlySet<string>,
+  hasPlaybackFailure: (videoId: string) => boolean,
+) {
   return (
     !runtimeUnplayableTrackIds.has(track.uuid) &&
-    (!isSong(track) || songUnplayableReason(track) === null)
+    (!isSong(track) || (
+      songUnplayableReason(track) === null &&
+      (!track.youtubeVideo || !hasPlaybackFailure(track.youtubeVideo.id))
+    ))
   );
 }
 
@@ -59,18 +67,19 @@ export function useListTracks<T>(
   page = 1,
   pageSize: number | string = 50,
 ) {
+  const playback = usePlaybackContext();
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
   const { session, sessionRestored } = useSession();
 
   return useQueryWithParse({
-    queryKey: listQueryKey(page),
+    queryKey: [...listQueryKey(page), ...(playback.key ? [playback.key] : [])],
     queryFn: async () => {
       if (scope == null) return null;
       return fetch(listEndpoint(page), true, scope === "me", {}, { page, pageSize });
     },
     schema: PaginatedResponseSchema(schema),
     context: "useListTracks",
-    enabled: scope != null && (scope === "reference" || (sessionRestored && !!session?.accessToken)),
+    enabled: playback.ready && scope != null && (scope === "reference" || (sessionRestored && !!session?.accessToken)),
   });
 }
 
@@ -148,9 +157,17 @@ export function TrackListProvider<T extends TrackBase>({
     id: number;
     trackUuid: string;
   } | null>(null);
-  const [runtimeUnplayableTrackIds, setRuntimeUnplayableTrackIds] = useState<ReadonlySet<string>>(() => new Set());
-  const { loadTrackForPlayer, setOnTrackEnd } = usePlayer();
+  const { loadTrackForPlayer, setOnTrackEnd, hasPlaybackFailure, playerTrackObject } = usePlayer();
+  const [failureClock, setFailureClock] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setFailureClock((tick) => tick + 1), 30_000);
+    return () => clearInterval(timer);
+  }, []);
+  const runtimeUnplayableTrackIds = useMemo<ReadonlySet<string>>(() => new Set(
+    (trackList?.tracks ?? []).filter((track) => isSong(track) && track.youtubeVideo && hasPlaybackFailure(track.youtubeVideo.id)).map((track) => track.uuid),
+  ), [trackList, hasPlaybackFailure, playerTrackObject, failureClock]);
   const { showTrackListSidebar } = useTrackListSidebarVisibility();
+  const playback = usePlaybackContext();
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
   const pageSchema = useMemo(() => makeTrackPlaylistRelPageSchema(schema), [schema]);
   // Identifies the latest play request / in-flight page load, so late responses for a list that's
@@ -238,9 +255,8 @@ export function TrackListProvider<T extends TrackBase>({
       // Ignore late media events from a track that is no longer selected.
       if (selectedTrack && selectedTrack.uuid !== completedTrackId) return;
 
-      const isEmbeddingBlocked = event?.error?.code === 101 || event?.error?.code === 150;
+      const isEmbeddingBlocked = event?.error?.code === 100 || event?.error?.code === 101 || event?.error?.code === 150;
       if (event?.error) {
-        setRuntimeUnplayableTrackIds((previous) => new Set(previous).add(completedTrackId));
         if (!isEmbeddingBlocked) return;
       }
 
@@ -248,7 +264,7 @@ export function TrackListProvider<T extends TrackBase>({
       if (currentIndex === -1) return;
       const nextTrack = trackList.tracks
         .slice(currentIndex + 1)
-        .find((track) => isTrackPlayable(track, runtimeUnplayableTrackIds));
+        .find((track) => isTrackPlayable(track, runtimeUnplayableTrackIds, hasPlaybackFailure));
       if (!nextTrack) {
         pendingAdvanceRef.current = trackList.nextPage === null
           ? null
@@ -268,6 +284,7 @@ export function TrackListProvider<T extends TrackBase>({
       loadTrackForPlayer,
       requestAutoAdvanceScroll,
       runtimeUnplayableTrackIds,
+      hasPlaybackFailure,
       selectedTrack,
     ],
   );
@@ -371,6 +388,23 @@ export function TrackListProvider<T extends TrackBase>({
     [clearDelayedTrackLoad, fetchArtistTracksPage, showTrackListSidebar, loadTrackForPlayer],
   );
 
+  const contextKeyRef = useRef(playback.key);
+  useEffect(() => {
+    if (contextKeyRef.current === playback.key) return;
+    contextKeyRef.current = playback.key;
+    const origin = trackList?.origin;
+    latestPlayRequestRef.current++;
+    pendingAdvanceRef.current = null;
+    clearDelayedTrackLoad();
+    setTrackList(null);
+    setSelectedTrack(null);
+    if (origin instanceof TrackListOriginFromCriteriaPlaylist) {
+      void playNewTrackListFromGenrePlaylist(origin.criteriaPlaylist, origin.scope).catch(() => {});
+    } else if (origin instanceof TrackListOriginFromArtist) {
+      void playNewTrackListFromArtist(origin.artist, origin.scope, { ordering: origin.ordering, genreUuid: origin.genreUuid }).catch(() => {});
+    }
+  }, [playback.key, trackList, clearDelayedTrackLoad, playNewTrackListFromGenrePlaylist, playNewTrackListFromArtist]);
+
   const updateTrack = useCallback((track: T) => {
     setTrackList((prev) => {
       if (!prev || !prev.tracks.some((listed) => listed.uuid === track.uuid)) return prev;
@@ -414,14 +448,14 @@ export function TrackListProvider<T extends TrackBase>({
     trackList && selectedTrackIndex >= 0
       ? trackList.tracks
           .slice(selectedTrackIndex + 1)
-          .find((track) => isTrackPlayable(track, runtimeUnplayableTrackIds)) ?? null
+          .find((track) => isTrackPlayable(track, runtimeUnplayableTrackIds, hasPlaybackFailure)) ?? null
       : null;
   const previousTrack =
     trackList && selectedTrackIndex > 0
       ? trackList.tracks
           .slice(0, selectedTrackIndex)
           .reverse()
-          .find((track) => isTrackPlayable(track, runtimeUnplayableTrackIds)) ?? null
+          .find((track) => isTrackPlayable(track, runtimeUnplayableTrackIds, hasPlaybackFailure)) ?? null
       : null;
   const hasNextTrack = nextTrack !== null || (selectedTrackIndex >= 0 && trackList?.nextPage != null);
   const hasPreviousTrack = previousTrack !== null;
@@ -473,7 +507,7 @@ export function TrackListProvider<T extends TrackBase>({
     }
     const nextTrack = trackList.tracks
       .slice(currentIndex + 1)
-      .find((track) => isTrackPlayable(track, runtimeUnplayableTrackIds));
+      .find((track) => isTrackPlayable(track, runtimeUnplayableTrackIds, hasPlaybackFailure));
     if (nextTrack) {
       pendingAdvanceRef.current = null;
       requestAutoAdvanceScroll(nextTrack.uuid);
@@ -492,6 +526,7 @@ export function TrackListProvider<T extends TrackBase>({
     loadTrackForPlayer,
     requestAutoAdvanceScroll,
     runtimeUnplayableTrackIds,
+    hasPlaybackFailure,
     selectedTrack,
   ]);
 

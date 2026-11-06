@@ -34,7 +34,7 @@ vi.mock("../transport/lib/use-query-with-parse", () => ({
 }));
 
 vi.mock("../player/PlayerContext", () => ({
-  usePlayer: () => ({ loadTrackForPlayer: loadTrackForPlayerMock, setOnTrackEnd: setOnTrackEndMock }),
+  usePlayer: () => ({ loadTrackForPlayer: loadTrackForPlayerMock, setOnTrackEnd: setOnTrackEndMock, hasPlaybackFailure: () => false, playerTrackObject: null }),
 }));
 
 vi.mock("./TrackListSidebarVisibilityContext", () => ({
@@ -164,7 +164,7 @@ describe("TrackListContext", () => {
   });
 
   describe("track navigation", () => {
-    it("moves between the selected track and skips unavailable tracks", async () => {
+    it("moves between tracks and keeps transient failures retryable", async () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
       const tracks = makeTracks(3);
       await playGenre(result, makePage(tracks));
@@ -193,9 +193,9 @@ describe("TrackListContext", () => {
 
       loadTrackForPlayerMock.mockClear();
       act(() => result.current.playNextTrack());
-      expect(result.current.selectedTrack?.uuid).toBe("t2");
-      expect(result.current.hasNextTrack).toBe(false);
-      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t2");
+      expect(result.current.selectedTrack?.uuid).toBe("t1");
+      expect(result.current.hasNextTrack).toBe(true);
+      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t1");
     });
 
     it("advances on completion and ignores stale or terminal events", async () => {

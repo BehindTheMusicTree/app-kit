@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- Scope song and playlist queries to verified playback context, discard stale responses, and recover from YouTube failures with bounded video-level exclusions and explicit retry.
+
 ### Breaking
 
 - `renderSummary` and `renderEssentialTracks` (`GenreDetailSlots`) now render the **body** of the Summary / Essential section: `GenreDetailExtras` wraps it in a titled `PanelSection`. A slot that rendered its own heading or frame must drop it.
