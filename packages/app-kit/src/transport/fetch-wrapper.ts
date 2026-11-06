@@ -41,6 +41,11 @@ const assertWellFormedRequest = (url: string, options: RequestInit) => {
   }
 };
 
+// fetch rejects with the signal's reason, so a custom reason is still the caller's abort;
+// AbortSignal.timeout() is the exception: it is a real failure to report.
+const isCallerAbort = (error: unknown, signal: RequestInit["signal"]) =>
+  !!signal?.aborted && (error as { name?: unknown } | null)?.name !== "TimeoutError";
+
 export const fetchWrapper = async <T>(
   url: string,
   requiresAuth: boolean,
@@ -95,6 +100,9 @@ export const fetchWrapper = async <T>(
       return result.json();
     }
   } catch (caughtError: unknown) {
+    // A caller that aborts its own request (React Query cancelling a superseded query) is not a
+    // connectivity failure; reporting it would raise the global offline popup.
+    if (isCallerAbort(caughtError, finalOptions.signal)) throw caughtError;
     let appError: AppError | null = null;
     if (caughtError instanceof AppError) {
       appError = caughtError;

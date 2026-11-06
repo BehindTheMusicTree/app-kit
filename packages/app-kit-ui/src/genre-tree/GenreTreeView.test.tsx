@@ -1248,7 +1248,7 @@ describe("GenreTreeView", () => {
     }
 
     function sectionOrder() {
-      const labels = ["Essential tracks", "Summary", "Family"];
+      const labels = ["Essential tracks", "Summary", "Family", "Ancestors"];
       // A PanelSection title sits in a button next to its chevron icon; the other titles are plain leaves.
       return Array.from(document.body.querySelectorAll("*"))
         .filter((el) => {
@@ -1301,6 +1301,26 @@ describe("GenreTreeView", () => {
       selectGenre();
 
       expect(sectionOrder()).toEqual(["Summary", "Family", "Essential tracks"]);
+    });
+
+    it("places Ancestors right after Family for a genre with an ancestor", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: [
+          makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } }),
+          makePlaylist({
+            uuid: "gp4",
+            root: { uuid: "gp1" },
+            parent: { uuid: "gp1" },
+            criteria: { uuid: "c4", name: "Bebop" },
+          }),
+        ],
+        isPending: false,
+      });
+      mockOverview({ c4: { summary: "Fast jazz", essentialSongs: [] } });
+      renderView();
+      selectGenre("gp4");
+
+      expect(sectionOrder()).toEqual(["Summary", "Family", "Ancestors", "Essential tracks"]);
     });
 
     it("shows Family after the Summary skeleton while the overview loads", () => {
