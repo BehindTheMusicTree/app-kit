@@ -41,6 +41,11 @@ const assertWellFormedRequest = (url: string, options: RequestInit) => {
   }
 };
 
+// fetch rejects with the signal's reason, so a custom reason is still the caller's abort;
+// AbortSignal.timeout() is the exception: it is a real failure to report.
+const isCallerAbort = (error: unknown, signal: RequestInit["signal"]) =>
+  !!signal?.aborted && (error as { name?: unknown } | null)?.name !== "TimeoutError";
+
 export const fetchWrapper = async <T>(
   url: string,
   requiresAuth: boolean,
@@ -77,10 +82,16 @@ export const fetchWrapper = async <T>(
     return null;
   }
 
+  let responseHookFailed = false;
   try {
     assertWellFormedRequest(finalUrl, finalOptions);
     const result = await fetchWithNetworkRetry(finalUrl, finalOptions);
-    await onResponse?.(result);
+    try {
+      await onResponse?.(result);
+    } catch (error) {
+      responseHookFailed = true;
+      throw error;
+    }
 
     if (!result.ok) {
       const appError = await createAppErrorFromResult(result, backendBaseUrl);
@@ -97,7 +108,7 @@ export const fetchWrapper = async <T>(
       return result.json();
     }
   } catch (caughtError: unknown) {
-    if (caughtError instanceof DOMException && caughtError.name === "AbortError") throw caughtError;
+    if (responseHookFailed || isCallerAbort(caughtError, finalOptions.signal)) throw caughtError;
     let appError: AppError | null = null;
     if (caughtError instanceof AppError) {
       appError = caughtError;

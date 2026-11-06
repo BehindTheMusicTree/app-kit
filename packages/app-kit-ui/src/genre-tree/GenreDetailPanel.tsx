@@ -160,10 +160,9 @@ export function GenreDetailPanel<O extends CriteriaOverview>({
       expanded={expanded}
       onExpandedChange={onExpandedChange}
       edgeTab={edgeTab}
-      aside={ancestors}
     >
       <GenreInfoPanelBody<O>
-        family={family}
+        family={<>{family}{ancestors}</>}
         genreUuid={detail.uuid}
         genrePlaylist={{ ...detail.criteriaPlaylist, tracksCount: detail.tracksCount }}
         wikidataId={detail.wikidataId}

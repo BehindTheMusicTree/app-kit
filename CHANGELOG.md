@@ -14,6 +14,43 @@ easy to spot when bumping.
 ### Added
 
 - Scope song and playlist queries to verified playback context, discard stale responses, and recover from YouTube failures with bounded video-level exclusions and explicit retry.
+## [33.0.0] - 2026-11-05
+
+### Breaking
+
+- `NetworkErrorPopup` (app-kit-ui) requires an `errorCode` prop, and `renderNetworkErrorPopup` receives the `ErrorCode`: pass it through (`renderNetworkErrorPopup: (errorCode) => <NetworkErrorPopup errorCode={errorCode} />`).
+- `fetchWrapper` / `useFetchWrapper().fetch`: a request aborted by the caller's own `signal` now rejects with the original abort error (any reason except `AbortSignal.timeout()`'s `TimeoutError`) instead of calling `handleError` and resolving `null` for GET/HEAD. A caller passing its own `signal` outside React Query must handle that rejection.
+
+### Changed
+
+- Genre detail panel (`GenreTreeView`, `GenreDetailPanel`): the Ancestors section renders right after Family in the panel body instead of in a separate aside.
+
+### Fixed
+
+- A request aborted by its caller's own signal (React Query cancelling a superseded query, e.g. typing in the artist search) is rethrown as-is instead of being reported as a `NetworkError`, which raised the global "not connected to the internet" popup.
+- `NetworkErrorPopup` says the user is offline only for `NETWORK_OFFLINE`; other network failures read "We couldn't reach the server".
+
+## [32.0.3] - 2026-11-05
+
+### Changed
+
+- Release preparation edits files only; CI owns annotated tags, validated npm publication and safe retries.
+- Bump `@behindthemusictree/genre-tree-view` to 8.3.0 (sector boundaries no longer stair-step while panning or zooming, and the wheel backdrop moves with the stage without repainting).
+
+
+## [32.0.2] - 2026-11-05
+
+### Changed
+
+- Bump `@behindthemusictree/genre-tree-view` to 8.2.0 (wheel breadcrumb now the shared ui `Breadcrumb`; its current item opens the focused genre's panel) and `@behindthemusictree/ui` to ^0.17.0.
+
+## [32.0.1] - 2026-11-05
+
+### Changed
+
+- Bump `@behindthemusictree/genre-tree-view` to 8.1.0 (pointer cursor and contrast halo on labels) and `@behindthemusictree/ui` to ^0.16.0.
+
+## [32.0.0] - 2026-11-05
 
 ### Breaking
 

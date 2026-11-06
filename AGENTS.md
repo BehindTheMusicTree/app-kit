@@ -62,16 +62,15 @@ to be" framing. History belongs in git log and `CHANGELOG.md`, not in reference 
 
 ## Branching (strict Gitflow)
 
-- `main` — released code only, every commit tagged `vX.Y.Z`. Never branch from or PR into it
+- `main` — released code only, validated version increases tagged `vX.Y.Z` by CI. Never branch from or PR into it
   directly; it only receives merges from `release/*` and `hotfix/*`.
 - `develop` — GitHub default branch, integration branch for all in-progress work. Branch
   `feature/*` from here for all non-release, non-hotfix work (features, fixes, chores); PR back
   into here. No other prefixes (`fix/*`, `chore/*`, …).
-- `release/*` — cut from `develop` by `pnpm release <bump>` (`scripts/release.sh`), which also
-  pushes it and opens PRs into both `main` and `develop`. After the `main` PR merges, run
-  `pnpm tag-release` on `main` to tag and trigger the publish workflow.
-- `hotfix/*` — cut from `main` for urgent production fixes; PR'd into both `main` and `develop`,
-  tagged the same way via `pnpm tag-release` after the `main` PR merges.
+- `release/*` — cut from `develop` before running `pnpm release <bump>`, which prepares files
+  only. Review and commit them, then open a PR into `main`; CI creates the annotated tag and
+  publishes after merge. Integrate `main` back into `develop` through a PR after publication.
+- `hotfix/*` — cut from `main` for urgent fixes, using the same preparation and CI publication.
 - Full detail: `CONTRIBUTING.md` § Branching (Gitflow).
 
 ## Forbidden
@@ -84,8 +83,8 @@ to be" framing. History belongs in git log and `CHANGELOG.md`, not in reference 
 - Merging or pushing directly to `main` or `develop`, including from `release/*`/`hotfix/*` —
   always go through a PR, even with branch-protection bypass rights
 - Publishing directly with `npm publish` — always go through `pnpm release <bump>`
-  (`scripts/release.sh`) followed by `pnpm tag-release`. The release script updates the changelog
-  and lockfile; the tag script pushes the release tag
+  (`scripts/release.sh`) and a PR into `main`. Preparation updates versions, changelog and
+  lockfile; CI owns tags and publication
 
 ## Agent guidance
 

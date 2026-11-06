@@ -21,7 +21,7 @@ export interface ConnectivityErrorPopupRenderers {
   renderInternalErrorPopup: (errorCode: ErrorCode) => ReactNode;
   renderSpotifyAuthErrorPopup: (params: { message: string; errorCode: ErrorCode; onClose: () => void }) => ReactNode;
   renderGoogleAuthErrorPopup: (params: { message: string; onClose: () => void }) => ReactNode;
-  renderNetworkErrorPopup: () => ReactNode;
+  renderNetworkErrorPopup: (errorCode: ErrorCode) => ReactNode;
 }
 
 export interface UseConnectivityErrorPopupOptions {
@@ -129,7 +129,7 @@ export function useConnectivityErrorPopup({
         // an unexpected 401 on those routes still needs to surface, not be dropped silently.
         popup = renderer.renderInternalErrorPopup(error.code);
       } else if (error instanceof NetworkError) {
-        popup = renderer.renderNetworkErrorPopup();
+        popup = renderer.renderNetworkErrorPopup(error.code);
       }
 
       if (popup) {
