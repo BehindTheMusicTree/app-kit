@@ -530,7 +530,7 @@ describe("TrackListContext", () => {
         await result.current.playNewTrackListFromArtist(artist, "reference", { ordering: "-albumYear" });
       });
 
-      expect(warnSpy).toHaveBeenCalledWith("No playable songs found for artist");
+      expect(warnSpy).toHaveBeenCalledWith("No playable songs found in catalogue");
       expect(result.current.trackList).toBeNull();
 
       warnSpy.mockRestore();
@@ -567,6 +567,25 @@ describe("TrackListContext", () => {
         expect(call[4]).toEqual({ genre: genre.uuid, playable: true, ordering: "title", page: index + 1, pageSize: 100, from: "t0", coverage: "genre_and_subgenres", subgenres: "regional" });
       }
       expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t0");
+    });
+
+    it("retains catalogue selection when a country change excludes the current anchor", async () => {
+      playback.key = "FR:1";
+      const { result, rerender } = renderHook(() => useTrackList(), { wrapper });
+      const genre = { uuid: makeGenreUuid("g1"), name: "Jazz" };
+      const selection = { coverage: "genreAndSubgenres" as const, subgenres: "regional" as const };
+      fetchMock.mockResolvedValueOnce(makeArtistPage(makeTracks(1)));
+      await act(async () => { await result.current.playNewTrackListFromGenreCatalogue(genre, "reference", { selection }); });
+      fetchMock.mockRejectedValueOnce(new BackendError(ErrorCode.BACKEND_NOT_FOUND))
+        .mockResolvedValueOnce(makeArtistPage([makeTrack("t2", "Available")]));
+      playback.key = "AL:2";
+      rerender();
+      await waitFor(() => expect(result.current.selectedTrack?.uuid).toBe("t2"));
+      expect(fetchMock.mock.calls[1][4]).toMatchObject({ from: "t0", coverage: "genre_and_subgenres", subgenres: "regional" });
+      expect(fetchMock).toHaveBeenLastCalledWith("library/songs/", true, false, {}, {
+        genre: genre.uuid, playable: true, ordering: "title", page: 1, pageSize: 100,
+        coverage: "genre_and_subgenres", subgenres: "regional",
+      }, false, false, true);
     });
 
     it("rejects personal scope before fetching", async () => {
