@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { GenreCountsSchema, GenreCatalogueCountsSchema } from "../genre-music";
 
 import { GenrePlaylistUuidSchema } from "../ids";
 import { CriteriaMinimumSchema } from "../criteria/minimum";
@@ -9,6 +10,9 @@ export const CriteriaPlaylistDetailedSchema = z.object({
   uuid: GenrePlaylistUuidSchema,
   name: z.string(),
   tracksCount: z.number(),
+  genreOnlyTracksCount: GenreCountsSchema.shape.genreOnlyTracksCount.optional(),
+  genreAndSubgenresTracksCount: GenreCountsSchema.shape.genreAndSubgenresTracksCount.optional(),
+  catalogue: GenreCatalogueCountsSchema.optional(),
   // Summed YouTube views of the same songs as `tracksCount`. Optional: hear-api has no view counts.
   viewsCount: z.number().optional(),
   durationInSec: z.number().min(0).nullable().optional(),

@@ -1,5 +1,7 @@
 "use client";
 
+import { genrePlaylistTrackCount } from "@behindthemusictree/app-kit/genre-tree";
+
 import { useCallback, useMemo, type ReactNode } from "react";
 import {
   GenreTreeWheel,
@@ -108,7 +110,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
         return;
       }
 
-      if (genrePlaylist.tracksCount === 0) {
+      if (genrePlaylistTrackCount(genrePlaylist) === 0) {
         return;
       }
 

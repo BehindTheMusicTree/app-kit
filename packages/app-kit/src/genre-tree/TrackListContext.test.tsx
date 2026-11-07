@@ -549,6 +549,31 @@ describe("TrackListContext", () => {
   });
 
   describe("playNewTrackListFromGenrePlaylist", () => {
+    it("keeps selection, artist and anchor on every membership page", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      fetchMock
+        .mockResolvedValueOnce(makePage(makeTracks(3, "b"), { page: 1, next: true, total: 250 }))
+        .mockResolvedValueOnce(makePage(makeTracks(1, "u"), { page: 2, total: 250 }));
+      const selection = { coverage: "genreAndSubgenres" as const, subgenres: "regional" as const };
+      await act(async () => {
+        await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "reference", { startSongUuid: "b0", selection, artistUuid: "a1" });
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      for (const [index, call] of fetchMock.mock.calls.entries()) {
+        expect(call[0]).toBe(`genre-playlists/${genrePlaylist.uuid}/tracks/`);
+        expect(call[4]).toEqual({ page: index + 1, pageSize: 100, from: "b0", artist: "a1", coverage: "genre_and_subgenres", subgenres: "regional" });
+      }
+      expect(result.current.trackList?.origin).toMatchObject({ selection, artistUuid: "a1", from: "b0" });
+    });
+
+    it("rejects selection parameters in personal scope", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      await act(async () => {
+        await expect(result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", { selection: { coverage: "genreOnly" } })).rejects.toThrow("reference scope");
+      });
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
     it("fetches the first reference page, selects the first track, shows the sidebar, and loads it", async () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
       const [trackA, trackB] = makeTracks(2);

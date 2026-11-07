@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ReferenceGenreDetailedSchema } from "./schemas/reference-genre";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 
@@ -45,7 +46,7 @@ export function useFetchGenre(scope: Scope, getBackendBaseUrl: () => string) {
     async (id: GenreUuid): Promise<CriteriaDetailed> => {
       const endpoint = scope === "reference" ? genreEndpoints.reference.detail(id) : genreEndpoints.me.detail(id);
       const response = await fetch(endpoint, true, scope === "me");
-      return parseWithLog(CriteriaDetailedSchema, response, "useFetchGenre");
+      return parseWithLog(scope === "reference" ? ReferenceGenreDetailedSchema : CriteriaDetailedSchema, response, "useFetchGenre");
     },
     [fetch, scope],
   );
@@ -56,7 +57,7 @@ export function useFetchGenreDetail<D extends CriteriaDetailed = CriteriaDetaile
   scope: Scope,
   getBackendBaseUrl: () => string,
   // The default only applies when D is left at its CriteriaDetailed default.
-  schema: z.ZodType<D, unknown> = CriteriaDetailedSchema as unknown as z.ZodType<D, unknown>,
+  schema: z.ZodType<D, unknown> = (scope === "reference" ? ReferenceGenreDetailedSchema : CriteriaDetailedSchema) as unknown as z.ZodType<D, unknown>,
 ) {
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
   const queryKeys = scope === "reference" ? genreQueryKeys.reference : genreQueryKeys.me;
@@ -65,7 +66,7 @@ export function useFetchGenreDetail<D extends CriteriaDetailed = CriteriaDetaile
   // Disabled queries never run queryFn, so the empty placeholder is only a stable cache key.
   const genreUuid = id ?? ("" as GenreUuid);
   return useQueryWithParse({
-    queryKey: queryKeys.detail(genreUuid),
+    queryKey: scope === "reference" ? [...queryKeys.detail(genreUuid), getBackendBaseUrl(), "genreMusicV1"] : queryKeys.detail(genreUuid),
     queryFn: () => fetch(endpoints.detail(genreUuid), true, scope === "me"),
     schema,
     context: "useFetchGenreDetail",

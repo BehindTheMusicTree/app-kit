@@ -16,6 +16,7 @@ import { usePopup } from "@behindthemusictree/app-kit/popup";
 import InternalErrorPopup from "../popup/InternalErrorPopup";
 import { ErrorCode } from "@behindthemusictree/app-kit/transport";
 import { Scope } from "@behindthemusictree/app-kit/transport";
+import { genreMusicQueryParams, type GenreMusicSelection } from "@behindthemusictree/app-kit/genre-tree";
 import { genrePlaylistQueryKeys } from "@behindthemusictree/app-kit/genre-tree";
 import { libraryEndpoints, libraryQueryKeys } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaPlaylistMinimum, type GenreUuid } from "@behindthemusictree/app-kit/genre-tree";
@@ -63,6 +64,7 @@ export type GenrePlaylistTracksSlots = {
 export type GenrePlaylistTracksProps = GenrePlaylistTracksSlots & {
   genreUuid: GenreUuid;
   genrePlaylist: CriteriaPlaylistMinimum;
+  selection?: GenreMusicSelection;
   scope: Scope;
   getBackendBaseUrl: () => string;
   /** When set, artist names render through it (e.g. a router `Link`). */
@@ -81,6 +83,7 @@ export type GenrePlaylistTracksProps = GenrePlaylistTracksSlots & {
 export function GenrePlaylistTracks({
   genreUuid,
   genrePlaylist,
+  selection,
   scope,
   getBackendBaseUrl,
   renderArtistLink,
@@ -90,7 +93,7 @@ export function GenrePlaylistTracks({
   renderTracksToolbar,
   artist = null,
 }: GenrePlaylistTracksProps) {
-  const { fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist, playNewTrackListFromArtist } = useTrackList();
+  const { fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist } = useTrackList();
   const { session, sessionRestored } = useSession();
   const { playerTrackObject, playState, handlePlayPauseAction } = usePlayer();
   const { showPopup } = usePopup();
@@ -105,8 +108,8 @@ export function GenrePlaylistTracks({
       scope === "me"
         ? genrePlaylistQueryKeys.me.tracks(uuid)
         : artist
-          ? [...libraryQueryKeys.reference.songs.byGenre(getBackendBaseUrl(), genreUuid), "artist", artist.uuid]
-          : libraryQueryKeys.reference.songs.byGenre(getBackendBaseUrl(), genreUuid)
+          ? [...libraryQueryKeys.reference.songs.byGenre(getBackendBaseUrl(), genreUuid, selection), "artist", artist.uuid]
+          : libraryQueryKeys.reference.songs.byGenre(getBackendBaseUrl(), genreUuid, selection)
     ), ...(playback.key ? [playback.key] : [])],
     queryFn: async ({ pageParam }): Promise<Omit<GenrePlaylistTracksPage<TrackBase>, "total" | "nextPage"> & { total: number | null; nextPage: number | string | null }> => {
       if (scope === "me") return fetchGenrePlaylistTracksPage(uuid, scope, Number(pageParam));
@@ -115,7 +118,7 @@ export function GenrePlaylistTracks({
         true,
         false,
         {},
-        { genre: genreUuid, ...(artist && { artist: artist.uuid }), pageSize: CATALOGUE_PAGE_SIZE, withTotal: false, ...(pageParam && { cursor: pageParam }) },
+        { genre: genreUuid, ...genreMusicQueryParams(selection), ...(artist && { artist: artist.uuid }), pageSize: CATALOGUE_PAGE_SIZE, withTotal: false, ...(pageParam && { cursor: pageParam }) },
       );
       const parsed = parseWithLog(SongPageSchema, response, "GenrePlaylistTracks");
       return { tracks: parsed.results, total: parsed.overallTotal, nextPage: parsed.next ? nextCursor(parsed.next) : null };
@@ -144,9 +147,9 @@ export function GenrePlaylistTracks({
   const total = pages[0]?.total ?? undefined;
 
   const play = (startSongUuid: string) => {
-    const started = artist
-      ? playNewTrackListFromArtist(artist, scope, { startSongUuid, ordering: "title", genreUuid })
-      : playNewTrackListFromGenrePlaylist(genrePlaylist, scope, { startSongUuid });
+    const started = playNewTrackListFromGenrePlaylist(genrePlaylist, scope, {
+      startSongUuid, ...(selection && { selection }), ...(artist && { artistUuid: artist.uuid }),
+    });
     started.catch((error) => {
       console.error("Failed to play genre playlist:", error);
       showPopup(<InternalErrorPopup errorCode={ErrorCode.CLIENT_UNKNOWN} />);

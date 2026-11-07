@@ -11,7 +11,7 @@ vi.mock("@behindthemusictree/app-kit/genre-tree", async (importOriginal) => ({
 import { TrackListOriginType, type CriteriaPlaylistSimple } from "@behindthemusictree/app-kit/genre-tree";
 import { useGenrePlaylistPlayback } from "./useGenrePlaylistPlayback";
 
-const jazz = { uuid: "gp1", criteria: { uuid: "c1" } } as unknown as CriteriaPlaylistSimple;
+const jazz = { uuid: "3f0d7b1e-8a3c-4d57-9a53-2b7f4f9c0a11", name: "Jazz", criteria: { uuid: "c1" }, genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: 139, regional: 0, all: 139 } } as unknown as CriteriaPlaylistSimple;
 const genreless = { uuid: "gp2", criteria: null } as unknown as CriteriaPlaylistSimple;
 const artist = { uuid: "a1", name: "Band" };
 
@@ -31,12 +31,12 @@ describe("useGenrePlaylistPlayback", () => {
   });
 
   it("plays the whole genre playlist without an artist and tracks it as the playing node", async () => {
-    setOrigin({ type: TrackListOriginType.GENRE_PLAYLIST, uuid: "gp1" });
+    setOrigin({ type: TrackListOriginType.GENRE_PLAYLIST, scope: "reference", uuid: jazz.uuid });
     const { result } = renderHook(() => useGenrePlaylistPlayback({ scope: "reference", genrePlaylists: [jazz] }));
 
-    expect(result.current.playingNodeId).toBe("gp1");
+    expect(result.current.playingNodeId).toBe(jazz.uuid);
     await result.current.play(jazz);
-    expect(playNewTrackListFromGenrePlaylist).toHaveBeenCalledWith(jazz, "reference");
+    expect(playNewTrackListFromGenrePlaylist).toHaveBeenCalledWith(jazz, "reference", { selection: { coverage: "genreAndSubgenres", subgenres: "canonical" } });
   });
 
   it("has no playing node when nothing or another origin plays", () => {
@@ -51,16 +51,16 @@ describe("useGenrePlaylistPlayback", () => {
   });
 
   it("plays only the artist's songs in the genre and maps the origin genre to its node", async () => {
-    setOrigin({ type: TrackListOriginType.ARTIST, uuid: "a1", genreUuid: "c1" });
+    setOrigin({ type: TrackListOriginType.GENRE_PLAYLIST, scope: "reference", uuid: jazz.uuid, artistUuid: "a1" });
     const { result } = renderHook(() =>
       useGenrePlaylistPlayback({ scope: "reference", genrePlaylists: [jazz], artist }),
     );
 
-    expect(result.current.playingNodeId).toBe("gp1");
+    expect(result.current.playingNodeId).toBe(jazz.uuid);
     await result.current.play(jazz);
-    expect(playNewTrackListFromArtist).toHaveBeenCalledWith(artist, "reference", {
-      ordering: "title",
-      genreUuid: "c1",
+    expect(playNewTrackListFromGenrePlaylist).toHaveBeenCalledWith(jazz, "reference", {
+      artistUuid: "a1",
+      selection: { coverage: "genreAndSubgenres", subgenres: "canonical" },
     });
   });
 
@@ -76,6 +76,30 @@ describe("useGenrePlaylistPlayback", () => {
     expect(result.current.playingNodeId).toBeNull();
 
     await result.current.play(genreless);
-    expect(playNewTrackListFromArtist).not.toHaveBeenCalled();
+    expect(playNewTrackListFromGenrePlaylist).not.toHaveBeenCalled();
   });
+  it("does not treat another scope or coverage as the current node", () => {
+    const { result, rerender } = renderHook(() =>
+      useGenrePlaylistPlayback({ scope: "reference", genrePlaylists: [jazz] }),
+    );
+    setOrigin({ type: TrackListOriginType.GENRE_PLAYLIST, scope: "me", uuid: jazz.uuid });
+    rerender();
+    expect(result.current.playingNodeId).toBeNull();
+    setOrigin({ type: TrackListOriginType.GENRE_PLAYLIST, scope: "reference", uuid: jazz.uuid, selection: { coverage: "genreOnly" } });
+    rerender();
+    expect(result.current.playingNodeId).toBeNull();
+  });
+
+  it("keeps genreless and personal playback free of reference selection parameters", async () => {
+    const { result, rerender } = renderHook(({ scope }: { scope: "reference" | "me" }) =>
+      useGenrePlaylistPlayback({ scope, genrePlaylists: [genreless] }),
+      { initialProps: { scope: "reference" } },
+    );
+    await result.current.play(genreless);
+    expect(playNewTrackListFromGenrePlaylist).toHaveBeenLastCalledWith(genreless, "reference");
+    rerender({ scope: "me" });
+    await result.current.play(jazz);
+    expect(playNewTrackListFromGenrePlaylist).toHaveBeenLastCalledWith(jazz, "me");
+  });
+
 });

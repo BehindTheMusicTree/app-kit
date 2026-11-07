@@ -173,12 +173,11 @@ describe("GenrePlaylistTracks", () => {
       {},
       { genre: makeGenreUuid("g1"), artist: "a1", pageSize: 100, withTotal: false },
     );
-    expect(playNewTrackListFromArtist).toHaveBeenCalledWith(artist, "reference", {
+    expect(playNewTrackListFromGenrePlaylist).toHaveBeenCalledWith(genrePlaylist, "reference", {
       startSongUuid: "x0",
-      ordering: "title",
-      genreUuid: makeGenreUuid("g1"),
+      artistUuid: "a1",
     });
-    expect(playNewTrackListFromGenrePlaylist).not.toHaveBeenCalled();
+    expect(playNewTrackListFromArtist).not.toHaveBeenCalled();
   });
 
   it("shows a dash for an empty catalogue and no count when the total is null", async () => {

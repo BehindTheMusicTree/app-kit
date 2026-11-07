@@ -10,6 +10,7 @@
 
 import { createContext, useState, useContext, ReactNode, useCallback, useEffect, useMemo, useRef } from "react";
 import { z } from "zod";
+import { genreMusicQueryParams, type GenreMusicSelection } from "./lib/genre-music-selection";
 import { usePlaybackContext } from "../transport/PlaybackContext";
 import { useFetchWrapper } from "../transport/useFetchWrapper";
 import { BackendError } from "../transport/app-errors/app-error";
@@ -87,9 +88,9 @@ export function useListTracks<T>(
 
 export type GenrePlaylistTracksPage<T> = { tracks: T[]; total: number; nextPage: number | null };
 
-export type PlayGenrePlaylistOptions = { startSongUuid?: string };
+export type PlayGenrePlaylistOptions = { startSongUuid?: string; selection?: GenreMusicSelection; artistUuid?: string };
 
-export type PlayArtistOptions = { ordering: ArtistSongsOrdering; startSongUuid?: string; genreUuid?: GenreUuid };
+export type PlayArtistOptions = { ordering: ArtistSongsOrdering; startSongUuid?: string; genreUuid?: GenreUuid; selection?: GenreMusicSelection };
 
 interface TrackListContextType<T extends TrackBase> {
   trackList: TrackList<T> | null;
@@ -130,6 +131,8 @@ interface TrackListContextType<T extends TrackBase> {
     scope: Scope,
     page: number,
     from?: string,
+    selection?: GenreMusicSelection,
+    artistUuid?: string,
   ) => Promise<GenrePlaylistTracksPage<T>>;
   /** Appends the next tracks page of the current genre-playlist or artist list; no-op when fully loaded or already loading. */
   loadMore: () => Promise<void>;
@@ -209,9 +212,10 @@ export function TrackListProvider<T extends TrackBase>({
   );
 
   const fetchTracksPage = useCallback(
-    async (uuid: GenrePlaylistUuid, scope: Scope, page: number, from?: string): Promise<GenrePlaylistTracksPage<T>> => {
+    async (uuid: GenrePlaylistUuid, scope: Scope, page: number, from?: string, selection?: GenreMusicSelection, artistUuid?: string): Promise<GenrePlaylistTracksPage<T>> => {
       const endpoint = genrePlaylistEndpoints[scope].tracks(uuid);
-      const params = { page, pageSize: TRACKS_PAGE_SIZE, ...(from && { from }) };
+      if (scope === "me" && (selection || artistUuid)) throw new Error("Genre selections require reference scope");
+      const params = { page, pageSize: TRACKS_PAGE_SIZE, ...(from && { from }), ...genreMusicQueryParams(selection), ...(artistUuid && { artist: artistUuid }) };
       const response = await fetch(endpoint, true, scope === "me", {}, params, false, !!from, page === 1);
       const parsed = parseWithLog(pageSchema, response, "fetchGenrePlaylistTracksPage");
       return {
@@ -235,6 +239,7 @@ export function TrackListProvider<T extends TrackBase>({
         pageSize: TRACKS_PAGE_SIZE,
         ...(origin.from && { from: origin.from }),
         ...(origin.genreUuid && { genre: origin.genreUuid }),
+        ...genreMusicQueryParams(origin.selection),
       };
       const response = await fetch(
         libraryEndpoints.reference.songs.list(),
@@ -336,7 +341,7 @@ export function TrackListProvider<T extends TrackBase>({
       const from = options?.startSongUuid;
       let page: GenrePlaylistTracksPage<T>;
       try {
-        page = await fetchTracksPage(genrePlaylist.uuid, scope, 1, from);
+        page = await fetchTracksPage(genrePlaylist.uuid, scope, 1, from, options?.selection, options?.artistUuid);
       } catch (error) {
         if (request !== latestPlayRequestRef.current) return;
         startingPlaybackRef.current = false;
@@ -355,7 +360,7 @@ export function TrackListProvider<T extends TrackBase>({
         return;
       }
 
-      const origin = new TrackListOriginFromCriteriaPlaylist(genrePlaylist, scope, from);
+      const origin = new TrackListOriginFromCriteriaPlaylist(genrePlaylist, scope, from, options?.selection, options?.artistUuid);
       setAutoAdvanceScrollRequest(null);
       setTrackList(new TrackListFromCriteriaPlaylist(page.tracks, origin, page.total, page.nextPage));
       setSelectedTrack(startTrack);
@@ -368,11 +373,12 @@ export function TrackListProvider<T extends TrackBase>({
   const playNewTrackListFromArtist = useCallback(
     async (artist: ArtistTrackListOriginInput, scope: Scope, options: PlayArtistOptions) => {
       if (scope !== "reference") throw new Error("Artist track lists only support the reference scope");
+      if (options.selection && !options.genreUuid) throw new Error("A genre selection requires a genre");
       clearDelayedTrackLoad();
       const request = ++latestPlayRequestRef.current;
       startingPlaybackRef.current = true;
       const from = options.startSongUuid;
-      const origin = new TrackListOriginFromArtist(artist, scope, options.ordering, from, options.genreUuid);
+      const origin = new TrackListOriginFromArtist(artist, scope, options.ordering, from, options.genreUuid, options.selection);
       let page: GenrePlaylistTracksPage<T>;
       try {
         page = await fetchArtistTracksPage(origin, 1);
@@ -423,14 +429,14 @@ export function TrackListProvider<T extends TrackBase>({
     setTrackList(null);
     setSelectedTrack(null);
     if (origin instanceof TrackListOriginFromCriteriaPlaylist) {
-      void playNewTrackListFromGenrePlaylist(origin.criteriaPlaylist, origin.scope, { startSongUuid: selected?.uuid })
+      void playNewTrackListFromGenrePlaylist(origin.criteriaPlaylist, origin.scope, { startSongUuid: selected?.uuid, selection: origin.selection, artistUuid: origin.artistUuid })
         .catch((error: unknown) => {
           if (error instanceof BackendError && error.code === ErrorCode.BACKEND_NOT_FOUND) {
-            return playNewTrackListFromGenrePlaylist(origin.criteriaPlaylist, origin.scope).catch(() => {});
+            return playNewTrackListFromGenrePlaylist(origin.criteriaPlaylist, origin.scope, { selection: origin.selection, artistUuid: origin.artistUuid }).catch(() => {});
           }
         });
     } else if (origin instanceof TrackListOriginFromArtist) {
-      const options = { ordering: origin.ordering, genreUuid: origin.genreUuid };
+      const options = { ordering: origin.ordering, genreUuid: origin.genreUuid, selection: origin.selection };
       void playNewTrackListFromArtist(origin.artist, origin.scope, { ...options, startSongUuid: selected?.uuid })
         .catch((error: unknown) => {
           if (error instanceof BackendError && error.code === ErrorCode.BACKEND_NOT_FOUND) {
@@ -472,7 +478,7 @@ export function TrackListProvider<T extends TrackBase>({
       const page =
         origin instanceof TrackListOriginFromArtist
           ? await fetchArtistTracksPage(origin, requestedPage)
-          : await fetchTracksPage(origin.criteriaPlaylist.uuid, origin.scope, requestedPage, origin.from);
+          : await fetchTracksPage(origin.criteriaPlaylist.uuid, origin.scope, requestedPage, origin.from, origin.selection, origin.artistUuid);
       setTrackList((prev) => {
         // A stale loadMore closure can refetch a page that was already appended.
         if (prev?.origin !== origin || prev.nextPage !== requestedPage) return prev;

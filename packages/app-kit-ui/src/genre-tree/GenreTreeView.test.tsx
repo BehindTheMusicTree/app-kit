@@ -179,12 +179,15 @@ function stubRaf() {
 }
 
 function makePlaylist(overrides: Record<string, unknown> = {}) {
+  const count = typeof overrides.tracksCount === "number" ? overrides.tracksCount : 3;
   return {
     uuid: "gp1",
     name: "Jazz",
     root: { uuid: "root1" },
     parent: null,
     tracksCount: 3,
+    genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: count, regional: 0, all: count },
+    catalogue: { genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: count, regional: 0, all: count } },
     viewsCount: 0,
     criteria: { uuid: "c1", name: "Jazz" },
     isUnacceptedRoot: false,
@@ -1583,7 +1586,7 @@ describe("GenreTreeView", () => {
     it("pauses instead of reloading when the selected genre is already the playing tracklist", () => {
       const jazz = makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } });
       useListFullGenrePlaylistsMock.mockReturnValue({ data: [jazz], isPending: false });
-      trackListState.value = { origin: { type: "GENRE_PLAYLIST", uuid: "gp1" } };
+      trackListState.value = { origin: { type: "GENRE_PLAYLIST", uuid: "gp1", scope: "me" } };
       renderView();
       fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
 

@@ -13,6 +13,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Separate reference genre catalogue and playlist counts, preserve explicit subgenre selections through playback, and size artist trees from playlist membership.
 - `useRemoteSearch`, the debounced typeahead core (`SEARCH_DEBOUNCE_MS`, `SEARCH_QUERY_MIN_LENGTH`) that `useArtistSearch`, `useSongSearch` and the new `useGenreRemoteSearch` (`genres/search/`) are built on.
 - `useRegionGenreLexicon` and `RegionGenreLexiconSchema` for `regions/map/genres/`.
 - `foldSearchText`, `trigramSimilarity` and `rankByName`: accent-folded, ranked (exact, prefix, substring, fuzzy) local matching.
