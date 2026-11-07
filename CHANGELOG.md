@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [33.2.0] - 2026-11-07
+
 ### Added
 
 - `useRemoteSearch`, the debounced typeahead core (`SEARCH_DEBOUNCE_MS`, `SEARCH_QUERY_MIN_LENGTH`) that `useArtistSearch`, `useSongSearch` and the new `useGenreRemoteSearch` (`genres/search/`) are built on.
