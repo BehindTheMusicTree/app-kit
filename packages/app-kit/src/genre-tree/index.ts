@@ -8,6 +8,10 @@ export * from "./useSongHistory";
 export * from "./useSongSearch";
 export * from "./useArtistGenreCounts";
 export * from "./useGenreSearch";
+export * from "./useGenreRemoteSearch";
+export * from "./useRemoteSearch";
+export * from "./useSearchQueryState";
+export * from "./useRegionGenreLexicon";
 export * from "./useGenreTreeViewState";
 export * from "./useVisibleGenrePlaylists";
 
@@ -42,6 +46,7 @@ export * from "./schemas/artist-detailed";
 export * from "./schemas/artist-genre-count";
 export * from "./schemas/album-minimum";
 export * from "./schemas/song-search";
+export * from "./schemas/genre-search";
 export * from "./schemas/song-history";
 export * from "./schemas/mb-artist";
 export * from "./schemas/mb-recording";
@@ -62,7 +67,7 @@ export * from "./schemas/track/minimum";
 export * from "./schemas/track-playlist-rel/without-playlist";
 
 // API domain contracts
-export { genreEndpoints, genreQueryKeys, genreUpdateMutationKey } from "./api/genres";
+export { genreEndpoints, genreQueryKeys, genreSearchQueryKeys, genreUpdateMutationKey } from "./api/genres";
 export { artistEndpoints, artistQueryKeys } from "./api/artists";
 export { genrePlaylistEndpoints, genrePlaylistQueryKeys } from "./api/genre-playlists";
 export { libraryEndpoints, libraryQueryKeys } from "./api/library";
@@ -73,5 +78,6 @@ export * from "./lib/formatting";
 export * from "./lib/genre-playlist-helpers";
 export * from "./lib/prune-genre-playlists-for-artist";
 export * from "./lib/genre-search";
+export * from "./lib/search-text";
 export * from "./lib/reparent-candidates";
 export * from "./lib/genre-songs-cache";

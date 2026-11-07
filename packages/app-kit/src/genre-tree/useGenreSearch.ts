@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { CriteriaPlaylistSimple } from "./schemas/criteria-playlist/simple";
 import { searchGenrePlaylistsByName } from "./lib/genre-search";
+import { useSearchQueryState } from "./useSearchQueryState";
 
 export interface UseGenreSearchOptions<T extends CriteriaPlaylistSimple = CriteriaPlaylistSimple> {
   genrePlaylists: T[];
@@ -23,33 +23,24 @@ export interface UseGenreSearchResult<T extends CriteriaPlaylistSimple = Criteri
   select: (genrePlaylist: T) => void;
 }
 
+/** In-memory genre search over already-loaded genre playlists. */
 export function useGenreSearch<T extends CriteriaPlaylistSimple = CriteriaPlaylistSimple>({
   genrePlaylists,
   onSelect,
   selectedName = null,
   onClear,
 }: UseGenreSearchOptions<T>): UseGenreSearchResult<T> {
-  const [query, setQuery] = useState(selectedName ?? "");
-  const [prevSelectedName, setPrevSelectedName] = useState(selectedName);
-  if (selectedName !== prevSelectedName) {
-    setPrevSelectedName(selectedName);
-    setQuery(selectedName ?? "");
-  }
-
-  const results = query !== "" && query !== selectedName ? searchGenrePlaylistsByName(genrePlaylists, query) : [];
+  const { query, setQuery, isTyping, canClear, clear, notifyPick } = useSearchQueryState({ selectedName, onClear });
+  const results = isTyping ? searchGenrePlaylistsByName(genrePlaylists, query) : [];
 
   return {
     query,
     setQuery,
     results,
-    canClear: query !== "" || selectedName !== null,
-    clear: () => {
-      setQuery("");
-      onClear?.();
-    },
+    canClear,
+    clear,
     select: (genrePlaylist) => {
-      // A new pick refills the query via the selectedName change; re-picking the shown genre does not change it.
-      setQuery(genrePlaylist.name === selectedName ? selectedName : "");
+      notifyPick(genrePlaylist.name);
       onSelect(genrePlaylist);
     },
   };

@@ -1,18 +1,11 @@
 "use client";
 
-import { keepPreviousData } from "@tanstack/react-query";
-
-import { useEffect, useState } from "react";
-
 import { usePlaybackContext } from "../transport/PlaybackContext";
-import { useFetchWrapper } from "../transport/useFetchWrapper";
-import { useQueryWithParse } from "../transport/lib/use-query-with-parse";
-import { SongSearchResultsSchema, type SongSearchResult } from "./schemas/song-search";
+import { SongSearchResultsSchema, type SongSearchParams, type SongSearchResult } from "./schemas/song-search";
 import { libraryEndpoints, libraryQueryKeys } from "./api/library";
+import { useRemoteSearch } from "./useRemoteSearch";
 
-const DEBOUNCE_MS = 250;
-const MIN_QUERY_LENGTH = 2;
-const RESULT_LIMIT = 8;
+const DEFAULT_RESULT_LIMIT = 8;
 
 export interface UseSongSearchResult {
   songs: SongSearchResult[];
@@ -23,34 +16,24 @@ export interface UseSongSearchResult {
   pending: boolean;
 }
 
-export function useSongSearch(getBackendBaseUrl: () => string, text: string): UseSongSearchResult {
+export function useSongSearch(
+  getBackendBaseUrl: () => string,
+  text: string,
+  options: Omit<SongSearchParams, "q"> = {},
+): UseSongSearchResult {
   const playback = usePlaybackContext();
-  const { fetch } = useFetchWrapper(getBackendBaseUrl);
-  const trimmed = text.trim();
-  const [query, setQuery] = useState("");
-  useEffect(() => {
-    const timer = setTimeout(() => setQuery(trimmed), DEBOUNCE_MS);
-    return () => clearTimeout(timer);
-  }, [trimmed]);
+  const { limit = DEFAULT_RESULT_LIMIT, genre, playable } = options;
+  const params = (q: string) => ({ q, limit, ...(genre && { genre }), ...(playable !== undefined && { playable }) });
 
-  const enabled = query.length >= MIN_QUERY_LENGTH && playback.ready;
-  const { data, isFetching, isError } = useQueryWithParse({
-    queryKey: [...libraryQueryKeys.reference.songs.search({ q: query, limit: RESULT_LIMIT }), ...(playback.key ? [playback.key] : [])],
-    queryFn: ({ signal }) =>
-      fetch(libraryEndpoints.reference.songs.search(), true, false, { signal }, { q: query, limit: RESULT_LIMIT }),
+  const { results, isError, settled, pending } = useRemoteSearch(getBackendBaseUrl, {
+    queryKey: (q) => [...libraryQueryKeys.reference.songs.search(params(q)), ...(playback.key ? [playback.key] : [])],
+    endpoint: libraryEndpoints.reference.songs.search(),
+    params,
     schema: SongSearchResultsSchema,
     context: "useSongSearch",
-    enabled,
-    placeholderData: playback.key === null ? keepPreviousData : undefined,
+    text,
+    enabled: playback.ready,
+    keepPrevious: playback.key === null,
   });
-
-  const settled = enabled && !isFetching && query === trimmed;
-  const failed = enabled && isError;
-
-  return {
-    songs: trimmed.length >= MIN_QUERY_LENGTH ? (data ?? []) : [],
-    isError: failed,
-    settled,
-    pending: trimmed.length >= MIN_QUERY_LENGTH && !settled && !failed,
-  };
+  return { songs: results, isError, settled, pending };
 }

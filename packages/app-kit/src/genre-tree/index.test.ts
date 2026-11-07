@@ -6,7 +6,11 @@ describe("genre-tree barrel", () => {
   it("re-exports data hooks and view-state hooks", () => {
     expect(genreTree.useGenreTreeViewState).toBeTypeOf("function");
     expect(genreTree.useGenreSearch).toBeTypeOf("function");
-    expect(genreTree.useArtist).toBeTypeOf("function");
+    expect(genreTree.useGenreRemoteSearch).toBeTypeOf("function");
+    expect(genreTree.useRemoteSearch).toBeTypeOf("function");
+    expect(genreTree.useSearchQueryState).toBeTypeOf("function");
+    expect(genreTree.useRegionGenreLexicon).toBeTypeOf("function");
+    expect(genreTree.rankByName).toBeTypeOf("function");    expect(genreTree.useArtist).toBeTypeOf("function");
     expect(genreTree.useArtistSearch).toBeTypeOf("function");
     expect(genreTree.useArtistGenreCounts).toBeTypeOf("function");
     expect(genreTree.useVisibleGenrePlaylists).toBeTypeOf("function");
