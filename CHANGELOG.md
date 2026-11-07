@@ -11,6 +11,19 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- `GenreSearchResultSchema` has `wikidataId` (`string | null`), served by `genres/search/`; requires a grow-api that returns it.
+- app-kit-ui: `GenreTreeView` accepts `onSearchQueryChange(text)` and `onSearchFocus()`, and always reports the typed text, so a host can resolve its own `extraSearchGroups` (previously only when it had groups at mount).
+
+### Changed
+
+- `useRemoteSearch` replaces `keepPrevious` with `scope`: previous results stay while the next query loads only as long as the scope is unchanged.
+
+### Fixed
+
+- `useSongSearch` no longer empties its results on every keystroke while a playback key is set (`LinkSongsDialog`, tree song search): the playback key is now the scope.
+
 ## [33.2.0] - 2026-11-07
 
 ### Added

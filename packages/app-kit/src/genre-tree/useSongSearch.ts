@@ -33,7 +33,7 @@ export function useSongSearch(
     context: "useSongSearch",
     text,
     enabled: playback.ready,
-    keepPrevious: playback.key === null,
+    scope: playback.key ?? "",
   });
   return { songs: results, isError, settled, pending };
 }
