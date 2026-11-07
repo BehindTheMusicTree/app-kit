@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [34.0.0] - 2026-11-07
+
 ### Breaking
 
 - Reference genre detail/tree parsers require explicit catalogue and playlist summaries from the updated Grow API. Personal (`me`) responses retain their existing contract.
