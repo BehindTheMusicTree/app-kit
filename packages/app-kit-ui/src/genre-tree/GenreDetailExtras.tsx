@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { PanelSection, Skeleton } from "@behindthemusictree/ui";
 import { z } from "zod";
 
+import type { GenreMusicSelection } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaOverview } from "@behindthemusictree/app-kit/genre-tree";
 import { Scope } from "@behindthemusictree/app-kit/transport";
 import { useFetchGenreOverview } from "@behindthemusictree/app-kit/genre-tree";
@@ -25,6 +26,7 @@ export type GenreDetailSlots<O extends CriteriaOverview> = {
 export type GenreDetailExtrasProps<O extends CriteriaOverview> = GenreDetailSlots<O> & GenrePlaylistTracksSlots & {
   genreUuid: GenreUuid;
   genrePlaylist: CriteriaPlaylistMinimum;
+  selection?: GenreMusicSelection;
   wikidataId?: string | null;
   scope: Scope;
   getBackendBaseUrl: () => string;
@@ -43,6 +45,7 @@ export type GenreDetailExtrasProps<O extends CriteriaOverview> = GenreDetailSlot
 export function GenreDetailExtras<O extends CriteriaOverview>({
   genreUuid,
   genrePlaylist,
+  selection,
   wikidataId,
   scope,
   getBackendBaseUrl,
@@ -141,6 +144,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
       <GenrePlaylistTracks
         genreUuid={genreUuid}
         genrePlaylist={genrePlaylist}
+        selection={selection}
         scope={scope}
         getBackendBaseUrl={getBackendBaseUrl}
         renderArtistLink={renderArtistLink}

@@ -16,6 +16,8 @@ import { Maximize2, Minimize2 } from "lucide-react";
 
 import {
   useFetchGenreDetail,
+  genreMusicCount,
+  GenrePlaylistSummarySchema,
   type CriteriaMinimum,
   type CriteriaOverview,
   type GenreUuid,
@@ -93,7 +95,7 @@ export function GenreDetailPanel<O extends CriteriaOverview>({
         id: detail.uuid,
         parentId: detail.parent?.uuid ?? null,
         name: detail.name,
-        itemCount: detail.tracksCount,
+        itemCount: scope === "reference" ? genreMusicCount(GenrePlaylistSummarySchema.parse(detail.criteriaPlaylist)) : detail.tracksCount,
         wikidataId: detail.wikidataId,
       } satisfies GenreTreeNode,
       fill: rootColor,
@@ -103,7 +105,7 @@ export function GenreDetailPanel<O extends CriteriaOverview>({
         relative(ascendant, index === 0 ? null : ancestors[index - 1].ascendant.uuid),
       ),
     };
-  }, [detail]);
+  }, [detail, scope]);
 
   if (isError) {
     return (
@@ -164,7 +166,8 @@ export function GenreDetailPanel<O extends CriteriaOverview>({
       <GenreInfoPanelBody<O>
         family={<>{family}{ancestors}</>}
         genreUuid={detail.uuid}
-        genrePlaylist={{ ...detail.criteriaPlaylist, tracksCount: detail.tracksCount }}
+        genrePlaylist={scope === "reference" ? GenrePlaylistSummarySchema.parse(detail.criteriaPlaylist) : { ...detail.criteriaPlaylist, tracksCount: detail.tracksCount }}
+        catalogue={detail.catalogue}
         wikidataId={detail.wikidataId}
         scope={scope}
         getBackendBaseUrl={getBackendBaseUrl}

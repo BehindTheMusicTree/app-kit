@@ -33,6 +33,7 @@ export {
   TrackListOriginFromTrack,
   TrackListOriginFromCriteriaPlaylist,
   TrackListOriginFromArtist,
+  TrackListOriginFromGenreCatalogue,
 } from "./models/TrackListOrigin";
 export type { ArtistTrackListOriginInput, ArtistSongsOrdering } from "./models/TrackListOrigin";
 export * from "./models/TrackListOriginType";
@@ -40,6 +41,7 @@ export * from "./models/TrackListOriginType";
 // Schemas / domain types
 export * from "./schemas/uuid-resource";
 export * from "./schemas/ids";
+export * from "./schemas/genre-music";
 export * from "./schemas/artist-minimum";
 export * from "./schemas/artist-search";
 export * from "./schemas/artist-detailed";
@@ -81,3 +83,6 @@ export * from "./lib/genre-search";
 export * from "./lib/search-text";
 export * from "./lib/reparent-candidates";
 export * from "./lib/genre-songs-cache";
+
+export * from "./schemas/reference-genre";
+export * from "./lib/genre-music-selection";

@@ -2,56 +2,48 @@
 
 import { useCallback, useMemo } from "react";
 import {
-  TrackListOriginType,
-  useTrackList,
-  type CriteriaPlaylistMinimum,
-  type CriteriaPlaylistSimple,
-  type TrackBase,
-  type TrackListOriginFromArtist,
+  TrackListOriginType, useTrackList, GenreCatalogueCountsSchema,
+  defaultGenreMusicSelection, genreMusicSelectionKey,
+  type CriteriaPlaylistMinimum, type CriteriaPlaylistSimple, type TrackBase,
+  type TrackListOriginFromCriteriaPlaylist,
 } from "@behindthemusictree/app-kit/genre-tree";
 import type { Scope } from "@behindthemusictree/app-kit/transport";
 
-/** What a play button needs of a playlist; `criteria` is only read when playing one artist's songs in the genre. */
 export type PlayableGenrePlaylistInput = CriteriaPlaylistMinimum & { criteria?: CriteriaPlaylistSimple["criteria"] };
-
-/** What a tree node's play button plays, and which node is the one currently playing. */
 export type GenrePlaylistPlayback = {
   playingNodeId: string | null;
   play: (genrePlaylist: PlayableGenrePlaylistInput) => Promise<void>;
 };
-
 export type UseGenrePlaylistPlaybackOptions = {
   scope: Scope;
   genrePlaylists: CriteriaPlaylistSimple[];
-  /** When set, nodes play only this artist's songs in the genre's subtree instead of the whole genre playlist. */
   artist?: { uuid: string; name: string } | null;
 };
 
 export function useGenrePlaylistPlayback<T extends TrackBase = TrackBase>({
-  scope,
-  genrePlaylists,
-  artist = null,
+  scope, genrePlaylists, artist = null,
 }: UseGenrePlaylistPlaybackOptions): GenrePlaylistPlayback {
-  const { trackList, playNewTrackListFromGenrePlaylist, playNewTrackListFromArtist } = useTrackList<T>();
+  const { trackList, playNewTrackListFromGenrePlaylist } = useTrackList<T>();
   const origin = trackList?.origin;
-
   const playingNodeId = useMemo(() => {
-    if (!origin) return null;
-    if (!artist) return origin.type === TrackListOriginType.GENRE_PLAYLIST ? origin.uuid : null;
-    if (origin.type !== TrackListOriginType.ARTIST || origin.uuid !== artist.uuid) return null;
-    const { genreUuid } = origin as TrackListOriginFromArtist;
-    return genreUuid ? (genrePlaylists.find((gp) => gp.criteria?.uuid === genreUuid)?.uuid ?? null) : null;
-  }, [origin, artist, genrePlaylists]);
+    if (!origin || origin.type !== TrackListOriginType.GENRE_PLAYLIST || origin.scope !== scope) return null;
+    const playlistOrigin = origin as TrackListOriginFromCriteriaPlaylist;
+    if (playlistOrigin.artistUuid !== artist?.uuid) return null;
+    const playlist = genrePlaylists.find((item) => item.uuid === origin.uuid) ?? playlistOrigin.criteriaPlaylist;
+    const expected = scope === "reference" && playlist && !("criteria" in playlist && playlist.criteria === null)
+      ? defaultGenreMusicSelection(GenreCatalogueCountsSchema.parse(playlist)) : undefined;
+    if (playlistOrigin.selection && expected && genreMusicSelectionKey(playlistOrigin.selection).join() !== genreMusicSelectionKey(expected).join()) return null;
+    return origin.uuid;
+  }, [origin, artist, genrePlaylists, scope]);
 
-  const play = useCallback(
-    async (genrePlaylist: PlayableGenrePlaylistInput) => {
-      if (!artist) return playNewTrackListFromGenrePlaylist(genrePlaylist, scope);
-      // Genre-less songs have no genre to filter on.
-      if (!genrePlaylist.criteria) return;
-      return playNewTrackListFromArtist(artist, scope, { ordering: "title", genreUuid: genrePlaylist.criteria.uuid });
-    },
-    [artist, scope, playNewTrackListFromGenrePlaylist, playNewTrackListFromArtist],
-  );
+  const play = useCallback(async (playlist: PlayableGenrePlaylistInput) => {
+    if (artist && !playlist.criteria) return;
+    const selection = scope === "reference" && playlist.criteria !== null
+      ? defaultGenreMusicSelection(GenreCatalogueCountsSchema.parse(playlist)) : undefined;
+    return selection || artist
+      ? playNewTrackListFromGenrePlaylist(playlist, scope, { selection, ...(artist && { artistUuid: artist.uuid }) })
+      : playNewTrackListFromGenrePlaylist(playlist, scope);
+  }, [artist, scope, playNewTrackListFromGenrePlaylist]);
 
   return useMemo(() => ({ playingNodeId, play }), [playingNodeId, play]);
 }

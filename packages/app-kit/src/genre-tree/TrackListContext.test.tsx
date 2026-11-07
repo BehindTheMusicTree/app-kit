@@ -44,7 +44,7 @@ vi.mock("./TrackListSidebarVisibilityContext", () => ({
 import { TrackListProvider, useTrackList, useListTracks } from "./TrackListContext";
 import type { TrackBase } from "./schemas/track/base";
 import { TrackListOriginType } from "./models/TrackListOriginType";
-import { makeGenrePlaylistUuid } from "./testing";
+import { makeGenrePlaylistUuid, makeGenreUuid } from "./testing";
 
 const playback = vi.hoisted(() => ({ key: null as string | null, ready: true, snapshot: () => ({ key: playback.key, country: null }) }));
 vi.mock("../transport/PlaybackContext", () => ({ usePlaybackContext: () => playback }));
@@ -530,7 +530,7 @@ describe("TrackListContext", () => {
         await result.current.playNewTrackListFromArtist(artist, "reference", { ordering: "-albumYear" });
       });
 
-      expect(warnSpy).toHaveBeenCalledWith("No playable songs found for artist");
+      expect(warnSpy).toHaveBeenCalledWith("No playable songs found in catalogue");
       expect(result.current.trackList).toBeNull();
 
       warnSpy.mockRestore();
@@ -548,7 +548,79 @@ describe("TrackListContext", () => {
     });
   });
 
+  describe("playNewTrackListFromGenreCatalogue", () => {
+    it("uses catalogue pages for songs absent from playlist membership, preserving scope and anchor", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      const genre = { uuid: makeGenreUuid("g1"), name: "Jazz" };
+      const selection = { coverage: "genreAndSubgenres" as const, subgenres: "regional" as const };
+      fetchMock
+        .mockResolvedValueOnce(makeArtistPage(makeTracks(20), { next: true, total: 21 }))
+        .mockResolvedValueOnce(makeArtistPage(makeTracks(1, "u"), { page: 2, total: 21 }));
+      await act(async () => {
+        await result.current.playNewTrackListFromGenreCatalogue(genre, "reference", { startSongUuid: "t0", selection });
+      });
+      await act(async () => { await result.current.loadMore(); });
+      expect(result.current.trackList?.tracks).toHaveLength(21);
+      expect(result.current.trackList?.origin).toMatchObject({ type: TrackListOriginType.GENRE_CATALOGUE, genre, selection, from: "t0" });
+      for (const [index, call] of fetchMock.mock.calls.entries()) {
+        expect(call[0]).toBe("library/songs/");
+        expect(call[4]).toEqual({ genre: genre.uuid, playable: true, ordering: "title", page: index + 1, pageSize: 100, from: "t0", coverage: "genre_and_subgenres", subgenres: "regional" });
+      }
+      expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t0");
+    });
+
+    it("retains catalogue selection when a country change excludes the current anchor", async () => {
+      playback.key = "FR:1";
+      const { result, rerender } = renderHook(() => useTrackList(), { wrapper });
+      const genre = { uuid: makeGenreUuid("g1"), name: "Jazz" };
+      const selection = { coverage: "genreAndSubgenres" as const, subgenres: "regional" as const };
+      fetchMock.mockResolvedValueOnce(makeArtistPage(makeTracks(1)));
+      await act(async () => { await result.current.playNewTrackListFromGenreCatalogue(genre, "reference", { selection }); });
+      fetchMock.mockRejectedValueOnce(new BackendError(ErrorCode.BACKEND_NOT_FOUND))
+        .mockResolvedValueOnce(makeArtistPage([makeTrack("t2", "Available")]));
+      playback.key = "AL:2";
+      rerender();
+      await waitFor(() => expect(result.current.selectedTrack?.uuid).toBe("t2"));
+      expect(fetchMock.mock.calls[1][4]).toMatchObject({ from: "t0", coverage: "genre_and_subgenres", subgenres: "regional" });
+      expect(fetchMock).toHaveBeenLastCalledWith("library/songs/", true, false, {}, {
+        genre: genre.uuid, playable: true, ordering: "title", page: 1, pageSize: 100,
+        coverage: "genre_and_subgenres", subgenres: "regional",
+      }, false, false, true);
+    });
+
+    it("rejects personal scope before fetching", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      await expect(result.current.playNewTrackListFromGenreCatalogue({ uuid: makeGenreUuid("g1"), name: "Jazz" }, "me")).rejects.toThrow("reference scope");
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+  });
+
   describe("playNewTrackListFromGenrePlaylist", () => {
+    it("keeps selection, artist and anchor on every membership page", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      fetchMock
+        .mockResolvedValueOnce(makePage(makeTracks(3, "b"), { page: 1, next: true, total: 250 }))
+        .mockResolvedValueOnce(makePage(makeTracks(1, "u"), { page: 2, total: 250 }));
+      const selection = { coverage: "genreAndSubgenres" as const, subgenres: "regional" as const };
+      await act(async () => {
+        await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "reference", { startSongUuid: "b0", selection, artistUuid: "a1" });
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      for (const [index, call] of fetchMock.mock.calls.entries()) {
+        expect(call[0]).toBe(`genre-playlists/${genrePlaylist.uuid}/tracks/`);
+        expect(call[4]).toEqual({ page: index + 1, pageSize: 100, from: "b0", artist: "a1", coverage: "genre_and_subgenres", subgenres: "regional" });
+      }
+      expect(result.current.trackList?.origin).toMatchObject({ selection, artistUuid: "a1", from: "b0" });
+    });
+
+    it("rejects selection parameters in personal scope", async () => {
+      const { result } = renderHook(() => useTrackList(), { wrapper });
+      await act(async () => {
+        await expect(result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", { selection: { coverage: "genreOnly" } })).rejects.toThrow("reference scope");
+      });
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
     it("fetches the first reference page, selects the first track, shows the sidebar, and loads it", async () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
       const [trackA, trackB] = makeTracks(2);

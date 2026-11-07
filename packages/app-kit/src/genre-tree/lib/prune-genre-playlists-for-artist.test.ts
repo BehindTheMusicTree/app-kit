@@ -11,10 +11,14 @@ const make = (uuid: string, name: string, parent: string | null = null) =>
     root: { uuid: parent ?? uuid },
     criteria: { uuid: `c-${uuid}` },
     tracksCount: 100,
+    genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: 100, regional: 0, all: 100 },
+    catalogue: { genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: 100, regional: 0, all: 100 } },
   }) as unknown as CriteriaPlaylistSimple;
 
 const count = (genrePlaylist: string, songsCount: number, tracksCount = songsCount) =>
-  ({ genrePlaylist, songsCount, tracksCount }) as unknown as ArtistGenreCount;
+  ({ genrePlaylist, songsCount, tracksCount,
+    genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: tracksCount, regional: 0, all: tracksCount },
+    catalogue: { genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: songsCount, regional: 0, all: songsCount } } }) as unknown as ArtistGenreCount;
 
 const pop = make("pop", "Mainstream Pop");
 const rock = make("rock", "Rock", "pop");

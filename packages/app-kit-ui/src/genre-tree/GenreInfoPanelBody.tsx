@@ -3,10 +3,16 @@
 import type { ComponentProps, ReactNode } from "react";
 
 import {
+  genreMusicCount,
+  defaultGenreMusicSelection,
+  GenreCatalogueCountsSchema,
+  type GenreCatalogueCounts,
+  type GenrePlaylistSummary,
   type CriteriaOverview,
   type CriteriaPlaylistMinimum,
   type GenreUuid,
 } from "@behindthemusictree/app-kit/genre-tree";
+import { useTrackNoun } from "@behindthemusictree/app-kit/track-noun";
 import { usePlayer } from "@behindthemusictree/app-kit/player";
 import type { Scope } from "@behindthemusictree/app-kit/transport";
 
@@ -15,7 +21,7 @@ import { GenreDetailExtras, type GenreDetailExtrasProps } from "./GenreDetailExt
 import type { GenrePlaylistPlayback } from "./playlist-tree/useGenrePlaylistPlayback";
 
 /** What the action band reads of a genre's playlist: enough to play it and to know whether it can be. */
-export type PlayableGenrePlaylist = CriteriaPlaylistMinimum & { tracksCount: number };
+export type PlayableGenrePlaylist = (CriteriaPlaylistMinimum & { tracksCount: number }) | GenrePlaylistSummary;
 
 type GenreNodeActionBandProps = Omit<ComponentProps<typeof GenreActionBand>, "onPlayPause" | "isPlaying"> & {
   genrePlaylist: PlayableGenrePlaylist;
@@ -37,7 +43,7 @@ export function GenreNodeActionBand({ genrePlaylist, playback, ...bandProps }: G
   return (
     <GenreActionBand
       {...bandProps}
-      onPlayPause={genrePlaylist.tracksCount > 0 ? handlePlayPause : undefined}
+      onPlayPause={("genreOnlyTracksCount" in genrePlaylist ? genreMusicCount(genrePlaylist) : genrePlaylist.tracksCount) > 0 ? handlePlayPause : undefined}
       isPlaying={isCurrentTrackList && isPlaying}
     />
   );
@@ -48,6 +54,7 @@ export type GenreInfoPanelBodyProps<O extends CriteriaOverview> = {
   toolbar?: ReactNode;
   family: ReactNode;
   genreUuid: GenreUuid;
+  catalogue?: GenreCatalogueCounts;
   genrePlaylist: PlayableGenrePlaylist;
   wikidataId?: string | null;
   scope: Scope;
@@ -68,6 +75,7 @@ export function GenreInfoPanelBody<O extends CriteriaOverview>({
   family,
   genreUuid,
   genrePlaylist,
+  catalogue,
   wikidataId,
   scope,
   getBackendBaseUrl,
@@ -75,16 +83,32 @@ export function GenreInfoPanelBody<O extends CriteriaOverview>({
   band,
   extras,
 }: GenreInfoPanelBodyProps<O>) {
+  const noun = useTrackNoun();
+  const summary = scope === "reference" ? GenreCatalogueCountsSchema.parse(genrePlaylist) : undefined;
+  const selection = summary ? defaultGenreMusicSelection(summary) : undefined;
+  const describeCounts = (counts: GenreCatalogueCounts) => {
+    const scopes = counts.genreAndSubgenresTracksCount;
+    return "canonical" in scopes
+      ? `${counts.genreOnlyTracksCount} this genre only · ${scopes.canonical} with canonical subgenres · ${scopes.regional} with regional subgenres · ${scopes.all} with all subgenres`
+      : `${counts.genreOnlyTracksCount} this genre only · ${scopes.all} with subgenres`;
+  };
   return (
     <>
       {toolbar}
       <GenreNodeActionBand {...band} genrePlaylist={genrePlaylist} playback={playback} />
+      {summary && catalogue && (
+        <div className="px-3.5 py-3 text-sm text-[var(--color-text)]">
+          <p>Catalogue {noun.plural}: {describeCounts(catalogue)}</p>
+          <p>Playlist {noun.plural}: {describeCounts(summary)}</p>
+        </div>
+      )}
       <GenreDetailExtras<O>
         {...extras}
         key={genreUuid}
         family={family}
         genreUuid={genreUuid}
         genrePlaylist={genrePlaylist}
+        selection={selection}
         wikidataId={wikidataId}
         scope={scope}
         getBackendBaseUrl={getBackendBaseUrl}

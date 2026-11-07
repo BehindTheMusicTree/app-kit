@@ -1,5 +1,6 @@
 export enum TrackListOriginType {
   TRACK = "TRACK",
   GENRE_PLAYLIST = "GENRE_PLAYLIST",
+  GENRE_CATALOGUE = "GENRE_CATALOGUE",
   ARTIST = "ARTIST",
 }

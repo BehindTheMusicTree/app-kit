@@ -33,6 +33,23 @@ Pieces are decoupled from any single app: `PlayerProvider` takes an injected `lo
 `useAuthCallback` takes injected pathnames and handlers, and track lists take an optional
 `renderArtistLink`.
 
+## Genre music summaries
+
+Reference genre detail and tree hooks require separate catalogue and playlist counts:
+`genreOnlyTracksCount` and `genreAndSubgenresTracksCount`. Canonical genres expose inclusive
+`canonical`, `regional`, and `all` counts; regional genres expose `all`. Inclusive counts already
+contain the genre itself, and `all` is a deduplicated union. Personal playlists retain their
+existing count contract.
+
+`GenreMusicSelection` selects `genreOnly` or `genreAndSubgenres` with a subgenre scope. Use
+`genreMusicCount` for the corresponding count and `genreMusicQueryParams` for API parameters.
+Reference playback defaults to canonical subgenres for canonical genres and all subgenres for
+regional genres. Playlist playback intersects actual members, including when filtered by artist;
+the detail panel's song list describes the catalogue. Catalogue row playback uses
+`playNewTrackListFromGenreCatalogue` (or the artist catalogue when filtered), so a playable
+catalogue song need not belong to the genre playlist. Country availability can further restrict
+the playback queue without changing global counts.
+
 ## Development
 
 ```bash
