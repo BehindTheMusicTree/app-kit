@@ -11,9 +11,18 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- `useRemoteSearch`, the debounced typeahead core (`SEARCH_DEBOUNCE_MS`, `SEARCH_QUERY_MIN_LENGTH`) that `useArtistSearch`, `useSongSearch` and the new `useGenreRemoteSearch` (`genres/search/`) are built on.
+- `useRegionGenreLexicon` and `RegionGenreLexiconSchema` for `regions/map/genres/`.
+- `foldSearchText`, `trigramSimilarity` and `rankByName`: accent-folded, ranked (exact, prefix, substring, fuzzy) local matching.
+- `useSearchQueryState`, the query/selection state behind `useGenreSearch`, reusable with any result source.
+- `useSongSearch` accepts `limit`, `genre` and `playable` options.
+
 ### Changed
 
-- Require UI ^0.17.2 for consistent detail panel scrollbars.
+- `searchGenrePlaylistsByName` (and so `useGenreSearch`) ranks matches and ignores accents instead of listing substring matches in tree order.
+- Require UI ^0.18.0 for the `SearchCombobox` primitive.
 
 ## [33.1.0] - 2026-11-06
 
