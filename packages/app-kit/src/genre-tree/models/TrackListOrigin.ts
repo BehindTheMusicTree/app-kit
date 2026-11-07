@@ -63,3 +63,16 @@ export class TrackListOriginFromArtist extends TrackListOrigin {
     super(TrackListOriginType.ARTIST, artist.name, artist.uuid, scope);
   }
 }
+
+export class TrackListOriginFromGenreCatalogue extends TrackListOrigin {
+  constructor(
+    public genre: { uuid: GenreUuid; name: string },
+    scope: Scope,
+    public from?: string,
+    public selection?: GenreMusicSelection,
+  ) {
+    super(TrackListOriginType.GENRE_CATALOGUE, genre.name, genre.uuid, scope);
+  }
+  readonly ordering = "title";
+  get genreUuid() { return this.genre.uuid; }
+}

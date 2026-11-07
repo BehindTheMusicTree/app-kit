@@ -11,6 +11,14 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- Separate reference genre catalogue and playlist counts, preserve explicit subgenre selections through playback, and size artist trees from playlist membership.
+
+### Fixed
+
+- Play genre catalogue rows through the catalogue, including playable songs outside playlist membership; genre Play continues to queue playlist members.
+
 ## [33.3.0] - 2026-11-07
 
 ### Added
@@ -30,7 +38,6 @@ easy to spot when bumping.
 
 ### Added
 
-- Separate reference genre catalogue and playlist counts, preserve explicit subgenre selections through playback, and size artist trees from playlist membership.
 - `useRemoteSearch`, the debounced typeahead core (`SEARCH_DEBOUNCE_MS`, `SEARCH_QUERY_MIN_LENGTH`) that `useArtistSearch`, `useSongSearch` and the new `useGenreRemoteSearch` (`genres/search/`) are built on.
 - `useRegionGenreLexicon` and `RegionGenreLexiconSchema` for `regions/map/genres/`.
 - `foldSearchText`, `trigramSimilarity` and `rankByName`: accent-folded, ranked (exact, prefix, substring, fuzzy) local matching.

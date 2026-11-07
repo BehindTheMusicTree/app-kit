@@ -77,7 +77,7 @@ export type GenrePlaylistTracksProps = GenrePlaylistTracksSlots & {
 
 /**
  * "reference" lists the genre's whole songs catalogue (genre subtree), playable or not, while
- * playing goes through the playable-only playlist. Other scopes have no catalogue endpoint; their
+ * row playback uses the playable catalogue. The genre Play action uses playlist members. Other scopes have no catalogue endpoint; their
  * playlist is the catalogue (e.g. hear's uploaded tracks are always playable).
  */
 export function GenrePlaylistTracks({
@@ -93,7 +93,7 @@ export function GenrePlaylistTracks({
   renderTracksToolbar,
   artist = null,
 }: GenrePlaylistTracksProps) {
-  const { fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist, playNewTrackListFromArtist } = useTrackList();
+  const { fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist, playNewTrackListFromArtist, playNewTrackListFromGenreCatalogue } = useTrackList();
   const { session, sessionRestored } = useSession();
   const { playerTrackObject, playState, handlePlayPauseAction } = usePlayer();
   const { showPopup } = usePopup();
@@ -151,9 +151,9 @@ export function GenrePlaylistTracks({
       ? playNewTrackListFromArtist(artist, scope, {
         startSongUuid, ordering: "title", genreUuid, ...(selection && { selection }),
       })
-      : playNewTrackListFromGenrePlaylist(genrePlaylist, scope, {
-        startSongUuid, ...(selection && { selection }),
-      });
+      : scope === "reference"
+        ? playNewTrackListFromGenreCatalogue({ uuid: genreUuid, name: genrePlaylist.name }, scope, { startSongUuid, ...(selection && { selection }) })
+        : playNewTrackListFromGenrePlaylist(genrePlaylist, scope, { startSongUuid });
     started.catch((error) => {
       console.error("Failed to play genre playlist:", error);
       showPopup(<InternalErrorPopup errorCode={ErrorCode.CLIENT_UNKNOWN} />);

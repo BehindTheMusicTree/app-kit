@@ -33,6 +33,7 @@ export {
   TrackListOriginFromTrack,
   TrackListOriginFromCriteriaPlaylist,
   TrackListOriginFromArtist,
+  TrackListOriginFromGenreCatalogue,
 } from "./models/TrackListOrigin";
 export type { ArtistTrackListOriginInput, ArtistSongsOrdering } from "./models/TrackListOrigin";
 export * from "./models/TrackListOriginType";

@@ -60,12 +60,13 @@ describe("GenrePlaylistTracks", () => {
   const fetchGenrePlaylistTracksPage = vi.fn();
   const playNewTrackListFromGenrePlaylist = vi.fn().mockResolvedValue(undefined);
   const playNewTrackListFromArtist = vi.fn().mockResolvedValue(undefined);
+  const playNewTrackListFromGenreCatalogue = vi.fn().mockResolvedValue(undefined);
   const handlePlayPauseAction = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
     playbackMock.mockReturnValue({ key: null, ready: true });
-    useTrackListMock.mockReturnValue({ fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist, playNewTrackListFromArtist });
+    useTrackListMock.mockReturnValue({ fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist, playNewTrackListFromArtist, playNewTrackListFromGenreCatalogue });
     usePlayerMock.mockReturnValue({ playerTrackObject: null, playState: PlayStates.STOPPED, handlePlayPauseAction });
     vi.stubGlobal(
       "IntersectionObserver",
@@ -120,7 +121,8 @@ describe("GenrePlaylistTracks", () => {
 
     expect(fetchMock).toHaveBeenLastCalledWith("library/songs/", true, false, {}, { genre: makeGenreUuid("g1"), pageSize: 100, withTotal: false, cursor: "CUR2" });
     expect(fetchGenrePlaylistTracksPage).not.toHaveBeenCalled();
-    expect(playNewTrackListFromGenrePlaylist).toHaveBeenCalledWith(genrePlaylist, "reference", { startSongUuid: "b0" });
+    expect(playNewTrackListFromGenreCatalogue).toHaveBeenCalledWith({ uuid: makeGenreUuid("g1"), name: "Jazz" }, "reference", { startSongUuid: "b0" });
+    expect(playNewTrackListFromGenrePlaylist).not.toHaveBeenCalled();
   });
 
   it("restarts the catalogue when playback context changes", async () => {
@@ -214,7 +216,7 @@ describe("GenrePlaylistTracks", () => {
   it("lists artists, logs and shows an error popup when playing fails", async () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const failure = new Error("boom");
-    playNewTrackListFromGenrePlaylist.mockRejectedValueOnce(failure);
+    playNewTrackListFromGenreCatalogue.mockRejectedValueOnce(failure);
     fetchMock.mockResolvedValueOnce(songsPage([{ uuid: "t1", title: "Song", artists: [{ uuid: "x", name: "A" }, { uuid: "y", name: "B" }] }]));
 
     renderTracks();
