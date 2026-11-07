@@ -18,10 +18,12 @@ easy to spot when bumping.
 - `foldSearchText`, `trigramSimilarity` and `rankByName`: accent-folded, ranked (exact, prefix, substring, fuzzy) local matching.
 - `useSearchQueryState`, the query/selection state behind `useGenreSearch`, reusable with any result source.
 - `useSongSearch` accepts `limit`, `genre` and `playable` options.
+- app-kit-ui: `SearchBox` (a `SearchCombobox` over any number of `SearchGroup`s) with the `useArtistSearchGroup`, `useSongSearchGroup` and `useGenreRemoteSearchGroup` hooks, and `GenreTreeView` `extraSearchGroups` to add host-provided groups (e.g. places).
 
 ### Changed
 
 - `searchGenrePlaylistsByName` (and so `useGenreSearch`) ranks matches and ignores accents instead of listing substring matches in tree order.
+- app-kit-ui: `GenreSearch` is built on `SearchBox`; `GenreSearchExtraGroup` is now an alias of `SearchGroup`. `GenreSearch` gains `onFocus`.
 - Require UI ^0.18.0 for the `SearchCombobox` primitive.
 
 ## [33.1.0] - 2026-11-06
