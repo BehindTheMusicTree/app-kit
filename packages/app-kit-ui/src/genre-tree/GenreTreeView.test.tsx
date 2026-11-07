@@ -247,6 +247,19 @@ describe("GenreTreeView", () => {
     );
   });
 
+  it("reports the typed search text and focus to the host", () => {
+    const onSearchQueryChange = vi.fn();
+    const onSearchFocus = vi.fn();
+    renderView({ onSearchQueryChange, onSearchFocus });
+
+    const input = screen.getByRole("combobox");
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: "bossa" } });
+
+    expect(onSearchFocus).toHaveBeenCalled();
+    expect(onSearchQueryChange).toHaveBeenCalledWith("bossa");
+  });
+
   it("calls handleGenreCreationAction(null) when Add root is clicked", () => {
     const handleGenreCreationAction = vi.fn();
     renderView({ handleGenreCreationAction });
