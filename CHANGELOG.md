@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Breaking
+
+- Reference genre detail/tree parsers require explicit catalogue and playlist summaries from the updated Grow API. Personal (`me`) responses retain their existing contract.
+
 ### Added
 
 - Separate reference genre catalogue and playlist counts, preserve explicit subgenre selections through playback, and size artist trees from playlist membership.

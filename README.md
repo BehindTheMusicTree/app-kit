@@ -45,7 +45,9 @@ existing count contract.
 `genreMusicCount` for the corresponding count and `genreMusicQueryParams` for API parameters.
 Reference playback defaults to canonical subgenres for canonical genres and all subgenres for
 regional genres. Playlist playback intersects actual members, including when filtered by artist;
-the detail panel's song list describes the catalogue. Catalogue row playback uses `playNewTrackListFromGenreCatalogue` (or the artist catalogue when filtered), so a playable catalogue song need not belong to the genre playlist. Country availability can further restrict
+the detail panel's song list describes the catalogue. Catalogue row playback uses
+`playNewTrackListFromGenreCatalogue` (or the artist catalogue when filtered), so a playable
+catalogue song need not belong to the genre playlist. Country availability can further restrict
 the playback queue without changing global counts.
 
 ## Development
