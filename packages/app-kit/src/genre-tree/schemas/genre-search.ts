@@ -9,6 +9,8 @@ export const GenreSearchResultSchema = z.object({
   /** Criteria (genre) uuid. */
   uuid: GenreUuidSchema,
   name: z.string(),
+  /** Null for app-created genres, which the Wikidata-keyed region index does not reference. */
+  wikidataId: z.string().nullable(),
   treeName: z.string(),
   /** Null when the genre has no playlist in the tree, so it cannot be opened there. */
   genrePlaylistUuid: GenrePlaylistUuidSchema.nullable(),
