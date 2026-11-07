@@ -36,7 +36,8 @@ const detail = {
   ],
   root,
   children: [{ uuid: makeGenreUuid("brittany"), name: "Music of Brittany" }],
-  criteriaPlaylist: { uuid: makeGenrePlaylistUuid("p"), name: "Music of France" },
+  criteriaPlaylist: { uuid: makeGenrePlaylistUuid("p"), name: "Music of France", genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { all: 4 } },
+  catalogue: { genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { all: 4 } },
   tracksCount: 4,
 };
 

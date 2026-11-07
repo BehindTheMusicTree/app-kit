@@ -1,5 +1,7 @@
 "use client";
 
+import { genrePlaylistTrackCount } from "@behindthemusictree/app-kit/genre-tree";
+
 import { useCallback, useMemo } from "react";
 import {
   GenreTree,
@@ -82,7 +84,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
         id: genrePlaylist.uuid,
         parentId: genrePlaylist.parent?.uuid ?? null,
         name: genrePlaylist.name,
-        itemCount: genrePlaylist.tracksCount,
+        itemCount: genrePlaylistTrackCount(genrePlaylist),
         actionable: Boolean(genrePlaylist.criteria),
         side: genrePlaylist.criteria?.side ?? undefined,
         wikidataId: genrePlaylist.criteria?.wikidataId ?? null,
@@ -101,7 +103,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
         return;
       }
 
-      if (genrePlaylist.tracksCount === 0) {
+      if (genrePlaylistTrackCount(genrePlaylist) === 0) {
         return;
       }
 

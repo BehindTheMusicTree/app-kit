@@ -15,7 +15,7 @@ const isNotFound = (error: Error | null) => error instanceof AppError && error.c
 export function useArtistGenreCounts(artistUuid: string | null, getBackendBaseUrl: () => string) {
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
   return useQueryWithParse({
-    queryKey: artistQueryKeys.genreCounts(getBackendBaseUrl(), artistUuid),
+    queryKey: [...artistQueryKeys.genreCounts(getBackendBaseUrl(), artistUuid), "genreMusicV1"],
     // A missing artist is shown in the artist panel, not raised as an app-wide connectivity error.
     queryFn: () => fetch(artistEndpoints.genreCounts(artistUuid as string), true, false, undefined, undefined, false, true),
     schema: z.array(ArtistGenreCountSchema),

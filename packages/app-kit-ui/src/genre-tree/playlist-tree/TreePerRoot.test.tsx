@@ -30,7 +30,7 @@ vi.mock("@behindthemusictree/app-kit/popup", async (importOriginal) => ({
 
 // Mutated per-test to drive `usePlayer`/`useTrackList`'s mocked return values.
 let isPlaying = false;
-let trackList: { origin: { type: TrackListOriginType; uuid: string } } | null = null;
+let trackList: { origin: { type: TrackListOriginType; scope: "reference"; uuid: string } } | null = null;
 
 vi.mock("@behindthemusictree/app-kit/genre-tree", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
@@ -66,6 +66,8 @@ const genrePlaylist: CriteriaPlaylistSimple = {
   parent: null,
   root: { uuid: playlistUuid, name: "Electronic" },
   tracksCount: 3,
+  genreOnlyTracksCount: 0,
+  genreAndSubgenresTracksCount: { canonical: 3, regional: 0, all: 3 },
   viewsCount: 0,
   createdOn: "2026-06-20T20:24:17.718222Z",
   updatedOn: "2026-06-20T20:24:17.718222Z",
@@ -131,7 +133,7 @@ describe("GenrePlaylistTreePerRoot", () => {
 
   describe("handlePlayPause", () => {
     it("toggles play state when the node is already the playing track list's origin", () => {
-      trackList = { origin: { type: TrackListOriginType.GENRE_PLAYLIST, uuid: playlistUuid } };
+      trackList = { origin: { type: TrackListOriginType.GENRE_PLAYLIST, scope: "reference", uuid: playlistUuid } };
       isPlaying = true;
       renderTree();
 
@@ -147,7 +149,7 @@ describe("GenrePlaylistTreePerRoot", () => {
 
       capturedProps!.onPlayPause!(playlistUuid);
 
-      expect(playNewTrackListFromGenrePlaylist).toHaveBeenCalledWith(genrePlaylist, "reference");
+      expect(playNewTrackListFromGenrePlaylist).toHaveBeenCalledWith(genrePlaylist, "reference", { selection: { coverage: "genreAndSubgenres", subgenres: "canonical" } });
     });
 
     it("logs an error and shows a popup when loading the tracks fails", async () => {
@@ -169,7 +171,7 @@ describe("GenrePlaylistTreePerRoot", () => {
     });
 
     it("does nothing for an empty genre playlist", () => {
-      renderTree([{ ...genrePlaylist, tracksCount: 0 }]);
+      renderTree([{ ...genrePlaylist, tracksCount: 0, genreAndSubgenresTracksCount: { canonical: 0, regional: 0, all: 0 } }]);
 
       capturedProps!.onPlayPause!(playlistUuid);
 

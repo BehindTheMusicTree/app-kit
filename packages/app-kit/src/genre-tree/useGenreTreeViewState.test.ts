@@ -34,6 +34,8 @@ const makePlaylist = (
     root: { uuid: overrides.root ?? uuid },
     criteria: overrides.criteria === false ? null : { uuid: `c-${uuid}` },
     isUnacceptedRoot: overrides.isUnacceptedRoot ?? false,
+    genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: 3, regional: 0, all: 3 },
+    catalogue: { genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: 3, regional: 0, all: 3 } },
   }) as unknown as CriteriaPlaylistSimple;
 
 const pop = makePlaylist("pop", "Mainstream Pop");
@@ -188,7 +190,10 @@ describe("useGenreTreeViewState", () => {
     const counts = [
       { genrePlaylist: "pop", songsCount: 2, tracksCount: 1 },
       { genrePlaylist: "rock", songsCount: 2, tracksCount: 1 },
-    ];
+    ].map((row) => ({ ...row,
+      genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: row.tracksCount, regional: 0, all: row.tracksCount },
+      catalogue: { genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: row.songsCount, regional: 0, all: row.songsCount } },
+    }));
 
     it("keeps the current tree and reports fetching while counts load", () => {
       const { result } = renderHook(() => useGenreTreeViewState({ ...options, artistUuid }));

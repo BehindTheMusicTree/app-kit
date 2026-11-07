@@ -191,7 +191,7 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
 
   it("reports the playing node id when the track list is a genre playlist", () => {
     useTrackListMock.mockReturnValue({
-      trackList: { origin: { type: "GENRE_PLAYLIST", uuid: makeGenrePlaylistUuid("gp1") } },
+      trackList: { origin: { type: "GENRE_PLAYLIST", scope: "me", uuid: makeGenrePlaylistUuid("gp1") } },
       playNewTrackListFromGenrePlaylist: vi.fn(),
     });
     renderWheelRadialPopCore();
@@ -220,7 +220,7 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
       const setIsPlaying = vi.fn();
       usePlayerMock.mockReturnValue({ isPlaying: false, setIsPlaying });
       useTrackListMock.mockReturnValue({
-        trackList: { origin: { type: "GENRE_PLAYLIST", uuid: makeGenrePlaylistUuid("gp1") } },
+        trackList: { origin: { type: "GENRE_PLAYLIST", scope: "me", uuid: makeGenrePlaylistUuid("gp1") } },
         playNewTrackListFromGenrePlaylist: vi.fn(),
       });
       renderWheelRadialPopCore();

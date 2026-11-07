@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { GenreCatalogueCountsSchema, GenrePlaylistSummarySchema } from "../genre-music";
 
 import { GenreUuidSchema } from "../ids";
 import { CriteriaMinimumSchema } from "./minimum";
@@ -18,7 +19,8 @@ export const CriteriaDetailedSchema = z.object({
   descendants: z.array(CriteriaLineageRelWithoutAscendantSchema),
   root: CriteriaMinimumSchema,
   children: z.array(CriteriaMinimumSchema),
-  criteriaPlaylist: CriteriaPlaylistMinimumSchema,
+  catalogue: GenreCatalogueCountsSchema.optional(),
+  criteriaPlaylist: z.union([GenrePlaylistSummarySchema, CriteriaPlaylistMinimumSchema]),
   tracks: z.array(TrackMinimumSchema),
   essentialSongs: z.array(TrackMinimumSchema),
   tracksCount: z.number(),

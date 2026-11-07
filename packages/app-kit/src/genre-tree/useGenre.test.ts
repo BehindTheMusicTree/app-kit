@@ -157,7 +157,7 @@ describe("useGenre", () => {
       renderHook(() => useFetchGenreDetail(makeGenreUuid("g1"), "reference", getBackendBaseUrl));
       const { queryKey, enabled, queryFn } = useQueryWithParseMock.mock.calls[0][0];
 
-      expect(queryKey).toEqual(["referenceGenres", "detail", makeGenreUuid("g1")]);
+      expect(queryKey).toEqual(["referenceGenres", "detail", makeGenreUuid("g1"), "https://backend.example.com", "genreMusicV1"]);
       expect(enabled).toBe(true);
 
       queryFn();

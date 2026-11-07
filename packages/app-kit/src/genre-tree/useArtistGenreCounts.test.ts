@@ -37,7 +37,7 @@ describe("useArtistGenreCounts", () => {
     renderHook(() => useArtistGenreCounts(uuid, getBackendBaseUrl));
     const options = useQueryWithParseMock.mock.calls[0][0];
 
-    expect(options.queryKey).toEqual(["artistGenreCounts", "https://backend.example.com", uuid]);
+    expect(options.queryKey).toEqual(["artistGenreCounts", "https://backend.example.com", uuid, "genreMusicV1"]);
     expect(options.enabled).toBe(true);
     await options.queryFn();
     expect(fetchMock).toHaveBeenCalledWith(`artists/${uuid}/genre-counts/`, true, false, undefined, undefined, false, true);
@@ -46,7 +46,9 @@ describe("useArtistGenreCounts", () => {
   it("parses the sparse camelCase payload", () => {
     renderHook(() => useArtistGenreCounts(uuid, getBackendBaseUrl));
     const { schema } = useQueryWithParseMock.mock.calls[0][0];
-    const row = { genrePlaylist: "b1e6a1c8-0e3d-4d3d-9d2e-2f6c1a2b3c4d", songsCount: 3, tracksCount: 2 };
+    const row = { genrePlaylist: "b1e6a1c8-0e3d-4d3d-9d2e-2f6c1a2b3c4d", songsCount: 3, tracksCount: 2,
+      genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: 2, regional: 1, all: 2 },
+      catalogue: { genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: 3, regional: 1, all: 3 } } };
 
     expect(schema.parse([row])).toEqual([row]);
     expect(() => schema.parse([{ ...row, songsCount: -1 }])).toThrow();
