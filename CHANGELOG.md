@@ -13,7 +13,7 @@ easy to spot when bumping.
 
 ### Changed
 
-- Require UI 0.17.2 or later for consistent detail panel scrollbars.
+- Require UI ^0.17.2 for consistent detail panel scrollbars.
 
 ## [33.1.0] - 2026-11-06
 
