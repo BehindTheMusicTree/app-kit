@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [33.3.0] - 2026-11-07
+
 ### Added
 
 - `GenreSearchResultSchema` has `wikidataId` (`string | null`), served by `genres/search/`; requires a grow-api that returns it.
