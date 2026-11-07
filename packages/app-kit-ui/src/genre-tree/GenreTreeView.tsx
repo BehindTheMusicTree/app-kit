@@ -27,9 +27,6 @@ import type {
 import {
   CriteriaMinimum,
   CriteriaPlaylistSimple,
-  useArtistSearch,
-  useSongSearch,
-  isSongSearchResultPlayable,
   type ArtistSearchResult,
   type RenderSongLink,
   type SongSearchResult,
@@ -48,7 +45,8 @@ import GenrePlaylistTreePerRoot from "./playlist-tree/TreePerRoot";
 import GenrePlaylistTreeWheel from "./playlist-tree/TreeWheel";
 import GenrePlaylistTreeWheelRadialPopCore, { type GenreFocusProps } from "./playlist-tree/TreeWheelRadialPopCore";
 import { GenreTreeWheelHandoff } from "./GenreTreeWheelHandoff";
-import GenreSearch, { type GenreSearchExtraGroup } from "./GenreSearch";
+import GenreSearch from "./GenreSearch";
+import { useArtistSearchGroup, useSongSearchGroup, type SearchGroup } from "./search";
 import { GenreInfoPanelBody } from "./GenreInfoPanelBody";
 import ChangeParentPopup, { type ParentChange } from "./ChangeParentPopup";
 import { useArtistPanel } from "./artist/useArtistPanel";
@@ -105,6 +103,8 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   /** When true, hides the "Add root" button and suppresses per-node
    * create/rename affordances, for a read-only consumer. Defaults to false. */
   readOnly?: boolean;
+  /** Further result groups (e.g. places) shown in the search box next to genres, artists and songs. */
+  extraSearchGroups?: SearchGroup[];
   /** Root element classes; the component adds no outer margin. */
   className?: string;
   /** Shows the "Tree display options" group (e.g. Rotation). Defaults to true. */
@@ -202,6 +202,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   artistExpanded: controlledArtistExpanded,
   onArtistExpandedChange,
   getShareUrl,
+  extraSearchGroups = [],
   artistSearch = true,
   onArtistSelect,
   artistSearchBaseUrl,
@@ -466,72 +467,27 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
 
   const { showPopup, hidePopup } = usePopup();
   const [searchText, setSearchText] = useState("");
-  const artistSearchResult = useArtistSearch(artistBaseUrl, artistSearch ? searchText : "");
-  const artistGroup: GenreSearchExtraGroup | undefined = artistSearch
-    ? {
-        key: "artists",
-        label: "Artists",
-        items: artistSearchResult.artists.map((artist) => ({
-          key: artist.uuid,
-          content: (
-            <>
-              <span className="block truncate font-medium">
-                {artist.name}
-                {artist.disambiguation && (
-                  <span className="font-normal text-[var(--color-neutral-500)]"> · {artist.disambiguation}</span>
-                )}
-              </span>
-              {artist.matchedAlias && (
-                <span className="block truncate text-xs text-[var(--color-neutral-500)]">
-                  also known as {artist.matchedAlias}
-                </span>
-              )}
-            </>
-          ),
-          onSelect: () => {
-            openArtist(artist.uuid);
-            onArtistSelect?.(artist);
-          },
-        })),
-        status: artistSearchResult.isError
-          ? "Search failed"
-          : artistSearchResult.settled && artistSearchResult.artists.length === 0
-            ? "No artists found"
-            : "",
-        loading: artistSearchResult.pending,
-      }
-    : undefined;
-  const songSearchResult = useSongSearch(songBaseUrl, songSearch ? searchText : "");
-  const songGroup: GenreSearchExtraGroup | undefined = songSearch
-    ? {
-        key: "songs",
-        label: "Songs",
-        items: songSearchResult.songs.map((song) => ({
-          key: song.uuid,
-          content: (
-            <span className={isSongSearchResultPlayable(song) ? undefined : "opacity-60"}>
-              <span className="block truncate font-medium">{song.title}</span>
-              <span className="block truncate text-xs text-[var(--color-neutral-500)]">
-                {[song.artists.map((artist) => artist.name).join(", "), song.genre?.name ?? "No genre"]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </span>
-            </span>
-          ),
-          onSelect: () => {
-            openSong(song.uuid);
-            onSongSelect?.(song);
-          },
-        })),
-        status: songSearchResult.isError
-          ? "Search failed"
-          : songSearchResult.settled && songSearchResult.songs.length === 0
-            ? "No songs found"
-            : "",
-        loading: songSearchResult.pending,
-      }
-    : undefined;
-  const extraGroups = [artistGroup, songGroup].filter((group): group is GenreSearchExtraGroup => group !== undefined);
+  const artistGroup = useArtistSearchGroup(
+    artistBaseUrl,
+    searchText,
+    (artist) => {
+      openArtist(artist.uuid);
+      onArtistSelect?.(artist);
+    },
+    Boolean(artistSearch),
+  );
+  const songGroup = useSongSearchGroup(
+    songBaseUrl,
+    searchText,
+    (song) => {
+      openSong(song.uuid);
+      onSongSelect?.(song);
+    },
+    Boolean(songSearch),
+  );
+  const extraGroups = [...extraSearchGroups, artistGroup, songGroup].filter(
+    (group): group is SearchGroup => group !== undefined,
+  );
   const handleSelectedNodeChange = (node: { id: string } | null) => {
     if (node !== null && songUuid !== null) changeSong(null);
     selectNode(node);
@@ -789,7 +745,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                 : handleGenreSearchClear
           }
           onPrevious={handlePrevious}
-          onQueryChange={artistSearch || songSearch ? setSearchText : undefined}
+          onQueryChange={artistSearch || songSearch || extraSearchGroups.length > 0 ? setSearchText : undefined}
           extraGroups={extraGroups}
         />
       )}
