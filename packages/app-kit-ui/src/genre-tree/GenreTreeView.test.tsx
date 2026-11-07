@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { screen, fireEvent, act, cleanup, waitFor, within } from "@testing-library/react";
 import { render } from "../test-utils";
@@ -258,6 +258,23 @@ describe("GenreTreeView", () => {
 
     expect(onSearchFocus).toHaveBeenCalled();
     expect(onSearchQueryChange).toHaveBeenCalledWith("bossa");
+  });
+
+  it("keeps host search groups and typing updates inside the search subtree", async () => {
+    const queries: string[] = [];
+    function Groups({ query, children }: { query: string; children: (groups: import("./search").SearchGroup[]) => ReactNode }) {
+      queries.push(query);
+      return children([]);
+    }
+    renderView({ SearchGroups: Groups });
+    treePerRootPropsMock.mockClear();
+    treeWheelPropsMock.mockClear();
+    treeWheelRadialPopCorePropsMock.mockClear();
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "bossa" } });
+    await waitFor(() => expect(queries).toContain("bossa"));
+    expect(treePerRootPropsMock).not.toHaveBeenCalled();
+    expect(treeWheelPropsMock).not.toHaveBeenCalled();
+    expect(treeWheelRadialPopCorePropsMock).not.toHaveBeenCalled();
   });
 
   it("calls handleGenreCreationAction(null) when Add root is clicked", () => {

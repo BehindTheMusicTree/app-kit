@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ComponentProps, type ComponentType, type ReactNode } from "react";
 import { useIsMutating } from "@tanstack/react-query";
 import { z } from "zod";
 import { Plus } from "lucide-react";
@@ -45,8 +45,8 @@ import GenrePlaylistTreePerRoot from "./playlist-tree/TreePerRoot";
 import GenrePlaylistTreeWheel from "./playlist-tree/TreeWheel";
 import GenrePlaylistTreeWheelRadialPopCore, { type GenreFocusProps } from "./playlist-tree/TreeWheelRadialPopCore";
 import { GenreTreeWheelHandoff } from "./GenreTreeWheelHandoff";
-import GenreSearch from "./GenreSearch";
-import { useArtistSearchGroup, useSongSearchGroup, type SearchGroup } from "./search";
+import { GenreTreeSearch, type GenreSearchGroupsProps } from "./GenreTreeSearch";
+import { type SearchGroup } from "./search";
 import { GenreInfoPanelBody } from "./GenreInfoPanelBody";
 import ChangeParentPopup, { type ParentChange } from "./ChangeParentPopup";
 import { useArtistPanel } from "./artist/useArtistPanel";
@@ -105,6 +105,8 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   readOnly?: boolean;
   /** Further result groups (e.g. places) shown in the search box next to genres, artists and songs. */
   extraSearchGroups?: SearchGroup[];
+  /** Host search hooks run inside this subtree, so typing does not rerender the tree page. */
+  SearchGroups?: ComponentType<GenreSearchGroupsProps>;
   /** Fires with the typed search text (empty when cleared), so a host can drive its own `extraSearchGroups`. */
   onSearchQueryChange?: (text: string) => void;
   /** Fires when the search box gains focus, e.g. to load data for `extraSearchGroups` lazily. */
@@ -207,6 +209,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   onArtistExpandedChange,
   getShareUrl,
   extraSearchGroups = [],
+  SearchGroups,
   onSearchQueryChange,
   onSearchFocus,
   artistSearch = true,
@@ -472,28 +475,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       : undefined;
 
   const { showPopup, hidePopup } = usePopup();
-  const [searchText, setSearchText] = useState("");
-  const artistGroup = useArtistSearchGroup(
-    artistBaseUrl,
-    searchText,
-    (artist) => {
-      openArtist(artist.uuid);
-      onArtistSelect?.(artist);
-    },
-    Boolean(artistSearch),
-  );
-  const songGroup = useSongSearchGroup(
-    songBaseUrl,
-    searchText,
-    (song) => {
-      openSong(song.uuid);
-      onSongSelect?.(song);
-    },
-    Boolean(songSearch),
-  );
-  const extraGroups = [...extraSearchGroups, artistGroup, songGroup].filter(
-    (group): group is SearchGroup => group !== undefined,
-  );
   const handleSelectedNodeChange = (node: { id: string } | null) => {
     if (node !== null && songUuid !== null) changeSong(null);
     selectNode(node);
@@ -737,7 +718,14 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const actions = (
     <>
       {!isLoading && (
-        <GenreSearch
+        <GenreTreeSearch
+          artistBaseUrl={artistBaseUrl}
+          songBaseUrl={songBaseUrl}
+          artistSearch={Boolean(artistSearch)}
+          songSearch={Boolean(songSearch)}
+          onArtistSelect={(artist) => { openArtist(artist.uuid); onArtistSelect?.(artist); }}
+          onSongSelect={(song) => { openSong(song.uuid); onSongSelect?.(song); }}
+          SearchGroups={SearchGroups}
           genrePlaylists={visibleGenrePlaylists}
           onSelect={handleGenreSearchSelect}
           selectedName={
@@ -752,12 +740,9 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                 : handleGenreSearchClear
           }
           onPrevious={handlePrevious}
-          onQueryChange={(text) => {
-            setSearchText(text);
-            onSearchQueryChange?.(text);
-          }}
+          onQueryChange={onSearchQueryChange}
           onFocus={onSearchFocus}
-          extraGroups={extraGroups}
+          extraGroups={extraSearchGroups}
         />
       )}
       {!isLoading && filterArtist && (

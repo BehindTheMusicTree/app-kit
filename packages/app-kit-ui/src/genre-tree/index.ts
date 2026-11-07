@@ -31,3 +31,5 @@ export { default as TrackPositionPlayPause } from "./TrackPositionPlayPause";
 export type { TrackPositionPlayPauseProps } from "./TrackPositionPlayPause";
 export { default as Rating } from "./Rating";
 export type { RatingProps } from "./Rating";
+
+export type { GenreSearchGroupsProps } from "./GenreTreeSearch";
