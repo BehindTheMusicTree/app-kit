@@ -105,6 +105,10 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   readOnly?: boolean;
   /** Further result groups (e.g. places) shown in the search box next to genres, artists and songs. */
   extraSearchGroups?: SearchGroup[];
+  /** Fires with the typed search text (empty when cleared), so a host can drive its own `extraSearchGroups`. */
+  onSearchQueryChange?: (text: string) => void;
+  /** Fires when the search box gains focus, e.g. to load data for `extraSearchGroups` lazily. */
+  onSearchFocus?: () => void;
   /** Root element classes; the component adds no outer margin. */
   className?: string;
   /** Shows the "Tree display options" group (e.g. Rotation). Defaults to true. */
@@ -203,6 +207,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   onArtistExpandedChange,
   getShareUrl,
   extraSearchGroups = [],
+  onSearchQueryChange,
+  onSearchFocus,
   artistSearch = true,
   onArtistSelect,
   artistSearchBaseUrl,
@@ -745,7 +751,11 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                 : handleGenreSearchClear
           }
           onPrevious={handlePrevious}
-          onQueryChange={artistSearch || songSearch || extraSearchGroups.length > 0 ? setSearchText : undefined}
+          onQueryChange={(text) => {
+            setSearchText(text);
+            onSearchQueryChange?.(text);
+          }}
+          onFocus={onSearchFocus}
           extraGroups={extraGroups}
         />
       )}
