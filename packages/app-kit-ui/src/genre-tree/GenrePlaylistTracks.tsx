@@ -93,7 +93,7 @@ export function GenrePlaylistTracks({
   renderTracksToolbar,
   artist = null,
 }: GenrePlaylistTracksProps) {
-  const { fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist } = useTrackList();
+  const { fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist, playNewTrackListFromArtist } = useTrackList();
   const { session, sessionRestored } = useSession();
   const { playerTrackObject, playState, handlePlayPauseAction } = usePlayer();
   const { showPopup } = usePopup();
@@ -147,9 +147,13 @@ export function GenrePlaylistTracks({
   const total = pages[0]?.total ?? undefined;
 
   const play = (startSongUuid: string) => {
-    const started = playNewTrackListFromGenrePlaylist(genrePlaylist, scope, {
-      startSongUuid, ...(selection && { selection }), ...(artist && { artistUuid: artist.uuid }),
-    });
+    const started = artist
+      ? playNewTrackListFromArtist(artist, scope, {
+        startSongUuid, ordering: "title", genreUuid, ...(selection && { selection }),
+      })
+      : playNewTrackListFromGenrePlaylist(genrePlaylist, scope, {
+        startSongUuid, ...(selection && { selection }),
+      });
     started.catch((error) => {
       console.error("Failed to play genre playlist:", error);
       showPopup(<InternalErrorPopup errorCode={ErrorCode.CLIENT_UNKNOWN} />);

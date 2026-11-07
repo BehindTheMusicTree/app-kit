@@ -38,7 +38,7 @@ vi.mock("@behindthemusictree/app-kit/auth", async (importOriginal) => ({
 
 import { GenrePlaylistTracks } from "./GenrePlaylistTracks";
 import { PlayStates } from "@behindthemusictree/app-kit/player";
-import type { RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
+import type { GenreMusicSelection, RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
 import { makeGenrePlaylistUuid, makeGenreUuid } from "@behindthemusictree/app-kit/genre-tree/testing";
 
 const genrePlaylist = { uuid: makeGenrePlaylistUuid("p1"), name: "Jazz" };
@@ -84,6 +84,7 @@ describe("GenrePlaylistTracks", () => {
     scope: "me" | "reference" = "reference",
     renderArtistLink?: RenderArtistLink,
     artist?: { uuid: string; name: string },
+    selection?: GenreMusicSelection,
   ) =>
     render(
       <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -94,6 +95,7 @@ describe("GenrePlaylistTracks", () => {
           getBackendBaseUrl={() => "https://b"}
           renderArtistLink={renderArtistLink}
           artist={artist}
+          selection={selection}
         />
       </QueryClientProvider>,
     );
@@ -158,11 +160,12 @@ describe("GenrePlaylistTracks", () => {
     expect(await screen.findByRole("button", { name: "Play Song b0" })).toBeInTheDocument();
   });
 
-  it("lists and plays only the artist's songs in the genre when an artist is set", async () => {
+  it("plays an artist catalogue song independently of playlist membership", async () => {
     const artist = { uuid: "a1", name: "Band" };
     fetchMock.mockResolvedValueOnce(songsPage(makeTracks(1, "x")));
 
-    renderTracks("reference", undefined, artist);
+    const selection = { coverage: "genreAndSubgenres" as const, subgenres: "regional" as const };
+    renderTracks("reference", undefined, artist, selection);
 
     fireEvent.click(await screen.findByRole("button", { name: "Play Song x0" }));
 
@@ -171,13 +174,12 @@ describe("GenrePlaylistTracks", () => {
       true,
       false,
       {},
-      { genre: makeGenreUuid("g1"), artist: "a1", pageSize: 100, withTotal: false },
+      { genre: makeGenreUuid("g1"), artist: "a1", coverage: "genre_and_subgenres", subgenres: "regional", pageSize: 100, withTotal: false },
     );
-    expect(playNewTrackListFromGenrePlaylist).toHaveBeenCalledWith(genrePlaylist, "reference", {
-      startSongUuid: "x0",
-      artistUuid: "a1",
+    expect(playNewTrackListFromArtist).toHaveBeenCalledWith(artist, "reference", {
+      startSongUuid: "x0", ordering: "title", genreUuid: makeGenreUuid("g1"), selection,
     });
-    expect(playNewTrackListFromArtist).not.toHaveBeenCalled();
+    expect(playNewTrackListFromGenrePlaylist).not.toHaveBeenCalled();
   });
 
   it("shows a dash for an empty catalogue and no count when the total is null", async () => {
