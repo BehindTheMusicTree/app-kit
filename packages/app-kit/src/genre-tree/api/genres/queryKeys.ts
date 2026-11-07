@@ -1,4 +1,5 @@
 import type { GenreUuid } from "../../schemas/ids";
+import type { GenreSearchParams } from "../../schemas/genre-search";
 
 export const genreQueryKeys = {
   me: {
@@ -15,6 +16,11 @@ export const genreQueryKeys = {
     byWikidataId: (qid: string) => ["referenceGenres", "byWikidataId", qid] as const,
     overview: (id: GenreUuid) => ["referenceGenres", "overview", id] as const,
   },
+};
+
+export const genreSearchQueryKeys = {
+  search: (params: GenreSearchParams) => ["genreSearch", params] as const,
+  regionLexicon: () => ["regionGenreLexicon"] as const,
 };
 
 export const genreUpdateMutationKey = ["genres", "update"] as const;

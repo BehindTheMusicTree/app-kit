@@ -12,4 +12,6 @@ const makeGenreEndpoints = (prefix: string) => ({
 export const genreEndpoints = {
   me: makeGenreEndpoints("me/"),
   reference: makeGenreEndpoints(""),
+  search: () => "genres/search/",
+  regionLexicon: () => "regions/map/genres/",
 };
