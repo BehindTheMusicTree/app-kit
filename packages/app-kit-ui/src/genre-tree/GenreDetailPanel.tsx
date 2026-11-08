@@ -19,6 +19,7 @@ import {
   genreMusicCount,
   GenrePlaylistSummarySchema,
   GenreCatalogueCountsSchema,
+  CriteriaMinimumSchema,
   type CriteriaPlaylistSimple,
   type CriteriaMinimum,
   type CriteriaOverview,
@@ -147,8 +148,9 @@ export function useGenreDetailContent<O extends CriteriaOverview>({
       <GenreInfoPanelBody<O>
         family={<>{family}{!expanded && ancestors}</>}
         genreUuid={detail.uuid}
-        genrePlaylist={hostPlaylist ?? (detail.criteriaPlaylist === null ? null : scope === "reference" ? GenrePlaylistSummarySchema.parse(detail.criteriaPlaylist) : { ...detail.criteriaPlaylist, tracksCount: detail.tracksCount })}
+        genrePlaylist={hostPlaylist ?? (detail.criteriaPlaylist === null ? null : scope === "reference" ? { ...GenrePlaylistSummarySchema.parse(detail.criteriaPlaylist), criteria: CriteriaMinimumSchema.parse(detail) } : { ...detail.criteriaPlaylist, criteria: CriteriaMinimumSchema.parse(detail), tracksCount: detail.tracksCount })}
         catalogue={detail.catalogue}
+        countsContext={!hostPlaylist && extras?.artist ? "all artists" : undefined}
         wikidataId={detail.wikidataId}
         scope={scope}
         getBackendBaseUrl={getBackendBaseUrl}

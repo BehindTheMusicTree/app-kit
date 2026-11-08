@@ -2,19 +2,23 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, fireEvent } from "@testing-library/react";
 import { render } from "../test-utils";
 
-const { useFetchGenreDetailMock } = vi.hoisted(() => ({ useFetchGenreDetailMock: vi.fn() }));
+const { useFetchGenreDetailMock, bodyMock } = vi.hoisted(() => ({ useFetchGenreDetailMock: vi.fn(), bodyMock: vi.fn() }));
 
 vi.mock("@behindthemusictree/app-kit/genre-tree", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useFetchGenreDetail: () => useFetchGenreDetailMock(),
 }));
 vi.mock("./GenreInfoPanelBody", () => ({
-  GenreInfoPanelBody: ({ band, family }: { band: { onZoomIn?: () => void }; family: React.ReactNode }) => (
+  GenreInfoPanelBody: (props: { band: { onZoomIn?: () => void }; family: React.ReactNode }) => {
+    bodyMock(props);
+    const { band, family } = props;
+    return (
     <div>
       {family}
       {band.onZoomIn && <button onClick={band.onZoomIn}>Focus</button>}
     </div>
-  ),
+  );
+  },
 }));
 vi.mock("./playlist-tree/useGenrePlaylistPlayback", () => ({
   useGenrePlaylistPlayback: () => ({ playingNodeId: null, play: vi.fn() }),
@@ -83,6 +87,14 @@ describe("GenreDetailPanel", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Hide panel" }));
     expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps entity metadata for artist-filtered playback outside the tree", () => {
+    renderPanel({ extras: { artist: { uuid: "artist", name: "Artist" } } });
+    expect(bodyMock).toHaveBeenLastCalledWith(expect.objectContaining({
+      genrePlaylist: expect.objectContaining({ criteria: expect.objectContaining({ uuid: detail.uuid }) }),
+      countsContext: "all artists",
+    }));
   });
 
   it("renders the genre's name", () => {

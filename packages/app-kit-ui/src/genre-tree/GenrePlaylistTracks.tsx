@@ -170,7 +170,9 @@ export function GenrePlaylistTracks({
     <PanelSection title={`${capitalize(trackNoun.plural)}${total !== undefined ? ` (${total})` : ""}`}>
       <div>
       {renderTracksToolbar?.()}
-      {isPending ? (
+      {scope === "me" && !genrePlaylist ? (
+        <p>—</p>
+      ) : isPending ? (
         <Skeleton className="h-4 w-3/4" aria-busy="true" />
       ) : isError && tracks.length === 0 ? (
         <p role="alert">

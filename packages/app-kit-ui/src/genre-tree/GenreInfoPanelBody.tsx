@@ -55,6 +55,7 @@ export type GenreInfoPanelBodyProps<O extends CriteriaOverview> = {
   family: ReactNode;
   genreUuid: GenreUuid;
   catalogue?: GenreCatalogueCounts;
+  countsContext?: string;
   genrePlaylist: PlayableGenrePlaylist | null;
   wikidataId?: string | null;
   scope: Scope;
@@ -76,6 +77,7 @@ export function GenreInfoPanelBody<O extends CriteriaOverview>({
   genreUuid,
   genrePlaylist,
   catalogue,
+  countsContext,
   wikidataId,
   scope,
   getBackendBaseUrl,
@@ -98,8 +100,8 @@ export function GenreInfoPanelBody<O extends CriteriaOverview>({
       {genrePlaylist ? <GenreNodeActionBand {...band} genrePlaylist={genrePlaylist} playback={playback} /> : <GenreActionBand {...band} />}
       {summary && catalogue && (
         <div className="px-3.5 py-3 text-sm text-[var(--color-text)]">
-          <p>Catalogue {noun.plural}: {describeCounts(catalogue)}</p>
-          {genrePlaylist && <p>Playlist {noun.plural}: {describeCounts(summary)}</p>}
+          <p>Catalogue {noun.plural}{countsContext ? ` (${countsContext})` : ""}: {describeCounts(catalogue)}</p>
+          {genrePlaylist && <p>Playlist {noun.plural}{countsContext ? ` (${countsContext})` : ""}: {describeCounts(summary)}</p>}
         </div>
       )}
       <GenreDetailExtras<O>

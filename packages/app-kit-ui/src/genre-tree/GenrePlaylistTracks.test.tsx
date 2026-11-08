@@ -103,6 +103,13 @@ describe("GenrePlaylistTracks", () => {
       </QueryClientProvider>,
     );
 
+  it("shows an empty personal list without a playlist instead of loading forever", () => {
+    renderTracks("me", undefined, undefined, undefined, null);
+    expect(screen.getByText("—")).toBeInTheDocument();
+    expect(fetchGenrePlaylistTracksPage).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("lists the genre catalogue page by page and plays from the clicked song", async () => {
     const page1 = makeTracks(2, "a");
     const page2 = makeTracks(2, "b");
