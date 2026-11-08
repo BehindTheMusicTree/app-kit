@@ -70,3 +70,69 @@ export function rankByName<T>(
   );
   return scored.map((entry) => entry.item);
 }
+
+
+export type NameIndex<T> = readonly {
+  item: T;
+  name: string;
+  grams: ReadonlySet<string>;
+  views: number;
+}[];
+
+/** Build once per immutable item collection, rather than folding every name on each keystroke. */
+export function createNameIndex<T>(
+  items: readonly T[],
+  getName: (item: T) => string,
+  getViews?: (item: T) => number,
+): NameIndex<T> {
+  return items.map((item) => {
+    const name = foldSearchText(getName(item));
+    return { item, name, grams: trigrams(name), views: getViews?.(item) ?? 0 };
+  });
+}
+
+/** Same ranking and stable tie order as rankByName; a limit keeps only the best requested entries. */
+export function rankNameIndex<T>(index: NameIndex<T>, query: string, limit = Infinity): T[] {
+  if (limit !== Infinity && (!Number.isInteger(limit) || limit < 0)) {
+    throw new RangeError("Search limit must be a nonnegative integer or Infinity");
+  }
+  const folded = foldSearchText(query);
+  if (!folded || limit === 0) return [];
+  const queryGrams = trigrams(folded);
+  const scored: { item: T; tier: number; similarity: number; views: number; name: string }[] = [];
+  const compare = (a: (typeof scored)[number], b: (typeof scored)[number]) =>
+    a.tier - b.tier || b.similarity - a.similarity || b.views - a.views || a.name.localeCompare(b.name);
+  for (const entry of index) {
+    let tier: number;
+    let similarity = 0;
+    if (entry.name === folded) tier = TIER_EXACT;
+    else if (entry.name.startsWith(folded)) tier = TIER_PREFIX;
+    else if (entry.name.includes(folded)) tier = TIER_SUBSTRING;
+    else {
+      let shared = 0;
+      for (const gram of queryGrams) if (entry.grams.has(gram)) shared++;
+      const union = entry.grams.size + queryGrams.size - shared;
+      similarity = union === 0 ? 0 : shared / union;
+      if (similarity < FUZZY_MIN_SIMILARITY) continue;
+      tier = TIER_FUZZY;
+    }
+    const candidate = { ...entry, tier, similarity };
+    if (limit === Infinity) scored.push(candidate);
+    else {
+      // Insert after ties so equal names/views retain the input order, just like stable Array.sort.
+      let low = 0;
+      let high = scored.length;
+      while (low < high) {
+        const mid = (low + high) >>> 1;
+        if (compare(candidate, scored[mid]) < 0) high = mid;
+        else low = mid + 1;
+      }
+      if (low < limit) {
+        scored.splice(low, 0, candidate);
+        if (scored.length > limit) scored.pop();
+      }
+    }
+  }
+  if (limit === Infinity) scored.sort(compare);
+  return scored.map((entry) => entry.item);
+}

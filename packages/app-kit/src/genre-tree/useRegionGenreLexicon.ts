@@ -5,6 +5,8 @@ import { useQueryWithParse } from "../transport/lib/use-query-with-parse";
 import { genreEndpoints, genreSearchQueryKeys } from "./api/genres";
 import { RegionGenreLexiconSchema, type RegionGenreLexiconEntry } from "./schemas/genre-search";
 
+const EMPTY_ENTRIES: RegionGenreLexiconEntry[] = [];
+
 /** Every genre the region map index references, loaded once on demand (`regions/map/genres/`). */
 export function useRegionGenreLexicon(getBackendBaseUrl: () => string, enabled: boolean) {
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
@@ -16,6 +18,6 @@ export function useRegionGenreLexicon(getBackendBaseUrl: () => string, enabled: 
     enabled,
     staleTime: Infinity,
   });
-  const entries: RegionGenreLexiconEntry[] = data ?? [];
+  const entries: RegionGenreLexiconEntry[] = data ?? EMPTY_ENTRIES;
   return { entries, isError, isPending: enabled && isPending };
 }

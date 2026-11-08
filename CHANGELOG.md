@@ -11,6 +11,12 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [34.1.0] - 2026-11-08
+
+### Improved
+
+- Precompute local genre search names/trigrams, defer result ranking, and expose stable bounded indexed ranking for place and regional genre searches. Keep the unloaded lexicon identity stable across renders and isolate typing/remote search in a subtree with injectable host search groups.
+
 ## [34.0.0] - 2026-11-07
 
 ### Breaking

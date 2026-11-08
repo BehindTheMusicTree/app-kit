@@ -1,7 +1,8 @@
 "use client";
 
 import { CriteriaPlaylistSimple } from "./schemas/criteria-playlist/simple";
-import { searchGenrePlaylistsByName } from "./lib/genre-search";
+import { useDeferredValue, useMemo } from "react";
+import { createNameIndex, rankNameIndex } from "./lib/search-text";
 import { useSearchQueryState } from "./useSearchQueryState";
 
 export interface UseGenreSearchOptions<T extends CriteriaPlaylistSimple = CriteriaPlaylistSimple> {
@@ -31,7 +32,15 @@ export function useGenreSearch<T extends CriteriaPlaylistSimple = CriteriaPlayli
   onClear,
 }: UseGenreSearchOptions<T>): UseGenreSearchResult<T> {
   const { query, setQuery, isTyping, canClear, clear, notifyPick } = useSearchQueryState({ selectedName, onClear });
-  const results = isTyping ? searchGenrePlaylistsByName(genrePlaylists, query) : [];
+  const index = useMemo(
+    () => createNameIndex(genrePlaylists, (playlist) => playlist.name, (playlist) => playlist.viewsCount ?? 0),
+    [genrePlaylists],
+  );
+  const deferredQuery = useDeferredValue(query);
+  const results = useMemo(
+    () => isTyping ? rankNameIndex(index, deferredQuery) : [],
+    [index, deferredQuery, isTyping],
+  );
 
   return {
     query,

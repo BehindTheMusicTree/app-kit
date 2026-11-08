@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { foldSearchText, rankByName, trigramSimilarity } from "./search-text";
+import { describe, it, expect, vi } from "vitest";
+import { createNameIndex, rankNameIndex, foldSearchText, rankByName, trigramSimilarity } from "./search-text";
 
 describe("foldSearchText", () => {
   it("strips diacritics, casefolds and collapses whitespace", () => {
@@ -39,5 +39,25 @@ describe("rankByName", () => {
 
   it("drops names too dissimilar to match", () => {
     expect(rankByName([item("Ambient")], "zzzz", name)).toEqual([]);
+  });
+});
+
+
+describe("indexed ranking", () => {
+  const items = ["Bossa Nová", "Bossa rock", "Nova bossa", "Bossa Nová", "Rock", "Bosa nova"].map((name, id) => ({ name, id, views: id % 3 }));
+  const getName = (item: typeof items[number]) => item.name;
+  const getViews = (item: typeof items[number]) => item.views;
+  it.each(["", "b", "bossa", "bossa nova", "bosa nova", "rock", "jazz"])("matches original ranking for %s", (query) => {
+    const expected = rankByName(items, query, getName, getViews);
+    const index = createNameIndex(items, getName, getViews);
+    expect(rankNameIndex(index, query)).toEqual(expected);
+    for (const limit of [0, 1, 2, 8]) expect(rankNameIndex(index, query, limit)).toEqual(expected.slice(0, limit));
+  });
+  it("normalizes the query once and never revisits source names", () => {
+    const index = createNameIndex(items, getName);
+    const normalize = vi.spyOn(String.prototype, "normalize");
+    rankNameIndex(index, "bossa", 8);
+    expect(normalize).toHaveBeenCalledTimes(1);
+    normalize.mockRestore();
   });
 });
