@@ -1,12 +1,14 @@
 "use client";
 
 import { useDeferredValue, useState, type ComponentType, type ReactNode } from "react";
+import type { GenreUuid } from "@behindthemusictree/app-kit/genre-tree";
 import GenreSearch, { type GenreSearchProps } from "./GenreSearch";
 import { useArtistSearchGroup, useSongSearchGroup, type SearchGroup } from "./search";
 
 export interface GenreSearchGroupsProps {
   query: string;
   focused: boolean;
+  onSelectGenre: (uuid: GenreUuid) => void;
   children: (groups: SearchGroup[]) => ReactNode;
 }
 
@@ -18,12 +20,13 @@ type Props = GenreSearchProps & {
   artistSearch: boolean;
   songSearch: boolean;
   SearchGroups?: ComponentType<GenreSearchGroupsProps>;
+  onSelectGenre: (uuid: GenreUuid) => void;
 };
 
 /** Keep typed query updates and remote results inside the search subtree. */
 export function GenreTreeSearch({
   artistBaseUrl, songBaseUrl, onArtistSelect, onSongSelect, artistSearch, songSearch,
-  SearchGroups, extraGroups = [], onQueryChange, onFocus, ...props
+  SearchGroups, onSelectGenre, extraGroups = [], onQueryChange, onFocus, ...props
 }: Props) {
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
@@ -45,6 +48,6 @@ export function GenreTreeSearch({
     />
   );
   return SearchGroups
-    ? <SearchGroups query={deferredQuery} focused={focused}>{render}</SearchGroups>
+    ? <SearchGroups query={deferredQuery} focused={focused} onSelectGenre={onSelectGenre}>{render}</SearchGroups>
     : render([]);
 }

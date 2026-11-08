@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type ComponentProps } from "react";
+import { useMemo, type ReactNode, type ComponentProps } from "react";
 import {
   ACCENT_TEXT_COLOR,
   GenreNodeAncestors,
@@ -18,9 +18,12 @@ import {
   useFetchGenreDetail,
   genreMusicCount,
   GenrePlaylistSummarySchema,
+  GenreCatalogueCountsSchema,
+  type CriteriaPlaylistSimple,
   type CriteriaMinimum,
   type CriteriaOverview,
   type GenreUuid,
+  GenreUuidSchema,
 } from "@behindthemusictree/app-kit/genre-tree";
 import type { Scope } from "@behindthemusictree/app-kit/transport";
 
@@ -46,6 +49,7 @@ export type GenreDetailPanelProps<O extends CriteriaOverview> = {
   /** Tab on the panel's inner edge, for hosts that hide and show the panel. */
   edgeTab?: ComponentProps<typeof DetailPanel>["edgeTab"];
   extras?: GenreInfoPanelBodyProps<O>["extras"];
+  headerClassName?: ComponentProps<typeof DetailPanel>["headerClassName"];
 };
 
 // Relatives from the detail endpoint carry no song count, so the family dots share one size.
@@ -62,24 +66,26 @@ function toNode(genre: CriteriaMinimum, parentId: string | null): GenreTreeNode 
   };
 }
 
-/** A genre's detail panel driven by one uuid, with no tree behind it. The tree's own panel shares its body. */
-export function GenreDetailPanel<O extends CriteriaOverview>({
-  genreUuid,
-  scope,
-  getBackendBaseUrl,
-  onClose,
-  onSelectGenre,
-  onZoomIn,
-  shareUrl,
-  shareTarget,
-  collapsed,
-  expanded,
-  onExpandedChange,
-  edgeTab,
-  extras,
-}: GenreDetailPanelProps<O>) {
+type GenreDetailContentOptions<O extends CriteriaOverview> = {
+  genreUuid: GenreUuid | null;
+  scope: Scope;
+  getBackendBaseUrl: () => string;
+  onSelectGenre: (uuid: GenreUuid) => void;
+  extras?: GenreInfoPanelBodyProps<O>["extras"];
+  band?: Partial<GenreInfoPanelBodyProps<O>["band"]>;
+  playback?: GenreInfoPanelBodyProps<O>["playback"];
+  trailing?: ReactNode;
+  genrePlaylist?: CriteriaPlaylistSimple;
+  expanded?: boolean;
+};
+
+/** Shared entity data and content; the host owns the panel shell and placement. */
+export function useGenreDetailContent<O extends CriteriaOverview>({
+  genreUuid, scope, getBackendBaseUrl, onSelectGenre, extras, band, playback: hostPlayback, trailing, genrePlaylist: hostPlaylist, expanded,
+}: GenreDetailContentOptions<O>) {
   const { data: detail, isPending, isError } = useFetchGenreDetail(genreUuid, scope, getBackendBaseUrl);
-  const playback = useGenrePlaylistPlayback({ scope, genrePlaylists: [] });
+  const defaultPlayback = useGenrePlaylistPlayback({ scope, genrePlaylists: [], artist: extras?.artist });
+  const playback = hostPlayback ?? defaultPlayback;
 
   const view = useMemo(() => {
     if (!detail) return null;
@@ -95,7 +101,7 @@ export function GenreDetailPanel<O extends CriteriaOverview>({
         id: detail.uuid,
         parentId: detail.parent?.uuid ?? null,
         name: detail.name,
-        itemCount: scope === "reference" ? genreMusicCount(GenrePlaylistSummarySchema.parse(detail.criteriaPlaylist)) : detail.tracksCount,
+        itemCount: scope === "reference" ? genreMusicCount(detail.criteriaPlaylist ? GenrePlaylistSummarySchema.parse(detail.criteriaPlaylist) : GenreCatalogueCountsSchema.parse(detail.catalogue)) : detail.tracksCount,
         wikidataId: detail.wikidataId,
       } satisfies GenreTreeNode,
       fill: rootColor,
@@ -107,24 +113,20 @@ export function GenreDetailPanel<O extends CriteriaOverview>({
     };
   }, [detail, scope]);
 
-  if (isError) {
-    return (
-      <div role="alert" className="p-4 text-sm text-[var(--color-text)]">
-        This genre could not be loaded.
-      </div>
-    );
-  }
-  if (isPending || !detail || !view) {
-    return (
-      <div className="flex flex-col gap-3 p-4" aria-busy="true" data-testid="genre-detail-panel-skeleton">
-        <Skeleton className="h-6 w-2/3" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-3/4" />
-      </div>
-    );
-  }
+  if (isError) return {
+    title: "Genre unavailable",
+    content: <p role="alert" className="p-4 text-sm text-[var(--color-text)]">This genre could not be loaded.</p>,
+  };
+  if (isPending || !detail || !view) return {
+    title: "Loading genre…",
+    content: <div className="flex flex-col gap-3 p-4" aria-busy="true" data-testid="genre-detail-panel-skeleton">
+      <Skeleton className="h-6 w-2/3" />
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-3/4" />
+    </div>,
+  };
 
-  const selectGenre = (nodeId: string) => onSelectGenre(nodeId as GenreUuid);
+  const selectGenre = (nodeId: string) => onSelectGenre(GenreUuidSchema.parse(nodeId));
   const family = (
     <GenreNodeFamily
       node={view.node}
@@ -137,45 +139,45 @@ export function GenreDetailPanel<O extends CriteriaOverview>({
   );
   const ancestors = <GenreNodeAncestors ancestorNodes={view.ancestorNodes} onSelectNode={selectGenre} />;
 
-  return (
-    <DetailPanel
-      side="left"
-      title={view.node.name}
-      headerAccent={{ background: view.fill, color: ACCENT_TEXT_COLOR }}
-      headerActions={
-        onExpandedChange ? (
-          <IconButton
-            aria-label={expanded ? "Shrink panel" : "Extend panel"}
-            style={{ color: "inherit" }}
-            onClick={() => onExpandedChange(!expanded)}
-          >
-            {expanded ? (
-              <Minimize2 aria-hidden="true" className="h-4 w-4" />
-            ) : (
-              <Maximize2 aria-hidden="true" className="h-4 w-4" />
-            )}
-          </IconButton>
-        ) : undefined
-      }
-      onClose={onClose}
-      collapsed={collapsed}
-      expanded={expanded}
-      onExpandedChange={onExpandedChange}
-      edgeTab={edgeTab}
-    >
+  return {
+    title: detail.name,
+    headerAccent: { background: view.fill, color: ACCENT_TEXT_COLOR },
+    aside: expanded ? ancestors : undefined,
+    content: <>
       <GenreInfoPanelBody<O>
-        family={<>{family}{ancestors}</>}
+        family={<>{family}{!expanded && ancestors}</>}
         genreUuid={detail.uuid}
-        genrePlaylist={scope === "reference" ? GenrePlaylistSummarySchema.parse(detail.criteriaPlaylist) : { ...detail.criteriaPlaylist, tracksCount: detail.tracksCount }}
+        genrePlaylist={hostPlaylist ?? (detail.criteriaPlaylist === null ? null : scope === "reference" ? GenrePlaylistSummarySchema.parse(detail.criteriaPlaylist) : { ...detail.criteriaPlaylist, tracksCount: detail.tracksCount })}
         catalogue={detail.catalogue}
         wikidataId={detail.wikidataId}
         scope={scope}
         getBackendBaseUrl={getBackendBaseUrl}
         playback={playback}
-        band={{ node: view.node, onZoomIn, shareUrl, shareTarget: shareUrl ? shareTarget : undefined }}
+        band={{ node: view.node, ...band, shareTarget: band?.shareTarget?.kind === "genre" ? { ...band.shareTarget, name: detail.name } : band?.shareTarget }}
         extras={extras}
       />
-      {!expanded && ancestors}
+      {trailing}
+    </>,
+  };
+}
+
+export function GenreDetailPanel<O extends CriteriaOverview>({
+  genreUuid, scope, getBackendBaseUrl, onClose, onSelectGenre, onZoomIn,
+  shareUrl, shareTarget, collapsed, expanded, onExpandedChange, edgeTab, extras, headerClassName,
+}: GenreDetailPanelProps<O>) {
+  const panel = useGenreDetailContent({
+    genreUuid, scope, getBackendBaseUrl, onSelectGenre, extras, expanded,
+    band: { onZoomIn, shareUrl, shareTarget: shareUrl ? shareTarget : undefined },
+  });
+  return (
+    <DetailPanel side="left" title={panel.title} headerAccent={panel.headerAccent}
+      onClose={onClose} collapsed={collapsed} expanded={expanded}
+      onExpandedChange={onExpandedChange} edgeTab={edgeTab} aside={panel.aside} headerClassName={headerClassName}
+      headerActions={onExpandedChange ? <IconButton aria-label={expanded ? "Shrink panel" : "Extend panel"} onClick={() => onExpandedChange(!expanded)}>
+        {expanded ? <Minimize2 aria-hidden="true" className="h-4 w-4" /> : <Maximize2 aria-hidden="true" className="h-4 w-4" />}
+      </IconButton> : undefined}
+    >
+      {panel.content}
     </DetailPanel>
   );
 }

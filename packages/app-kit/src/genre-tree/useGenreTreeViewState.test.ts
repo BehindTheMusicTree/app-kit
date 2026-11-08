@@ -20,6 +20,7 @@ vi.mock("./useGenre", () => ({
 }));
 
 import { useGenreTreeViewState } from "./useGenreTreeViewState";
+import { GenreUuidSchema } from "./schemas/ids";
 import type { CriteriaPlaylistSimple } from "./schemas/criteria-playlist/simple";
 
 const makePlaylist = (
@@ -32,7 +33,7 @@ const makePlaylist = (
     name,
     parent: overrides.parent ? { uuid: overrides.parent } : null,
     root: { uuid: overrides.root ?? uuid },
-    criteria: overrides.criteria === false ? null : { uuid: `c-${uuid}` },
+    criteria: overrides.criteria === false ? null : { uuid: uuid === "pop" ? "00000000-0000-4000-8000-000000000001" : `c-${uuid}` },
     isUnacceptedRoot: overrides.isUnacceptedRoot ?? false,
     genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: 3, regional: 0, all: 3 },
     catalogue: { genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: 3, regional: 0, all: 3 } },
@@ -117,8 +118,8 @@ describe("useGenreTreeViewState", () => {
   });
 
   it("manages an internal selection and reports changes", () => {
-    const onSelectedNodeIdChange = vi.fn();
-    const { result } = renderHook(() => useGenreTreeViewState({ ...options, onSelectedNodeIdChange }));
+    const onSelectedGenreUuidChange = vi.fn();
+    const { result } = renderHook(() => useGenreTreeViewState({ ...options, onSelectedGenreUuidChange }));
 
     act(() => result.current.selectNode({ id: "rock" }));
     expect(result.current.selectedNodeId).toBe("rock");
@@ -131,20 +132,29 @@ describe("useGenreTreeViewState", () => {
     expect(result.current.selectedNodeId).toBeNull();
 
     act(() => result.current.selectNode(null));
-    expect(onSelectedNodeIdChange).toHaveBeenLastCalledWith(null);
-    expect(onSelectedNodeIdChange).toHaveBeenCalledTimes(4);
+    expect(onSelectedGenreUuidChange).toHaveBeenLastCalledWith(null);
+    expect(onSelectedGenreUuidChange).toHaveBeenCalledTimes(4);
   });
 
   it("does not change a controlled selection but still reports", () => {
-    const onSelectedNodeIdChange = vi.fn();
+    const onSelectedGenreUuidChange = vi.fn();
     const { result } = renderHook(() =>
-      useGenreTreeViewState({ ...options, selectedNodeId: "pop", onSelectedNodeIdChange }),
+      useGenreTreeViewState({ ...options, selectedGenreUuid: GenreUuidSchema.parse("00000000-0000-4000-8000-000000000001"), onSelectedGenreUuidChange }),
     );
 
     act(() => result.current.selectNode({ id: "rock" }));
 
     expect(result.current.selectedNodeId).toBe("pop");
-    expect(onSelectedNodeIdChange).toHaveBeenCalledWith("rock");
+    expect(onSelectedGenreUuidChange).toHaveBeenCalledWith(rock.criteria!.uuid);
+  });
+
+  it("keeps an entity absent from the tree without highlighting a playlist alias", () => {
+    const uuid = GenreUuidSchema.parse("00000000-0000-4000-8000-000000000002");
+    const onSelectedGenreUuidChange = vi.fn();
+    const { result } = renderHook(() => useGenreTreeViewState({ ...options, selectedGenreUuid: uuid, onSelectedGenreUuidChange }));
+    expect(result.current.selectedGenreUuid).toBe(uuid);
+    expect(result.current.selectedNodeId).toBeNull();
+    expect(onSelectedGenreUuidChange).not.toHaveBeenCalled();
   });
 
   it("toggles wheel rotation", () => {
@@ -215,7 +225,7 @@ describe("useGenreTreeViewState", () => {
     it("serves the pruned tree with the artist's counts to every consumer", () => {
       mockData([pop, rock, makePlaylist("jazz", "Jazz", { parent: "pop", root: "pop" })]);
       useArtistGenreCountsMock.mockReturnValue({ data: counts, isPending: false, error: null });
-      const { result } = renderHook(() => useGenreTreeViewState({ ...options, artistUuid, selectedNodeId: "rock" }));
+      const { result } = renderHook(() => useGenreTreeViewState({ ...options, artistUuid, selectedGenreUuid: rock.criteria!.uuid }));
 
       expect(result.current.isLoading).toBe(false);
       expect(result.current.visibleGenrePlaylists.map((gp) => [gp.uuid, gp.tracksCount])).toEqual([

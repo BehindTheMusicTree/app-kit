@@ -63,7 +63,8 @@ export type GenrePlaylistTracksSlots = {
 
 export type GenrePlaylistTracksProps = GenrePlaylistTracksSlots & {
   genreUuid: GenreUuid;
-  genrePlaylist: CriteriaPlaylistMinimum;
+  genrePlaylist: CriteriaPlaylistMinimum | null;
+  genreName?: string;
   selection?: GenreMusicSelection;
   scope: Scope;
   getBackendBaseUrl: () => string;
@@ -83,6 +84,7 @@ export type GenrePlaylistTracksProps = GenrePlaylistTracksSlots & {
 export function GenrePlaylistTracks({
   genreUuid,
   genrePlaylist,
+  genreName: selectedGenreName,
   selection,
   scope,
   getBackendBaseUrl,
@@ -98,7 +100,8 @@ export function GenrePlaylistTracks({
   const { playerTrackObject, playState, handlePlayPauseAction } = usePlayer();
   const { showPopup } = usePopup();
   const trackNoun = useTrackNoun();
-  const { uuid } = genrePlaylist;
+  const uuid = genrePlaylist?.uuid;
+  const genreName = selectedGenreName ?? genrePlaylist?.name ?? "Genre";
 
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
   const playback = usePlaybackContext();
@@ -106,13 +109,16 @@ export function GenrePlaylistTracks({
   const { data, isPending, isError, refetch, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery({
     queryKey: [...(
       scope === "me"
-        ? genrePlaylistQueryKeys.me.tracks(uuid)
+        ? (uuid ? genrePlaylistQueryKeys.me.tracks(uuid) : ["missing-personal-genre-playlist", genreUuid])
         : artist
           ? [...libraryQueryKeys.reference.songs.byGenre(getBackendBaseUrl(), genreUuid, selection), "artist", artist.uuid]
           : libraryQueryKeys.reference.songs.byGenre(getBackendBaseUrl(), genreUuid, selection)
     ), ...(playback.key ? [playback.key] : [])],
     queryFn: async ({ pageParam }): Promise<Omit<GenrePlaylistTracksPage<TrackBase>, "total" | "nextPage"> & { total: number | null; nextPage: number | string | null }> => {
-      if (scope === "me") return fetchGenrePlaylistTracksPage(uuid, scope, Number(pageParam));
+      if (scope === "me") {
+        if (!uuid) throw new Error("Personal genre has no playlist");
+        return fetchGenrePlaylistTracksPage(uuid, scope, Number(pageParam));
+      }
       const response = await fetch(
         libraryEndpoints.reference.songs.list(),
         true,
@@ -125,7 +131,7 @@ export function GenrePlaylistTracks({
     },
     initialPageParam: scope === "me" ? 1 : "",
     getNextPageParam: (lastPage) => lastPage.nextPage ?? undefined,
-    enabled: playback.ready && (scope !== "me" || (sessionRestored && !!session?.accessToken)),
+    enabled: playback.ready && (scope !== "me" || (uuid !== undefined && sessionRestored && !!session?.accessToken)),
   });
 
   // State, not a ref object: PanelSection unmounts its body when collapsed, so the observer must
@@ -152,8 +158,8 @@ export function GenrePlaylistTracks({
         startSongUuid, ordering: "title", genreUuid, ...(selection && { selection }),
       })
       : scope === "reference"
-        ? playNewTrackListFromGenreCatalogue({ uuid: genreUuid, name: genrePlaylist.name }, scope, { startSongUuid, ...(selection && { selection }) })
-        : playNewTrackListFromGenrePlaylist(genrePlaylist, scope, { startSongUuid });
+        ? playNewTrackListFromGenreCatalogue({ uuid: genreUuid, name: genreName }, scope, { startSongUuid, ...(selection && { selection }) })
+        : genrePlaylist ? playNewTrackListFromGenrePlaylist(genrePlaylist, scope, { startSongUuid }) : Promise.reject(new Error("Personal genre has no playlist"));
     started.catch((error) => {
       console.error("Failed to play genre playlist:", error);
       showPopup(<InternalErrorPopup errorCode={ErrorCode.CLIENT_UNKNOWN} />);
@@ -176,7 +182,7 @@ export function GenrePlaylistTracks({
       ) : tracks.length === 0 ? (
         <p>—</p>
       ) : (
-        <ul className="mt-1 max-h-64 overflow-y-auto text-[0.8125rem] leading-[1.45] [container-type:inline-size]" aria-label={`${genrePlaylist.name} ${trackNoun.plural}`}>
+        <ul className="mt-1 max-h-64 overflow-y-auto text-[0.8125rem] leading-[1.45] [container-type:inline-size]" aria-label={`${genreName} ${trackNoun.plural}`}>
           {tracks.map((track, index) => {
             const label = track.artists?.length
               ? `${track.title} — ${track.artists.map((artist) => artist.name).join(", ")}`

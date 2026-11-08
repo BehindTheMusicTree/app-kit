@@ -55,7 +55,7 @@ export type GenreInfoPanelBodyProps<O extends CriteriaOverview> = {
   family: ReactNode;
   genreUuid: GenreUuid;
   catalogue?: GenreCatalogueCounts;
-  genrePlaylist: PlayableGenrePlaylist;
+  genrePlaylist: PlayableGenrePlaylist | null;
   wikidataId?: string | null;
   scope: Scope;
   getBackendBaseUrl: () => string;
@@ -64,7 +64,7 @@ export type GenreInfoPanelBodyProps<O extends CriteriaOverview> = {
   band: Omit<GenreNodeActionBandProps, "genrePlaylist" | "playback">;
   extras?: Omit<
     GenreDetailExtrasProps<O>,
-    "family" | "genreUuid" | "genrePlaylist" | "wikidataId" | "scope" | "getBackendBaseUrl"
+    "family" | "genreUuid" | "genreName" | "genrePlaylist" | "wikidataId" | "scope" | "getBackendBaseUrl"
   >;
 };
 
@@ -84,7 +84,7 @@ export function GenreInfoPanelBody<O extends CriteriaOverview>({
   extras,
 }: GenreInfoPanelBodyProps<O>) {
   const noun = useTrackNoun();
-  const summary = scope === "reference" ? GenreCatalogueCountsSchema.parse(genrePlaylist) : undefined;
+  const summary = scope === "reference" ? GenreCatalogueCountsSchema.parse(genrePlaylist ?? catalogue) : undefined;
   const selection = summary ? defaultGenreMusicSelection(summary) : undefined;
   const describeCounts = (counts: GenreCatalogueCounts) => {
     const scopes = counts.genreAndSubgenresTracksCount;
@@ -95,11 +95,11 @@ export function GenreInfoPanelBody<O extends CriteriaOverview>({
   return (
     <>
       {toolbar}
-      <GenreNodeActionBand {...band} genrePlaylist={genrePlaylist} playback={playback} />
+      {genrePlaylist ? <GenreNodeActionBand {...band} genrePlaylist={genrePlaylist} playback={playback} /> : <GenreActionBand {...band} />}
       {summary && catalogue && (
         <div className="px-3.5 py-3 text-sm text-[var(--color-text)]">
           <p>Catalogue {noun.plural}: {describeCounts(catalogue)}</p>
-          <p>Playlist {noun.plural}: {describeCounts(summary)}</p>
+          {genrePlaylist && <p>Playlist {noun.plural}: {describeCounts(summary)}</p>}
         </div>
       )}
       <GenreDetailExtras<O>
@@ -108,6 +108,7 @@ export function GenreInfoPanelBody<O extends CriteriaOverview>({
         family={family}
         genreUuid={genreUuid}
         genrePlaylist={genrePlaylist}
+        genreName={band.node.name}
         selection={selection}
         wikidataId={wikidataId}
         scope={scope}

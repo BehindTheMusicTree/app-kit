@@ -61,7 +61,10 @@ describe("GenreDetailPanel", () => {
 
   it("shows a skeleton while the genre loads", () => {
     useFetchGenreDetailMock.mockReturnValue({ data: undefined, isPending: true, isError: false });
-    renderPanel();
+    const onClose = vi.fn();
+    renderPanel({ onClose });
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(onClose).toHaveBeenCalledOnce();
 
     expect(screen.getByTestId("genre-detail-panel-skeleton")).toBeInTheDocument();
   });
@@ -71,6 +74,7 @@ describe("GenreDetailPanel", () => {
     renderPanel();
 
     expect(screen.getByRole("alert")).toHaveTextContent("could not be loaded");
+    expect(screen.getByRole("button", { name: "Close" })).toBeInTheDocument();
   });
 
   it("hangs the host's edge tab off the panel", () => {
@@ -94,6 +98,26 @@ describe("GenreDetailPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: /Music of Brittany/ }));
 
     expect(onSelectGenre).toHaveBeenCalledWith(makeGenreUuid("brittany"));
+  });
+
+
+  it("opens a genre without a playlist and navigates by genre UUID", () => {
+    useFetchGenreDetailMock.mockReturnValue({ data: { ...detail, criteriaPlaylist: null }, isPending: false, isError: false });
+    const onSelectGenre = vi.fn();
+    renderPanel({ onSelectGenre });
+    expect(screen.getByRole("complementary", { name: detail.name })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Music of Brittany/ }));
+    expect(onSelectGenre).toHaveBeenCalledWith(makeGenreUuid("brittany"));
+  });
+
+  it("replaces previous genre content with a closable loading state on navigation", () => {
+    const props = { genreUuid: detail.uuid, scope: "reference" as const, getBackendBaseUrl: () => "https://b", onClose: vi.fn(), onSelectGenre: vi.fn() };
+    const view = render(<GenreDetailPanel {...props} />);
+    useFetchGenreDetailMock.mockReturnValue({ data: undefined, isPending: true, isError: false });
+    view.rerender(<GenreDetailPanel {...props} genreUuid={makeGenreUuid("brittany")} />);
+    expect(screen.queryByText(detail.name)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Close" })).toBeInTheDocument();
+    expect(screen.getByTestId("genre-detail-panel-skeleton")).toBeInTheDocument();
   });
 
   it("offers Focus only when onZoomIn is given", () => {
