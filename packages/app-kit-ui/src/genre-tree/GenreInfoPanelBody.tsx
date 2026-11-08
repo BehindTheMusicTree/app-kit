@@ -9,6 +9,7 @@ import {
   type GenreCatalogueCounts,
   type GenrePlaylistSummary,
   type CriteriaOverview,
+  type CriteriaMinimum,
   type CriteriaPlaylistMinimum,
   type GenreUuid,
 } from "@behindthemusictree/app-kit/genre-tree";
@@ -21,7 +22,7 @@ import { GenreDetailExtras, type GenreDetailExtrasProps } from "./GenreDetailExt
 import type { GenrePlaylistPlayback } from "./playlist-tree/useGenrePlaylistPlayback";
 
 /** What the action band reads of a genre's playlist: enough to play it and to know whether it can be. */
-export type PlayableGenrePlaylist = (CriteriaPlaylistMinimum & { tracksCount: number }) | GenrePlaylistSummary;
+export type PlayableGenrePlaylist = ((CriteriaPlaylistMinimum & { tracksCount: number }) | GenrePlaylistSummary) & { criteria?: CriteriaMinimum | null };
 
 type GenreNodeActionBandProps = Omit<ComponentProps<typeof GenreActionBand>, "onPlayPause" | "isPlaying"> & {
   genrePlaylist: PlayableGenrePlaylist;
