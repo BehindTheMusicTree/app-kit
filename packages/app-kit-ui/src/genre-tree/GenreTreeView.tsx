@@ -468,7 +468,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     if (node !== null && songUuid !== null) changeSong(null);
     selectNode(node);
   };
-  const handleGenreSearchClear = clearSelection;
   const handleGenreSearchSelect = (genrePlaylist: CriteriaPlaylistSimple) => {
     reopenPanel();
     if (songUuid !== null) changeSong(null);
@@ -552,8 +551,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     expanded: boolean;
     onExpandedChange?: (expanded: boolean) => void;
     onClose: () => void;
-    // A genre's or built-in panel's name lives in the search field, and the search field clears it.
-    compact: boolean;
+    // A genre's or built-in panel's name lives in the search field, and the search field closes it.
+    titleInSearch: boolean;
     headerAccent?: { background: string; color: string };
   };
   let activePanel: ActivePanel | null = null;
@@ -565,7 +564,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       expanded: overlayPanel.expanded ?? false,
       onExpandedChange: overlayPanel.onExpandedChange,
       onClose: overlayPanel.onClose,
-      compact: false,
+      titleInSearch: false,
     };
   } else if (selectedGenreUuid) {
     activePanel = {
@@ -575,7 +574,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       expanded: isExpanded,
       onExpandedChange: changeExpanded,
       onClose: clearSelection,
-      compact: false,
+      titleInSearch: true,
       headerAccent: relations ? { background: relations.fill, color: relations.textColor } : genreContent.headerAccent,
     };
   } else if (builtInPanel) {
@@ -586,7 +585,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       expanded: builtInPanel.expanded,
       onExpandedChange: builtInPanel.onExpandedChange,
       onClose: builtInPanel.onClose,
-      compact: true,
+      titleInSearch: true,
     };
   }
   const isPanelShown = activePanel !== null && (selectedGenreUuid !== null || isTreeReady);
@@ -665,16 +664,15 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           onSelect={handleGenreSearchSelect}
           onSelectGenre={(uuid) => { reopenPanel(); if (songUuid) changeSong(null); selectGenre(uuid); }}
           selectedName={
-            (selectedGenreUuid ? genreContent.title : null) ??
-            (typeof builtInPanel?.title === "string" ? builtInPanel.title : null)
+            selectedGenreUuid
+              ? genreContent.name
+              : typeof builtInPanel?.title === "string"
+                ? builtInPanel.title
+                : null
           }
-          onClear={
-            builtInSongPanel
-              ? () => changeSong(null)
-              : builtInArtistPanel
-                ? () => changeArtist(null)
-                : handleGenreSearchClear
-          }
+          onClear={activePanel?.onClose}
+          showClear={activePanel?.titleInSearch ?? false}
+          clearLabel="Close panel"
           onPrevious={handlePrevious}
           onQueryChange={onSearchQueryChange}
           onFocus={onSearchFocus}
@@ -901,8 +899,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             ref={panelRef}
             side="left"
             title={activePanel?.title ?? ""}
-            hideTitle={activePanel?.compact}
-            hideClose={activePanel?.compact}
+            titleInSearch={activePanel?.titleInSearch}
             headerAccent={activePanel?.headerAccent}
             headerActions={expandButton}
             onClose={activePanel?.onClose ?? noop}
@@ -911,7 +908,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             onExpandedChange={activePanel?.onExpandedChange}
             aside={activePanel?.aside}
             edgeTab={detailTab}
-            headerClassName="pt-[calc(var(--layout-search-h)+var(--layout-panel-inset)+0.5rem)]"
+            headerClassName={activePanel?.titleInSearch ? undefined : "pt-[calc(var(--layout-search-h)+var(--layout-panel-inset)+0.5rem)]"}
           >
             {activePanel?.aside && !activePanel.expanded ? (
               <>
