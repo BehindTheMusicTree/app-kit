@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [35.0.0] - 2026-11-09
+
 ### Breaking
 
 - Genre selection uses branded `GenreUuid` through `selectedGenreUuid` / `onSelectedGenreUuidChange`; remove playlist-ID aliases. Genre share targets carry `genreUuid` instead of `genrePlaylistUuid`. Hosts must migrate URL producers and consumers together.
