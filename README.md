@@ -79,3 +79,21 @@ tag and publishes both packages through the existing OIDC workflow. After public
 integrate `main` back into `develop` through a PR. Do not create or push release tags locally.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow, including hotfixes.
+
+## Genre identity and selection
+
+`GenreTreeView` and `useGenreTreeViewState` accept `selectedGenreUuid` and
+`onSelectedGenreUuidChange`, both using branded `GenreUuid` values. Parse external
+IDs with `GenreUuidSchema`. Renderer node IDs and playlist UUIDs remain internal
+visualization/playback identities; they are never selection aliases.
+
+A selected genre loads its own detail endpoint even when it has no node or
+playlist. Family and ancestor navigation reports genre UUIDs. Genre share targets
+use `{ kind: "genre", genreUuid, name, scope }` (plus optional artist context).
+Hosts should write `?genre=<genre UUID>` consistently across views and handle old
+playlist links as unavailable entities, without reinterpreting them.
+
+Hosts injecting `SearchGroups` receive `onSelectGenre(uuid)` to open remote results
+in the current view. A geographic region is optional context, independent of the
+selected genre. Selection actions should reopen collapsed panels even when the
+UUID is unchanged.

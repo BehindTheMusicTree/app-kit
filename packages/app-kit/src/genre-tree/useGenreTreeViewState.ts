@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { Scope } from "../transport/lib/scope";
 import { CriteriaPlaylistSimple } from "./schemas/criteria-playlist/simple";
+import { GenreUuid } from "./schemas/ids";
 import { CriteriaOverview } from "./schemas/criteria/overview";
 import { usePrefetchGenreOverview } from "./useGenre";
 import { useVisibleGenrePlaylists } from "./useVisibleGenrePlaylists";
@@ -22,12 +23,9 @@ export interface UseGenreTreeViewStateOptions<O extends CriteriaOverview = Crite
   viewMode?: GenreViewMode;
   /** Narrows the tree to this artist's footprint (see `useVisibleGenrePlaylists`). */
   artistUuid?: string | null;
-  /** Controlled selection (a genre playlist UUID, i.e. the tree node ID).
-   * Legacy criteria UUIDs are resolved on load.
-   */
-  selectedNodeId?: string | null;
-  /** Called when selection changes, including normalizing a legacy criteria UUID to its playlist UUID. */
-  onSelectedNodeIdChange?: (nodeId: string | null) => void;
+  /** Entity selection is independent of the visible renderer nodes. */
+  selectedGenreUuid?: GenreUuid | null;
+  onSelectedGenreUuidChange?: (genreUuid: GenreUuid | null) => void;
   criteriaOverviewSchema?: z.ZodType<O, unknown>;
 }
 
@@ -40,7 +38,9 @@ export interface UseGenreTreeViewStateResult {
   /** Playlists the current view mode may show: unaccepted roots and, outside stacked/outline, criteria-less playlists are hidden. */
   visibleGenrePlaylists: CriteriaPlaylistSimple[];
   groupedGenrePlaylistsByRoot: Record<string, CriteriaPlaylistSimple[]>;
+  selectedGenreUuid: GenreUuid | null;
   selectedNodeId: string | null;
+  selectGenre: (genreUuid: GenreUuid | null) => void;
   selectedGenrePlaylist: CriteriaPlaylistSimple | undefined;
   selectNode: (node: { id: string } | null) => void;
   selectGenrePlaylist: (genrePlaylist: CriteriaPlaylistSimple) => void;
@@ -62,22 +62,22 @@ export function useGenreTreeViewState<O extends CriteriaOverview = CriteriaOverv
   getBackendBaseUrl,
   viewMode: controlledViewMode,
   artistUuid,
-  selectedNodeId: controlledSelectedNodeId,
-  onSelectedNodeIdChange,
+  selectedGenreUuid: controlledSelectedGenreUuid,
+  onSelectedGenreUuidChange,
   criteriaOverviewSchema,
 }: UseGenreTreeViewStateOptions<O>): UseGenreTreeViewStateResult {
   const [internalViewMode, setInternalViewMode] = useState<GenreViewMode>("pop-core");
   const [allowWheelRotation, setAllowWheelRotation] = useState(false);
-  const [internalSelectedNodeId, setInternalSelectedNodeId] = useState<string | null>(null);
+  const [internalSelectedGenreUuid, setInternalSelectedGenreUuid] = useState<GenreUuid | null>(null);
 
-  const isSelectionControlled = controlledSelectedNodeId !== undefined;
-  const requestedSelectedNodeId = isSelectionControlled ? controlledSelectedNodeId : internalSelectedNodeId;
-  const setSelectedNodeId = useCallback(
-    (nodeId: string | null) => {
-      if (!isSelectionControlled) setInternalSelectedNodeId(nodeId);
-      onSelectedNodeIdChange?.(nodeId);
+  const isSelectionControlled = controlledSelectedGenreUuid !== undefined;
+  const selectedGenreUuid = isSelectionControlled ? controlledSelectedGenreUuid : internalSelectedGenreUuid;
+  const selectGenre = useCallback(
+    (nodeId: GenreUuid | null) => {
+      if (!isSelectionControlled) setInternalSelectedGenreUuid(nodeId);
+      onSelectedGenreUuidChange?.(nodeId);
     },
-    [isSelectionControlled, onSelectedNodeIdChange],
+    [isSelectionControlled, onSelectedGenreUuidChange],
   );
 
   const { isLoading, isFetching, genrePlaylists } = useVisibleGenrePlaylists({ scope, getBackendBaseUrl, artistUuid });
@@ -85,33 +85,21 @@ export function useGenreTreeViewState<O extends CriteriaOverview = CriteriaOverv
   const genrePlaylistByNodeId = useMemo(() => new Map<string, CriteriaPlaylistSimple>(genrePlaylists.map((gp) => [gp.uuid, gp])), [genrePlaylists]);
 
   const selectedGenrePlaylist = useMemo(
-    () =>
-      genrePlaylists.find((gp) => gp.uuid === requestedSelectedNodeId) ??
-      // Older shared links stored the criteria UUID in `genre`; resolve that alias while preserving
-      // the playlist UUID as the canonical tree selection identity.
-      genrePlaylists.find((gp) => gp.criteria?.uuid === requestedSelectedNodeId),
-    [genrePlaylists, requestedSelectedNodeId],
+    () => genrePlaylists.find((gp) => gp.criteria?.uuid === selectedGenreUuid),
+    [genrePlaylists, selectedGenreUuid],
   );
-  const selectedNodeId = selectedGenrePlaylist?.uuid ?? requestedSelectedNodeId;
-
-  useEffect(() => {
-    if (
-      !isSelectionControlled ||
-      requestedSelectedNodeId == null ||
-      selectedGenrePlaylist == null ||
-      requestedSelectedNodeId === selectedGenrePlaylist.uuid
-    ) {
-      return;
+  const selectedNodeId = selectedGenrePlaylist?.uuid ?? null;
+  const selectNode = useCallback((node: { id: string } | null) => {
+    if (!node) selectGenre(null);
+    else {
+      const genreUuid = genrePlaylistByNodeId.get(node.id)?.criteria?.uuid;
+      if (genreUuid) selectGenre(genreUuid);
     }
-    onSelectedNodeIdChange?.(selectedGenrePlaylist.uuid);
-  }, [isSelectionControlled, onSelectedNodeIdChange, requestedSelectedNodeId, selectedGenrePlaylist]);
-
-  const selectNode = useCallback((node: { id: string } | null) => setSelectedNodeId(node?.id ?? null), [setSelectedNodeId]);
-  const clearSelection = useCallback(() => setSelectedNodeId(null), [setSelectedNodeId]);
-  const selectGenrePlaylist = useCallback(
-    (genrePlaylist: CriteriaPlaylistSimple) => setSelectedNodeId(genrePlaylist.uuid),
-    [setSelectedNodeId],
-  );
+  }, [selectGenre, genrePlaylistByNodeId]);
+  const clearSelection = useCallback(() => selectGenre(null), [selectGenre]);
+  const selectGenrePlaylist = useCallback((playlist: CriteriaPlaylistSimple) => {
+    if (playlist.criteria) selectGenre(playlist.criteria.uuid);
+  }, [selectGenre]);
 
   const prefetchGenreOverview = usePrefetchGenreOverview<O>(scope, getBackendBaseUrl, criteriaOverviewSchema);
   const hoverPrefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -177,6 +165,8 @@ export function useGenreTreeViewState<O extends CriteriaOverview = CriteriaOverv
     genrePlaylistByNodeId,
     visibleGenrePlaylists,
     groupedGenrePlaylistsByRoot,
+    selectedGenreUuid,
+    selectGenre,
     selectedNodeId,
     selectedGenrePlaylist,
     selectNode,
