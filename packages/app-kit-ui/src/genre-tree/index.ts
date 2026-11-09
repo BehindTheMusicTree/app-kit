@@ -33,3 +33,8 @@ export { default as Rating } from "./Rating";
 export type { RatingProps } from "./Rating";
 
 export type { GenreSearchGroupsProps } from "./GenreTreeSearch";
+export { useEntityPanel } from "./useEntityPanel";
+export type { EntityPanelOptions, EntityPanelState } from "./useEntityPanel";
+export { EntityDetailPanel } from "./EntityDetailPanel";
+export type { EntityDetailPanelProps } from "./EntityDetailPanel";
+export type { SongGenreNavigation } from "./song/useSongPanel";

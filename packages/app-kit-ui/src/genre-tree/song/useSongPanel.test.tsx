@@ -43,7 +43,7 @@ function Harness({ uuid, onSelectGenre = vi.fn(), genrePath = [rock, alt] }: { u
     getBackendBaseUrl: () => "/api",
     renderArtistLink: ({ name }) => name,
     getGenrePath: () => genrePath as never,
-    onSelectGenre: onSelectGenre as never,
+    onSelectGenrePlaylist: onSelectGenre as never,
     expanded: false,
     onExpandedChange: vi.fn(),
     onClose: vi.fn(),
@@ -134,5 +134,28 @@ describe("useSongPanel", () => {
 
     expect(screen.queryByRole("button", { name: "Play" })).not.toBeInTheDocument();
     expect(screen.getByText("Private video")).toBeInTheDocument();
+  });
+
+  it("selects the genre itself when the host has no tree", () => {
+    useSongMock.mockReturnValue({ status: "success", song });
+    const onSelectGenre = vi.fn();
+    function NoTree() {
+      const panel = useSongPanel({
+        uuid: UUID,
+        scope: "me",
+        getBackendBaseUrl: () => "/api",
+        renderArtistLink: ({ name }) => name,
+        onSelectGenre,
+        expanded: false,
+        onExpandedChange: vi.fn(),
+        onClose: vi.fn(),
+      });
+      return <section>{panel?.content}</section>;
+    }
+    render(<NoTree />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Alternative rock" }));
+
+    expect(onSelectGenre).toHaveBeenCalledWith(song.genre);
   });
 });
