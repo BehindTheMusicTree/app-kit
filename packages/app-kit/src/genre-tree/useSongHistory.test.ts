@@ -9,6 +9,9 @@ const { fetchMock, useQueryWithParseMock } = vi.hoisted(() => ({
 vi.mock("../transport/useFetchWrapper", () => ({
   useFetchWrapper: () => ({ fetch: fetchMock }),
 }));
+vi.mock("../transport/usePlaybackFetch", () => ({
+  usePlaybackFetch: () => ({ fetchBound: fetchMock, fetchLatest: fetchMock }),
+}));
 
 vi.mock("../transport/lib/use-query-with-parse", () => ({
   useQueryWithParse: (options: unknown) => useQueryWithParseMock(options),

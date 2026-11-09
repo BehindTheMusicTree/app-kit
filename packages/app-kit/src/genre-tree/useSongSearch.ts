@@ -1,6 +1,7 @@
 "use client";
 
 import { usePlaybackContext } from "../transport/PlaybackContext";
+import { usePlaybackFetch } from "../transport/usePlaybackFetch";
 import { SongSearchResultsSchema, type SongSearchParams, type SongSearchResult } from "./schemas/song-search";
 import { libraryEndpoints, libraryQueryKeys } from "./api/library";
 import { useRemoteSearch } from "./useRemoteSearch";
@@ -22,11 +23,13 @@ export function useSongSearch(
   options: Omit<SongSearchParams, "q"> = {},
 ): UseSongSearchResult {
   const playback = usePlaybackContext();
+  const { fetchBound } = usePlaybackFetch(getBackendBaseUrl);
   const { limit = DEFAULT_RESULT_LIMIT, genre, playable } = options;
   const params = (q: string) => ({ q, limit, ...(genre && { genre }), ...(playable !== undefined && { playable }) });
 
   const { results, isError, settled, pending } = useRemoteSearch(getBackendBaseUrl, {
     queryKey: (q) => [...libraryQueryKeys.reference.songs.search(params(q)), ...(playback.key ? [playback.key] : [])],
+    fetch: fetchBound,
     endpoint: libraryEndpoints.reference.songs.search(),
     params,
     schema: SongSearchResultsSchema,

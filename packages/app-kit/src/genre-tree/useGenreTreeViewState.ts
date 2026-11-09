@@ -31,6 +31,9 @@ export interface UseGenreTreeViewStateOptions<O extends CriteriaOverview = Crite
 
 export interface UseGenreTreeViewStateResult {
   isLoading: boolean;
+  /** The tree failed to load and nothing is cached. `genrePlaylists` is empty, which is not "no genres". */
+  isError: boolean;
+  refetch: () => void;
   /** True while the visible tree is being refreshed or re-pruned; the previous tree stays in `genrePlaylists`. */
   isFetching: boolean;
   genrePlaylists: CriteriaPlaylistSimple[];
@@ -80,7 +83,7 @@ export function useGenreTreeViewState<O extends CriteriaOverview = CriteriaOverv
     [isSelectionControlled, onSelectedGenreUuidChange],
   );
 
-  const { isLoading, isFetching, genrePlaylists } = useVisibleGenrePlaylists({ scope, getBackendBaseUrl, artistUuid });
+  const { isLoading, isError, refetch, isFetching, genrePlaylists } = useVisibleGenrePlaylists({ scope, getBackendBaseUrl, artistUuid });
 
   const genrePlaylistByNodeId = useMemo(() => new Map<string, CriteriaPlaylistSimple>(genrePlaylists.map((gp) => [gp.uuid, gp])), [genrePlaylists]);
 
@@ -136,10 +139,10 @@ export function useGenreTreeViewState<O extends CriteriaOverview = CriteriaOverv
   );
 
   useEffect(() => {
-    if (!isLoading && needsPopCore(internalViewMode) && !canShowPopCore) {
+    if (!isLoading && !isError && needsPopCore(internalViewMode) && !canShowPopCore) {
       setInternalViewMode("wheel");
     }
-  }, [isLoading, canShowPopCore, internalViewMode]);
+  }, [isLoading, isError, canShowPopCore, internalViewMode]);
 
   // Mirrors the effect above, but applied synchronously in the render path: the effect alone
   // can't stop a "pop-core" render from mounting the pop-core wheel on data with no "Mainstream
@@ -160,6 +163,8 @@ export function useGenreTreeViewState<O extends CriteriaOverview = CriteriaOverv
 
   return {
     isLoading,
+    isError,
+    refetch: () => void refetch(),
     isFetching,
     genrePlaylists,
     genrePlaylistByNodeId,

@@ -260,6 +260,19 @@ describe("GenreTreeView", () => {
     );
   });
 
+  it("shows an error with Retry instead of an empty tree when the tree fails to load", () => {
+    const refetch = vi.fn();
+    useListFullGenrePlaylistsMock.mockReturnValue({ data: undefined, isPending: false, isError: true, refetch });
+    renderView();
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Couldn't load the genre tree.");
+    expect(screen.queryByTestId("genre-tree-wheel-skeleton")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Add root" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
   it("reports the typed search text and focus to the host", () => {
     const onSearchQueryChange = vi.fn();
     const onSearchFocus = vi.fn();

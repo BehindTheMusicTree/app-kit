@@ -12,11 +12,11 @@ import { createContext, useState, useContext, ReactNode, useCallback, useEffect,
 import { z } from "zod";
 import { genreMusicQueryParams, type GenreMusicSelection } from "./lib/genre-music-selection";
 import { usePlaybackContext } from "../transport/PlaybackContext";
-import { useFetchWrapper } from "../transport/useFetchWrapper";
+import { usePlaybackFetch } from "../transport/usePlaybackFetch";
+import { usePlaybackQuery } from "../transport/lib/use-playback-query";
 import { BackendError } from "../transport/app-errors/app-error";
 import { ErrorCode } from "../transport/app-errors/app-error-codes";
 import { useSession } from "../auth/SessionContext";
-import { useQueryWithParse } from "../transport/lib/use-query-with-parse";
 import { PaginatedResponseSchema } from "../transport/lib/paginated-response";
 import { parseWithLog } from "../transport/lib/parse-with-log";
 import { TrackBase } from "./schemas/track/base";
@@ -71,19 +71,18 @@ export function useListTracks<T>(
   page = 1,
   pageSize: number | string = 50,
 ) {
-  const playback = usePlaybackContext();
-  const { fetch } = useFetchWrapper(getBackendBaseUrl);
   const { session, sessionRestored } = useSession();
 
-  return useQueryWithParse({
-    queryKey: [...listQueryKey(page), ...(playback.key ? [playback.key] : [])],
-    queryFn: async () => {
+  return usePlaybackQuery({
+    getBackendBaseUrl,
+    queryKey: listQueryKey(page),
+    queryFn: async (fetchBound) => {
       if (scope == null) return null;
-      return fetch(listEndpoint(page), true, scope === "me", {}, { page, pageSize });
+      return fetchBound(listEndpoint(page), true, scope === "me", {}, { page, pageSize });
     },
     schema: PaginatedResponseSchema(schema),
     context: "useListTracks",
-    enabled: playback.ready && scope != null && (scope === "reference" || (sessionRestored && !!session?.accessToken)),
+    enabled: scope != null && (scope === "reference" || (sessionRestored && !!session?.accessToken)),
   });
 }
 
@@ -180,7 +179,7 @@ export function TrackListProvider<T extends TrackBase>({
   ), [trackList, hasPlaybackFailure, playerTrackObject, failureClock]);
   const { showTrackListSidebar } = useTrackListSidebarVisibility();
   const playback = usePlaybackContext();
-  const { fetch } = useFetchWrapper(getBackendBaseUrl);
+  const { fetchBound, fetchLatest } = usePlaybackFetch(getBackendBaseUrl);
   const pageSchema = useMemo(() => makeTrackPlaylistRelPageSchema(schema), [schema]);
   // Identifies the latest play request / in-flight page load, so late responses for a list that's
   // no longer current are dropped.
@@ -223,7 +222,7 @@ export function TrackListProvider<T extends TrackBase>({
       const endpoint = genrePlaylistEndpoints[scope].tracks(uuid);
       if (scope === "me" && (selection || artistUuid)) throw new Error("Genre selections require reference scope");
       const params = { page, pageSize: TRACKS_PAGE_SIZE, ...(from && { from }), ...genreMusicQueryParams(selection), ...(artistUuid && { artist: artistUuid }) };
-      const response = await fetch(endpoint, true, scope === "me", {}, params, false, !!from, page === 1);
+      const response = await (page === 1 ? fetchLatest : fetchBound)(endpoint, true, scope === "me", {}, params, false, !!from);
       const parsed = parseWithLog(pageSchema, response, "fetchGenrePlaylistTracksPage");
       return {
         tracks: parsed.results.map((rel) => rel.track as T),
@@ -231,7 +230,7 @@ export function TrackListProvider<T extends TrackBase>({
         nextPage: parsed.next ? parsed.page + 1 : null,
       };
     },
-    [fetch, pageSchema],
+    [fetchBound, fetchLatest, pageSchema],
   );
 
   const cataloguePageSchema = useMemo(() => PaginatedResponseSchema(schema), [schema]);
@@ -248,7 +247,7 @@ export function TrackListProvider<T extends TrackBase>({
         ...(origin.genreUuid && { genre: origin.genreUuid }),
         ...genreMusicQueryParams(origin.selection),
       };
-      const response = await fetch(
+      const response = await (page === 1 ? fetchLatest : fetchBound)(
         libraryEndpoints.reference.songs.list(),
         true,
         false,
@@ -257,12 +256,11 @@ export function TrackListProvider<T extends TrackBase>({
         false,
         // A start song that isn't playable 404s; surface it as a rejection, not the global error.
         page === 1 && !!origin.from,
-        page === 1,
       );
       const parsed = parseWithLog(cataloguePageSchema, response, "fetchCatalogueTracksPage");
       return { tracks: parsed.results, total: parsed.overallTotal, nextPage: parsed.next ? parsed.page + 1 : null };
     },
-    [fetch, cataloguePageSchema],
+    [fetchBound, fetchLatest, cataloguePageSchema],
   );
 
   const advanceAfterTrackEnd = useCallback(
@@ -479,14 +477,14 @@ export function TrackListProvider<T extends TrackBase>({
       const request = latestPlayRequestRef.current;
       void (async () => {
         const track = isSong(selected) && origin.scope === "reference"
-          ? parseWithLog(schema, await fetch(libraryEndpoints.reference.songs.detail(selected.uuid), true, false), "refreshSelectedTrack")
+          ? parseWithLog(schema, await fetchBound(libraryEndpoints.reference.songs.detail(selected.uuid), true, false), "refreshSelectedTrack")
           : selected;
         if (request !== latestPlayRequestRef.current) return;
         setTrackList(new TrackListFromTrack([track], new TrackListOriginFromTrack(track, origin.scope)));
         setSelectedTrack(track);
       })().catch(() => {});
     }
-  }, [playback.key, trackList, selectedTrack, clearDelayedTrackLoad, playNewTrackListFromGenrePlaylist, playNewTrackListFromArtist, playNewTrackListFromGenreCatalogue, schema, fetch]);
+  }, [playback.key, trackList, selectedTrack, clearDelayedTrackLoad, playNewTrackListFromGenrePlaylist, playNewTrackListFromArtist, playNewTrackListFromGenreCatalogue, schema, fetchBound]);
 
   const updateTrack = useCallback((track: T) => {
     setTrackList((prev) => {
