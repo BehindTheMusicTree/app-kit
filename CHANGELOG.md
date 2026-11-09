@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [37.0.0] - 2026-11-09
+
 ### Breaking
 
 - `GenreDetailPanel` replaces `headerClassName` with `titleInSearch`, for hosts whose floating search field shows the genre's name and closes the panel.
