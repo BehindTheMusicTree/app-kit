@@ -18,7 +18,7 @@ easy to spot when bumping.
 ### Added
 
 - `usePlaybackFetch` and `usePlaybackQuery` (transport) bind a request to the playback context: the query key carries `playback.key`, the query waits for the context to be ready and retries once if the context changed mid-request. `useRemoteSearch` accepts a `fetch` option.
-- `useGenreTreeViewState` and `useVisibleGenrePlaylists` expose `isError` and `refetch`; `GenreTreeView` shows an error with Retry when the tree fails to load and nothing is cached.
+- `useGenreTreeViewState` and `useVisibleGenrePlaylists` expose `isError` and `refetch`; `UseGenreTreeViewStateResult` gains `isError` and `refetch` (hosts building their own state result must supply them); `GenreTreeView` shows an error with Retry when the tree fails to load and nothing is cached.
 
 ### Fixed
 

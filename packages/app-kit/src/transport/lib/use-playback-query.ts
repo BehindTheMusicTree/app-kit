@@ -36,7 +36,7 @@ export function usePlaybackQuery<T>({
     ...options,
     queryKey: [...queryKey, ...(playback.key ? [playback.key] : [])],
     queryFn: run,
-    enabled: enabled && playback.ready,
+    enabled: typeof enabled === "function" ? (query) => playback.ready && enabled(query) : enabled && playback.ready,
     retry: (failureCount, error) =>
       (failureCount < 1 && error instanceof DOMException && error.name === "AbortError")
       || (retry?.(failureCount, error) ?? false),

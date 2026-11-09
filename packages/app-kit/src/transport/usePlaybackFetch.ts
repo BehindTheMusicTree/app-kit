@@ -39,7 +39,7 @@ export const usePlaybackFetch = (getBackendBaseUrl: () => string) => {
           backendEndpointOrUrl, fromBackend, requiresAuth, options, queryParams, expectBinary, skipGlobalError,
           async (response) => {
             const responseCountry = response.headers.get("x-playback-country");
-            if (responseCountry !== null && responseCountry !== (requestContext.country ?? "unknown")) {
+            if (playback.key !== null && responseCountry !== null && responseCountry !== (requestContext.country ?? "unknown")) {
               await playback.refresh(true);
               throw stale();
             }

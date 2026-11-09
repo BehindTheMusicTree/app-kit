@@ -117,4 +117,14 @@ describe("usePlaybackFetch", () => {
     await expect(result.current.fetchBound("artists/x/", true, false)).resolves.toEqual({ ok: true });
     expect(playbackState.refresh).toHaveBeenCalled();
   });
+
+  it("skips the country check when no PlaybackContextProvider manages the context", async () => {
+    rawFetchMock.mockImplementationOnce(async (...args: unknown[]) => {
+      await (args[9] as (response: Response) => Promise<void>)(new Response(null, { headers: { "X-Playback-Country": "FR" } }));
+      return { ok: true };
+    });
+    const { result } = renderHook(() => usePlaybackFetch(() => "https://api.example.com"));
+    await expect(result.current.fetchBound("library/songs/", true, false)).resolves.toEqual({ ok: true });
+    expect(playbackState.refresh).not.toHaveBeenCalledWith(true);
+  });
 });

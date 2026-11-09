@@ -132,6 +132,8 @@ export function GenrePlaylistTracks({
     initialPageParam: scope === "me" ? 1 : "",
     getNextPageParam: (lastPage) => lastPage.nextPage ?? undefined,
     enabled: playback.ready && (scope !== "me" || (uuid !== undefined && sessionRestored && !!session?.accessToken)),
+    retry: (failureCount, error) => failureCount < 1 && error instanceof DOMException && error.name === "AbortError",
+    retryDelay: 0,
   });
 
   // State, not a ref object: PanelSection unmounts its body when collapsed, so the observer must
