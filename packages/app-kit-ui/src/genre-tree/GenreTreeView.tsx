@@ -8,8 +8,6 @@ import { Maximize2, Minimize2 } from "lucide-react";
 import { IconTextButton, IconButton, Button, SegmentedControl, DetailPanel, useObscuredInset } from "@behindthemusictree/ui";
 
 import {
-  GenreNodeAncestors,
-  GenreNodeFamily,
   GenreTreeWheelSkeleton,
   GenreTreeViewSkeleton,
   useGenreNodeRelations,
@@ -20,13 +18,13 @@ import type {
   GenreTreeViewMode,
   GenreTreeViewport,
   GenreTreeProps,
-  GenreNodeRelations,
   GenreNodeStyleResolver,
 } from "@behindthemusictree/genre-tree-view";
 
 import {
   CriteriaMinimum,
   CriteriaPlaylistSimple,
+  type GenreUuid,
   type ArtistSearchResult,
   type RenderSongLink,
   type SongSearchResult,
@@ -47,7 +45,7 @@ import GenrePlaylistTreeWheelRadialPopCore, { type GenreFocusProps } from "./pla
 import { GenreTreeWheelHandoff } from "./GenreTreeWheelHandoff";
 import { GenreTreeSearch, type GenreSearchGroupsProps } from "./GenreTreeSearch";
 import { type SearchGroup } from "./search";
-import { GenreInfoPanelBody } from "./GenreInfoPanelBody";
+import { useGenreDetailContent } from "./GenreDetailPanel";
 import ChangeParentPopup, { type ParentChange } from "./ChangeParentPopup";
 import { useArtistPanel } from "./artist/useArtistPanel";
 import { useSongPanel } from "./song/useSongPanel";
@@ -87,11 +85,10 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   /** Controlled view mode. When provided, the internal Stacked/Wheel toggle is not rendered — the consumer owns that UI. */
   viewMode?: GenreTreeViewMode;
-  /** Controlled selection (a genre playlist uuid, i.e. the tree node id). When provided, the
-   * consumer owns it — e.g. to move the selection after deleting the selected genre. */
-  selectedNodeId?: string | null;
+  /** Selected genre entity, including genres outside the rendered tree. */
+  selectedGenreUuid?: GenreUuid | null;
   /** Called on every user-driven selection change (tree click, search pick, search clear). */
-  onSelectedNodeIdChange?: (nodeId: string | null) => void;
+  onSelectedGenreUuidChange?: (genreUuid: GenreUuid | null) => void;
   /** Mount-only seed for the pan/zoom (wheel, pop-core and stacked views), replacing the initial fit. */
   defaultViewport?: GenreTreeViewport;
   /** Restore silently after layout; use a new revision for each navigation. Supply focus, selection,
@@ -187,8 +184,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   getBackendBaseUrl,
   additionalActions,
   viewMode: controlledViewMode,
-  selectedNodeId: controlledSelectedNodeId,
-  onSelectedNodeIdChange,
+  selectedGenreUuid: controlledSelectedGenreUuid,
+  onSelectedGenreUuidChange,
   defaultViewport,
   viewportRestore,
   onViewportChange,
@@ -265,6 +262,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     genrePlaylistByNodeId,
     visibleGenrePlaylists,
     groupedGenrePlaylistsByRoot,
+    selectedGenreUuid,
+    selectGenre,
     selectedNodeId,
     selectedGenrePlaylist,
     selectNode,
@@ -281,8 +280,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     scope,
     getBackendBaseUrl,
     viewMode: controlledViewMode,
-    selectedNodeId: controlledSelectedNodeId,
-    onSelectedNodeIdChange,
+    selectedGenreUuid: controlledSelectedGenreUuid,
+    onSelectedGenreUuidChange,
     criteriaOverviewSchema,
     artistUuid,
   });
@@ -320,12 +319,12 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     selectedGenrePlaylist !== undefined && visibleGenrePlaylists.some(({ uuid }) => uuid === selectedGenrePlaylist.uuid);
   const playback = useGenrePlaylistPlayback({ scope, genrePlaylists: visibleGenrePlaylists, artist: filterArtist });
   const openArtist = (uuid: string) => {
-    if (selectedNodeId !== null) clearSelection();
+    if (selectedGenreUuid !== null) clearSelection();
     if (songUuid !== null) changeSong(null);
     changeArtist(uuid);
   };
   const openSong = (uuid: string) => {
-    if (selectedNodeId !== null) clearSelection();
+    if (selectedGenreUuid !== null) clearSelection();
     changeSong(uuid);
   };
   // Kept stable: it feeds the memoized info panel body, which must not rebuild on every render.
@@ -411,8 +410,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   // Like a genre, the built-in artist panel shows its name in the search field and closes from its clear button.
   // A selected genre shows its own panel instead; the artist stays active as a filter.
   // A song, like a genre, replaces the artist panel; the artist stays active as a filter.
-  const builtInSongPanel = overlayPanel || hasSelectedGenreNode ? undefined : songPanel;
-  const builtInArtistPanel = overlayPanel || hasSelectedGenreNode || builtInSongPanel ? undefined : artistPanel;
+  const builtInSongPanel = overlayPanel || selectedGenreUuid !== null ? undefined : songPanel;
+  const builtInArtistPanel = overlayPanel || selectedGenreUuid !== null || builtInSongPanel ? undefined : artistPanel;
   const builtInPanel = builtInSongPanel ?? builtInArtistPanel;
 
   const [uncontrolledCollapsed, setUncontrolledCollapsed] = useState(false);
@@ -429,7 +428,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   };
   useEffect(() => {
     setUncontrolledCollapsed(false);
-  }, [selectedNodeId, artistUuid, songUuid]);
+  }, [selectedGenreUuid, artistUuid, songUuid]);
 
   const [isWheelRevealed, setIsWheelRevealed] = useState(false);
   const usesHandoff = viewMode === "wheel" || viewMode === "pop-core";
@@ -454,33 +453,22 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     resolveStyle,
   );
 
-  // "Previous" returns to the genre selected before the current one.
-  const [selectionHistory, setSelectionHistory] = useState<{ current: string | null; previous: string | null }>({
-    current: selectedNodeId,
-    previous: null,
-  });
-  if (selectionHistory.current !== selectedNodeId) {
-    setSelectionHistory({
-      current: selectedNodeId,
-      previous: selectionHistory.current ?? selectionHistory.previous,
-    });
+  const [selectionHistory, setSelectionHistory] = useState<{ current: GenreUuid | null; previous: GenreUuid | null }>({ current: selectedGenreUuid, previous: null });
+  if (selectionHistory.current !== selectedGenreUuid) {
+    setSelectionHistory({ current: selectedGenreUuid, previous: selectionHistory.current ?? selectionHistory.previous });
   }
-  const previousPlaylist =
-    selectionHistory.previous !== null && selectionHistory.previous !== selectedNodeId
-      ? genrePlaylistByNodeId.get(selectionHistory.previous)
-      : undefined;
-  const handlePrevious =
-    previousPlaylist && visibleGenrePlaylists.includes(previousPlaylist)
-      ? () => handleGenreSearchSelect(previousPlaylist)
-      : undefined;
+  const handlePrevious = selectionHistory.previous ? () => selectGenre(selectionHistory.previous) : undefined;
 
   const { showPopup, hidePopup } = usePopup();
+  const reopenPanel = () => { setUncontrolledCollapsed(false); onCollapsedChange?.(false); };
   const handleSelectedNodeChange = (node: { id: string } | null) => {
+    reopenPanel();
     if (node !== null && songUuid !== null) changeSong(null);
     selectNode(node);
   };
   const handleGenreSearchClear = clearSelection;
   const handleGenreSearchSelect = (genrePlaylist: CriteriaPlaylistSimple) => {
+    reopenPanel();
     if (songUuid !== null) changeSong(null);
     selectGenrePlaylist(genrePlaylist);
   };
@@ -503,109 +491,54 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const zoomInRef = useRef<(() => void) | undefined>(undefined);
   zoomInRef.current = canZoomIn ? handleGenreSearchZoomIn : undefined;
 
-  const selectGenreFromPanel = (nodeId: string) => {
-    const genrePlaylist = genrePlaylistByNodeId.get(nodeId);
-    if (genrePlaylist) handleGenreSearchSelect(genrePlaylist);
-  };
-  // The overview fetch lives in GenreDetailExtras, so its loading states re-render only the panel, never the tree.
-  // The count row is left out: the tracks section title carries it.
-  const renderGenreBody = (relation: GenreNodeRelations): { primary: ReactNode } => {
-      const { node } = relation;
-      const family = (
-        <GenreNodeFamily
-          node={node}
-          fill={relation.fill}
-          textColor={relation.textColor}
-          parentNode={relation.parentNode}
-          childNodes={relation.childNodes}
-          onSelectNode={selectGenreFromPanel}
-        />
-      );
-      const ancestors = <GenreNodeAncestors ancestorNodes={relation.ancestorNodes} onSelectNode={selectGenreFromPanel} />;
-      const genrePlaylist = genrePlaylistByNodeId.get(node.id);
-      const criteria = genrePlaylist?.criteria;
-      if (!genrePlaylist || !criteria) return { primary: <>{family}{ancestors}</> };
-      const genreUuid = criteria.uuid;
-      // The API only accepts a side on a root's direct child, and at most one pop child per root.
-      const parentPlaylist = visibleGenrePlaylists.find(({ uuid }) => uuid === genrePlaylist.parent?.uuid);
-      const canToggleSide = !readOnly && parentPlaylist !== undefined && parentPlaylist.parent === null;
-      const side = criteria.side ?? "core";
-      const shareTarget: GenreTreeShareTarget = {
-        kind: "genre",
-        genrePlaylistUuid: genrePlaylist.uuid,
-        name: criteria.name,
-        scope,
-        artistUuid,
-      };
-      const shareUrl = getShareUrlRef.current?.(shareTarget) ?? undefined;
-      const popSibling =
-        canToggleSide && side === "core"
-          ? visibleGenrePlaylists.find(
-              (sibling) =>
-                sibling.parent?.uuid === parentPlaylist.uuid &&
-                sibling.uuid !== genrePlaylist.uuid &&
-                sibling.criteria?.side === "pop",
-            )
-          : undefined;
-      return {
-        primary: (
-          <>
-          <GenreInfoPanelBody<O>
-            family={<>{family}{ancestors}</>}
-            genreUuid={genreUuid}
-            genrePlaylist={genrePlaylist}
-            catalogue={genrePlaylist.catalogue}
-            wikidataId={criteria.wikidataId}
-            scope={scope}
-            getBackendBaseUrl={getBackendBaseUrl}
-            playback={playback}
-            band={{
-              node,
-              shareTarget: shareUrl ? shareTarget : undefined,
-              shareUrl,
-              onZoomIn: zoomInRef.current,
-              onAddChild: readOnly ? undefined : () => handleGenreCreationAction(criteria),
-              onRename: readOnly ? undefined : () => handleGenreRenameAction(criteria),
-              onChangeParent: readOnly
-                ? undefined
-                : () =>
-                    showPopup(
-                      <ChangeParentPopup
-                        genrePlaylist={{ ...genrePlaylist, criteria }}
-                        genrePlaylists={visibleGenrePlaylists}
-                        scope={scope}
-                        getBackendBaseUrl={getBackendBaseUrl}
-                        onClose={hidePopup}
-                        onParentChanged={onParentChanged}
-                      />,
-                    ),
-              side,
-              onToggleSide: canToggleSide
-                ? () => updateGenre({ uuid: genreUuid, data: { side: side === "pop" ? "core" : "pop" } })
-                : undefined,
-              toggleSideDisabledReason: popSibling
-                ? `${popSibling.name} is already the pop side of ${parentPlaylist?.name}`
-                : undefined,
-              additionalActions,
-            }}
-            extras={{
-              criteriaOverviewSchema,
-              renderGenreDetailExtras,
-              renderArtistLink,
-              renderSongLink: resolvedRenderSongLink,
-              artist: filterArtist,
-              renderSummary,
-              renderEssentialTracks,
-              renderSongLeading,
-              renderSongActions,
-              renderTracksToolbar,
-            }}
-          />
-          {renderDangerZone?.(node)}
-          </>
-        ),
-      };
-  };
+  const genrePlaylist = selectedGenrePlaylist;
+  const criteria = genrePlaylist?.criteria;
+  const parentPlaylist = visibleGenrePlaylists.find(({ uuid }) => uuid === genrePlaylist?.parent?.uuid);
+  const canToggleSide = !readOnly && criteria !== undefined && criteria !== null && parentPlaylist !== undefined && parentPlaylist.parent === null;
+  const side = criteria?.side ?? "core";
+  const popSibling = canToggleSide && side === "core" ? visibleGenrePlaylists.find((sibling) => sibling.parent?.uuid === parentPlaylist.uuid && sibling.uuid !== genrePlaylist?.uuid && sibling.criteria?.side === "pop") : undefined;
+  const shareTarget: GenreTreeShareTarget | undefined = selectedGenreUuid ? { kind: "genre", genreUuid: selectedGenreUuid, name: criteria?.name ?? "Genre", scope, artistUuid } : undefined;
+  const shareUrl = shareTarget ? getShareUrlRef.current?.(shareTarget) ?? undefined : undefined;
+  const genreContent = useGenreDetailContent<O>({
+    genreUuid: selectedGenreUuid,
+    scope, getBackendBaseUrl,
+    onSelectGenre: (uuid) => { reopenPanel(); selectGenre(uuid); },
+    expanded: isExpanded,
+    playback,
+    genrePlaylist: selectedGenrePlaylist,
+    band: {
+      ...(relations ? { node: relations.node } : {}),
+      shareTarget: shareUrl ? shareTarget : undefined, shareUrl,
+      onZoomIn: zoomInRef.current,
+      onAddChild: readOnly || !criteria ? undefined : () => handleGenreCreationAction(criteria),
+      onRename: readOnly || !criteria ? undefined : () => handleGenreRenameAction(criteria),
+      onChangeParent: readOnly || !genrePlaylist || !criteria
+        ? undefined
+        : () =>
+            showPopup(
+              <ChangeParentPopup
+                genrePlaylist={{ ...genrePlaylist, criteria }}
+                genrePlaylists={visibleGenrePlaylists}
+                scope={scope}
+                getBackendBaseUrl={getBackendBaseUrl}
+                onClose={hidePopup}
+                onParentChanged={onParentChanged}
+              />,
+            ),
+      side,
+      onToggleSide: canToggleSide && criteria
+        ? () => updateGenre({ uuid: criteria.uuid, data: { side: side === "pop" ? "core" : "pop" } })
+        : undefined,
+      toggleSideDisabledReason: popSibling
+        ? `${popSibling.name} is already the pop side of ${parentPlaylist?.name}`
+        : undefined,
+      additionalActions,
+    },
+    extras: { criteriaOverviewSchema, renderGenreDetailExtras, renderArtistLink,
+      renderSongLink: resolvedRenderSongLink, artist: filterArtist, renderSummary,
+      renderEssentialTracks, renderSongLeading, renderSongActions, renderTracksToolbar },
+    trailing: relations ? renderDangerZone?.(relations.node) : undefined,
+  });
 
   const isRotationControlled = controlledAllowWheelRotation !== undefined;
   const allowWheelRotation = controlledAllowWheelRotation ?? internalAllowWheelRotation;
@@ -632,16 +565,16 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       onClose: overlayPanel.onClose,
       compact: false,
     };
-  } else if (relations) {
-    const { primary } = renderGenreBody(relations);
+  } else if (selectedGenreUuid) {
     activePanel = {
-      title: relations.node.name,
-      content: primary,
+      title: genreContent.title,
+      content: genreContent.content,
+      aside: genreContent.aside,
       expanded: isExpanded,
       onExpandedChange: changeExpanded,
       onClose: clearSelection,
-      compact: true,
-      headerAccent: { background: relations.fill, color: relations.textColor },
+      compact: false,
+      headerAccent: relations ? { background: relations.fill, color: relations.textColor } : genreContent.headerAccent,
     };
   } else if (builtInPanel) {
     activePanel = {
@@ -654,7 +587,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       compact: true,
     };
   }
-  const isPanelShown = isTreeReady && activePanel !== null;
+  const isPanelShown = activePanel !== null && (selectedGenreUuid !== null || isTreeReady);
 
   const detailTab =
     placement === "regions" && activePanel?.onExpandedChange
@@ -698,7 +631,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           className="py-1 pl-3 pr-2 [@media(pointer:coarse)]:min-h-[var(--layout-touch-target)] hover:underline"
           aria-label={`Show artist ${filterArtist.name}`}
           onClick={() => {
-            if (selectedNodeId !== null) clearSelection();
+            if (selectedGenreUuid !== null) clearSelection();
           }}
         >
           {filterArtist.name}
@@ -728,8 +661,9 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           SearchGroups={SearchGroups}
           genrePlaylists={visibleGenrePlaylists}
           onSelect={handleGenreSearchSelect}
+          onSelectGenre={(uuid) => { reopenPanel(); if (songUuid) changeSong(null); selectGenre(uuid); }}
           selectedName={
-            selectedGenrePlaylist?.name ??
+            (selectedGenreUuid ? genreContent.title : null) ??
             (typeof builtInPanel?.title === "string" ? builtInPanel.title : null)
           }
           onClear={
@@ -963,12 +897,12 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             headerAccent={activePanel?.headerAccent}
             headerActions={expandButton}
             onClose={activePanel?.onClose ?? noop}
-            collapsed={isCollapsed || !isTreeReady || !activePanel}
+            collapsed={isCollapsed || !isPanelShown}
             expanded={activePanel?.expanded}
             onExpandedChange={activePanel?.onExpandedChange}
             aside={activePanel?.aside}
             edgeTab={detailTab}
-            headerClassName={activePanel?.compact ? "pt-[calc(var(--layout-search-h)+var(--layout-panel-inset)+0.5rem)]" : undefined}
+            headerClassName="pt-[calc(var(--layout-search-h)+var(--layout-panel-inset)+0.5rem)]"
           >
             {activePanel?.aside && !activePanel.expanded ? (
               <>

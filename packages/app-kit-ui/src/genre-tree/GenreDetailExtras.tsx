@@ -25,7 +25,8 @@ export type GenreDetailSlots<O extends CriteriaOverview> = {
 
 export type GenreDetailExtrasProps<O extends CriteriaOverview> = GenreDetailSlots<O> & GenrePlaylistTracksSlots & {
   genreUuid: GenreUuid;
-  genrePlaylist: CriteriaPlaylistMinimum;
+  genrePlaylist: CriteriaPlaylistMinimum | null;
+  genreName?: string;
   selection?: GenreMusicSelection;
   wikidataId?: string | null;
   scope: Scope;
@@ -45,6 +46,7 @@ export type GenreDetailExtrasProps<O extends CriteriaOverview> = GenreDetailSlot
 export function GenreDetailExtras<O extends CriteriaOverview>({
   genreUuid,
   genrePlaylist,
+  genreName,
   selection,
   wikidataId,
   scope,
@@ -144,6 +146,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
       <GenrePlaylistTracks
         genreUuid={genreUuid}
         genrePlaylist={genrePlaylist}
+        genreName={genreName}
         selection={selection}
         scope={scope}
         getBackendBaseUrl={getBackendBaseUrl}

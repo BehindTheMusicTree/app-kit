@@ -86,12 +86,14 @@ describe("GenrePlaylistTracks", () => {
     renderArtistLink?: RenderArtistLink,
     artist?: { uuid: string; name: string },
     selection?: GenreMusicSelection,
+    playlist: typeof genrePlaylist | null = genrePlaylist,
   ) =>
     render(
       <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
         <GenrePlaylistTracks
           genreUuid={makeGenreUuid("g1")}
-          genrePlaylist={genrePlaylist}
+          genrePlaylist={playlist}
+          genreName="Jazz"
           scope={scope}
           getBackendBaseUrl={() => "https://b"}
           renderArtistLink={renderArtistLink}
@@ -100,6 +102,13 @@ describe("GenrePlaylistTracks", () => {
         />
       </QueryClientProvider>,
     );
+
+  it("shows an empty personal list without a playlist instead of loading forever", () => {
+    renderTracks("me", undefined, undefined, undefined, null);
+    expect(screen.getByText("—")).toBeInTheDocument();
+    expect(fetchGenrePlaylistTracksPage).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 
   it("lists the genre catalogue page by page and plays from the clicked song", async () => {
     const page1 = makeTracks(2, "a");
@@ -123,6 +132,16 @@ describe("GenrePlaylistTracks", () => {
     expect(fetchGenrePlaylistTracksPage).not.toHaveBeenCalled();
     expect(playNewTrackListFromGenreCatalogue).toHaveBeenCalledWith({ uuid: makeGenreUuid("g1"), name: "Jazz" }, "reference", { startSongUuid: "b0" });
     expect(playNewTrackListFromGenrePlaylist).not.toHaveBeenCalled();
+  });
+
+  it("lists and plays catalogue songs without a playlist", async () => {
+    fetchMock.mockResolvedValueOnce(songsPage(makeTracks(1, "regional")));
+    renderTracks("reference", undefined, undefined, undefined, null);
+    expect(await screen.findByRole("list", { name: "Jazz tracks" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Play Song regional0" }));
+    expect(playNewTrackListFromGenreCatalogue).toHaveBeenCalledWith(
+      { uuid: makeGenreUuid("g1"), name: "Jazz" }, "reference", { startSongUuid: "regional0" },
+    );
   });
 
   it("restarts the catalogue when playback context changes", async () => {

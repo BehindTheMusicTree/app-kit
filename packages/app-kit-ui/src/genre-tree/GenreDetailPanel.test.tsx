@@ -2,19 +2,23 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, fireEvent } from "@testing-library/react";
 import { render } from "../test-utils";
 
-const { useFetchGenreDetailMock } = vi.hoisted(() => ({ useFetchGenreDetailMock: vi.fn() }));
+const { useFetchGenreDetailMock, bodyMock } = vi.hoisted(() => ({ useFetchGenreDetailMock: vi.fn(), bodyMock: vi.fn() }));
 
 vi.mock("@behindthemusictree/app-kit/genre-tree", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useFetchGenreDetail: () => useFetchGenreDetailMock(),
 }));
 vi.mock("./GenreInfoPanelBody", () => ({
-  GenreInfoPanelBody: ({ band, family }: { band: { onZoomIn?: () => void }; family: React.ReactNode }) => (
+  GenreInfoPanelBody: (props: { band: { onZoomIn?: () => void }; family: React.ReactNode }) => {
+    bodyMock(props);
+    const { band, family } = props;
+    return (
     <div>
       {family}
       {band.onZoomIn && <button onClick={band.onZoomIn}>Focus</button>}
     </div>
-  ),
+  );
+  },
 }));
 vi.mock("./playlist-tree/useGenrePlaylistPlayback", () => ({
   useGenrePlaylistPlayback: () => ({ playingNodeId: null, play: vi.fn() }),
@@ -61,7 +65,10 @@ describe("GenreDetailPanel", () => {
 
   it("shows a skeleton while the genre loads", () => {
     useFetchGenreDetailMock.mockReturnValue({ data: undefined, isPending: true, isError: false });
-    renderPanel();
+    const onClose = vi.fn();
+    renderPanel({ onClose });
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(onClose).toHaveBeenCalledOnce();
 
     expect(screen.getByTestId("genre-detail-panel-skeleton")).toBeInTheDocument();
   });
@@ -71,6 +78,7 @@ describe("GenreDetailPanel", () => {
     renderPanel();
 
     expect(screen.getByRole("alert")).toHaveTextContent("could not be loaded");
+    expect(screen.getByRole("button", { name: "Close" })).toBeInTheDocument();
   });
 
   it("hangs the host's edge tab off the panel", () => {
@@ -79,6 +87,14 @@ describe("GenreDetailPanel", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Hide panel" }));
     expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps entity metadata for artist-filtered playback outside the tree", () => {
+    renderPanel({ extras: { artist: { uuid: "artist", name: "Artist" } } });
+    expect(bodyMock).toHaveBeenLastCalledWith(expect.objectContaining({
+      genrePlaylist: expect.objectContaining({ criteria: expect.objectContaining({ uuid: detail.uuid }) }),
+      countsContext: "all artists",
+    }));
   });
 
   it("renders the genre's name", () => {
@@ -94,6 +110,26 @@ describe("GenreDetailPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: /Music of Brittany/ }));
 
     expect(onSelectGenre).toHaveBeenCalledWith(makeGenreUuid("brittany"));
+  });
+
+
+  it("opens a genre without a playlist and navigates by genre UUID", () => {
+    useFetchGenreDetailMock.mockReturnValue({ data: { ...detail, criteriaPlaylist: null }, isPending: false, isError: false });
+    const onSelectGenre = vi.fn();
+    renderPanel({ onSelectGenre });
+    expect(screen.getByRole("complementary", { name: detail.name })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Music of Brittany/ }));
+    expect(onSelectGenre).toHaveBeenCalledWith(makeGenreUuid("brittany"));
+  });
+
+  it("replaces previous genre content with a closable loading state on navigation", () => {
+    const props = { genreUuid: detail.uuid, scope: "reference" as const, getBackendBaseUrl: () => "https://b", onClose: vi.fn(), onSelectGenre: vi.fn() };
+    const view = render(<GenreDetailPanel {...props} />);
+    useFetchGenreDetailMock.mockReturnValue({ data: undefined, isPending: true, isError: false });
+    view.rerender(<GenreDetailPanel {...props} genreUuid={makeGenreUuid("brittany")} />);
+    expect(screen.queryByText(detail.name)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Close" })).toBeInTheDocument();
+    expect(screen.getByTestId("genre-detail-panel-skeleton")).toBeInTheDocument();
   });
 
   it("offers Focus only when onZoomIn is given", () => {

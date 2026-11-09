@@ -11,6 +11,17 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [35.0.0] - 2026-11-09
+
+### Breaking
+
+- Genre selection uses branded `GenreUuid` through `selectedGenreUuid` / `onSelectedGenreUuidChange`; remove playlist-ID aliases. Genre share targets carry `genreUuid` instead of `genrePlaylistUuid`. Hosts must migrate URL producers and consumers together.
+
+### Fixed
+
+- Load tree and standalone genre details by entity UUID, including genres absent from the rendered tree or without a playlist. Keep loading and error panels closable and reopen a collapsed panel on repeated selection.
+- Accept genre detail responses without embedded tracks or descendants; these are fetched separately.
+
 ## [34.1.0] - 2026-11-08
 
 ### Improved

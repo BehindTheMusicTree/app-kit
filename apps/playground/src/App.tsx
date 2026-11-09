@@ -4,6 +4,8 @@ import {
   usePopup,
   useConnectivityErrorPopup,
   CriteriaMinimum,
+  GenreUuidSchema,
+  type GenreUuid,
   PlayerProvider,
   usePlayer,
   PlayerTrack,
@@ -63,8 +65,8 @@ function ReferenceGenreTree() {
   const [viewMode, setViewMode] = useState<(typeof VIEW_MODES)[number]["mode"]>("pop-core");
   const [allowWheelRotation, setAllowWheelRotation] = useState(false);
   const [focusGenreUuid, setFocusGenreUuid] = useState<string | null>(null);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(
-    () => new URLSearchParams(window.location.search).get("genre"),
+  const [selectedGenreUuid, setSelectedGenreUuid] = useState<GenreUuid | null>(
+    () => { const parsed = GenreUuidSchema.safeParse(new URLSearchParams(window.location.search).get("genre")); return parsed.success ? parsed.data : null; },
   );
   const [artistUuid, setArtistUuid] = useState<string | null>(
     () => new URLSearchParams(window.location.search).get("artist"),
@@ -77,8 +79,8 @@ function ReferenceGenreTree() {
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
   }, []);
 
-  const handleSelectedNodeIdChange = useCallback((id: string | null) => {
-    setSelectedNodeId(id);
+  const handleSelectedGenreUuidChange = useCallback((id: GenreUuid | null) => {
+    setSelectedGenreUuid(id);
     updateQueryParam("genre", id);
   }, [updateQueryParam]);
 
@@ -91,7 +93,7 @@ function ReferenceGenreTree() {
   const getShareUrl = useCallback<GetGenreTreeShareUrl>((target) => {
     const url = new URL(window.location.href);
     if (target.kind === "genre") {
-      url.searchParams.set("genre", target.genrePlaylistUuid);
+      url.searchParams.set("genre", target.genreUuid);
       if (target.artistUuid) url.searchParams.set("artist", target.artistUuid);
       else url.searchParams.delete("artist");
     } else {
@@ -171,8 +173,8 @@ function ReferenceGenreTree() {
         handleGenreCreationAction={showCriteriaCreationPopup}
         handleGenreRenameAction={showGenreRenamePopup}
         getBackendBaseUrl={getBackendBaseUrl}
-        selectedNodeId={selectedNodeId}
-        onSelectedNodeIdChange={handleSelectedNodeIdChange}
+        selectedGenreUuid={selectedGenreUuid}
+        onSelectedGenreUuidChange={handleSelectedGenreUuidChange}
         artistUuid={artistUuid}
         onArtistUuidChange={handleArtistUuidChange}
         getShareUrl={getShareUrl}

@@ -1,12 +1,12 @@
 import type { Scope } from "@behindthemusictree/app-kit/transport";
-import type { GenrePlaylistUuid } from "@behindthemusictree/app-kit/genre-tree";
+import type { GenreUuid } from "@behindthemusictree/app-kit/genre-tree";
 
 /** Identifies the detail-panel entity whose current host route should be shared. */
 export type GenreTreeShareTarget =
   | {
       kind: "genre";
-      /** Tree selection/route identity; distinct from the associated criteria UUID. */
-      genrePlaylistUuid: GenrePlaylistUuid;
+      /** Genre entity identity, independent of its playlist or renderer. */
+      genreUuid: GenreUuid;
       name: string;
       scope: Scope;
       /** Preserve an active artist filter when sharing one of its genre details. */

@@ -21,6 +21,13 @@ describe("reference genre contracts", () => {
     expect(ReferenceGenrePlaylistSchema.parse(playlist)).toMatchObject({ ...counts, catalogue: counts });
   });
 
+  it("accepts detail without embedded tracks, descendants or a playlist", () => {
+    const { tracks: _tracks, descendants: _descendants, ...response } = detail;
+    expect(ReferenceGenreDetailedSchema.parse({ ...response, criteriaPlaylist: null })).toMatchObject({
+      uuid: identity.uuid, criteriaPlaylist: null, catalogue: counts,
+    });
+  });
+
   it("requires both populations on music summaries while keeping identities minimal", () => {
     expect(CriteriaPlaylistMinimumSchema.parse(identity)).toEqual(identity);
     expect(ReferenceGenreDetailedSchema.safeParse({ ...detail, catalogue: undefined }).success).toBe(false);

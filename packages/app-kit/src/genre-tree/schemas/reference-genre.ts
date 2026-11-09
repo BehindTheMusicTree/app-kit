@@ -5,7 +5,7 @@ import { GenreCatalogueCountsSchema, GenreCountsSchema, GenrePlaylistSummarySche
 
 export const ReferenceGenreDetailedSchema = CriteriaDetailedSchema.extend({
   catalogue: GenreCatalogueCountsSchema,
-  criteriaPlaylist: GenrePlaylistSummarySchema,
+  criteriaPlaylist: GenrePlaylistSummarySchema.nullable(),
 });
 
 export const ReferenceGenrePlaylistSchema = CriteriaPlaylistSimpleSchema.extend({
