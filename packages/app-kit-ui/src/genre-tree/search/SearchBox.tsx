@@ -16,6 +16,7 @@ export type SearchBoxProps = {
   onPicked?: (groupKey: string, itemKey: string) => void;
   /** Shows the clear button when set. */
   onClear?: () => void;
+  clearLabel?: string;
   /** An action left of the text, e.g. a Previous button. */
   leading?: ReactNode;
   className?: string;
@@ -32,6 +33,7 @@ export default function SearchBox({
   groups,
   onPicked,
   onClear,
+  clearLabel,
   leading,
   className,
   onFocus,
@@ -68,6 +70,7 @@ export default function SearchBox({
         status={status}
         loading={loading}
         onClear={onClear}
+        clearLabel={clearLabel}
         leading={leading}
         inputClassName="focus-visible:ring-0"
       />

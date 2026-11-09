@@ -1609,12 +1609,25 @@ describe("GenreTreeView", () => {
       fireEvent.mouseDown(screen.getByRole("option", { name: "Jazz" }));
 
       expect(input).toHaveValue("Jazz");
-      expect(screen.getByRole("button", { name: "Close" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Close" })).not.toBeInTheDocument();
 
-      fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
+      fireEvent.click(screen.getByRole("button", { name: "Close panel" }));
 
       expect(input).toHaveValue("");
       expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].selectedNodeId).toBeNull();
+    });
+
+    it("offers the close cross only while a panel is open", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: makeGenreUuid("c1"), name: "Jazz" } })],
+        isPending: false,
+      });
+      renderView();
+      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+
+      fireEvent.change(screen.getByRole("combobox", { name: "Search" }), { target: { value: "Ja" } });
+
+      expect(screen.queryByRole("button", { name: "Close panel" })).not.toBeInTheDocument();
     });
 
     function openBand(id: string) {
@@ -2058,7 +2071,7 @@ describe("GenreTreeView", () => {
       expect(screen.getByRole("complementary", { name: "Band" })).toBeInTheDocument();
       expect(onArtistSelect).toHaveBeenCalledWith(suggestion);
 
-      fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
+      fireEvent.click(screen.getByRole("button", { name: "Close panel" }));
       expect(screen.queryByRole("complementary", { name: /.+/ })).not.toBeInTheDocument();
     });
 
@@ -2214,7 +2227,7 @@ describe("GenreTreeView", () => {
       expect(screen.queryByRole("button", { name: "Close" })).not.toBeInTheDocument();
       expect(screen.getByRole("combobox", { name: "Search" })).toHaveValue("Band");
 
-      fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
+      fireEvent.click(screen.getByRole("button", { name: "Close panel" }));
       expect(onArtistUuidChange).toHaveBeenCalledWith(null);
     });
 
@@ -2332,7 +2345,7 @@ describe("GenreTreeView", () => {
       expect(screen.getByRole("complementary", { name: "Karma Police" })).toBeInTheDocument();
       expect(screen.getByRole("combobox", { name: "Search" })).toHaveValue("Karma Police");
 
-      fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
+      fireEvent.click(screen.getByRole("button", { name: "Close panel" }));
       expect(onSongUuidChange).toHaveBeenLastCalledWith(null);
       expect(screen.queryByRole("complementary", { name: /.+/ })).not.toBeInTheDocument();
     });
