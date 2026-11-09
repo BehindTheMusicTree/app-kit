@@ -50,7 +50,8 @@ export type GenreDetailPanelProps<O extends CriteriaOverview> = {
   /** Tab on the panel's inner edge, for hosts that hide and show the panel. */
   edgeTab?: ComponentProps<typeof DetailPanel>["edgeTab"];
   extras?: GenreInfoPanelBodyProps<O>["extras"];
-  headerClassName?: ComponentProps<typeof DetailPanel>["headerClassName"];
+  /** The host's search field shows this genre's name and closes the panel. */
+  titleInSearch?: boolean;
 };
 
 // Relatives from the detail endpoint carry no song count, so the family dots share one size.
@@ -115,10 +116,12 @@ export function useGenreDetailContent<O extends CriteriaOverview>({
   }, [detail, scope]);
 
   if (isError) return {
+    name: null,
     title: "Genre unavailable",
     content: <p role="alert" className="p-4 text-sm text-[var(--color-text)]">This genre could not be loaded.</p>,
   };
   if (isPending || !detail || !view) return {
+    name: null,
     title: "Loading genre…",
     content: <div className="flex flex-col gap-3 p-4" aria-busy="true" data-testid="genre-detail-panel-skeleton">
       <Skeleton className="h-6 w-2/3" />
@@ -141,6 +144,7 @@ export function useGenreDetailContent<O extends CriteriaOverview>({
   const ancestors = <GenreNodeAncestors ancestorNodes={view.ancestorNodes} onSelectNode={selectGenre} />;
 
   return {
+    name: detail.name,
     title: detail.name,
     headerAccent: { background: view.fill, color: ACCENT_TEXT_COLOR },
     aside: expanded ? ancestors : undefined,
@@ -165,7 +169,7 @@ export function useGenreDetailContent<O extends CriteriaOverview>({
 
 export function GenreDetailPanel<O extends CriteriaOverview>({
   genreUuid, scope, getBackendBaseUrl, onClose, onSelectGenre, onZoomIn,
-  shareUrl, shareTarget, collapsed, expanded, onExpandedChange, edgeTab, extras, headerClassName,
+  shareUrl, shareTarget, collapsed, expanded, onExpandedChange, edgeTab, extras, titleInSearch,
 }: GenreDetailPanelProps<O>) {
   const panel = useGenreDetailContent({
     genreUuid, scope, getBackendBaseUrl, onSelectGenre, extras, expanded,
@@ -174,7 +178,7 @@ export function GenreDetailPanel<O extends CriteriaOverview>({
   return (
     <DetailPanel side="left" title={panel.title} headerAccent={panel.headerAccent}
       onClose={onClose} collapsed={collapsed} expanded={expanded}
-      onExpandedChange={onExpandedChange} edgeTab={edgeTab} aside={panel.aside} headerClassName={headerClassName}
+      onExpandedChange={onExpandedChange} edgeTab={edgeTab} aside={panel.aside} titleInSearch={titleInSearch}
       headerActions={onExpandedChange ? <IconButton aria-label={expanded ? "Shrink panel" : "Extend panel"} onClick={() => onExpandedChange(!expanded)}>
         {expanded ? <Minimize2 aria-hidden="true" className="h-4 w-4" /> : <Maximize2 aria-hidden="true" className="h-4 w-4" />}
       </IconButton> : undefined}

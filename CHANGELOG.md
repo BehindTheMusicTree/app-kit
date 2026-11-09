@@ -11,6 +11,22 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [37.0.0] - 2026-11-09
+
+### Breaking
+
+- `GenreDetailPanel` replaces `headerClassName` with `titleInSearch`, for hosts whose floating search field shows the genre's name and closes the panel.
+- Requires `@behindthemusictree/ui` 0.19.0 or later (`DetailPanel`'s `titleInSearch`).
+
+### Added
+
+- `GenreSearch`: `showClear` and `clearLabel`. `SearchBox`: `clearLabel`.
+- `useGenreDetailContent` returns `name`, `null` while the genre loads or fails.
+
+### Fixed
+
+- `GenreTreeView` shows a genre's name only in the search field again, without a panel close button. The search cross shows only while such a panel is open, closes it and unselects the item, and the field no longer reads "Loading genre…" or "Genre unavailable".
+
 ## [36.0.0] - 2026-11-09
 
 ### Breaking

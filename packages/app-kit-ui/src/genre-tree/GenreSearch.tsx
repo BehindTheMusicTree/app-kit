@@ -18,6 +18,9 @@ export type GenreSearchProps<T extends CriteriaPlaylistSimple = CriteriaPlaylist
   onPrevious?: () => void;
   /** Called by the clear button, after it empties the input. */
   onClear?: () => void;
+  /** Forces the clear button on or off; by default it shows while the input has something to clear. */
+  showClear?: boolean;
+  clearLabel?: string;
   placeholder?: string;
   /** Called with what the user types, and with "" on clear or pick; never when `selectedName` refills the input. */
   onQueryChange?: (query: string) => void;
@@ -32,6 +35,8 @@ export default function GenreSearch<T extends CriteriaPlaylistSimple = CriteriaP
   onSelect,
   selectedName = null,
   onClear,
+  showClear,
+  clearLabel,
   onPrevious,
   placeholder,
   onQueryChange,
@@ -88,8 +93,9 @@ export default function GenreSearch<T extends CriteriaPlaylistSimple = CriteriaP
           if (groupKey !== "genres") setQuery("");
           onQueryChange?.("");
         }}
+        clearLabel={clearLabel}
         onClear={
-          canClear
+          (showClear ?? canClear)
             ? () => {
                 clear();
                 onQueryChange?.("");
