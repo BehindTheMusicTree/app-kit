@@ -14,7 +14,7 @@ import {
   type RenderSongLink,
   type SongDetailed,
 } from "@behindthemusictree/app-kit/genre-tree";
-import { PaginatedResponseSchema, useFetchWrapper, useQueryWithParse } from "@behindthemusictree/app-kit/transport";
+import { PaginatedResponseSchema, usePlaybackQuery } from "@behindthemusictree/app-kit/transport";
 import TrackItem from "../track-list-sidebar/TrackItem";
 
 const SongPageSchema = PaginatedResponseSchema(SongDetailedSchema);
@@ -35,13 +35,13 @@ interface ArtistSongsProps {
 export default function ArtistSongs({ artist, getBackendBaseUrl, renderArtistLink, renderSongLink }: ArtistSongsProps) {
   const [page, setPage] = useState(1);
   const [ordering, setOrdering] = useState<Ordering>("title");
-  const { fetch } = useFetchWrapper(getBackendBaseUrl);
   const { playNewTrackListFromArtist } = useTrackList<SongDetailed>();
   const { playerTrackObject } = usePlayer();
-  const { data, isPending, isError } = useQueryWithParse({
+  const { data, isPending, isError } = usePlaybackQuery({
+    getBackendBaseUrl,
     queryKey: ["referenceSongs", "artist", artist.uuid, ordering, page],
-    queryFn: () =>
-      fetch(libraryEndpoints.reference.songs.list(), true, false, undefined, {
+    queryFn: (fetchBound) =>
+      fetchBound(libraryEndpoints.reference.songs.list(), true, false, undefined, {
         artist: artist.uuid,
         ordering,
         page,

@@ -24,6 +24,9 @@ const {
 vi.mock("../transport/useFetchWrapper", () => ({
   useFetchWrapper: () => ({ fetch: fetchMock }),
 }));
+vi.mock("../transport/usePlaybackFetch", () => ({
+  usePlaybackFetch: () => ({ fetchBound: fetchMock, fetchLatest: fetchMock }),
+}));
 
 vi.mock("../auth/SessionContext", () => ({
   useSession: () => useSessionMock(),
@@ -200,7 +203,7 @@ describe("TrackListContext", () => {
     expect(result.current.trackList?.tracks.map((track) => track.uuid)).toEqual(["t1", "t2"]);
     expect(fetchMock).toHaveBeenLastCalledWith(expect.any(String), true, true, {}, {
       page: 1, pageSize: 100, from: "t1",
-    }, false, true, true);
+    }, false, true);
   });
 
   it("restarts at the list head when the selected anchor becomes blocked", async () => {
@@ -212,7 +215,7 @@ describe("TrackListContext", () => {
     playback.key = "AL:2";
     rerender();
     await waitFor(() => expect(result.current.selectedTrack?.uuid).toBe("t2"));
-    expect(fetchMock).toHaveBeenLastCalledWith(expect.any(String), true, true, {}, { page: 1, pageSize: 100 }, false, false, true);
+    expect(fetchMock).toHaveBeenLastCalledWith(expect.any(String), true, true, {}, { page: 1, pageSize: 100 }, false, false);
   });
 
   it("keeps a single audio track listed across country changes", async () => {
@@ -375,7 +378,6 @@ describe("TrackListContext", () => {
         { artist: "a1", playable: true, ordering: "-albumYear", page: 1, pageSize: 100 },
         false,
         false,
-        true,
       );
       expect(result.current.trackList?.tracks).toEqual(tracks);
       expect(result.current.trackList?.total).toBe(5);
@@ -585,7 +587,7 @@ describe("TrackListContext", () => {
       expect(fetchMock).toHaveBeenLastCalledWith("library/songs/", true, false, {}, {
         genre: genre.uuid, playable: true, ordering: "title", page: 1, pageSize: 100,
         coverage: "genre_and_subgenres", subgenres: "regional",
-      }, false, false, true);
+      }, false, false);
     });
 
     it("rejects personal scope before fetching", async () => {
@@ -627,7 +629,7 @@ describe("TrackListContext", () => {
 
       await playGenre(result, makePage([trackA, trackB], { next: true, total: 250 }), "reference");
 
-      expect(fetchMock).toHaveBeenCalledWith(`genre-playlists/${makeGenrePlaylistUuid("p1")}/tracks/`, true, false, {}, { page: 1, pageSize: 100 }, false, false, true);
+      expect(fetchMock).toHaveBeenCalledWith(`genre-playlists/${makeGenrePlaylistUuid("p1")}/tracks/`, true, false, {}, { page: 1, pageSize: 100 }, false, false);
       expect(result.current.trackList?.tracks).toEqual([trackA, trackB]);
       expect(result.current.trackList?.total).toBe(250);
       expect(result.current.trackList?.nextPage).toBe(2);
@@ -641,7 +643,7 @@ describe("TrackListContext", () => {
 
       await playGenre(result, makePage(makeTracks(1)), "me");
 
-      expect(fetchMock).toHaveBeenCalledWith(`me/genre-playlists/${makeGenrePlaylistUuid("p1")}/tracks/`, true, true, {}, { page: 1, pageSize: 100 }, false, false, true);
+      expect(fetchMock).toHaveBeenCalledWith(`me/genre-playlists/${makeGenrePlaylistUuid("p1")}/tracks/`, true, true, {}, { page: 1, pageSize: 100 }, false, false);
       expect(result.current.trackList?.nextPage).toBeNull();
     });
 
@@ -660,7 +662,7 @@ describe("TrackListContext", () => {
         page: 1,
         pageSize: 100,
         from: "b0",
-      }, false, true, true);
+      }, false, true);
       expect(result.current.selectedTrack).toEqual(first[0]);
       expect(loadTrackForPlayerMock).toHaveBeenCalledWith("b0");
       // The start track is near the end of the loaded page, so auto-load fetches page 2 with the same `from`.
@@ -669,7 +671,7 @@ describe("TrackListContext", () => {
         page: 2,
         pageSize: 100,
         from: "b0",
-      }, false, true, false);
+      }, false, true);
       expect(result.current.trackList?.tracks.map((track) => track.uuid)).toEqual(["b0", "b1", "b2", "u0"]);
     });
 
@@ -824,7 +826,7 @@ describe("TrackListContext", () => {
         await result.current.loadMore();
       });
 
-      expect(fetchMock).toHaveBeenLastCalledWith(`me/genre-playlists/${makeGenrePlaylistUuid("p1")}/tracks/`, true, true, {}, { page: 2, pageSize: 100 }, false, false, false);
+      expect(fetchMock).toHaveBeenLastCalledWith(`me/genre-playlists/${makeGenrePlaylistUuid("p1")}/tracks/`, true, true, {}, { page: 2, pageSize: 100 }, false, false);
       expect(result.current.trackList?.tracks.map((track) => track.uuid)).toEqual([
         ...firstPage.map((track) => track.uuid),
         "u0",

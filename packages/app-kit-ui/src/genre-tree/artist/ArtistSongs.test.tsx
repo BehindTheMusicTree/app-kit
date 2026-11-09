@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
-import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, keepPreviousData, useQuery } from "@tanstack/react-query";
 import ArtistSongs from "./ArtistSongs";
 
 const fetchMock = vi.fn();
@@ -8,9 +8,11 @@ const playNewTrackListMock = vi.fn();
 
 vi.mock("@behindthemusictree/app-kit/transport", () => ({
   PaginatedResponseSchema: () => null,
-  useFetchWrapper: () => ({ fetch: fetchMock }),
-  useQueryWithParse: ({ queryKey, queryFn }: { queryKey: unknown[]; queryFn: () => Promise<unknown> }) =>
-    useQuery({ queryKey, queryFn }),
+  usePlaybackQuery: ({ queryKey, queryFn, placeholderData }: {
+    queryKey: unknown[];
+    queryFn: (fetchBound: typeof fetchMock) => Promise<unknown>;
+    placeholderData?: typeof keepPreviousData;
+  }) => useQuery({ queryKey, queryFn: () => queryFn(fetchMock), placeholderData }),
 }));
 vi.mock("@behindthemusictree/app-kit/player", () => ({ usePlayer: () => ({ playerTrackObject: null }) }));
 vi.mock("@behindthemusictree/app-kit/genre-tree", () => ({

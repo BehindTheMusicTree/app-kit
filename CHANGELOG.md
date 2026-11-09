@@ -11,6 +11,22 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [36.0.0] - 2026-11-09
+
+### Breaking
+
+- `useFetchWrapper` no longer carries the playback country: `acceptRefreshedContext` is removed and its `fetch` is country-agnostic. A GET whose response depends on the viewer's playback country must use `usePlaybackFetch` (`fetchBound` for queries, `fetchLatest` for explicit play intents) or `usePlaybackQuery`. In development, a GET answered with `X-Playback-Country` through `useFetchWrapper` logs a `console.error`.
+- `UseGenreTreeViewStateResult` gains required `isError` and `refetch` fields; hosts that build their own state result must supply them.
+
+### Added
+
+- `usePlaybackFetch` and `usePlaybackQuery` (transport) bind a request to the playback context: the query key carries `playback.key`, the query waits for the context to be ready and retries once if the context changed mid-request. `useRemoteSearch` accepts a `fetch` option.
+- `useGenreTreeViewState` and `useVisibleGenrePlaylists` expose `isError` and `refetch`; `GenreTreeView` shows an error with Retry when the tree fails to load and nothing is cached.
+
+### Fixed
+
+- The genre tree no longer loads blank on first visit when the playback country resolves while the tree request is in flight. Song, song history, song search, track list, artist songs and genre playlist reads now use the explicit playback binding.
+
 ## [35.0.0] - 2026-11-09
 
 ### Breaking
