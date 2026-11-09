@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [36.0.0] - 2026-11-09
+
 ### Breaking
 
 - `useFetchWrapper` no longer carries the playback country: `acceptRefreshedContext` is removed and its `fetch` is country-agnostic. A GET whose response depends on the viewer's playback country must use `usePlaybackFetch` (`fetchBound` for queries, `fetchLatest` for explicit play intents) or `usePlaybackQuery`. In development, a GET answered with `X-Playback-Country` through `useFetchWrapper` logs a `console.error`.
