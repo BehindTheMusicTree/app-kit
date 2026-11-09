@@ -47,8 +47,7 @@ import { GenreTreeSearch, type GenreSearchGroupsProps } from "./GenreTreeSearch"
 import { type SearchGroup } from "./search";
 import { useGenreDetailContent } from "./GenreDetailPanel";
 import ChangeParentPopup, { type ParentChange } from "./ChangeParentPopup";
-import { useArtistPanel } from "./artist/useArtistPanel";
-import { useSongPanel } from "./song/useSongPanel";
+import { useEntityPanel } from "./useEntityPanel";
 import { SizeMetricToggle } from "./SizeMetricToggle";
 import { hasViewsCount, type GenreTreeSizeMetric } from "./playlist-tree/size-metric";
 import { useGenrePlaylistPlayback, type GenrePlaylistPlayback } from "./playlist-tree/useGenrePlaylistPlayback";
@@ -348,29 +347,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const [expandedArtistUuid, setExpandedArtistUuid] = useState<string | null>(null);
   const artistBaseUrl = artistSearchBaseUrl ?? getBackendBaseUrl;
   const songBaseUrl = getBackendBaseUrl;
-  const artistPanel = useArtistPanel({
-    uuid: artistUuid,
-    scope,
-    getBackendBaseUrl: artistBaseUrl,
-    getShareUrl: getShareUrlRef.current,
-    renderArtistLink:
-      renderArtistLink ??
-      ((artist) =>
-        artist.isSpecialPurpose ? (
-          artist.name
-        ) : (
-          <button type="button" onClick={() => openArtist(artist.uuid)} className="hover:underline">
-            {artist.name}
-          </button>
-        )),
-    expanded: controlledArtistExpanded ?? (artistUuid !== null && expandedArtistUuid === artistUuid),
-    onExpandedChange: (on) => {
-      if (controlledArtistExpanded === undefined) setExpandedArtistUuid(on ? artistUuid : null);
-      onArtistExpandedChange?.(on);
-    },
-    renderSongLink: resolvedRenderSongLink,
-    onClose: () => changeArtist(null),
-  });
   const resolvedRenderArtistLink: RenderArtistLink =
     renderArtistLink ??
     ((artist) =>
@@ -391,30 +367,40 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     }
     return path;
   };
-  const songPanel = useSongPanel({
-    uuid: songUuid,
+  const entityPanel = useEntityPanel({
     scope,
     getBackendBaseUrl: songBaseUrl,
+    getArtistBackendBaseUrl: artistBaseUrl,
     getShareUrl: getShareUrlRef.current,
     renderArtistLink: resolvedRenderArtistLink,
+    renderSongLink: resolvedRenderSongLink,
+    song: {
+      uuid: songUuid,
+      expanded: controlledSongExpanded ?? (songUuid !== null && expandedSongUuid === songUuid),
+      onExpandedChange: (on) => {
+        if (controlledSongExpanded === undefined) setExpandedSongUuid(on ? songUuid : null);
+        onSongExpandedChange?.(on);
+      },
+      onClose: () => changeSong(null),
+    },
+    artist: {
+      uuid: artistUuid,
+      expanded: controlledArtistExpanded ?? (artistUuid !== null && expandedArtistUuid === artistUuid),
+      onExpandedChange: (on) => {
+        if (controlledArtistExpanded === undefined) setExpandedArtistUuid(on ? artistUuid : null);
+        onArtistExpandedChange?.(on);
+      },
+      onClose: () => changeArtist(null),
+    },
     getGenrePath,
-    onSelectGenre: (genrePlaylist) => {
+    onSelectGenrePlaylist: (genrePlaylist) => {
       changeSong(null);
       selectGenrePlaylist(genrePlaylist);
     },
-    expanded: controlledSongExpanded ?? (songUuid !== null && expandedSongUuid === songUuid),
-    onExpandedChange: (on) => {
-      if (controlledSongExpanded === undefined) setExpandedSongUuid(on ? songUuid : null);
-      onSongExpandedChange?.(on);
-    },
-    onClose: () => changeSong(null),
   });
-  // Like a genre, the built-in artist panel shows its name in the search field and closes from its clear button.
-  // A selected genre shows its own panel instead; the artist stays active as a filter.
-  // A song, like a genre, replaces the artist panel; the artist stays active as a filter.
-  const builtInSongPanel = overlayPanel || selectedGenreUuid !== null ? undefined : songPanel;
-  const builtInArtistPanel = overlayPanel || selectedGenreUuid !== null || builtInSongPanel ? undefined : artistPanel;
-  const builtInPanel = builtInSongPanel ?? builtInArtistPanel;
+  // Like a genre, the built-in panel shows its name in the search field and closes from its clear button. A selected
+  // genre shows its own panel instead; the artist stays active as a filter.
+  const builtInPanel = overlayPanel || selectedGenreUuid !== null ? undefined : entityPanel;
 
   const [uncontrolledCollapsed, setUncontrolledCollapsed] = useState(false);
   const [uncontrolledExpanded, setUncontrolledExpanded] = useState(false);

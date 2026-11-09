@@ -10,6 +10,7 @@ import {
   songUnplayableReason,
   useSongHistory,
   useTrackList,
+  type CriteriaMinimum,
   type CriteriaPlaylistSimple,
   type RenderArtistLink,
   type SongDetailed,
@@ -18,16 +19,26 @@ import type { Scope } from "@behindthemusictree/app-kit/transport";
 import ShareActionButton from "../ShareActionButton";
 import type { GenreTreeShareTarget } from "../share";
 
-export interface SongPanelContentProps {
+export type SongPanelContentProps = {
   song: SongDetailed;
   scope: Scope;
   getBackendBaseUrl: () => string;
   shareUrl?: string;
   renderArtistLink: RenderArtistLink;
-  /** Root-to-leaf playlists of the song's genre in the loaded tree; empty when the tree doesn't hold it. */
-  genrePath: CriteriaPlaylistSimple[];
-  onSelectGenre: (genrePlaylist: CriteriaPlaylistSimple) => void;
-}
+} & (
+  | {
+      /** Root-to-leaf playlists of the song's genre in the loaded tree; empty when the tree doesn't hold it. */
+      genrePath: CriteriaPlaylistSimple[];
+      onSelectGenrePlaylist: (genrePlaylist: CriteriaPlaylistSimple) => void;
+      onSelectGenre?: never;
+    }
+  | {
+      /** The genre alone opens, for a host without a tree. */
+      onSelectGenre: (genre: CriteriaMinimum) => void;
+      genrePath?: never;
+      onSelectGenrePlaylist?: never;
+    }
+);
 
 const numberFormat = new Intl.NumberFormat("en");
 const dateFormat = new Intl.DateTimeFormat("en", { dateStyle: "medium" });
@@ -76,15 +87,8 @@ function SongHistory({ uuid, getBackendBaseUrl }: { uuid: string; getBackendBase
   );
 }
 
-export default function SongPanelContent({
-  song,
-  scope,
-  getBackendBaseUrl,
-  shareUrl,
-  renderArtistLink,
-  genrePath,
-  onSelectGenre,
-}: SongPanelContentProps) {
+export default function SongPanelContent(props: SongPanelContentProps) {
+  const { song, scope, getBackendBaseUrl, shareUrl, renderArtistLink } = props;
   const { playNewTrackListFromTrackUuid } = useTrackList<SongDetailed>();
   const { playerTrackObject, playState, handlePlayPauseAction } = usePlayer();
   const unplayableReason = songUnplayableReason(song);
@@ -95,15 +99,21 @@ export default function SongPanelContent({
 
   const fields: { label: string; value: ReactNode }[] = [];
   if (song.genre) {
-    const path = genrePath.length > 0 ? genrePath : null;
+    const path = props.genrePath && props.genrePath.length > 0 ? props.genrePath : null;
+    const { onSelectGenre } = props;
+    const genre = song.genre;
     fields.push({
       label: "Genre",
-      value: path ? (
+      value: onSelectGenre ? (
+        <button type="button" onClick={() => onSelectGenre(genre)} className="hover:underline">
+          {genre.name}
+        </button>
+      ) : path ? (
         <span className="flex flex-wrap items-center gap-x-1">
           {path.map((genrePlaylist, index) => (
             <span key={genrePlaylist.uuid}>
               {index > 0 && <span aria-hidden="true">› </span>}
-              <button type="button" onClick={() => onSelectGenre(genrePlaylist)} className="hover:underline">
+              <button type="button" onClick={() => props.onSelectGenrePlaylist?.(genrePlaylist)} className="hover:underline">
                 {genrePlaylist.name}
               </button>
             </span>

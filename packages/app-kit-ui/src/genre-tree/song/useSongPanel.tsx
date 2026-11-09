@@ -12,19 +12,30 @@ import type { GetGenreTreeShareUrl } from "../share";
 import SongPanelContent from "./SongPanelContent";
 import type { OverlayPanel } from "../overlayPanel";
 
-export interface SongPanelOptions {
+/** How the song's genre is opened: through the loaded tree's playlists, or by the genre alone for a host without a tree. */
+export type SongGenreNavigation =
+  | {
+      /** Root-to-leaf playlists of a genre in the loaded tree; empty when the tree doesn't hold it. */
+      getGenrePath: (genre: CriteriaMinimum) => CriteriaPlaylistSimple[];
+      onSelectGenrePlaylist: (genrePlaylist: CriteriaPlaylistSimple) => void;
+      onSelectGenre?: never;
+    }
+  | {
+      onSelectGenre: (genre: CriteriaMinimum) => void;
+      getGenrePath?: never;
+      onSelectGenrePlaylist?: never;
+    };
+
+export type SongPanelOptions = {
   uuid: string | null;
   scope: Scope;
   getBackendBaseUrl: () => string;
   getShareUrl?: GetGenreTreeShareUrl;
   renderArtistLink: RenderArtistLink;
-  /** Root-to-leaf playlists of a genre in the loaded tree; empty when the tree doesn't hold it. */
-  getGenrePath: (genre: CriteriaMinimum) => CriteriaPlaylistSimple[];
-  onSelectGenre: (genrePlaylist: CriteriaPlaylistSimple) => void;
   expanded: boolean;
   onExpandedChange: (expanded: boolean) => void;
   onClose: () => void;
-}
+} & SongGenreNavigation;
 
 /** The song detail overlay panel for `uuid`, or undefined when no song is set. */
 export function useSongPanel({
@@ -33,11 +44,10 @@ export function useSongPanel({
   getBackendBaseUrl,
   getShareUrl,
   renderArtistLink,
-  getGenrePath,
-  onSelectGenre,
   expanded,
   onExpandedChange,
   onClose,
+  ...navigation
 }: SongPanelOptions): OverlayPanel | undefined {
   const result = useSong(uuid, getBackendBaseUrl);
 
@@ -83,8 +93,12 @@ export function useSongPanel({
             getBackendBaseUrl={getBackendBaseUrl}
             shareUrl={shareUrl ?? undefined}
             renderArtistLink={renderArtistLink}
-            genrePath={song.genre ? getGenrePath(song.genre) : []}
-            onSelectGenre={onSelectGenre}
+            {...(navigation.getGenrePath
+              ? {
+                  genrePath: song.genre ? navigation.getGenrePath(song.genre) : [],
+                  onSelectGenrePlaylist: navigation.onSelectGenrePlaylist,
+                }
+              : { onSelectGenre: navigation.onSelectGenre })}
           />
         ),
       };

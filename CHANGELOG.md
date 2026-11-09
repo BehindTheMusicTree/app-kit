@@ -11,6 +11,12 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [37.1.0] - 2026-11-09
+
+### Added
+
+- `app-kit-ui/genre-tree`: `useEntityPanel` and `EntityDetailPanel` show the song or artist detail (song first) for a host without a genre tree. A song's genre opens through `onSelectGenre`, or through `getGenrePath` and `onSelectGenrePlaylist` where the tree holds it. `GenreTreeView` uses `useEntityPanel` with no change in behavior.
+
 ## [37.0.0] - 2026-11-09
 
 ### Breaking
