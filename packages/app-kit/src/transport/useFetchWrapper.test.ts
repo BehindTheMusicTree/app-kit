@@ -53,82 +53,44 @@ describe("useFetchWrapper", () => {
     useSessionState = { clearSession: clearSessionMock, session: { accessToken: "token" }, sessionRestored: true };
   });
 
-  it("retries an explicit play once if country changes during the response", async () => {
+  it("never touches the playback context, whatever the endpoint", async () => {
     playbackState.key = "FR:1";
-    playbackState.country = "FR";
-    playbackState.isCurrent.mockImplementation((...args: unknown[]) => args[0] === playbackState.key);
-    rawFetchMock.mockImplementationOnce(async (...args: unknown[]) => {
-      playbackState.key = "AL:2";
-      playbackState.country = "AL";
-      await (args[9] as (response: Response) => Promise<void>)(new Response(null, { headers: { "X-Playback-Country": "FR" } }));
-    }).mockImplementationOnce(async (...args: unknown[]) => {
-      await (args[9] as (response: Response) => Promise<void>)(new Response(null, { headers: { "X-Playback-Country": "AL" } }));
-      return { results: ["new"] };
-    });
+    playbackState.isCurrent.mockReturnValue(false);
+    rawFetchMock.mockResolvedValueOnce({ results: [] });
     const { result } = renderHook(() => useFetchWrapper(() => "https://api.example.com"));
-    await expect(result.current.fetch("library/songs/", true, false, {}, undefined, false, false, true))
-      .resolves.toEqual({ results: ["new"] });
-    expect(rawFetchMock).toHaveBeenCalledTimes(2);
+    await expect(result.current.fetch("genre-playlists/tree/", true, false)).resolves.toEqual({ results: [] });
+    expect(playbackState.refresh).not.toHaveBeenCalled();
   });
 
-  it("uses the refreshed context for an explicit play request", async () => {
-    playbackState.key = "FR:1";
-    playbackState.country = "FR";
-    playbackState.refresh.mockImplementationOnce(async () => {
-      playbackState.key = "AL:2";
-      playbackState.country = "AL";
-      return "AL";
-    });
-    playbackState.isCurrent.mockImplementation((...args: unknown[]) => args[0] === playbackState.key);
-    rawFetchMock.mockImplementationOnce(async (...args: unknown[]) => {
-      await (args[9] as (response: Response) => Promise<void>)(new Response(null, { headers: { "X-Playback-Country": "AL" } }));
-      return { results: ["new"] };
-    });
-    const { result } = renderHook(() => useFetchWrapper(() => "https://api.example.com"));
-    await expect(result.current.fetch("library/songs/", true, false, {}, undefined, false, false, true))
-      .resolves.toEqual({ results: ["new"] });
-  });
+  describe("playback drift guard", () => {
+    const run = async (options: RequestInit, headers: Record<string, string>) => {
+      const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+      rawFetchMock.mockImplementationOnce(async (...args: unknown[]) => {
+        await (args[9] as ((response: Response) => Promise<void>) | undefined)?.(new Response(null, { headers }));
+        return {};
+      });
+      const { result } = renderHook(() => useFetchWrapper(() => "https://api.example.com"));
+      await result.current.fetch("library/songs/", true, false, options);
+      return spy;
+    };
 
-  it.each(["library/songs/", "genre-playlists/example/tracks/", "manual-playlists/example/tracks/", "me/genre-playlists/example/tracks/", "me/manual-playlists/example/tracks/"])("discards a changed-country response from %s", async (endpoint) => {
-    playbackState.key = "FR:1";
-    playbackState.country = "FR";
-    rawFetchMock.mockImplementationOnce(async (...args: unknown[]) => {
-      await (args[9] as (response: Response) => Promise<void>)(new Response(null, { headers: { "X-Playback-Country": "AL" } }));
-      return { results: [] };
+    it("logs an error for a GET stamped with X-Playback-Country", async () => {
+      const spy = await run({}, { "X-Playback-Country": "FR" });
+      expect(spy).toHaveBeenCalledWith(expect.stringContaining("library/songs/"));
+      spy.mockRestore();
     });
-    const { result } = renderHook(() => useFetchWrapper(() => "https://api.example.com"));
-    await expect(result.current.fetch(endpoint, true, false)).rejects.toMatchObject({ name: "AbortError" });
-    expect(playbackState.refresh).toHaveBeenCalledWith(true);
-  });
 
-  it.each([
-    ["FR", "FR"],
-    [null, "unknown"],
-    ["FR", null],
-  ])("accepts country %s with response header %s", async (country, header) => {
-    playbackState.key = `${country ?? "unknown"}:1`;
-    playbackState.country = country;
-    rawFetchMock.mockImplementationOnce(async (...args: unknown[]) => {
-      await (args[9] as (response: Response) => Promise<void>)(new Response(null, {
-        headers: header === null ? {} : { "X-Playback-Country": header },
-      }));
-      return { results: [] };
+    it("stays silent for a stamped PATCH", async () => {
+      const spy = await run({ method: "PATCH" }, { "X-Playback-Country": "FR" });
+      expect(spy).not.toHaveBeenCalled();
+      spy.mockRestore();
     });
-    const { result } = renderHook(() => useFetchWrapper(() => "https://api.example.com"));
-    await expect(result.current.fetch("library/songs/", true, false)).resolves.toEqual({ results: [] });
-    expect(playbackState.refresh).not.toHaveBeenCalledWith(true);
-  });
 
-  it("discards a response when the context changed while its body was loading", async () => {
-    playbackState.key = "FR:1";
-    playbackState.country = "FR";
-    rawFetchMock.mockImplementationOnce(async (...args: unknown[]) => {
-      await (args[9] as (response: Response) => Promise<void>)(new Response(null, { headers: { "X-Playback-Country": "FR" } }));
-      playbackState.isCurrent.mockReturnValue(false);
-      return { results: [] };
+    it("stays silent for an unstamped GET", async () => {
+      const spy = await run({}, {});
+      expect(spy).not.toHaveBeenCalled();
+      spy.mockRestore();
     });
-    const { result } = renderHook(() => useFetchWrapper(() => "https://api.example.com"));
-    await expect(result.current.fetch("library/songs/", true, false)).rejects.toMatchObject({ name: "AbortError" });
   });
 
   it("builds the backend url from a relative endpoint and calls rawFetch", () => {

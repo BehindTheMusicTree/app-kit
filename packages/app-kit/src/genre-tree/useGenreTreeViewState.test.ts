@@ -45,10 +45,12 @@ const genreless = makePlaylist("none", "Genreless", { criteria: false });
 const unaccepted = makePlaylist("un", "Pending", { isUnacceptedRoot: true });
 const unacceptedChild = makePlaylist("unc", "Child", { parent: "un", root: "un" });
 
+const refetchMock = vi.fn();
+
 const options = { scope: "public" as never, getBackendBaseUrl: () => "https://b.example.com" };
 
-const mockData = (data: CriteriaPlaylistSimple[] | undefined, isPending = false) =>
-  useListFullGenrePlaylistsMock.mockReturnValue({ data, isPending });
+const mockData = (data: CriteriaPlaylistSimple[] | undefined, isPending = false, isError = false) =>
+  useListFullGenrePlaylistsMock.mockReturnValue({ data, isPending, isError, refetch: refetchMock });
 
 describe("useGenreTreeViewState", () => {
   beforeEach(() => {
@@ -68,6 +70,21 @@ describe("useGenreTreeViewState", () => {
 
     expect(result.current.isLoading).toBe(true);
     expect(result.current.genrePlaylists).toEqual([]);
+  });
+
+  it("exposes a failed tree load with refetch, and keeps pop-core for when the retry succeeds", () => {
+    mockData(undefined, false, true);
+    const { result, rerender } = renderHook(() => useGenreTreeViewState(options));
+
+    expect(result.current.isError).toBe(true);
+    expect(result.current.genrePlaylists).toEqual([]);
+    result.current.refetch();
+    expect(refetchMock).toHaveBeenCalledTimes(1);
+
+    mockData([pop, rock]);
+    rerender();
+    expect(result.current.isError).toBe(false);
+    expect(result.current.viewMode).toBe("pop-core");
   });
 
   it("indexes and groups playlists", () => {

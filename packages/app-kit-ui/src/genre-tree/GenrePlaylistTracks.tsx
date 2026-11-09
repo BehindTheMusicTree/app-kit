@@ -7,7 +7,7 @@ import { FaPlay, FaPause } from "react-icons/fa";
 import { PanelSection, RingLoader, Skeleton } from "@behindthemusictree/ui";
 
 import { useSession } from "@behindthemusictree/app-kit/auth";
-import { usePlaybackContext, useFetchWrapper } from "@behindthemusictree/app-kit/transport";
+import { usePlaybackContext, usePlaybackFetch } from "@behindthemusictree/app-kit/transport";
 import { PaginatedResponseSchema } from "@behindthemusictree/app-kit/transport";
 import { parseWithLog } from "@behindthemusictree/app-kit/transport";
 import { usePlayer } from "@behindthemusictree/app-kit/player";
@@ -103,7 +103,7 @@ export function GenrePlaylistTracks({
   const uuid = genrePlaylist?.uuid;
   const genreName = selectedGenreName ?? genrePlaylist?.name ?? "Genre";
 
-  const { fetch } = useFetchWrapper(getBackendBaseUrl);
+  const { fetchBound } = usePlaybackFetch(getBackendBaseUrl);
   const playback = usePlaybackContext();
 
   const { data, isPending, isError, refetch, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery({
@@ -119,7 +119,7 @@ export function GenrePlaylistTracks({
         if (!uuid) throw new Error("Personal genre has no playlist");
         return fetchGenrePlaylistTracksPage(uuid, scope, Number(pageParam));
       }
-      const response = await fetch(
+      const response = await fetchBound(
         libraryEndpoints.reference.songs.list(),
         true,
         false,
@@ -132,6 +132,8 @@ export function GenrePlaylistTracks({
     initialPageParam: scope === "me" ? 1 : "",
     getNextPageParam: (lastPage) => lastPage.nextPage ?? undefined,
     enabled: playback.ready && (scope !== "me" || (uuid !== undefined && sessionRestored && !!session?.accessToken)),
+    retry: (failureCount, error) => failureCount < 1 && error instanceof DOMException && error.name === "AbortError",
+    retryDelay: 0,
   });
 
   // State, not a ref object: PanelSection unmounts its body when collapsed, so the observer must

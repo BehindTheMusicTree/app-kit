@@ -258,6 +258,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   };
   const {
     isLoading,
+    isError,
+    refetch,
     isFetching: isTreeFetching,
     genrePlaylistByNodeId,
     visibleGenrePlaylists,
@@ -433,7 +435,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const [isWheelRevealed, setIsWheelRevealed] = useState(false);
   const usesHandoff = viewMode === "wheel" || viewMode === "pop-core";
   // The panel stands beside a tree that fades in, so it waits for the tree.
-  const isTreeReady = !isLoading && (!usesHandoff || isWheelRevealed);
+  const isTreeReady = !isLoading && !isError && (!usesHandoff || isWheelRevealed);
 
   // The tree publishes how it draws each node; the panel header and family chips reuse it.
   const [resolveStyle, setResolveStyle] = useState<GenreNodeStyleResolver | null>(null);
@@ -650,7 +652,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
 
   const actions = (
     <>
-      {!isLoading && (
+      {!isLoading && !isError && (
         <GenreTreeSearch
           artistBaseUrl={artistBaseUrl}
           songBaseUrl={songBaseUrl}
@@ -679,11 +681,11 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           extraGroups={extraSearchGroups}
         />
       )}
-      {!isLoading && filterArtist && (
+      {!isLoading && !isError && filterArtist && (
         <div className="hidden w-full justify-center max-md:flex">{renderArtistFilter()}</div>
       )}
       <div className="contents max-md:flex max-md:w-full max-md:items-center max-md:gap-2 max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[&>*]:shrink-0">
-        {!isLoading && !isControlled && (
+        {!isLoading && !isError && !isControlled && (
           <SegmentedControl
             aria-label="Tree view mode"
             value={viewMode}
@@ -696,7 +698,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             ]}
           />
         )}
-        {!isLoading && showDisplayOptions && (
+        {!isLoading && !isError && showDisplayOptions && (
           <div
             className="flex items-center gap-1"
             role="group"
@@ -713,7 +715,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             )}
           </div>
         )}
-        {!isLoading && !readOnly && showAddRoot && (
+        {!isLoading && !isError && !readOnly && showAddRoot && (
           <IconTextButton
             icon={Plus}
             text="Add root"
@@ -740,7 +742,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       >
         {actions}
       </div>
-      {!isLoading && filterArtist && (
+      {!isLoading && !isError && filterArtist && (
         <div
           className={`absolute left-1/2 z-30 hidden -translate-x-1/2 md:block ${
             placement === "regions" ? "top-[calc(var(--layout-gutter)+var(--layout-panel-inset))]" : "top-5"
@@ -751,11 +753,18 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       )}
       <div className="content-container flex-1 min-h-0 flex flex-row gap-4">
         <div className="tree-view-container relative flex-1 min-w-0 flex flex-col h-full">
-          {!isLoading && viewMode === "outline" && floatingControlsLeading && (
+          {!isLoading && !isError && viewMode === "outline" && floatingControlsLeading && (
             <div className="absolute bottom-3 right-3 z-10">{floatingControlsLeading}</div>
           )}
           {isLoading ? (
             <GenreTreeViewSkeleton viewMode={viewMode} />
+          ) : isError ? (
+            <p role="alert" className="m-auto text-center">
+              Couldn&apos;t load the genre tree.{" "}
+              <button type="button" className="underline" onClick={refetch}>
+                Retry
+              </button>
+            </p>
           ) : viewMode === "wheel" ? (
             // The info panel's top edge aligns with the tree's; the search bar floats `--layout-panel-inset` below it,
             // and the header inset (the bar's height plus that inset) extends the header's fill behind the bar,

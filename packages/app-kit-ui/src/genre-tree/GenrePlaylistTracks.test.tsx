@@ -21,7 +21,7 @@ vi.mock("@behindthemusictree/app-kit/player", async (importOriginal) => ({
 }));
 vi.mock("@behindthemusictree/app-kit/transport", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
-  useFetchWrapper: () => ({ fetch: fetchMock }),
+  usePlaybackFetch: () => ({ fetchBound: fetchMock }),
   usePlaybackContext: playbackMock,
   parseWithLog: (_schema: unknown, data: unknown) => data,
 }));

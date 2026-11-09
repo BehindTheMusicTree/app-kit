@@ -82,3 +82,34 @@ describe("useRemoteSearch scope", () => {
     expect(placeholder()).toBeUndefined();
   });
 });
+
+describe("useRemoteSearch fetch option", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    useQueryWithParseMock.mockReset();
+    useQueryWithParseMock.mockReturnValue({ data: ["a"], isFetching: false, isError: false, isPlaceholderData: false });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("runs the query through the supplied fetch instead of the plain one", async () => {
+    const customFetch = vi.fn().mockResolvedValue(["x"]);
+    renderHook(() =>
+      useRemoteSearch(() => "https://backend.example.com", {
+        queryKey: (q) => ["search", q],
+        endpoint: "search/",
+        params: (q) => ({ q }),
+        schema: z.array(z.string()),
+        context: "test",
+        text: "taylor",
+        fetch: customFetch as never,
+      }),
+    );
+    const signal = new AbortController().signal;
+    await useQueryWithParseMock.mock.calls.at(-1)?.[0].queryFn({ signal });
+
+    expect(customFetch).toHaveBeenCalledWith("search/", true, false, { signal }, { q: "" });
+  });
+});

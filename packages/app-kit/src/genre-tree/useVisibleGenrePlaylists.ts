@@ -23,7 +23,7 @@ export interface UseVisibleGenrePlaylistsOptions {
  * is shown.
  */
 export function useVisibleGenrePlaylists({ scope, getBackendBaseUrl, artistUuid = null }: UseVisibleGenrePlaylistsOptions) {
-  const { data: tree, isPending: isTreePending, isFetching: isTreeFetching } = useListFullGenrePlaylists(scope, getBackendBaseUrl);
+  const { data: tree, isPending: isTreePending, isFetching: isTreeFetching, isError: isTreeError, refetch } = useListFullGenrePlaylists(scope, getBackendBaseUrl);
   const counts = useArtistGenreCounts(artistUuid, getBackendBaseUrl);
   const artistCounts = artistUuid !== null ? counts.data : undefined;
   const isCountsLoading = artistUuid !== null && (counts.isPending || counts.isPlaceholderData);
@@ -33,5 +33,12 @@ export function useVisibleGenrePlaylists({ scope, getBackendBaseUrl, artistUuid 
     return artistCounts ? pruneGenrePlaylistsForArtist(tree, artistCounts) : tree;
   }, [tree, artistCounts]);
 
-  return { isLoading: isTreePending, isFetching: isCountsLoading || (!isTreePending && isTreeFetching), genrePlaylists };
+  return {
+    isLoading: isTreePending,
+    // The tree failed with nothing cached to show; the host must say so rather than render an empty tree.
+    isError: isTreeError && !tree,
+    refetch,
+    isFetching: isCountsLoading || (!isTreePending && isTreeFetching),
+    genrePlaylists,
+  };
 }

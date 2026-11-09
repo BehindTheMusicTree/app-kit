@@ -27,6 +27,8 @@ export interface UseRemoteSearchOptions<TSchema extends z.ZodTypeAny> {
    * makes old results wrong for the new query (e.g. the playback key); omit it to always keep them.
    */
   scope?: string;
+  /** Replaces the plain fetch, e.g. `usePlaybackFetch`'s `fetchBound` for country-dependent endpoints. */
+  fetch?: ReturnType<typeof useFetchWrapper>["fetch"];
 }
 
 export interface UseRemoteSearchResult<T> {
@@ -41,9 +43,10 @@ export interface UseRemoteSearchResult<T> {
 /** Debounced typeahead against a search endpoint; the shared core of the artist, song and genre searches. */
 export function useRemoteSearch<TSchema extends z.ZodType<unknown[]>>(
   getBackendBaseUrl: () => string,
-  { queryKey, endpoint, params, schema, context, text, enabled: extraEnabled = true, scope = "" }: UseRemoteSearchOptions<TSchema>,
+  { queryKey, endpoint, params, schema, context, text, enabled: extraEnabled = true, scope = "", fetch: fetchOverride }: UseRemoteSearchOptions<TSchema>,
 ): UseRemoteSearchResult<z.infer<TSchema>[number]> {
-  const { fetch } = useFetchWrapper(getBackendBaseUrl);
+  const { fetch: plainFetch } = useFetchWrapper(getBackendBaseUrl);
+  const fetch = fetchOverride ?? plainFetch;
   const trimmed = text.trim();
   const [query, setQuery] = useState("");
   useEffect(() => {
