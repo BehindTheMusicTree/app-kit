@@ -14,10 +14,15 @@ easy to spot when bumping.
 ### Breaking
 
 - `ArtistDetailed` (and `ArtistDetailedSchema`) gains a required `playableTracksCount`. The artist endpoint must send it (grow-api does), and consumers that build `ArtistDetailed` fixtures or mocks must include it.
+- Requires `@behindthemusictree/ui` 0.21.0 or later (`ActionBand`, `ActionButton`).
+- `GenreActionBand`: `onPlayPause` and `isPlaying` are replaced by a `playActions` node rendered before the other actions.
+- `GenrePlaylistPlayback`: `playingNodeId` becomes `playing` (`{ uuid, selectionKey }`), and `play(genrePlaylist, selection?)` accepts the coverage to play.
+- `GenreInfoPanelBody`: the `countsContext` prop is removed and the "Catalogue / Playlist" count lines are replaced by Play buttons, so an artist-filtered genre panel no longer says "all artists".
 
 ### Added
 
 - `ArtistDetailedSchema` carries `playableTracksCount` (songs with a genre and a playable video), served by grow-api, so the artist panel can enable or disable Play without loading the tracklist.
+- Genre, regional-genre, artist and song detail panels offer icon Play buttons in the action band, each showing its playable-song count: Direct · Canonical · Canonical + regional · Regional for a canonical genre, Direct · All for a regional one. A count of 0 stays visible but disabled; an unplayable song or an artist with no playable song gets a disabled Play.
 
 ## [38.0.0] - 2026-11-10
 

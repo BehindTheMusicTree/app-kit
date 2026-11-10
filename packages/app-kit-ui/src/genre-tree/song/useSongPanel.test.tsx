@@ -125,15 +125,16 @@ describe("useSongPanel", () => {
     expect(handlePlayPauseActionMock).toHaveBeenCalled();
   });
 
-  it("explains why an unplayable song has no Play button", () => {
+  it("explains why an unplayable song cannot be played", () => {
     useSongMock.mockReturnValue({
       status: "success",
       song: { ...song, youtubeVideo: { id: "vid", unplayableReason: "private", viewCount: null } },
     });
     render(<Harness uuid={UUID} />);
 
-    expect(screen.queryByRole("button", { name: "Play" })).not.toBeInTheDocument();
-    expect(screen.getByText("Private video")).toBeInTheDocument();
+    const play = screen.getByRole("button", { name: "Play" });
+    expect(play).toBeDisabled();
+    expect(play).toHaveAttribute("title", "Private video");
   });
 
   it("selects the genre itself when the host has no tree", () => {

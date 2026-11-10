@@ -21,7 +21,7 @@ vi.mock("./GenreInfoPanelBody", () => ({
   },
 }));
 vi.mock("./playlist-tree/useGenrePlaylistPlayback", () => ({
-  useGenrePlaylistPlayback: () => ({ playingNodeId: null, play: vi.fn() }),
+  useGenrePlaylistPlayback: () => ({ playing: null, play: vi.fn() }),
 }));
 
 import { GenreDetailPanel } from "./GenreDetailPanel";
@@ -93,7 +93,6 @@ describe("GenreDetailPanel", () => {
     renderPanel({ extras: { artist: { uuid: "artist", name: "Artist" } } });
     expect(bodyMock).toHaveBeenLastCalledWith(expect.objectContaining({
       genrePlaylist: expect.objectContaining({ criteria: expect.objectContaining({ uuid: detail.uuid }) }),
-      countsContext: "all artists",
     }));
   });
 

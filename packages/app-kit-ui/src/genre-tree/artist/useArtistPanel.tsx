@@ -2,6 +2,7 @@
 
 import { Skeleton } from "@behindthemusictree/ui";
 import { useArtist, type RenderArtistLink, type RenderSongLink } from "@behindthemusictree/app-kit/genre-tree";
+import ArtistActionBand from "./ArtistActionBand";
 import ArtistHeader from "./ArtistHeader";
 import ArtistPhoto from "./ArtistPhoto";
 import ArtistMembers from "./ArtistMembers";
@@ -81,13 +82,10 @@ export function useArtistPanel({
         title: artist.name,
         content: (
           <>
-            {shareUrl && (
-              <div className="genre-action-band border-b border-[var(--color-border)]">
-                <div className="flex flex-wrap gap-1 px-3.5 py-3">
-                  {shareTarget && <ShareActionButton target={shareTarget} url={shareUrl} />}
-                </div>
-              </div>
-            )}
+            <ArtistActionBand
+              artist={artist}
+              share={shareTarget && shareUrl ? <ShareActionButton target={shareTarget} url={shareUrl} /> : undefined}
+            />
             {artist.image && <ArtistPhoto image={artist.image} name={artist.name} />}
             <ArtistHeader artist={artist} />
             <ArtistMembers title="Members" memberships={artist.members} renderArtistLink={renderArtistLink} />

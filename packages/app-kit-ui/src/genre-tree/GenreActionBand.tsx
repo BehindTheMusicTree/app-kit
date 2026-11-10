@@ -1,7 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ArrowLeftRight, MoveUpRight, Pause, Pencil, Play, Plus, ZoomIn } from "lucide-react";
+import { ArrowLeftRight, MoveUpRight, Pencil, Plus, ZoomIn } from "lucide-react";
+import { ActionBand, ActionButton } from "@behindthemusictree/ui";
 import type {
   GenreTreeAction,
   GenreTreeNode,
@@ -11,9 +12,8 @@ import ShareActionButton from "./ShareActionButton";
 
 export type GenreActionBandProps = {
   node: GenreTreeNode;
-  /** When set, shows the Play/Pause action. */
-  onPlayPause?: () => void;
-  isPlaying?: boolean;
+  /** Play buttons, shown first. */
+  playActions?: ReactNode;
   /** When set, shows the "Zoom in" action. */
   onZoomIn?: () => void;
   /** When set, shows the "Add" (sub-genre) action. */
@@ -43,8 +43,7 @@ type BandItem = {
 
 export default function GenreActionBand({
   node,
-  onPlayPause,
-  isPlaying = false,
+  playActions,
   onZoomIn,
   onAddChild,
   onRename,
@@ -58,18 +57,6 @@ export default function GenreActionBand({
 }: GenreActionBandProps) {
   const items: BandItem[] = [];
   const adminItems: BandItem[] = [];
-  if (onPlayPause) {
-    items.push({
-      key: "play-pause",
-      label: isPlaying ? "Pause" : "Play",
-      icon: isPlaying ? (
-        <Pause aria-hidden="true" className="w-5 h-5" />
-      ) : (
-        <Play aria-hidden="true" className="w-5 h-5" />
-      ),
-      onClick: onPlayPause,
-    });
-  }
   if (onZoomIn) {
     items.push({
       key: "zoom-in",
@@ -106,42 +93,19 @@ export default function GenreActionBand({
       disabled: action.enabled ? !action.enabled(node) : false,
     });
   }
-  if (items.length === 0 && (!shareTarget || !shareUrl) && adminItems.length === 0) return null;
-
   const renderItems = (list: BandItem[]) =>
     list.map((item) => (
-      <button
-        key={item.key}
-        type="button"
-        disabled={item.disabled}
-        title={item.title}
-        onClick={item.onClick}
-        className="group flex flex-col items-center gap-1 w-16 text-caption text-center text-[var(--color-text)] focus-visible:outline-none disabled:opacity-50"
-      >
-        <span className="flex items-center justify-center w-10 h-10 rounded-full group-focus-visible:ring-2 group-focus-visible:ring-[var(--color-focus-ring)] bg-[var(--color-surface-muted)] transition-colors group-hover:bg-[var(--color-border)] group-disabled:group-hover:bg-[var(--color-surface-muted)]">
-          {item.icon}
-        </span>
-        {item.label}
-      </button>
+      <ActionButton key={item.key} icon={item.icon} label={item.label} disabled={item.disabled} title={item.title} onClick={item.onClick} />
     ));
 
   return (
-    <div className="genre-action-band border-b border-[var(--color-border)]">
-      {(items.length > 0 || (shareTarget && shareUrl)) && (
-        <div className="flex flex-wrap gap-1 px-3.5 py-3">
-          {renderItems(items)}
-          {shareTarget && shareUrl && <ShareActionButton target={shareTarget} url={shareUrl} />}
-        </div>
-      )}
-      {adminItems.length > 0 && (
-        <section
-          aria-label="Admin actions"
-          className={`px-3.5 py-3 ${items.length > 0 ? "border-t border-[var(--color-border)]" : ""}`}
-        >
-          <h3 className="mb-2 text-caption font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Admin</h3>
-          <div className="flex flex-wrap gap-1">{renderItems(adminItems)}</div>
-        </section>
-      )}
-    </div>
+    <ActionBand
+      className="genre-action-band"
+      section={{ title: "Admin", label: "Admin actions", children: renderItems(adminItems) }}
+    >
+      {playActions}
+      {renderItems(items)}
+      {shareTarget && shareUrl && <ShareActionButton target={shareTarget} url={shareUrl} />}
+    </ActionBand>
   );
 }

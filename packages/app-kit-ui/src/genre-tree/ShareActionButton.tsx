@@ -1,6 +1,7 @@
 "use client";
 
 import { Share2 } from "lucide-react";
+import { ActionButton } from "@behindthemusictree/ui";
 import { usePopup } from "@behindthemusictree/app-kit/popup";
 import type { GenreTreeShareTarget } from "./share";
 import SharePopup from "./SharePopup";
@@ -18,17 +19,12 @@ export default function ShareActionButton({ target, url }: ShareActionButtonProp
   };
 
   return (
-    <button
-      type="button"
-      onClick={openSharePopup}
-      className="group flex flex-col items-center gap-1 w-16 text-caption text-center text-[var(--color-text)] focus-visible:outline-none"
+    <ActionButton
+      icon={<Share2 aria-hidden="true" className="w-5 h-5" />}
+      label="Share"
       aria-label={`Share ${target.name}`}
       title={`Share ${target.name}`}
-    >
-      <span className="flex items-center justify-center w-10 h-10 rounded-full group-focus-visible:ring-2 group-focus-visible:ring-[var(--color-focus-ring)] bg-[var(--color-surface-muted)] transition-colors group-hover:bg-[var(--color-border)]">
-        <Share2 aria-hidden="true" className="w-5 h-5" />
-      </span>
-      Share
-    </button>
+      onClick={openSharePopup}
+    />
   );
 }

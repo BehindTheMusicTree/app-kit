@@ -154,7 +154,6 @@ export function useGenreDetailContent<O extends CriteriaOverview>({
         genreUuid={detail.uuid}
         genrePlaylist={hostPlaylist ?? (detail.criteriaPlaylist === null ? null : scope === "reference" ? { ...GenrePlaylistSummarySchema.parse(detail.criteriaPlaylist), criteria: CriteriaMinimumSchema.parse(detail) } : { ...detail.criteriaPlaylist, criteria: CriteriaMinimumSchema.parse(detail), tracksCount: detail.tracksCount })}
         catalogue={detail.catalogue}
-        countsContext={!hostPlaylist && extras?.artist ? "all artists" : undefined}
         wikidataId={detail.wikidataId}
         scope={scope}
         getBackendBaseUrl={getBackendBaseUrl}

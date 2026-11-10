@@ -75,7 +75,8 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
 }: GenrePlaylistTreePerRootProps<T>) {
   const { isPlaying, setIsPlaying } = usePlayer();
   const defaultPlayback = useGenrePlaylistPlayback<T>({ scope, genrePlaylists: genrePlaylistTreePerRoot });
-  const { playingNodeId, play } = playback ?? defaultPlayback;
+  const { playing, play } = playback ?? defaultPlayback;
+  const playingNodeId = playing?.uuid ?? null;
   const { showPopup } = usePopup();
 
   const nodes: GenreTreeNode[] = useMemo(
