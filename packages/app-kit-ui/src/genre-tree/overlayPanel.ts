@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 
-/** An artist or song detail the host renders in the shared DetailPanel in place of a genre's. */
+/** A detail panel shown in the shared DetailPanel in place of a genre's: an artist, a song or a host page. */
 export interface OverlayPanel {
-  title: ReactNode;
+  /** Plain text, like a genre's name: it fills the search field, whose clear button closes the panel. */
+  title: string;
   content: ReactNode;
   /** Second column, shown only while expanded. */
   extraContent?: ReactNode;
