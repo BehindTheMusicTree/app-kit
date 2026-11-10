@@ -14,15 +14,14 @@ describe("GenreActionBand", () => {
 
   it("renders each provided action and wires its click", () => {
     const handlers = {
-      onPlayPause: vi.fn(),
-      onZoomIn: vi.fn(),
+            onZoomIn: vi.fn(),
       onAddChild: vi.fn(),
       onRename: vi.fn(),
       onChangeParent: vi.fn(),
     };
     render(<GenreActionBand node={node} {...handlers} />);
 
-    for (const name of ["Play", "Focus", "Add", "Rename", "Parent"]) {
+    for (const name of ["Focus", "Add", "Rename", "Parent"]) {
       fireEvent.click(screen.getByRole("button", { name }));
     }
 
@@ -40,10 +39,10 @@ describe("GenreActionBand", () => {
     );
   });
 
-  it("labels the play action Pause while playing", () => {
-    render(<GenreActionBand node={node} onPlayPause={vi.fn()} isPlaying />);
+  it("renders the play actions before the other actions", () => {
+    render(<GenreActionBand node={node} playActions={<button type="button">Play</button>} onZoomIn={vi.fn()} />);
 
-    expect(screen.getByRole("button", { name: "Pause" })).toBeInTheDocument();
+    expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual(["Play", "Focus"]);
   });
 
   it("renders additional actions and disables those that are not enabled", () => {

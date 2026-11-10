@@ -29,23 +29,36 @@ function renderPanel(playlistCount: number) {
     catalogue={GenreCatalogueCountsSchema.parse(counts(10, 200))}
     scope="reference"
     getBackendBaseUrl={() => "https://backend.example.com"}
-    playback={{ playingNodeId: null, play }}
+    playback={{ playing: null, play }}
     band={{ node: { id: playlist.uuid, name: playlist.name, parentId: null, itemCount: playlistCount } }}
   />);
   return { play, playlist };
 }
 
 describe("GenreInfoPanelBody music populations", () => {
-  it("plays a playlist with no direct songs and 139 songs with subgenres", () => {
-    const { play, playlist } = renderPanel(139);
-    fireEvent.click(screen.getByRole("button", { name: "Play" }));
-    expect(play).toHaveBeenCalledWith(playlist);
-    expect(screen.getByText(/Catalogue tracks: 10 this genre only/)).toHaveTextContent("200 with canonical subgenres");
-    expect(screen.getByText(/Playlist tracks: 0 this genre only/)).toHaveTextContent("139 with canonical subgenres");
+  it("offers a Play button per scope with its playable count, in order", () => {
+    renderPanel(139);
+    const names = screen.getAllByRole("button").map((button) => button.textContent);
+    expect(names).toEqual(["Direct0", "Canonical139", "Canonical + regional139", "Regional0"]);
   });
 
-  it("does not offer Play for an empty playlist even when the catalogue has songs", () => {
+  it("plays the clicked scope", () => {
+    const { play, playlist } = renderPanel(139);
+    fireEvent.click(screen.getByRole("button", { name: /^Canonical \+ regional/ }));
+    expect(play).toHaveBeenCalledWith(playlist, { coverage: "genreAndSubgenres", subgenres: "all" });
+    fireEvent.click(screen.getByRole("button", { name: /^Canonical139/ }));
+    expect(play).toHaveBeenLastCalledWith(playlist, { coverage: "genreAndSubgenres", subgenres: "canonical" });
+  });
+
+  it("keeps an empty scope visible but disabled", () => {
+    renderPanel(139);
+    expect(screen.getByRole("button", { name: /^Direct/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^Regional/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^Canonical139/ })).toBeEnabled();
+  });
+
+  it("disables every Play button for an empty playlist even when the catalogue has songs", () => {
     renderPanel(0);
-    expect(screen.queryByRole("button", { name: "Play" })).not.toBeInTheDocument();
+    for (const button of screen.getAllByRole("button")) expect(button).toBeDisabled();
   });
 });
