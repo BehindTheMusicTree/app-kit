@@ -612,7 +612,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const renderArtistFilter = () => {
     if (isLoading || !filterArtist) return null;
     return (
-      <span className="inline-flex items-center overflow-hidden rounded-full bg-[var(--color-neutral-100)] text-sm">
+      <span className="inline-flex items-center overflow-hidden rounded-full bg-[var(--color-neutral-100)] text-body">
         <button
           type="button"
           className="py-1 pl-3 pr-2 [@media(pointer:coarse)]:min-h-[var(--layout-touch-target)] hover:underline"

@@ -3,9 +3,9 @@ packages:
   - "apps/*"
 
 catalog:
-  "@behindthemusictree/brand": ^12.10.0
+  "@behindthemusictree/brand": ^12.11.0
   "@behindthemusictree/genre-tree-view": "8.3.0"
-  "@behindthemusictree/ui": ^0.19.0
+  "@behindthemusictree/ui": ^0.20.0
 
 allowBuilds:
   esbuild: true

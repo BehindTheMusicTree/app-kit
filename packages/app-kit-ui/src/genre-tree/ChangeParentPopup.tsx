@@ -65,7 +65,7 @@ export default function ChangeParentPopup({
 
   return (
     <BasePopup title={`Change parent of ${genrePlaylist.name}`} onClose={onClose} showCancelButton fitContent>
-      <p className="mb-3 text-sm text-[var(--color-text-muted)]">
+      <p className="mb-3 text-body text-[var(--color-text-muted)]">
         Current parent: {genrePlaylist.parent?.name ?? "none"}
       </p>
       <div aria-busy={isPending} className={isPending ? "pointer-events-none opacity-60" : undefined}>
@@ -76,7 +76,7 @@ export default function ChangeParentPopup({
         />
       </div>
       {formErrors.length > 0 && (
-        <p role="alert" className="mt-3 text-sm text-[var(--color-red-500)]">
+        <p role="alert" className="mt-3 text-body text-[var(--color-red-500)]">
           {formErrors.map(({ message }) => message).join(" ")}
         </p>
       )}

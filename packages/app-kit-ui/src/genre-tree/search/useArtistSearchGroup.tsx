@@ -26,7 +26,7 @@ export function useArtistSearchGroup(
             )}
           </span>
           {artist.matchedAlias && (
-            <span className="block truncate text-xs text-[var(--color-neutral-500)]">also known as {artist.matchedAlias}</span>
+            <span className="block truncate text-caption text-[var(--color-neutral-500)]">also known as {artist.matchedAlias}</span>
           )}
         </>
       ),

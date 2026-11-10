@@ -100,7 +100,7 @@ export function GenreInfoPanelBody<O extends CriteriaOverview>({
       {toolbar}
       {genrePlaylist ? <GenreNodeActionBand {...band} genrePlaylist={genrePlaylist} playback={playback} /> : <GenreActionBand {...band} />}
       {summary && catalogue && (
-        <div className="px-3.5 py-3 text-sm text-[var(--color-text)]">
+        <div className="px-3.5 py-3 text-body text-[var(--color-text)]">
           <p>Catalogue {noun.plural}{countsContext ? ` (${countsContext})` : ""}: {describeCounts(catalogue)}</p>
           {genrePlaylist && <p>Playlist {noun.plural}{countsContext ? ` (${countsContext})` : ""}: {describeCounts(summary)}</p>}
         </div>
