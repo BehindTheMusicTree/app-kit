@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Breaking
+
+- `ArtistDetailed` (and `ArtistDetailedSchema`) gains a required `playableTracksCount`. The artist endpoint must send it (grow-api does), and consumers that build `ArtistDetailed` fixtures or mocks must include it.
+
 ### Added
 
 - `ArtistDetailedSchema` carries `playableTracksCount` (songs with a genre and a playable video), served by grow-api, so the artist panel can enable or disable Play without loading the tracklist.
