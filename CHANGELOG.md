@@ -15,7 +15,7 @@ easy to spot when bumping.
 
 - Detail-panel content no longer carries its own horizontal margin or section-level vertical padding: the `DetailPanel` body (ui 0.21) provides both. A host `overlayPanel` that added its own margin must remove it, or the margin is applied twice. Action bands, the song history divider and the selection bar span the panel edges through `PanelBleed`.
 - `ArtistDetailed` (and `ArtistDetailedSchema`) gains a required `playableTracksCount`. The artist endpoint must send it (grow-api does), and consumers that build `ArtistDetailed` fixtures or mocks must include it.
-- Requires `@behindthemusictree/ui` 0.21.1 or later and `@behindthemusictree/genre-tree-view` 9.1.0 or later (`ActionBand`, `ActionButton`, `PanelBleed`, `PanelStack`) and `@behindthemusictree/brand` 12.12.0 or later.
+- Requires `@behindthemusictree/ui` 0.21.1 or later (`ActionBand`, `ActionButton`, `PanelBleed`, `PanelStack`) and `@behindthemusictree/brand` 12.12.0 or later, and `@behindthemusictree/genre-tree-view` 9.1.0 or later (`getTextColorOnFill`, white Mainstream Pop root).
 - `GenreActionBand`: `onPlayPause` and `isPlaying` are replaced by a `playActions` node rendered before the other actions.
 - `GenrePlaylistPlayback`: `playingNodeId` becomes `playing` (`{ uuid, selectionKey }`), and `play(genrePlaylist, selection?)` accepts the coverage to play.
 - `GenreInfoPanelBody`: the `countsContext` prop is removed and the "Catalogue / Playlist" count lines are replaced by Play buttons, so an artist-filtered genre panel no longer says "all artists".

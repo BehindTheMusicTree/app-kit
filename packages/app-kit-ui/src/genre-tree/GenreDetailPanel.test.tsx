@@ -25,7 +25,7 @@ vi.mock("./playlist-tree/useGenrePlaylistPlayback", () => ({
 }));
 
 import { GenreDetailPanel, useGenreDetailContent } from "./GenreDetailPanel";
-import { getTextColorOnFill } from "@behindthemusictree/genre-tree-view";
+import { getGenreTreeColor, getTextColorOnFill, TEXT_COLOR, tintSurface } from "@behindthemusictree/genre-tree-view";
 import { makeGenrePlaylistUuid, makeGenreUuid } from "@behindthemusictree/app-kit/genre-tree/testing";
 
 const root = { uuid: makeGenreUuid("root"), name: "World music", wikidataId: "Q1" };
@@ -166,8 +166,7 @@ describe("GenreDetailPanel", () => {
     it("falls back to the root color for a relative the tree does not draw", () => {
       const panel = content({ node: node(detail.uuid, null), ...style("#123456", "#abcdef"), parentNode: null, childNodes: [], ancestorNodes: [] });
       render(<>{panel.content}</>);
-      expect(familyProps().childNodes[0].textColor).not.toBe("#abcdef");
-      expect(familyProps().childNodes[0].fill).not.toBe("#6B7280");
+      expect(familyProps().childNodes[0]).toMatchObject({ fill: tintSurface(getGenreTreeColor(root.wikidataId)), textColor: TEXT_COLOR });
     });
 
     it("paints a white root with dark text when no tree is mounted", () => {
