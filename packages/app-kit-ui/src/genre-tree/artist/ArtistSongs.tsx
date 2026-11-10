@@ -2,7 +2,6 @@
 
 import { useState, type MouseEvent } from "react";
 import { keepPreviousData } from "@tanstack/react-query";
-import { Play } from "lucide-react";
 import { Pagination, PanelSection, Skeleton } from "@behindthemusictree/ui";
 import { usePlayer } from "@behindthemusictree/app-kit/player";
 import {
@@ -76,15 +75,7 @@ export default function ArtistSongs({ artist, getBackendBaseUrl, renderArtistLin
         <p className="text-[var(--color-text-muted)]">No songs yet.</p>
       ) : (
         <>
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-            <button
-              type="button"
-              onClick={() => void play()}
-              className="flex w-fit items-center gap-1.5 px-3 py-1 text-caption font-medium bg-gray-900 text-white rounded-full hover:bg-gray-700"
-            >
-              <Play className="h-3.5 w-3.5" aria-hidden="true" />
-              Play all
-            </button>
+          <div className="flex flex-wrap items-center justify-end gap-2 mb-2">
             <div role="group" aria-label="Sort songs by" className="flex gap-1 text-caption">
               {SORTS.map((sort) => (
                 <button

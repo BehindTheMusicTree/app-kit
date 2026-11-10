@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- `ArtistSongs` no longer renders its own "Play all" button: the artist panel's action band already has Play.
+
 ## [40.0.0] - 2026-11-10
 
 ### Breaking
