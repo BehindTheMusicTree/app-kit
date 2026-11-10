@@ -14,7 +14,7 @@ import { usePlayer } from "@behindthemusictree/app-kit/player";
 import { PlayStates } from "@behindthemusictree/app-kit/player";
 import { usePopup } from "@behindthemusictree/app-kit/popup";
 import InternalErrorPopup from "../popup/InternalErrorPopup";
-import { ErrorCode } from "@behindthemusictree/app-kit/transport";
+import { AppError, ErrorCode } from "@behindthemusictree/app-kit/transport";
 import { Scope } from "@behindthemusictree/app-kit/transport";
 import { genreMusicQueryParams, type GenreMusicSelection } from "@behindthemusictree/app-kit/genre-tree";
 import { genrePlaylistQueryKeys } from "@behindthemusictree/app-kit/genre-tree";
@@ -164,7 +164,7 @@ export function GenrePlaylistTracks({
         : genrePlaylist ? playNewTrackListFromGenrePlaylist(genrePlaylist, scope, { startSongUuid }) : Promise.reject(new Error("Personal genre has no playlist"));
     started.catch((error) => {
       console.error("Failed to play genre playlist:", error);
-      showPopup(<InternalErrorPopup errorCode={ErrorCode.CLIENT_UNKNOWN} />);
+      showPopup(<InternalErrorPopup errorCode={error instanceof AppError ? error.code : ErrorCode.CLIENT_UNKNOWN} />);
     });
   };
 

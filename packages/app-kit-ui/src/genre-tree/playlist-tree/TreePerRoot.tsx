@@ -14,9 +14,6 @@ import {
 } from "@behindthemusictree/genre-tree-view";
 
 import { usePlayer } from "@behindthemusictree/app-kit/player";
-import { usePopup } from "@behindthemusictree/app-kit/popup";
-import InternalErrorPopup from "../../popup/InternalErrorPopup";
-import { ErrorCode } from "@behindthemusictree/app-kit/transport";
 
 import { TrackBase } from "@behindthemusictree/app-kit/genre-tree";
 
@@ -77,7 +74,6 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
   const defaultPlayback = useGenrePlaylistPlayback<T>({ scope, genrePlaylists: genrePlaylistTreePerRoot });
   const { playing, play } = playback ?? defaultPlayback;
   const playingNodeId = playing?.uuid ?? null;
-  const { showPopup } = usePopup();
 
   const nodes: GenreTreeNode[] = useMemo(
     () =>
@@ -108,10 +104,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
         return;
       }
 
-      play(genrePlaylist).catch((error) => {
-        console.error("Failed to load genre playlist tracks:", error);
-        showPopup(<InternalErrorPopup errorCode={ErrorCode.CLIENT_UNKNOWN} />);
-      });
+      void play(genrePlaylist);
     },
     [
       genrePlaylistTreePerRoot,
@@ -119,7 +112,6 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
       isPlaying,
       setIsPlaying,
       play,
-      showPopup,
     ],
   );
 

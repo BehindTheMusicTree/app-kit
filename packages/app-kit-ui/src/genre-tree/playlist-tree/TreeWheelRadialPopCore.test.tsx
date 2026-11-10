@@ -26,6 +26,11 @@ vi.mock("@behindthemusictree/genre-tree-view", () => ({
   },
 }));
 
+vi.mock("@behindthemusictree/app-kit/popup", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  usePopup: () => ({ showPopup: vi.fn(), hidePopup: vi.fn() }),
+}));
+
 vi.mock("@behindthemusictree/app-kit/genre-tree", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useTrackList: () => useTrackListMock(),

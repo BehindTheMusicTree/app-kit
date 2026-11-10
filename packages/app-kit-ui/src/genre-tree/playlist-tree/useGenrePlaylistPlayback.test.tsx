@@ -1,7 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
 
-const { useTrackListMock } = vi.hoisted(() => ({ useTrackListMock: vi.fn() }));
+const { useTrackListMock, showPopupMock } = vi.hoisted(() => ({ useTrackListMock: vi.fn(), showPopupMock: vi.fn() }));
+
+vi.mock("@behindthemusictree/app-kit/popup", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  usePopup: () => ({ showPopup: showPopupMock, hidePopup: vi.fn() }),
+}));
 
 vi.mock("@behindthemusictree/app-kit/genre-tree", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
@@ -9,6 +14,7 @@ vi.mock("@behindthemusictree/app-kit/genre-tree", async (importOriginal) => ({
 }));
 
 import { TrackListOriginType, type CriteriaPlaylistSimple } from "@behindthemusictree/app-kit/genre-tree";
+import { createAppErrorFromErrorCode, ErrorCode } from "@behindthemusictree/app-kit/transport";
 import { useGenrePlaylistPlayback } from "./useGenrePlaylistPlayback";
 
 const jazz = { uuid: "3f0d7b1e-8a3c-4d57-9a53-2b7f4f9c0a11", name: "Jazz", criteria: { uuid: "c1" }, genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: 139, regional: 0, all: 139 } } as unknown as CriteriaPlaylistSimple;
@@ -111,4 +117,23 @@ describe("useGenrePlaylistPlayback", () => {
     expect(playNewTrackListFromGenrePlaylist).toHaveBeenLastCalledWith(jazz, "me");
   });
 
+
+  it("shows the failure's real error code in a popup instead of rejecting", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    playNewTrackListFromGenrePlaylist.mockRejectedValueOnce(createAppErrorFromErrorCode(ErrorCode.CLIENT_UNKNOWN));
+    const { result } = renderHook(() => useGenrePlaylistPlayback({ scope: "reference", genrePlaylists: [jazz] }));
+
+    await expect(result.current.play(jazz)).resolves.toBeUndefined();
+    expect(showPopupMock).toHaveBeenCalledTimes(1);
+    expect(showPopupMock.mock.calls[0][0].props.errorCode).toBe(ErrorCode.CLIENT_UNKNOWN);
+  });
+
+  it("falls back to CLIENT_UNKNOWN for a non-AppError failure", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    playNewTrackListFromGenrePlaylist.mockRejectedValueOnce(new Error("boom"));
+    const { result } = renderHook(() => useGenrePlaylistPlayback({ scope: "reference", genrePlaylists: [jazz] }));
+
+    await result.current.play(jazz);
+    expect(showPopupMock.mock.calls[0][0].props.errorCode).toBe(ErrorCode.CLIENT_UNKNOWN);
+  });
 });

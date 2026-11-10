@@ -11,6 +11,11 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- HTTP 502/503/504 responses now map to `BACKEND_UNAVAILABLE` (backend scope) or `SERVICE_INTERNAL_ERROR` instead of `CLIENT_UNKNOWN`, so the global connectivity popup shows them.
+- Playing a genre playlist whose tracks fail to load now shows the error popup with the real error code and never rejects; callers use `void play(...)`. Previously the failure surfaced only as an unhandled "ClientError: Unknown error" with no popup.
+
 ## [39.0.0] - 2026-11-10
 
 ### Breaking

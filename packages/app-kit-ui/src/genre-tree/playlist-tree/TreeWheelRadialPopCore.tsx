@@ -128,9 +128,7 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
         return;
       }
 
-      play(genrePlaylist).catch((error) => {
-        console.error("Failed to load genre playlist tracks:", error);
-      });
+      void play(genrePlaylist);
     },
     [genrePlaylists, playingNodeId, isPlaying, setIsPlaying, play],
   );
