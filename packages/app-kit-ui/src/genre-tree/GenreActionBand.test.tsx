@@ -12,6 +12,12 @@ describe("GenreActionBand", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it("spans the panel edges so the body margin does not inset the band", () => {
+    render(<GenreActionBand node={node} onZoomIn={vi.fn()} />);
+
+    expect(screen.getByRole("button", { name: "Focus" }).closest(".-mx-panel-x")).not.toBeNull();
+  });
+
   it("renders each provided action and wires its click", () => {
     const handlers = {
             onZoomIn: vi.fn(),

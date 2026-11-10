@@ -49,7 +49,7 @@ export function useArtistPanel({
         ...panel,
         title: "Artist",
         content: (
-          <div aria-busy="true" className="flex flex-col gap-2.5 px-6 py-2.5">
+          <div aria-busy="true" className="flex flex-col gap-2.5">
             <Skeleton className="h-3 w-16" />
             <Skeleton className="h-4 w-32" />
             <Skeleton className="h-3 w-16" />
@@ -63,13 +63,13 @@ export function useArtistPanel({
       return {
         ...panel,
         title: "Artist not found",
-        content: <p className="px-6 py-2.5 text-[var(--color-text-muted)]">This artist does not exist.</p>,
+        content: <p className="text-[var(--color-text-muted)]">This artist does not exist.</p>,
       };
     case "error":
       return {
         ...panel,
         title: "Artist",
-        content: <p className="px-6 py-2.5 text-red-600">Could not load this artist.</p>,
+        content: <p className="text-red-600">Could not load this artist.</p>,
       };
     case "success": {
       const { artist } = result;
