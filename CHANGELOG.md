@@ -15,13 +15,18 @@ easy to spot when bumping.
 
 - Detail-panel content no longer carries its own horizontal margin or section-level vertical padding: the `DetailPanel` body (ui 0.21) provides both. A host `overlayPanel` that added its own margin must remove it, or the margin is applied twice. Action bands, the song history divider and the selection bar span the panel edges through `PanelBleed`.
 - `ArtistDetailed` (and `ArtistDetailedSchema`) gains a required `playableTracksCount`. The artist endpoint must send it (grow-api does), and consumers that build `ArtistDetailed` fixtures or mocks must include it.
-- Requires `@behindthemusictree/ui` 0.21.0 or later (`ActionBand`, `ActionButton`, `PanelBleed`, `PanelStack`) and `@behindthemusictree/brand` 12.12.0 or later.
+- Requires `@behindthemusictree/ui` 0.21.1 or later and `@behindthemusictree/genre-tree-view` 9.1.0 or later (`ActionBand`, `ActionButton`, `PanelBleed`, `PanelStack`) and `@behindthemusictree/brand` 12.12.0 or later.
 - `GenreActionBand`: `onPlayPause` and `isPlaying` are replaced by a `playActions` node rendered before the other actions.
 - `GenrePlaylistPlayback`: `playingNodeId` becomes `playing` (`{ uuid, selectionKey }`), and `play(genrePlaylist, selection?)` accepts the coverage to play.
 - `GenreInfoPanelBody`: the `countsContext` prop is removed and the "Catalogue / Playlist" count lines are replaced by Play buttons, so an artist-filtered genre panel no longer says "all artists".
 
+### Changed
+
+- The song history toggle uses the shared panel label style (`PANEL_LABEL_CLASS`), like every other panel label.
+
 ### Added
 
+- `useGenreDetailContent` accepts `treeRelations`, the styles a mounted tree draws for the genre and its relatives. `GenreTreeView` passes them, so the Family and Ancestors dots take the tree's exact colors for every genre (not a pale tint of the root), and the header accent comes from one place. Without a tree, a genre falls back to its root color with readable text, so Mainstream Pop and Hyperpop show white with dark text instead of grey.
 - `ArtistDetailedSchema` carries `playableTracksCount` (songs with a genre and a playable video), served by grow-api, so the artist panel can enable or disable Play without loading the tracklist.
 - Genre, regional-genre, artist and song detail panels offer icon Play buttons in the action band, each showing its playable-song count: Genre · Canonical · Regional · All for a canonical genre, Genre · All for a regional one. The play triangle is the same on every button (filled); Canonical and Regional show the Grow tree and globe faintly behind it, All the left half of the tree and the right half of the globe. A count of 0 stays visible but disabled; an unplayable song or an artist with no playable song gets a disabled Play.
 

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen, fireEvent } from "@testing-library/react";
-import { render } from "../test-utils";
+import { screen, fireEvent, renderHook } from "@testing-library/react";
+import { render, TrackNounWrapper } from "../test-utils";
 
 const { useFetchGenreDetailMock, bodyMock } = vi.hoisted(() => ({ useFetchGenreDetailMock: vi.fn(), bodyMock: vi.fn() }));
 
@@ -24,7 +24,8 @@ vi.mock("./playlist-tree/useGenrePlaylistPlayback", () => ({
   useGenrePlaylistPlayback: () => ({ playing: null, play: vi.fn() }),
 }));
 
-import { GenreDetailPanel } from "./GenreDetailPanel";
+import { GenreDetailPanel, useGenreDetailContent } from "./GenreDetailPanel";
+import { getTextColorOnFill } from "@behindthemusictree/genre-tree-view";
 import { makeGenrePlaylistUuid, makeGenreUuid } from "@behindthemusictree/app-kit/genre-tree/testing";
 
 const root = { uuid: makeGenreUuid("root"), name: "World music", wikidataId: "Q1" };
@@ -140,5 +141,40 @@ describe("GenreDetailPanel", () => {
 
     renderPanel();
     expect(screen.queryByRole("button", { name: "Focus" })).not.toBeInTheDocument();
+  });
+
+  describe("colors", () => {
+    const options = { genreUuid: detail.uuid, scope: "reference" as const, getBackendBaseUrl: () => "https://b", onSelectGenre: vi.fn() };
+    const style = (fill: string, textColor: string) => ({ fill, textColor });
+    const node = (uuid: ReturnType<typeof makeGenreUuid>, parentId: string | null) => ({ id: uuid, parentId, name: uuid, itemCount: 1 });
+    const content = (treeRelations?: Parameters<typeof useGenreDetailContent>[0]["treeRelations"]) =>
+      renderHook(() => useGenreDetailContent({ ...options, treeRelations }), { wrapper: TrackNounWrapper }).result.current;
+    const familyProps = () => bodyMock.mock.calls.at(-1)![0].family.props.children[0].props;
+
+    it("paints the header and family with the exact styles the tree draws", () => {
+      const west = makeGenreUuid("west");
+      const panel = content({
+        node: node(detail.uuid, west), ...style("#123456", "#abcdef"),
+        parentNode: { node: node(west, null), ...style("#111111", "#eeeeee") },
+        childNodes: [], ancestorNodes: [],
+      });
+      expect(panel.headerAccent).toEqual({ background: "#123456", color: "#abcdef" });
+      render(<>{panel.content}</>);
+      expect(familyProps().parentNode).toMatchObject(style("#111111", "#eeeeee"));
+    });
+
+    it("falls back to the root color for a relative the tree does not draw", () => {
+      const panel = content({ node: node(detail.uuid, null), ...style("#123456", "#abcdef"), parentNode: null, childNodes: [], ancestorNodes: [] });
+      render(<>{panel.content}</>);
+      expect(familyProps().childNodes[0].textColor).not.toBe("#abcdef");
+      expect(familyProps().childNodes[0].fill).not.toBe("#6B7280");
+    });
+
+    it("paints a white root with dark text when no tree is mounted", () => {
+      useFetchGenreDetailMock.mockReturnValue({ data: { ...detail, root: { ...root, wikidataId: "Q37073" } }, isPending: false, isError: false });
+      const panel = content();
+      expect(panel.headerAccent?.background).toBe("#FFFFFF");
+      expect(panel.headerAccent?.color).toBe(getTextColorOnFill("#FFFFFF"));
+    });
   });
 });
