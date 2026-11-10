@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [39.0.0] - 2026-11-10
+
 ### Breaking
 
 - Detail-panel content no longer carries its own horizontal margin or section-level vertical padding: the `DetailPanel` body (ui 0.21) provides both. A host `overlayPanel` that added its own margin must remove it, or the margin is applied twice. Action bands, the song history divider and the selection bar span the panel edges through `PanelBleed`.
