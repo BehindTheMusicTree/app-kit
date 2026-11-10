@@ -263,6 +263,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     isFetching: isTreeFetching,
     genrePlaylistByNodeId,
     visibleGenrePlaylists,
+    focusUuids,
     groupedGenrePlaylistsByRoot,
     selectedGenreUuid,
     selectGenre,
@@ -435,7 +436,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const hostPanel = { obscuredInset, onNodeStyleResolverChange: handleNodeStyleResolverChange };
 
   const nodeMetric: GenreTreeSizeMetric = isArtistFiltered || !canSizeByViews ? "songs" : deferredSizeMetric;
-  const treeNodes = useMemo(() => toTreeNodes(visibleGenrePlaylists, nodeMetric), [visibleGenrePlaylists, nodeMetric]);
+  const treeNodes = useMemo(() => toTreeNodes(visibleGenrePlaylists, nodeMetric, focusUuids), [visibleGenrePlaylists, nodeMetric, focusUuids]);
   const relations = useGenreNodeRelations(
     treeNodes,
     !overlayPanel && hasSelectedGenreNode ? selectedNodeId : null,
@@ -745,6 +746,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                 <GenrePlaylistTreeWheel
                   scope={scope}
                   genrePlaylists={visibleGenrePlaylists}
+                  focusUuids={focusUuids}
                   handleGenreCreationAction={handleGenreCreationAction}
                   handleGenreRenameAction={handleGenreRenameAction}
                   additionalActions={additionalActions}
@@ -778,6 +780,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                 <GenrePlaylistTreeWheelRadialPopCore
                   scope={scope}
                   genrePlaylists={visibleGenrePlaylists}
+                  focusUuids={focusUuids}
                   handleGenreCreationAction={handleGenreCreationAction}
                   handleGenreRenameAction={handleGenreRenameAction}
                   additionalActions={additionalActions}
@@ -811,6 +814,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                 outline
                 scope={scope}
                 genrePlaylists={visibleGenrePlaylists}
+                focusUuids={focusUuids}
                 handleGenreCreationAction={handleGenreCreationAction}
                 handleGenreRenameAction={handleGenreRenameAction}
                 additionalActions={additionalActions}
@@ -840,9 +844,10 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                           handleGenreRenameAction={handleGenreRenameAction}
                           additionalActions={additionalActions}
                           onSelectedNodeChange={handleSelectedNodeChange}
-                                                                              onNodeHover={handleNodeHover}
+                          onNodeHover={handleNodeHover}
                           {...hostPanel}
                           playback={playback}
+                          focusUuids={focusUuids}
                           // Each root has its own panel; null closes the one not holding the selection.
                           selectedNodeId={
                             uuid === selectedGenrePlaylist?.root.uuid ? selectedNodeId : null

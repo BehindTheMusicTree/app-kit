@@ -94,6 +94,29 @@ describe("GenrePlaylistTreePerRoot", () => {
     vi.clearAllMocks();
   });
 
+  it("mutes nodes outside the open artist's footprint", () => {
+    const childUuid = makeGenrePlaylistUuid("0b6f3c1e-6d7a-4b0f-9b55-0b1d5c1c2a10");
+    const child: CriteriaPlaylistSimple = { ...genrePlaylist, uuid: childUuid, name: "House", parent: { uuid: playlistUuid } } as CriteriaPlaylistSimple;
+    render(
+      <GenrePlaylistTreePerRoot
+        scope="reference"
+        rootUuid={playlistUuid}
+        genrePlaylistTreePerRoot={[genrePlaylist, child]}
+        handleGenreCreationAction={handleGenreCreationAction}
+        handleGenreRenameAction={handleGenreRenameAction}
+        focusUuids={new Set([playlistUuid])}
+      />,
+    );
+
+    expect(capturedProps!.nodes.map((node) => node.muted)).toEqual([false, true]);
+  });
+
+  it("mutes nothing without a footprint", () => {
+    renderTree();
+
+    expect(capturedProps!.nodes.map((node) => node.muted)).toEqual([undefined]);
+  });
+
   it("passes wheelZoom through to GenreTree", () => {
     render(
       <GenrePlaylistTreePerRoot

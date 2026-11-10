@@ -74,6 +74,8 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   onViewportChange?: (viewport: GenreTreeViewport) => void;
   /** What node play buttons play; defaults to each node's whole genre playlist. */
   playback?: GenrePlaylistPlayback;
+  /** The open artist's footprint; nodes outside it are drawn muted. */
+  focusUuids?: ReadonlySet<string>;
 } & GenreFocusProps &
   HostPanelProps;
 
@@ -112,7 +114,7 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
   const { playing, play } = playback ?? defaultPlayback;
   const playingNodeId = playing?.uuid ?? null;
 
-  const nodes = useMemo(() => toTreeNodes(genrePlaylists, sizeMetric), [genrePlaylists, sizeMetric]);
+  const nodes = useMemo(() => toTreeNodes(genrePlaylists, sizeMetric, props.focusUuids), [genrePlaylists, sizeMetric, props.focusUuids]);
 
   const handlePlayPause = useCallback(
     (nodeId: string) => {
