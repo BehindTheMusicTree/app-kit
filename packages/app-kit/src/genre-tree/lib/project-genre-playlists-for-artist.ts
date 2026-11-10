@@ -6,16 +6,24 @@ import type { CriteriaPlaylistSimple } from "../schemas/criteria-playlist/simple
 const POP_ROOT_NAME = "Mainstream Pop";
 const CORE_ELECTRONIC_NAME = "Core electronic";
 
+export interface ArtistGenreProjection {
+  /** Every canonical playlist, carrying the artist's counts (zero outside the footprint). */
+  genrePlaylists: CriteriaPlaylistSimple[];
+  /** The artist's footprint: renderers draw every other node muted instead of dropping it. */
+  focusUuids: ReadonlySet<string>;
+}
+
 /**
- * Narrows the canonical tree to an artist's footprint: nodes with songs in their subtree (which
- * includes every ancestor of such a node) carry the artist's counts. Two structural exceptions are
- * kept with zero counts: the "Mainstream Pop" root (pop-core needs it) and the scene children of a
- * kept "Core electronic" (the scene stack needs one commercial and one underground child).
+ * Projects an artist onto the canonical tree. No node is dropped: every playlist carries the
+ * artist's counts (zero outside the footprint). The footprint is the nodes with songs in their
+ * subtree (which includes every ancestor of such a node), plus two structural exceptions that
+ * have zero counts: the "Mainstream Pop" root (pop-core needs it) and the scene children of a
+ * footprint "Core electronic" (the scene stack needs one commercial and one underground child).
  */
-export const pruneGenrePlaylistsForArtist = (
+export const projectGenrePlaylistsForArtist = (
   playlists: CriteriaPlaylistSimple[],
   counts: ArtistGenreCount[],
-): CriteriaPlaylistSimple[] => {
+): ArtistGenreProjection => {
   const countByPlaylist = new Map(counts.map((count) => [count.genrePlaylist as string, count]));
   const kept = new Set<string>();
   for (const playlist of playlists) {
@@ -28,8 +36,7 @@ export const pruneGenrePlaylistsForArtist = (
   for (const playlist of playlists) {
     if (playlist.parent && coreElectronicUuids.has(playlist.parent.uuid)) kept.add(playlist.uuid);
   }
-  return playlists
-    .filter((playlist) => kept.has(playlist.uuid))
+  const genrePlaylists = playlists
     .map((playlist) => {
       const count = countByPlaylist.get(playlist.uuid);
       const catalogue = GenreCatalogueCountsSchema.parse(playlist.catalogue);
@@ -46,4 +53,5 @@ export const pruneGenrePlaylistsForArtist = (
         viewsCount: undefined,
       };
     });
+  return { genrePlaylists, focusUuids: kept };
 };

@@ -54,6 +54,8 @@ export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
   onViewportChange?: (viewport: GenreTreeViewport) => void;
   /** What node play buttons play; defaults to each node's whole genre playlist. */
   playback?: GenrePlaylistPlayback;
+  /** The open artist's footprint; nodes outside it are drawn muted. */
+  focusUuids?: ReadonlySet<string>;
 } & HostPanelProps;
 
 export default function GenrePlaylistTreeWheel<T extends TrackBase>({
@@ -76,6 +78,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
   viewportRestore,
   onViewportChange,
   playback,
+  focusUuids,
   ...hostPanel
 }: GenrePlaylistTreeWheelProps<T>) {
   const { isPlaying, setIsPlaying } = usePlayer();
@@ -93,8 +96,9 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
         actionable: Boolean(genrePlaylist.criteria),
         side: genrePlaylist.criteria?.side ?? undefined,
         wikidataId: genrePlaylist.criteria?.wikidataId ?? null,
+        muted: focusUuids ? !focusUuids.has(genrePlaylist.uuid) : undefined,
       })),
-    [genrePlaylists, sizeMetric],
+    [genrePlaylists, sizeMetric, focusUuids],
   );
 
   const handlePlayPause = useCallback(

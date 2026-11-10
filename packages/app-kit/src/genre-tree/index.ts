@@ -78,7 +78,7 @@ export { libraryEndpoints, libraryQueryKeys } from "./api/library";
 export * from "./lib/rating";
 export * from "./lib/formatting";
 export * from "./lib/genre-playlist-helpers";
-export * from "./lib/prune-genre-playlists-for-artist";
+export * from "./lib/project-genre-playlists-for-artist";
 export * from "./lib/genre-search";
 export * from "./lib/search-text";
 export * from "./lib/reparent-candidates";

@@ -231,15 +231,15 @@ describe("useGenreTreeViewState", () => {
       expect(result.current.genrePlaylists.length).toBeGreaterThan(0);
     });
 
-    it("keeps pruning by the previous artist's counts while the next artist's load", () => {
+    it("keeps the previous artist's projection while the next artist's counts load", () => {
       useArtistGenreCountsMock.mockReturnValue({ data: counts, isPending: false, isPlaceholderData: true, error: null });
       const { result } = renderHook(() => useGenreTreeViewState({ ...options, artistUuid }));
 
       expect(result.current.isFetching).toBe(true);
-      expect(result.current.genrePlaylists.map((gp) => gp.uuid)).toEqual(["pop", "rock"]);
+      expect([...result.current.focusUuids!]).toEqual(["pop", "rock"]);
     });
 
-    it("serves the pruned tree with the artist's counts to every consumer", () => {
+    it("serves the whole tree with the artist's counts and their footprint to every consumer", () => {
       mockData([pop, rock, makePlaylist("jazz", "Jazz", { parent: "pop", root: "pop" })]);
       useArtistGenreCountsMock.mockReturnValue({ data: counts, isPending: false, error: null });
       const { result } = renderHook(() => useGenreTreeViewState({ ...options, artistUuid, selectedGenreUuid: rock.criteria!.uuid }));
@@ -248,8 +248,10 @@ describe("useGenreTreeViewState", () => {
       expect(result.current.visibleGenrePlaylists.map((gp) => [gp.uuid, gp.tracksCount])).toEqual([
         ["pop", 1],
         ["rock", 1],
+        ["jazz", 0],
       ]);
-      expect(result.current.genrePlaylistByNodeId.has("jazz")).toBe(false);
+      expect([...result.current.focusUuids!]).toEqual(["pop", "rock"]);
+      expect(result.current.genrePlaylistByNodeId.has("jazz")).toBe(true);
       expect(result.current.selectedGenrePlaylist?.uuid).toBe("rock");
       expect(result.current.canShowPopCore).toBe(true);
     });
@@ -259,6 +261,7 @@ describe("useGenreTreeViewState", () => {
       const { result } = renderHook(() => useGenreTreeViewState({ ...options, artistUuid }));
 
       expect(result.current.genrePlaylists).toHaveLength(5);
+      expect(result.current.focusUuids).toBeUndefined();
     });
   });
 });

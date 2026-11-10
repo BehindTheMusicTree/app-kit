@@ -11,6 +11,15 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Breaking
+
+- With an artist open, the tree is no longer pruned to their footprint: `useVisibleGenrePlaylists` and `useGenreTreeViewState` serve the whole canonical tree carrying the artist's counts (zero outside the footprint), and return the footprint as the new `focusUuids` (`undefined` without an artist). `GenreTreeView` draws every node outside it muted. Hosts that validated URL state against `genrePlaylists` now keep a genre outside the footprint instead of dropping it.
+- `pruneGenrePlaylistsForArtist` is replaced by `projectGenrePlaylistsForArtist`, which returns `{ genrePlaylists, focusUuids }` over the whole tree.
+
+### Added
+
+- `GenrePlaylistTreeWheel` and `GenrePlaylistTreeWheelRadialPopCore` take `focusUuids`; `toTreeNodes` sets `muted` on every node outside it.
+
 ### Fixed
 
 - HTTP 502/503/504 responses now map to `BACKEND_UNAVAILABLE` (backend scope) or `SERVICE_INTERNAL_ERROR` instead of `CLIENT_UNKNOWN`, so the global connectivity popup shows them.
@@ -18,6 +27,7 @@ easy to spot when bumping.
 
 ### Changed
 
+- Requires `@behindthemusictree/genre-tree-view` 9.2.0 (the `muted` node flag) and `@behindthemusictree/ui` `^0.21.2`.
 - `useGenrePlaylistPlayback` (and so `GenreTreeView`, `GenreDetailPanel`, `TreeWheel`, `TreePerRoot`, `TreeWheelRadialPopCore`) now calls `usePopup`: render them inside a `PopupProvider`.
 
 ## [39.0.0] - 2026-11-10
