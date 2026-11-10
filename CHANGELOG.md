@@ -22,7 +22,7 @@ easy to spot when bumping.
 ### Added
 
 - `ArtistDetailedSchema` carries `playableTracksCount` (songs with a genre and a playable video), served by grow-api, so the artist panel can enable or disable Play without loading the tracklist.
-- Genre, regional-genre, artist and song detail panels offer icon Play buttons in the action band, each showing its playable-song count: Direct · Canonical · Canonical + regional · Regional for a canonical genre, Direct · All for a regional one. A count of 0 stays visible but disabled; an unplayable song or an artist with no playable song gets a disabled Play.
+- Genre, regional-genre, artist and song detail panels offer icon Play buttons in the action band, each showing its playable-song count: Genre · Canonical · Regional · All for a canonical genre, Genre · All for a regional one. Canonical and Regional carry a tree and a map icon under the play triangle, All both. A count of 0 stays visible but disabled; an unplayable song or an artist with no playable song gets a disabled Play.
 
 ## [38.0.0] - 2026-11-10
 
