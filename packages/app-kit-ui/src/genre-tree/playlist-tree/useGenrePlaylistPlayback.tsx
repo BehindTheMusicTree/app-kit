@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from "react";
 import {
-  TrackListOriginType, useTrackList, GenreCatalogueCountsSchema,
+  TrackListOriginType, TracksFailureAlreadyReportedError, useTrackList, GenreCatalogueCountsSchema,
   defaultGenreMusicSelection, genreMusicSelectionKey,
   type GenreMusicSelection,
   type CriteriaPlaylistMinimum, type CriteriaPlaylistSimple, type TrackBase,
@@ -55,6 +55,7 @@ export function useGenrePlaylistPlayback<T extends TrackBase = TrackBase>({
         : playNewTrackListFromGenrePlaylist(playlist, scope));
     } catch (error) {
       console.error("Failed to load genre playlist tracks:", error);
+      if (error instanceof TracksFailureAlreadyReportedError) return;
       showPopup(<InternalErrorPopup errorCode={error instanceof AppError ? error.code : ErrorCode.CLIENT_UNKNOWN} />);
     }
   }, [artist, scope, playNewTrackListFromGenrePlaylist, showPopup]);
