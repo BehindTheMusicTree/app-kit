@@ -15,6 +15,7 @@ easy to spot when bumping.
 
 - With an artist open, the tree is no longer pruned to their footprint: `useVisibleGenrePlaylists` and `useGenreTreeViewState` serve the whole canonical tree carrying the artist's counts (zero outside the footprint), and return the footprint as the new `focusUuids` (`undefined` without an artist). `GenreTreeView` draws every node outside it muted. Hosts that validated URL state against `genrePlaylists` now keep a genre outside the footprint instead of dropping it.
 - `pruneGenrePlaylistsForArtist` is replaced by `projectGenrePlaylistsForArtist`, which returns `{ genrePlaylists, focusUuids }` over the whole tree. The footprint is now only the genres with the artist's songs in their subtree: the Mainstream Pop root and the scene children of Core electronic are no longer kept in it, so they are muted for an artist without songs there.
+- `GenreTreeView`'s `overlayPanel.title` must be a string: like a genre's name or the artist and song panels' titles, it now fills the search field, whose "Close panel" button closes the overlay. The overlay's header no longer shows its own title or close button.
 
 ### Added
 
