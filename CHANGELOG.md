@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- `ArtistSongs` no longer renders its own "Play all" button: the artist panel's action band already has Play.
+
 ## [40.0.0] - 2026-11-10
 
 ### Breaking
@@ -30,7 +34,6 @@ easy to spot when bumping.
 
 ### Changed
 
-- `ArtistSongs` no longer renders its own "Play all" button: the artist panel's action band already has Play.
 - `GenrePlaylistTreeWheel` and `GenrePlaylistTreePerRoot` build their nodes with `toTreeNodes`, so they now also pass `detached`, `umbrella` and `scene`.
 - Requires `@behindthemusictree/genre-tree-view` 9.2.0 (the `muted` node flag) and `@behindthemusictree/ui` `^0.21.2`.
 - `useGenrePlaylistPlayback` (and so `GenreTreeView`, `GenreDetailPanel`, `TreeWheel`, `TreePerRoot`, `TreeWheelRadialPopCore`) now calls `usePopup`: render them inside a `PopupProvider`.
