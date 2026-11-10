@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- `GenreTreeView` (`regions` placement): on desktop the search field and artist filter sit at the panel inset from the top and left edge, so the search is centered in the detail panel's header band.
+
 ### Breaking
 
 - Requires `@behindthemusictree/ui` 0.20.0 or later and `@behindthemusictree/brand` 12.11.0 or later (the `text-body` and `text-caption` typographic scale).
