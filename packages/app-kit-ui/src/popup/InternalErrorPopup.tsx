@@ -33,7 +33,7 @@ export default function InternalErrorPopup({ errorCode, contactEmail, ...rest }:
             </p>
           </div>
           {errorCode && (
-            <div className="text-sm text-[var(--color-neutral-500)] bg-[var(--color-neutral-100)] p-3 rounded-lg border border-[var(--color-neutral-100)]">
+            <div className="text-body text-[var(--color-neutral-500)] bg-[var(--color-neutral-100)] p-3 rounded-lg border border-[var(--color-neutral-100)]">
               Error Code: {errorCode}
             </div>
           )}

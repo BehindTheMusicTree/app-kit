@@ -94,7 +94,7 @@ export default function TrackItem<T extends TrackBase>({
       </div>
       <div className="genre-name-container flex items-center justify-start w-[21.6%] min-w-0 shrink-0">
         {track.genre ? (
-          <div className="genre-name max-w-full whitespace-normal break-words p-1 text-xs font-bold">{track.genre.name}</div>
+          <div className="genre-name max-w-full whitespace-normal break-words p-1 text-caption font-bold">{track.genre.name}</div>
         ) : (
           ""
         )}

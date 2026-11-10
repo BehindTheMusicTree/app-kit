@@ -26,7 +26,7 @@ export default function Toast({ message, onClose, durationMs = 2200 }: ToastProp
         role="status"
         aria-live="polite"
         aria-atomic="true"
-        className="pointer-events-auto w-full max-w-md rounded-md bg-[var(--color-surface)] px-4 py-4 text-sm text-[var(--color-text)] shadow-lg ring-1 ring-black/10"
+        className="pointer-events-auto w-full max-w-md rounded-md bg-[var(--color-surface)] px-4 py-4 text-body text-[var(--color-text)] shadow-lg ring-1 ring-black/10"
       >
         {message}
       </div>

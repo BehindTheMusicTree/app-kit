@@ -64,7 +64,7 @@ export default function GenreSearch<T extends CriteriaPlaylistSimple = CriteriaP
           <>
             {genrePlaylist.name}
             {genrePlaylist.isUmbrella && (
-              <span className="ml-2 text-xs italic text-[var(--color-text-muted)]">umbrella</span>
+              <span className="ml-2 text-caption italic text-[var(--color-text-muted)]">umbrella</span>
             )}
           </>
         ),

@@ -89,7 +89,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
     <>
       {(summarySourceUrl || wikidataUrl) && (
         <PanelSection title="Links">
-          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-[var(--color-text)]">
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-caption text-[var(--color-text)]">
             {summarySourceUrl && (
               <a
                 href={summarySourceUrl}
@@ -119,7 +119,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
         {renderSummary ? (
           renderSummary(overview)
         ) : (
-          <ClampedText key={genreUuid} className="text-[0.8125rem] leading-[1.45] text-[var(--color-text)]">
+          <ClampedText key={genreUuid} className="text-body text-[var(--color-text)]">
             {summary ?? "—"}
           </ClampedText>
         )}
@@ -131,7 +131,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
           {renderEssentialTracks ? (
             renderEssentialTracks(overview)
           ) : essentialSongs && essentialSongs.length > 0 ? (
-            <ul className="text-[0.8125rem] leading-[1.45] text-[var(--color-text)]">
+            <ul className="text-body text-[var(--color-text)]">
               {essentialSongs.map((track) => (
                 <li key={track.uuid} className="py-1">
                   {track.title}
@@ -139,7 +139,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
               ))}
             </ul>
           ) : (
-            <p className="text-[0.8125rem] leading-[1.45] text-[var(--color-text)]">—</p>
+            <p className="text-body text-[var(--color-text)]">—</p>
           )}
         </PanelSection>
       )}

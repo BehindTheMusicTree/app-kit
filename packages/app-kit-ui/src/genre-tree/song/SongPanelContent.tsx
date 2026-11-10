@@ -58,7 +58,7 @@ function SongHistory({ uuid, getBackendBaseUrl }: { uuid: string; getBackendBase
       ) : (
         <ul className="divide-y divide-[var(--color-border)]">
           {history.entries.map((entry) => (
-            <li key={entry.uuid} className="py-1.5 text-sm">
+            <li key={entry.uuid} className="py-1.5 text-body">
               <span className="font-medium">{entry.action}</span>
               {entry.oldValue !== null || entry.newValue !== null ? (
                 <span className="text-[var(--color-text-muted)]">
@@ -66,7 +66,7 @@ function SongHistory({ uuid, getBackendBaseUrl }: { uuid: string; getBackendBase
                   — {entry.oldValue ?? "none"} → {entry.newValue ?? "none"}
                 </span>
               ) : null}
-              <span className="block text-xs text-[var(--color-text-muted)]">
+              <span className="block text-caption text-[var(--color-text-muted)]">
                 {entry.actorPseudo ?? "Anonymous"} · {dateFormat.format(new Date(entry.createdOn))}
               </span>
             </li>
@@ -161,12 +161,12 @@ export default function SongPanelContent(props: SongPanelContentProps) {
       <div className="genre-action-band border-b border-[var(--color-border)]">
         <div className="flex flex-wrap gap-1 px-3.5 py-3">
           {unplayableReason ? (
-            <p className="flex items-center px-2.5 text-sm text-[var(--color-text-muted)]">{unplayableReason}</p>
+            <p className="flex items-center px-2.5 text-body text-[var(--color-text-muted)]">{unplayableReason}</p>
           ) : (
             <button
               type="button"
               onClick={() => (isCurrent ? handlePlayPauseAction() : playNewTrackListFromTrackUuid(song, scope))}
-              className="group flex flex-col items-center gap-1 w-16 text-xs text-center text-[var(--color-text)] focus-visible:outline-none"
+              className="group flex flex-col items-center gap-1 w-16 text-caption text-center text-[var(--color-text)] focus-visible:outline-none"
             >
               <span className="flex items-center justify-center w-10 h-10 rounded-full group-focus-visible:ring-2 group-focus-visible:ring-[var(--color-focus-ring)] bg-[var(--color-surface-muted)] transition-colors group-hover:bg-[var(--color-border)]">
                 {isPlaying ? (

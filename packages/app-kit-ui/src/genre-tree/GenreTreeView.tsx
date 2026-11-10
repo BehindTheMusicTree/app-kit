@@ -612,7 +612,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const renderArtistFilter = () => {
     if (isLoading || !filterArtist) return null;
     return (
-      <span className="inline-flex items-center overflow-hidden rounded-full bg-[var(--color-neutral-100)] text-sm">
+      <span className="inline-flex items-center overflow-hidden rounded-full bg-[var(--color-neutral-100)] text-body">
         <button
           type="button"
           className="py-1 pl-3 pr-2 [@media(pointer:coarse)]:min-h-[var(--layout-touch-target)] hover:underline"
@@ -720,7 +720,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       <div
         className={`actions-container absolute z-30 flex items-center gap-2 ${
           placement === "regions"
-            ? "left-[calc(var(--layout-gutter)+var(--layout-panel-inset))] top-[calc(var(--layout-gutter)+var(--layout-panel-inset))] max-md:right-[calc(var(--layout-gutter)+var(--layout-panel-inset))] max-md:top-[var(--layout-band-top)] max-md:flex-col max-md:items-stretch"
+            ? "left-[calc(var(--layout-gutter)+var(--layout-panel-inset))] top-[calc(var(--layout-gutter)+var(--layout-panel-inset))] md:left-[var(--layout-panel-inset)] md:top-[var(--layout-panel-inset)] max-md:right-[calc(var(--layout-gutter)+var(--layout-panel-inset))] max-md:top-[var(--layout-band-top)] max-md:flex-col max-md:items-stretch"
             : "left-5 top-5"
         }`}
       >
@@ -729,7 +729,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       {!isLoading && !isError && filterArtist && (
         <div
           className={`absolute left-1/2 z-30 hidden -translate-x-1/2 md:block ${
-            placement === "regions" ? "top-[calc(var(--layout-gutter)+var(--layout-panel-inset))]" : "top-5"
+            placement === "regions" ? "top-[calc(var(--layout-gutter)+var(--layout-panel-inset))] md:top-[var(--layout-panel-inset)]" : "top-5"
           }`}
         >
           {renderArtistFilter()}
