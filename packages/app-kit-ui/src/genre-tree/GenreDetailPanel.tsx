@@ -2,12 +2,14 @@
 
 import { useMemo, type ReactNode, type ComponentProps } from "react";
 import {
-  ACCENT_TEXT_COLOR,
   GenreNodeAncestors,
   GenreNodeFamily,
   getGenreTreeColor,
+  getTextColorOnFill,
   TEXT_COLOR,
   tintSurface,
+  type GenreNodeRelations,
+  type GenreNodeStyle,
   type GenreTreeNode,
   type InfoPanelChild,
 } from "@behindthemusictree/genre-tree-view";
@@ -79,11 +81,13 @@ type GenreDetailContentOptions<O extends CriteriaOverview> = {
   trailing?: ReactNode;
   genrePlaylist?: CriteriaPlaylistSimple;
   expanded?: boolean;
+  /** How the mounted tree draws this genre and its relatives; genres it omits fall back to the root color. */
+  treeRelations?: GenreNodeRelations | null;
 };
 
 /** Shared entity data and content; the host owns the panel shell and placement. */
 export function useGenreDetailContent<O extends CriteriaOverview>({
-  genreUuid, scope, getBackendBaseUrl, onSelectGenre, extras, band, playback: hostPlayback, trailing, genrePlaylist: hostPlaylist, expanded,
+  genreUuid, scope, getBackendBaseUrl, onSelectGenre, extras, band, playback: hostPlayback, trailing, genrePlaylist: hostPlaylist, expanded, treeRelations,
 }: GenreDetailContentOptions<O>) {
   const { data: detail, isPending, isError } = useFetchGenreDetail(genreUuid, scope, getBackendBaseUrl);
   const defaultPlayback = useGenrePlaylistPlayback({ scope, genrePlaylists: [], artist: extras?.artist });
@@ -92,12 +96,19 @@ export function useGenreDetailContent<O extends CriteriaOverview>({
   const view = useMemo(() => {
     if (!detail) return null;
     const rootColor = getGenreTreeColor(detail.root.wikidataId);
+    const treeStyles = new Map<string, GenreNodeStyle>();
+    if (treeRelations) {
+      const drawn = [treeRelations, treeRelations.parentNode, ...treeRelations.childNodes, ...treeRelations.ancestorNodes];
+      for (const entry of drawn) {
+        if (entry) treeStyles.set(entry.node.id, { fill: entry.fill, textColor: entry.textColor });
+      }
+    }
     const relative = (genre: CriteriaMinimum, parentId: string | null): InfoPanelChild => ({
       node: toNode(genre, parentId),
-      fill: tintSurface(rootColor),
-      textColor: TEXT_COLOR,
+      ...(treeStyles.get(genre.uuid) ?? { fill: tintSurface(rootColor), textColor: TEXT_COLOR }),
     });
     const ancestors = [...detail.ascendants].sort((a, b) => b.degree - a.degree);
+    const own = treeStyles.get(detail.uuid) ?? { fill: rootColor, textColor: getTextColorOnFill(rootColor) };
     return {
       node: {
         id: detail.uuid,
@@ -106,24 +117,25 @@ export function useGenreDetailContent<O extends CriteriaOverview>({
         itemCount: scope === "reference" ? genreMusicCount(detail.criteriaPlaylist ? GenrePlaylistSummarySchema.parse(detail.criteriaPlaylist) : GenreCatalogueCountsSchema.parse(detail.catalogue)) : detail.tracksCount,
         wikidataId: detail.wikidataId,
       } satisfies GenreTreeNode,
-      fill: rootColor,
+      fill: own.fill,
+      textColor: own.textColor,
       parentNode: detail.parent ? relative(detail.parent, null) : null,
       childNodes: detail.children.map((child) => relative(child, detail.uuid)),
       ancestorNodes: ancestors.map(({ ascendant }, index) =>
         relative(ascendant, index === 0 ? null : ancestors[index - 1].ascendant.uuid),
       ),
     };
-  }, [detail, scope]);
+  }, [detail, scope, treeRelations]);
 
   if (isError) return {
     name: null,
     title: "Genre unavailable",
-    content: <p role="alert" className="p-4 text-body text-[var(--color-text)]">This genre could not be loaded.</p>,
+    content: <p role="alert" className="text-body text-[var(--color-text)]">This genre could not be loaded.</p>,
   };
   if (isPending || !detail || !view) return {
     name: null,
     title: "Loading genre…",
-    content: <div className="flex flex-col gap-3 p-4" aria-busy="true" data-testid="genre-detail-panel-skeleton">
+    content: <div className="flex flex-col gap-3" aria-busy="true" data-testid="genre-detail-panel-skeleton">
       <Skeleton className="h-6 w-2/3" />
       <Skeleton className="h-4 w-full" />
       <Skeleton className="h-4 w-3/4" />
@@ -135,7 +147,7 @@ export function useGenreDetailContent<O extends CriteriaOverview>({
     <GenreNodeFamily
       node={view.node}
       fill={view.fill}
-      textColor={ACCENT_TEXT_COLOR}
+      textColor={view.textColor}
       parentNode={view.parentNode}
       childNodes={view.childNodes}
       onSelectNode={selectGenre}
@@ -146,7 +158,7 @@ export function useGenreDetailContent<O extends CriteriaOverview>({
   return {
     name: detail.name,
     title: detail.name,
-    headerAccent: { background: view.fill, color: ACCENT_TEXT_COLOR },
+    headerAccent: { background: view.fill, color: view.textColor },
     aside: expanded ? ancestors : undefined,
     content: <>
       <GenreInfoPanelBody<O>
@@ -154,7 +166,6 @@ export function useGenreDetailContent<O extends CriteriaOverview>({
         genreUuid={detail.uuid}
         genrePlaylist={hostPlaylist ?? (detail.criteriaPlaylist === null ? null : scope === "reference" ? { ...GenrePlaylistSummarySchema.parse(detail.criteriaPlaylist), criteria: CriteriaMinimumSchema.parse(detail) } : { ...detail.criteriaPlaylist, criteria: CriteriaMinimumSchema.parse(detail), tracksCount: detail.tracksCount })}
         catalogue={detail.catalogue}
-        countsContext={!hostPlaylist && extras?.artist ? "all artists" : undefined}
         wikidataId={detail.wikidataId}
         scope={scope}
         getBackendBaseUrl={getBackendBaseUrl}

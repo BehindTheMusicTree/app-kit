@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TrackNounProvider } from "@behindthemusictree/app-kit/track-noun";
 import { useState, type ReactElement, type ReactNode } from "react";
 
-function TrackNounWrapper({ children }: { children: ReactNode }) {
+export function TrackNounWrapper({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
   return (
     <QueryClientProvider client={queryClient}>

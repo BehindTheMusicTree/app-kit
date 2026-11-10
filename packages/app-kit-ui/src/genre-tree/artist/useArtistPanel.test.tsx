@@ -6,6 +6,14 @@ type ArtistResult = { status: string; artist?: unknown };
 const { useArtistMock } = vi.hoisted(() => ({ useArtistMock: vi.fn<(uuid: string | null) => ArtistResult>() }));
 
 vi.mock("../../../../app-kit/src/genre-tree/useArtist", () => ({ useArtist: (uuid: string | null) => useArtistMock(uuid) }));
+vi.mock("../../../../app-kit/src/genre-tree/TrackListContext", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  useTrackList: () => ({ trackList: null, playNewTrackListFromArtist: vi.fn() }),
+}));
+vi.mock("../../../../app-kit/src/player/PlayerContext", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  usePlayer: () => ({ isPlaying: false, setIsPlaying: vi.fn() }),
+}));
 vi.mock("./ArtistSongs", () => ({ default: () => <p>Songs list</p> }));
 
 const UUID = "11111111-1111-1111-1111-111111111111";
@@ -23,6 +31,7 @@ const artist = {
   memberOf: [],
   albums: [{ uuid: "a1", name: "First", year: "1995", primaryType: "album", secondaryTypes: [] }],
   tracksCount: 3,
+  playableTracksCount: 2,
   image: null,
 };
 

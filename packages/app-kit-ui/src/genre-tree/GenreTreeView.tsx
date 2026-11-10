@@ -491,6 +491,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     scope, getBackendBaseUrl,
     onSelectGenre: (uuid) => { reopenPanel(); selectGenre(uuid); },
     expanded: isExpanded,
+    treeRelations: relations,
     playback,
     genrePlaylist: selectedGenrePlaylist,
     band: {
@@ -561,7 +562,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       onExpandedChange: changeExpanded,
       onClose: clearSelection,
       titleInSearch: true,
-      headerAccent: relations ? { background: relations.fill, color: relations.textColor } : genreContent.headerAccent,
+      headerAccent: genreContent.headerAccent,
     };
   } else if (builtInPanel) {
     activePanel = {
@@ -894,7 +895,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             onExpandedChange={activePanel?.onExpandedChange}
             aside={activePanel?.aside}
             edgeTab={detailTab}
-            headerClassName={activePanel?.titleInSearch ? undefined : "pt-[calc(var(--layout-search-h)+var(--layout-panel-inset)+0.5rem)]"}
+            headerClassName={activePanel?.titleInSearch ? undefined : "pt-search-clear"}
           >
             {activePanel?.aside && !activePanel.expanded ? (
               <>

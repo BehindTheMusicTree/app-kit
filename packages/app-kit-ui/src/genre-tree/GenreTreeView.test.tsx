@@ -1645,7 +1645,7 @@ describe("GenreTreeView", () => {
       fireEvent.change(screen.getByRole("combobox", { name: "Search" }), { target: { value: "Ja" } });
       fireEvent.mouseDown(screen.getByRole("option", { name: "Jazz" }));
       openBand("gp1");
-      fireEvent.click(screen.getByRole("button", { name: "Play" }));
+      fireEvent.click(screen.getByRole("button", { name: /^Canonical3/ }));
 
       expect(playNewTrackListFromGenrePlaylistMock).toHaveBeenCalledWith(jazz, "me");
     });
@@ -1660,7 +1660,7 @@ describe("GenreTreeView", () => {
       fireEvent.change(screen.getByRole("combobox", { name: "Search" }), { target: { value: "Ja" } });
       fireEvent.mouseDown(screen.getByRole("option", { name: "Jazz" }));
       openBand("gp1");
-      fireEvent.click(screen.getByRole("button", { name: "Play" }));
+      fireEvent.click(screen.getByRole("button", { name: /^Canonical3/ }));
 
       expect(setIsPlayingMock).toHaveBeenCalledWith(true);
       expect(playNewTrackListFromGenrePlaylistMock).not.toHaveBeenCalled();
@@ -1679,7 +1679,7 @@ describe("GenreTreeView", () => {
       fireEvent.change(screen.getByRole("combobox", { name: "Search" }), { target: { value: "Ja" } });
       fireEvent.mouseDown(screen.getByRole("option", { name: "Jazz" }));
       openBand("gp1");
-      fireEvent.click(screen.getByRole("button", { name: "Play" }));
+      fireEvent.click(screen.getByRole("button", { name: /^Canonical3/ }));
 
       await waitFor(() => expect(errorSpy).toHaveBeenCalledWith("Failed to load genre playlist tracks:", failure));
       errorSpy.mockRestore();

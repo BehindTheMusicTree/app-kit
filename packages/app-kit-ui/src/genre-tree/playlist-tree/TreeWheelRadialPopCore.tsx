@@ -109,7 +109,8 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
   };
   const { isPlaying, setIsPlaying } = usePlayer();
   const defaultPlayback = useGenrePlaylistPlayback<T>({ scope, genrePlaylists });
-  const { playingNodeId, play } = playback ?? defaultPlayback;
+  const { playing, play } = playback ?? defaultPlayback;
+  const playingNodeId = playing?.uuid ?? null;
 
   const nodes = useMemo(() => toTreeNodes(genrePlaylists, sizeMetric), [genrePlaylists, sizeMetric]);
 
