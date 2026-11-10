@@ -24,6 +24,7 @@ easy to spot when bumping.
 ### Changed
 
 - `app-kit-ui`: popups and the genre tree use the `text-body` / `text-caption` scale instead of `text-sm` / `text-xs` and the `text-[0.8125rem]` literal. The dark player and `SharePopup`'s title keep their sizes.
+- Removed the per-repo graphify `hook-guard` in `.claude/settings.json`; the global agent-config freshness hook replaces it.
 
 ## [37.1.0] - 2026-11-09
 
