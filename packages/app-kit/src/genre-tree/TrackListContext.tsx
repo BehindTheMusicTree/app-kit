@@ -62,6 +62,17 @@ function isTrackPlayable<T extends TrackBase>(
   );
 }
 
+/**
+ * The tracks request failed and the global connectivity popup (or a newer request replacing this one) already
+ * accounts for it; callers must not show a second popup.
+ */
+export class TracksFailureAlreadyReportedError extends Error {
+  constructor() {
+    super("Genre playlist tracks request failed; the failure was already reported globally");
+    this.name = "TracksFailureAlreadyReportedError";
+  }
+}
+
 export function useListTracks<T>(
   scope: Scope | null,
   getBackendBaseUrl: () => string,
@@ -223,6 +234,7 @@ export function TrackListProvider<T extends TrackBase>({
       if (scope === "me" && (selection || artistUuid)) throw new Error("Genre selections require reference scope");
       const params = { page, pageSize: TRACKS_PAGE_SIZE, ...(from && { from }), ...genreMusicQueryParams(selection), ...(artistUuid && { artist: artistUuid }) };
       const response = await (page === 1 ? fetchLatest : fetchBound)(endpoint, true, scope === "me", {}, params, false, !!from);
+      if (response === null && !from) throw new TracksFailureAlreadyReportedError();
       const parsed = parseWithLog(pageSchema, response, "fetchGenrePlaylistTracksPage");
       return {
         tracks: parsed.results.map((rel) => rel.track as T),

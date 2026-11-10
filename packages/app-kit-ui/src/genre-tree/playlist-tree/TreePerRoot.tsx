@@ -14,9 +14,6 @@ import {
 } from "@behindthemusictree/genre-tree-view";
 
 import { usePlayer } from "@behindthemusictree/app-kit/player";
-import { usePopup } from "@behindthemusictree/app-kit/popup";
-import InternalErrorPopup from "../../popup/InternalErrorPopup";
-import { ErrorCode } from "@behindthemusictree/app-kit/transport";
 
 import { TrackBase } from "@behindthemusictree/app-kit/genre-tree";
 
@@ -24,6 +21,7 @@ import { CriteriaPlaylistSimple } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaMinimum } from "@behindthemusictree/app-kit/genre-tree";
 import { Scope } from "@behindthemusictree/app-kit/transport";
 import type { HostPanelProps } from "./hostPanelProps";
+import { toTreeNodes } from "./toTreeNodes";
 import { useGenrePlaylistPlayback, type GenrePlaylistPlayback } from "./useGenrePlaylistPlayback";
 
 export type GenrePlaylistTreePerRootProps<T extends TrackBase> = {
@@ -51,6 +49,8 @@ export type GenrePlaylistTreePerRootProps<T extends TrackBase> = {
   onViewportChange?: (viewport: GenreTreeViewport) => void;
   /** What node play buttons play; defaults to each node's whole genre playlist. */
   playback?: GenrePlaylistPlayback;
+  /** The open artist's footprint; nodes outside it are drawn muted. */
+  focusUuids?: ReadonlySet<string>;
 } & HostPanelProps;
 
 export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
@@ -71,27 +71,17 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
   viewportRestore,
   onViewportChange,
   playback,
+  focusUuids,
   ...hostPanel
 }: GenrePlaylistTreePerRootProps<T>) {
   const { isPlaying, setIsPlaying } = usePlayer();
   const defaultPlayback = useGenrePlaylistPlayback<T>({ scope, genrePlaylists: genrePlaylistTreePerRoot });
   const { playing, play } = playback ?? defaultPlayback;
   const playingNodeId = playing?.uuid ?? null;
-  const { showPopup } = usePopup();
 
-  const nodes: GenreTreeNode[] = useMemo(
-    () =>
-      genrePlaylistTreePerRoot.map((genrePlaylist) => ({
-        id: genrePlaylist.uuid,
-        parentId: genrePlaylist.parent?.uuid ?? null,
-        name: genrePlaylist.name,
-        itemCount: genrePlaylistTrackCount(genrePlaylist),
-        actionable: Boolean(genrePlaylist.criteria),
-        side: genrePlaylist.criteria?.side ?? undefined,
-        wikidataId: genrePlaylist.criteria?.wikidataId ?? null,
-        umbrella: genrePlaylist.isUmbrella,
-      })),
-    [genrePlaylistTreePerRoot],
+  const nodes = useMemo(
+    () => toTreeNodes(genrePlaylistTreePerRoot, "songs", focusUuids),
+    [genrePlaylistTreePerRoot, focusUuids],
   );
 
   const handlePlayPause = useCallback(
@@ -108,10 +98,7 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
         return;
       }
 
-      play(genrePlaylist).catch((error) => {
-        console.error("Failed to load genre playlist tracks:", error);
-        showPopup(<InternalErrorPopup errorCode={ErrorCode.CLIENT_UNKNOWN} />);
-      });
+      void play(genrePlaylist);
     },
     [
       genrePlaylistTreePerRoot,
@@ -119,7 +106,6 @@ export default function GenrePlaylistTreePerRoot<T extends TrackBase>({
       isPlaying,
       setIsPlaying,
       play,
-      showPopup,
     ],
   );
 

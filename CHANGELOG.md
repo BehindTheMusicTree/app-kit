@@ -11,6 +11,29 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [40.0.0] - 2026-11-10
+
+### Breaking
+
+- With an artist open, the tree is no longer pruned to their footprint: `useVisibleGenrePlaylists` and `useGenreTreeViewState` serve the whole canonical tree carrying the artist's counts (zero outside the footprint), and return the footprint as the new `focusUuids` (`undefined` without an artist). `GenreTreeView` draws every node outside it muted. Hosts that validated URL state against `genrePlaylists` now keep a genre outside the footprint instead of dropping it.
+- `pruneGenrePlaylistsForArtist` is replaced by `projectGenrePlaylistsForArtist`, which returns `{ genrePlaylists, focusUuids }` over the whole tree. The footprint is now only the genres with the artist's songs in their subtree: the Mainstream Pop root and the scene children of Core electronic are no longer kept in it, so they are muted for an artist without songs there.
+- `GenreTreeView`'s `overlayPanel.title` must be a string: like a genre's name or the artist and song panels' titles, it now fills the search field, whose "Close panel" button closes the overlay. The overlay's header no longer shows its own title or close button.
+
+### Added
+
+- `GenrePlaylistTreeWheel`, `GenrePlaylistTreeWheelRadialPopCore` and `GenrePlaylistTreePerRoot` take `focusUuids`; `toTreeNodes` sets `muted` on every node outside it, so every view mode, the stacked view included, mutes genres outside the footprint.
+
+### Fixed
+
+- HTTP 502/503/504 responses now map to `BACKEND_UNAVAILABLE` (backend scope) or `SERVICE_INTERNAL_ERROR` instead of `CLIENT_UNKNOWN`, so the global connectivity popup shows them.
+- Playing a genre playlist whose tracks fail to load now shows the error popup with the real error code and never rejects; callers use `void play(...)`. When the global connectivity popup already reports the failure, `fetchGenrePlaylistTracksPage` and `playNewTrackListFromGenrePlaylist` reject with the new `TracksFailureAlreadyReportedError` and no second popup is shown. Previously the failure surfaced only as an unhandled "ClientError: Unknown error" with no popup.
+
+### Changed
+
+- `GenrePlaylistTreeWheel` and `GenrePlaylistTreePerRoot` build their nodes with `toTreeNodes`, so they now also pass `detached`, `umbrella` and `scene`.
+- Requires `@behindthemusictree/genre-tree-view` 9.2.0 (the `muted` node flag) and `@behindthemusictree/ui` `^0.21.2`.
+- `useGenrePlaylistPlayback` (and so `GenreTreeView`, `GenreDetailPanel`, `TreeWheel`, `TreePerRoot`, `TreeWheelRadialPopCore`) now calls `usePopup`: render them inside a `PopupProvider`.
+
 ## [39.0.0] - 2026-11-10
 
 ### Breaking

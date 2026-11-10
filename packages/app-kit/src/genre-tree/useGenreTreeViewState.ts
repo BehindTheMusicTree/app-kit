@@ -21,7 +21,7 @@ export interface UseGenreTreeViewStateOptions<O extends CriteriaOverview = Crite
   getBackendBaseUrl: () => string;
   /** Controlled view mode; when provided the hook never changes it. */
   viewMode?: GenreViewMode;
-  /** Narrows the tree to this artist's footprint (see `useVisibleGenrePlaylists`). */
+  /** Projects this artist onto the tree (see `useVisibleGenrePlaylists`). */
   artistUuid?: string | null;
   /** Entity selection is independent of the visible renderer nodes. */
   selectedGenreUuid?: GenreUuid | null;
@@ -34,9 +34,11 @@ export interface UseGenreTreeViewStateResult {
   /** The tree failed to load and nothing is cached. `genrePlaylists` is empty, which is not "no genres". */
   isError: boolean;
   refetch: () => void;
-  /** True while the visible tree is being refreshed or re-pruned; the previous tree stays in `genrePlaylists`. */
+  /** True while the visible tree is being refreshed or re-projected; the previous tree stays in `genrePlaylists`. */
   isFetching: boolean;
   genrePlaylists: CriteriaPlaylistSimple[];
+  /** The open artist's footprint; undefined without an artist. Nodes outside it are rendered muted. */
+  focusUuids: ReadonlySet<string> | undefined;
   genrePlaylistByNodeId: Map<string, CriteriaPlaylistSimple>;
   /** Playlists the current view mode may show: unaccepted roots and, outside stacked/outline, criteria-less playlists are hidden. */
   visibleGenrePlaylists: CriteriaPlaylistSimple[];
@@ -83,7 +85,7 @@ export function useGenreTreeViewState<O extends CriteriaOverview = CriteriaOverv
     [isSelectionControlled, onSelectedGenreUuidChange],
   );
 
-  const { isLoading, isError, refetch, isFetching, genrePlaylists } = useVisibleGenrePlaylists({ scope, getBackendBaseUrl, artistUuid });
+  const { isLoading, isError, refetch, isFetching, genrePlaylists, focusUuids } = useVisibleGenrePlaylists({ scope, getBackendBaseUrl, artistUuid });
 
   const genrePlaylistByNodeId = useMemo(() => new Map<string, CriteriaPlaylistSimple>(genrePlaylists.map((gp) => [gp.uuid, gp])), [genrePlaylists]);
 
@@ -167,6 +169,7 @@ export function useGenreTreeViewState<O extends CriteriaOverview = CriteriaOverv
     refetch: () => void refetch(),
     isFetching,
     genrePlaylists,
+    focusUuids,
     genrePlaylistByNodeId,
     visibleGenrePlaylists,
     groupedGenrePlaylistsByRoot,

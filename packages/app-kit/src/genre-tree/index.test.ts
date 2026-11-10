@@ -14,7 +14,7 @@ describe("genre-tree barrel", () => {
     expect(genreTree.useArtistSearch).toBeTypeOf("function");
     expect(genreTree.useArtistGenreCounts).toBeTypeOf("function");
     expect(genreTree.useVisibleGenrePlaylists).toBeTypeOf("function");
-    expect(genreTree.pruneGenrePlaylistsForArtist).toBeTypeOf("function");
+    expect(genreTree.projectGenrePlaylistsForArtist).toBeTypeOf("function");
     expect(genreTree.useListGenres).toBeTypeOf("function");
     expect(genreTree.useFetchGenre).toBeTypeOf("function");
     expect(genreTree.useListGenrePlaylists).toBeTypeOf("function");

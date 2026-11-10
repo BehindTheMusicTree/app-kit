@@ -44,7 +44,7 @@ vi.mock("./TrackListSidebarVisibilityContext", () => ({
   useTrackListSidebarVisibility: () => ({ showTrackListSidebar: showTrackListSidebarMock }),
 }));
 
-import { TrackListProvider, useTrackList, useListTracks } from "./TrackListContext";
+import { TrackListProvider, useTrackList, useListTracks, TracksFailureAlreadyReportedError } from "./TrackListContext";
 import type { TrackBase } from "./schemas/track/base";
 import { TrackListOriginType } from "./models/TrackListOriginType";
 import { makeGenrePlaylistUuid, makeGenreUuid } from "./testing";
@@ -169,6 +169,24 @@ describe("TrackListContext", () => {
       expect(result.current.trackList?.tracks).toEqual([track]);
       expect(showTrackListSidebarMock).toHaveBeenCalled();
       expect(loadTrackForPlayerMock).toHaveBeenCalledWith("t1");
+    });
+  });
+
+  it("rejects with TracksFailureAlreadyReportedError when the request resolved to null after a global error", async () => {
+    const { result } = renderHook(() => useTrackList(), { wrapper });
+    fetchMock.mockResolvedValueOnce(null);
+    await act(async () => {
+      await expect(result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me")).rejects.toBeInstanceOf(TracksFailureAlreadyReportedError);
+    });
+  });
+
+  it("keeps a schema failure distinct from an already-reported failure when starting from a song", async () => {
+    const { result } = renderHook(() => useTrackList(), { wrapper });
+    fetchMock.mockResolvedValueOnce(null);
+    await act(async () => {
+      const error = await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", { startSongUuid: "s1" }).catch((e: unknown) => e);
+      expect(error).toBeInstanceOf(Error);
+      expect(error).not.toBeInstanceOf(TracksFailureAlreadyReportedError);
     });
   });
 
