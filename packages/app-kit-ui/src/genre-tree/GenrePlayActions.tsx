@@ -1,6 +1,6 @@
 "use client";
 
-import { Map, Network, Pause, Play } from "lucide-react";
+import { Pause, Play } from "lucide-react";
 import { ActionButton } from "@behindthemusictree/ui";
 import {
   genreMusicCount,
@@ -11,24 +11,25 @@ import { usePlayer } from "@behindthemusictree/app-kit/player";
 
 import type { PlayableGenrePlaylist } from "./GenreInfoPanelBody";
 import type { GenrePlaylistPlayback } from "./playlist-tree/useGenrePlaylistPlayback";
+import { RegionGlobeIcon } from "./RegionGlobeIcon";
+import { TreeMarkIcon } from "./TreeMarkIcon";
 
 type PlayIconKind = "play" | "tree" | "map" | "tree-map";
 type PlayOption = { key: string; label: string; icon: PlayIconKind; selection?: GenreMusicSelection; count: number };
 
-/** The scope's glyphs (tree = canonical genres, map = regional genres) with the play triangle centered over them. */
+/** The play triangle is the same on every button; the scope's glyphs (tree = canonical genres, map = regional genres) stay faint behind it so it reads first. "All" joins the left half of the tree and the right half of the globe at the centre. */
 function PlayIcon({ kind }: { kind: PlayIconKind }) {
-  if (kind === "play") return <Play aria-hidden="true" className="w-5 h-5" />;
   return (
     <span aria-hidden="true" className="relative flex items-center justify-center w-5 h-5">
-      {kind === "tree-map" ? (
-        <span className="flex items-center justify-center gap-px opacity-60">
-          <Network className="w-2.5 h-2.5" />
-          <Map className="w-2.5 h-2.5" />
-        </span>
-      ) : (
-        <span className="opacity-60">{kind === "tree" ? <Network className="w-5 h-5" /> : <Map className="w-5 h-5" />}</span>
+      {kind === "tree" && <TreeMarkIcon className="absolute -left-1.5 -top-1.5 w-8 h-8 opacity-35" />}
+      {kind === "map" && <RegionGlobeIcon className="absolute -left-1.5 -top-1.5 w-8 h-8 opacity-35" />}
+      {kind === "tree-map" && (
+        <>
+          <TreeMarkIcon className="absolute -left-1.5 -top-1.5 w-8 h-8 opacity-35 [clip-path:inset(0_50%_0_0)]" />
+          <RegionGlobeIcon className="absolute -left-1.5 -top-1.5 w-8 h-8 opacity-35 [clip-path:inset(0_0_0_50%)]" />
+        </>
       )}
-      <Play className="absolute w-3 h-3 fill-current stroke-[var(--color-surface-muted)] stroke-[3]" paintOrder="stroke" />
+      <Play className="relative w-5 h-5 fill-[var(--color-surface)]" />
     </span>
   );
 }
