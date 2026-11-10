@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Breaking
+
+- `GenreTreeView`'s `overlayPanel.title` must be a string: like a genre's name or the artist and song panels' titles, it now fills the search field, whose "Close panel" button closes the overlay. The overlay's header no longer shows its own title or close button.
+
 ### Fixed
 
 - HTTP 502/503/504 responses now map to `BACKEND_UNAVAILABLE` (backend scope) or `SERVICE_INTERNAL_ERROR` instead of `CLIENT_UNKNOWN`, so the global connectivity popup shows them.

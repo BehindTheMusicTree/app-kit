@@ -273,6 +273,14 @@ describe("GenreTreeView", () => {
     expect(refetch).toHaveBeenCalledTimes(1);
   });
 
+  it("keeps a host overlayPanel's own close button while the search field is hidden by a load error", () => {
+    useListFullGenrePlaylistsMock.mockReturnValue({ data: undefined, isPending: false, isError: true, refetch: vi.fn() });
+    renderView({ overlayPanel: { title: "About", content: <p>About body</p>, onClose: vi.fn() } });
+
+    expect(screen.queryByRole("combobox", { name: "Search" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Close" })).toBeInTheDocument();
+  });
+
   it("reports the typed search text and focus to the host", () => {
     const onSearchQueryChange = vi.fn();
     const onSearchFocus = vi.fn();
@@ -2231,12 +2239,15 @@ describe("GenreTreeView", () => {
       expect(onArtistUuidChange).toHaveBeenCalledWith(null);
     });
 
-    it("leaves a host overlayPanel's header and the search field alone", () => {
+    it("shows a host overlayPanel's title in the search field and closes it from there, like the artist panel", () => {
       const overlayPanel = { title: "About", content: "x", onClose: vi.fn() };
       render(<GenreTreeView {...baseProps()} overlayPanel={overlayPanel} artistUuid={suggestion.uuid} />);
 
-      expect(screen.getByRole("button", { name: "Close" })).toBeInTheDocument();
-      expect(screen.getByRole("combobox", { name: "Search" })).toHaveValue("");
+      expect(screen.queryByRole("button", { name: "Close" })).not.toBeInTheDocument();
+      expect(screen.getByRole("combobox", { name: "Search" })).toHaveValue("About");
+
+      fireEvent.click(screen.getByRole("button", { name: "Close panel" }));
+      expect(overlayPanel.onClose).toHaveBeenCalledOnce();
     });
 
     it("drives the artist panel from the edge tab", () => {

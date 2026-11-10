@@ -163,7 +163,8 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
     /** Controlled expanded state of the genre panel. Uncontrolled when omitted. */
     expanded?: boolean;
     onExpandedChange?: (expanded: boolean) => void;
-    /** A host panel rendered in the detail panel's slot; it takes precedence over the genre, song and artist panels. */
+    /** A host panel rendered in the detail panel's slot; it takes precedence over the genre, song and artist panels.
+     * Like theirs, its title fills the search field, whose clear button closes it. */
     overlayPanel?: HostOverlayPanel;
     /** Hides the info panel behind its edge tab; uncontrolled when omitted. Only applies with `placement="regions"`. */
     collapsed?: boolean;
@@ -398,9 +399,9 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       selectGenrePlaylist(genrePlaylist);
     },
   });
-  // Like a genre, the built-in panel shows its name in the search field and closes from its clear button. A selected
-  // genre shows its own panel instead; the artist stays active as a filter.
-  const builtInPanel = overlayPanel || selectedGenreUuid !== null ? undefined : entityPanel;
+  // A host panel takes precedence over the genre's; a selected genre's panel replaces the artist's or song's, and the
+  // artist stays active as a filter.
+  const otherPanel = overlayPanel ?? (selectedGenreUuid !== null ? undefined : entityPanel);
 
   const [uncontrolledCollapsed, setUncontrolledCollapsed] = useState(false);
   const [uncontrolledExpanded, setUncontrolledExpanded] = useState(false);
@@ -538,20 +539,20 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     expanded: boolean;
     onExpandedChange?: (expanded: boolean) => void;
     onClose: () => void;
-    // A genre's or built-in panel's name lives in the search field, and the search field closes it.
-    titleInSearch: boolean;
+    // Every panel's name lives in the search field, and the search field closes it; null leaves the field empty.
+    searchName: string | null;
     headerAccent?: { background: string; color: string };
   };
   let activePanel: ActivePanel | null = null;
-  if (overlayPanel) {
+  if (otherPanel) {
     activePanel = {
-      title: overlayPanel.title,
-      content: overlayPanel.content,
-      aside: overlayPanel.extraContent,
-      expanded: overlayPanel.expanded ?? false,
-      onExpandedChange: overlayPanel.onExpandedChange,
-      onClose: overlayPanel.onClose,
-      titleInSearch: false,
+      title: otherPanel.title,
+      content: otherPanel.content,
+      aside: otherPanel.extraContent,
+      expanded: otherPanel.expanded ?? false,
+      onExpandedChange: otherPanel.onExpandedChange,
+      onClose: otherPanel.onClose,
+      searchName: otherPanel.title,
     };
   } else if (selectedGenreUuid) {
     activePanel = {
@@ -561,18 +562,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       expanded: isExpanded,
       onExpandedChange: changeExpanded,
       onClose: clearSelection,
-      titleInSearch: true,
+      searchName: genreContent.name,
       headerAccent: genreContent.headerAccent,
-    };
-  } else if (builtInPanel) {
-    activePanel = {
-      title: builtInPanel.title,
-      content: builtInPanel.content,
-      aside: builtInPanel.extraContent,
-      expanded: builtInPanel.expanded,
-      onExpandedChange: builtInPanel.onExpandedChange,
-      onClose: builtInPanel.onClose,
-      titleInSearch: true,
     };
   }
   const isPanelShown = activePanel !== null && (selectedGenreUuid !== null || isTreeReady);
@@ -650,15 +641,9 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           genrePlaylists={visibleGenrePlaylists}
           onSelect={handleGenreSearchSelect}
           onSelectGenre={(uuid) => { reopenPanel(); if (songUuid) changeSong(null); selectGenre(uuid); }}
-          selectedName={
-            selectedGenreUuid
-              ? genreContent.name
-              : typeof builtInPanel?.title === "string"
-                ? builtInPanel.title
-                : null
-          }
+          selectedName={activePanel?.searchName ?? null}
           onClear={activePanel?.onClose}
-          showClear={activePanel?.titleInSearch ?? false}
+          showClear={activePanel !== null}
           clearLabel="Close panel"
           onPrevious={handlePrevious}
           onQueryChange={onSearchQueryChange}
@@ -886,7 +871,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             ref={panelRef}
             side="left"
             title={activePanel?.title ?? ""}
-            titleInSearch={activePanel?.titleInSearch}
+            titleInSearch={!isLoading && !isError}
             headerAccent={activePanel?.headerAccent}
             headerActions={expandButton}
             onClose={activePanel?.onClose ?? noop}
@@ -895,7 +880,6 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             onExpandedChange={activePanel?.onExpandedChange}
             aside={activePanel?.aside}
             edgeTab={detailTab}
-            headerClassName={activePanel?.titleInSearch ? undefined : "pt-search-clear"}
           >
             {activePanel?.aside && !activePanel.expanded ? (
               <>
