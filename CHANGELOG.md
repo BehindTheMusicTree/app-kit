@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [38.0.0] - 2026-11-10
+
 ### Fixed
 
 - `GenreTreeView` (`regions` placement): on desktop the search field and artist filter sit at the panel inset from the top and left edge, so the search is centered in the detail panel's header band.
