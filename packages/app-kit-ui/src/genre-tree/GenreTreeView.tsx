@@ -859,9 +859,10 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
                           handleGenreRenameAction={handleGenreRenameAction}
                           additionalActions={additionalActions}
                           onSelectedNodeChange={handleSelectedNodeChange}
-                                                                              onNodeHover={handleNodeHover}
+                          onNodeHover={handleNodeHover}
                           {...hostPanel}
                           playback={playback}
+                          focusUuids={focusUuids}
                           // Each root has its own panel; null closes the one not holding the selection.
                           selectedNodeId={
                             uuid === selectedGenrePlaylist?.root.uuid ? selectedNodeId : null

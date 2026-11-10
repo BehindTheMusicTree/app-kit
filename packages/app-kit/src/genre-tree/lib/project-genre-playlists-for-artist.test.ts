@@ -43,22 +43,37 @@ describe("projectGenrePlaylistsForArtist", () => {
     expect(focus([count("pop", 2), count("rock", 2), count("punk", 2)])).toEqual(["pop", "rock", "punk"]);
   });
 
-  it("always focuses the Mainstream Pop root, with zero counts when the artist has none there", () => {
-    const { genrePlaylists, focusUuids } = projectGenrePlaylistsForArtist(all, [count("jazz", 1)]);
-
-    expect(genrePlaylists.find((p) => p.uuid === "pop")?.tracksCount).toBe(0);
-    expect([...focusUuids]).toEqual(["pop", "jazz"]);
+  it("mutes the Mainstream Pop root and Core electronic scenes outside the footprint", () => {
+    expect(focus([count("jazz", 1)])).toEqual(["jazz"]);
+    expect(focus([count("core", 1), count("com", 1), count("house", 1)])).toEqual(["core", "com", "house"]);
   });
 
-  it("focuses both scene children of a focused Core electronic", () => {
-    const { genrePlaylists, focusUuids } = projectGenrePlaylistsForArtist(all, [count("core", 1), count("com", 1), count("house", 1)]);
-
-    expect([...focusUuids].sort()).toEqual(["com", "core", "house", "pop", "und"]);
-    expect(genrePlaylists.find((p) => p.uuid === "und")?.tracksCount).toBe(0);
+  it("ignores count rows without songs in their subtree", () => {
+    expect(focus([count("rock", 0, 0), count("jazz", 1)])).toEqual(["jazz"]);
   });
 
-  it("leaves Core electronic and its scenes out of focus when the artist has no songs there", () => {
-    expect(focus([count("rock", 1)])).toEqual(["pop", "rock"]);
+  it("gives an artist without genres an empty footprint", () => {
+    expect(focus([])).toEqual([]);
+  });
+
+  it("gives a playlist without a count row zero counts in its own scope shape", () => {
+    const unscoped = {
+      ...make("und", "Underground", "core"),
+      genreAndSubgenresTracksCount: { all: 4 },
+      catalogue: { genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { all: 4 } },
+    } as unknown as CriteriaPlaylistSimple;
+    const { genrePlaylists } = projectGenrePlaylistsForArtist([rock, unscoped], []);
+
+    expect(genrePlaylists.map((p) => [p.genreAndSubgenresTracksCount, p.catalogue, p.viewsCount])).toEqual([
+      [{ canonical: 0, regional: 0, all: 0 }, { genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: 0, regional: 0, all: 0 } }, undefined],
+      [{ all: 0 }, { genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { all: 0 } }, undefined],
+    ]);
+  });
+
+  it("fails fast on a playlist without a reference genre summary", () => {
+    const bare = { ...make("bare", "Bare"), genreAndSubgenresTracksCount: undefined } as unknown as CriteriaPlaylistSimple;
+
+    expect(() => projectGenrePlaylistsForArtist([bare], [])).toThrow(/genre playlist bare/);
   });
 
   it("gives out-of-focus playlists zero counts", () => {

@@ -20,7 +20,8 @@ import { CriteriaMinimum } from "@behindthemusictree/app-kit/genre-tree";
 import { Scope } from "@behindthemusictree/app-kit/transport";
 import type { HostPanelProps } from "./hostPanelProps";
 import { useGenrePlaylistPlayback, type GenrePlaylistPlayback } from "./useGenrePlaylistPlayback";
-import { genrePlaylistSize, type GenreTreeSizeMetric } from "./size-metric";
+import type { GenreTreeSizeMetric } from "./size-metric";
+import { toTreeNodes } from "./toTreeNodes";
 
 export type GenrePlaylistTreeWheelProps<T extends TrackBase> = {
   scope: Scope;
@@ -86,18 +87,8 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
   const { playing, play } = playback ?? defaultPlayback;
   const playingNodeId = playing?.uuid ?? null;
 
-  const nodes: GenreTreeNode[] = useMemo(
-    () =>
-      genrePlaylists.map((genrePlaylist) => ({
-        id: genrePlaylist.uuid,
-        parentId: genrePlaylist.parent?.uuid ?? null,
-        name: genrePlaylist.name,
-        itemCount: genrePlaylistSize(genrePlaylist, sizeMetric),
-        actionable: Boolean(genrePlaylist.criteria),
-        side: genrePlaylist.criteria?.side ?? undefined,
-        wikidataId: genrePlaylist.criteria?.wikidataId ?? null,
-        muted: focusUuids ? !focusUuids.has(genrePlaylist.uuid) : undefined,
-      })),
+  const nodes = useMemo(
+    () => toTreeNodes(genrePlaylists, sizeMetric, focusUuids),
     [genrePlaylists, sizeMetric, focusUuids],
   );
 

@@ -14,11 +14,11 @@ easy to spot when bumping.
 ### Breaking
 
 - With an artist open, the tree is no longer pruned to their footprint: `useVisibleGenrePlaylists` and `useGenreTreeViewState` serve the whole canonical tree carrying the artist's counts (zero outside the footprint), and return the footprint as the new `focusUuids` (`undefined` without an artist). `GenreTreeView` draws every node outside it muted. Hosts that validated URL state against `genrePlaylists` now keep a genre outside the footprint instead of dropping it.
-- `pruneGenrePlaylistsForArtist` is replaced by `projectGenrePlaylistsForArtist`, which returns `{ genrePlaylists, focusUuids }` over the whole tree.
+- `pruneGenrePlaylistsForArtist` is replaced by `projectGenrePlaylistsForArtist`, which returns `{ genrePlaylists, focusUuids }` over the whole tree. The footprint is now only the genres with the artist's songs in their subtree: the Mainstream Pop root and the scene children of Core electronic are no longer kept in it, so they are muted for an artist without songs there.
 
 ### Added
 
-- `GenrePlaylistTreeWheel` and `GenrePlaylistTreeWheelRadialPopCore` take `focusUuids`; `toTreeNodes` sets `muted` on every node outside it.
+- `GenrePlaylistTreeWheel`, `GenrePlaylistTreeWheelRadialPopCore` and `GenrePlaylistTreePerRoot` take `focusUuids`; `toTreeNodes` sets `muted` on every node outside it, so every view mode, the stacked view included, mutes genres outside the footprint.
 
 ### Fixed
 
@@ -27,6 +27,7 @@ easy to spot when bumping.
 
 ### Changed
 
+- `GenrePlaylistTreeWheel` and `GenrePlaylistTreePerRoot` build their nodes with `toTreeNodes`, so they now also pass `detached`, `umbrella` and `scene`.
 - Requires `@behindthemusictree/genre-tree-view` 9.2.0 (the `muted` node flag) and `@behindthemusictree/ui` `^0.21.2`.
 - `useGenrePlaylistPlayback` (and so `GenreTreeView`, `GenreDetailPanel`, `TreeWheel`, `TreePerRoot`, `TreeWheelRadialPopCore`) now calls `usePopup`: render them inside a `PopupProvider`.
 

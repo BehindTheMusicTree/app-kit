@@ -3,9 +3,6 @@ import { genreMusicCount } from "./genre-music-selection";
 import type { ArtistGenreCount } from "../schemas/artist-genre-count";
 import type { CriteriaPlaylistSimple } from "../schemas/criteria-playlist/simple";
 
-const POP_ROOT_NAME = "Mainstream Pop";
-const CORE_ELECTRONIC_NAME = "Core electronic";
-
 export interface ArtistGenreProjection {
   /** Every canonical playlist, carrying the artist's counts (zero outside the footprint). */
   genrePlaylists: CriteriaPlaylistSimple[];
@@ -13,45 +10,48 @@ export interface ArtistGenreProjection {
   focusUuids: ReadonlySet<string>;
 }
 
+const ZERO_SCOPED = { genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: 0, regional: 0, all: 0 } };
+const ZERO_ALL = { genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { all: 0 } };
+const ZERO_SCOPED_CATALOGUE = GenreCatalogueCountsSchema.parse(ZERO_SCOPED);
+const ZERO_ALL_CATALOGUE = GenreCatalogueCountsSchema.parse(ZERO_ALL);
+
 /**
  * Projects an artist onto the canonical tree. No node is dropped: every playlist carries the
  * artist's counts (zero outside the footprint). The footprint is the nodes with songs in their
- * subtree (which includes every ancestor of such a node), plus two structural exceptions that
- * have zero counts: the "Mainstream Pop" root (pop-core needs it) and the scene children of a
- * footprint "Core electronic" (the scene stack needs one commercial and one underground child).
+ * subtree, which includes every ancestor of such a node; an artist without genres has an empty
+ * footprint. Since nothing is pruned, no structural node needs to be kept in focus.
  */
 export const projectGenrePlaylistsForArtist = (
   playlists: CriteriaPlaylistSimple[],
   counts: ArtistGenreCount[],
 ): ArtistGenreProjection => {
   const countByPlaylist = new Map(counts.map((count) => [count.genrePlaylist as string, count]));
-  const kept = new Set<string>();
-  for (const playlist of playlists) {
-    const isPopRoot = playlist.parent === null && playlist.name === POP_ROOT_NAME;
-    if (isPopRoot || (countByPlaylist.get(playlist.uuid)?.catalogue.genreAndSubgenresTracksCount.all ?? 0) > 0) kept.add(playlist.uuid);
-  }
-  const coreElectronicUuids = new Set(
-    playlists.filter((playlist) => playlist.name === CORE_ELECTRONIC_NAME && kept.has(playlist.uuid)).map((p) => p.uuid),
+  const focusUuids = new Set(
+    counts.filter((count) => count.catalogue.genreAndSubgenresTracksCount.all > 0).map((count) => count.genrePlaylist as string),
   );
-  for (const playlist of playlists) {
-    if (playlist.parent && coreElectronicUuids.has(playlist.parent.uuid)) kept.add(playlist.uuid);
-  }
-  const genrePlaylists = playlists
-    .map((playlist) => {
-      const count = countByPlaylist.get(playlist.uuid);
-      const catalogue = GenreCatalogueCountsSchema.parse(playlist.catalogue);
-      const scopes = playlist.genreAndSubgenresTracksCount;
-      if (!scopes) throw new Error("Artist projections require a reference genre summary");
-      const zero = { genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: "canonical" in scopes ? { canonical: 0, regional: 0, all: 0 } : { all: 0 } };
+  const genrePlaylists = playlists.map((playlist) => {
+    const count = countByPlaylist.get(playlist.uuid);
+    if (count) {
       return {
         ...playlist,
-        genreOnlyTracksCount: count?.genreOnlyTracksCount ?? 0,
-        genreAndSubgenresTracksCount: count?.genreAndSubgenresTracksCount ?? zero.genreAndSubgenresTracksCount,
-        catalogue: count?.catalogue ?? { ...catalogue, ...zero },
-        tracksCount: count ? genreMusicCount(count) : 0,
+        genreOnlyTracksCount: count.genreOnlyTracksCount,
+        genreAndSubgenresTracksCount: count.genreAndSubgenresTracksCount,
+        catalogue: count.catalogue,
+        tracksCount: genreMusicCount(count),
         // Artist view totals are not served.
         viewsCount: undefined,
       };
-    });
-  return { genrePlaylists, focusUuids: kept };
+    }
+    const scopes = playlist.genreAndSubgenresTracksCount;
+    if (!scopes) throw new Error(`Artist projections require a reference genre summary (genre playlist ${playlist.uuid})`);
+    const isScoped = "canonical" in scopes;
+    return {
+      ...playlist,
+      ...(isScoped ? ZERO_SCOPED : ZERO_ALL),
+      catalogue: isScoped ? ZERO_SCOPED_CATALOGUE : ZERO_ALL_CATALOGUE,
+      tracksCount: 0,
+      viewsCount: undefined,
+    };
+  });
+  return { genrePlaylists, focusUuids };
 };
