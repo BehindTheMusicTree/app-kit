@@ -166,6 +166,13 @@ export async function createAppErrorFromResult(result: Response, backendBaseUrl?
     } else {
       return createAppErrorFromErrorCode(ErrorCode.SERVICE_INTERNAL_ERROR);
     }
+  } else if (result.status === 502 || result.status === 503 || result.status === 504) {
+    // Gateway and overload statuses (incl. the API's 503 query_timeout) mean the backend could not answer, not that the client misbehaved.
+    if (isBackendError) {
+      return createAppErrorFromErrorCode(ErrorCode.BACKEND_UNAVAILABLE);
+    } else {
+      return createAppErrorFromErrorCode(ErrorCode.SERVICE_INTERNAL_ERROR);
+    }
   }
   return createAppErrorFromErrorCode(ErrorCode.CLIENT_UNKNOWN);
 }

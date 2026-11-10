@@ -1,6 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { render } from "../../test-utils";
 
+vi.mock("@behindthemusictree/app-kit/popup", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  usePopup: () => ({ showPopup: vi.fn(), hidePopup: vi.fn() }),
+}));
+
 vi.mock("@behindthemusictree/app-kit/genre-tree", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useTrackList: () => ({ trackList: null, playNewTrackListFromGenrePlaylist: vi.fn() }),

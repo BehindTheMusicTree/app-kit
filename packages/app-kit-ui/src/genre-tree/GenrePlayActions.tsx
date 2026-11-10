@@ -77,9 +77,7 @@ export default function GenrePlayActions({ genrePlaylist, playback }: GenrePlayA
                 setIsPlaying(!isPlaying);
                 return;
               }
-              playback.play(genrePlaylist, option.selection).catch((error) => {
-                console.error("Failed to load genre playlist tracks:", error);
-              });
+              void playback.play(genrePlaylist, option.selection);
             }}
           />
         );

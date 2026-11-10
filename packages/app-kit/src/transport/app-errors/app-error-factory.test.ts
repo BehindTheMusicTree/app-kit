@@ -242,6 +242,19 @@ describe("createAppErrorFromResult", () => {
     });
   });
 
+  describe.each([502, 503, 504])("status %i", (status) => {
+    it("backend: returns BACKEND_UNAVAILABLE", async () => {
+      const err = await createAppErrorFromResult(makeResponse(status, `${backendBaseUrl}/foo`), backendBaseUrl);
+      expect(err.code).toBe(ErrorCode.BACKEND_UNAVAILABLE);
+      expect(err).toBeInstanceOf(BackendError);
+    });
+
+    it("non-backend: returns SERVICE_INTERNAL_ERROR", async () => {
+      const err = await createAppErrorFromResult(makeResponse(status, "https://other.example.com/foo"), backendBaseUrl);
+      expect(err.code).toBe(ErrorCode.SERVICE_INTERNAL_ERROR);
+    });
+  });
+
   it("returns CLIENT_UNKNOWN for an unhandled status code", async () => {
     const res = makeResponse(418, `${backendBaseUrl}/foo`);
     const err = await createAppErrorFromResult(res, backendBaseUrl);

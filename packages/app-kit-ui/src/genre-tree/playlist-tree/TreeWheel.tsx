@@ -12,9 +12,6 @@ import {
 } from "@behindthemusictree/genre-tree-view";
 
 import { usePlayer } from "@behindthemusictree/app-kit/player";
-import { usePopup } from "@behindthemusictree/app-kit/popup";
-import InternalErrorPopup from "../../popup/InternalErrorPopup";
-import { ErrorCode } from "@behindthemusictree/app-kit/transport";
 
 import { TrackBase } from "@behindthemusictree/app-kit/genre-tree";
 
@@ -85,7 +82,6 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
   const defaultPlayback = useGenrePlaylistPlayback<T>({ scope, genrePlaylists });
   const { playing, play } = playback ?? defaultPlayback;
   const playingNodeId = playing?.uuid ?? null;
-  const { showPopup } = usePopup();
 
   const nodes: GenreTreeNode[] = useMemo(
     () =>
@@ -115,10 +111,7 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
         return;
       }
 
-      play(genrePlaylist).catch((error) => {
-        console.error("Failed to load genre playlist tracks:", error);
-        showPopup(<InternalErrorPopup errorCode={ErrorCode.CLIENT_UNKNOWN} />);
-      });
+      void play(genrePlaylist);
     },
     [
       genrePlaylists,
@@ -126,7 +119,6 @@ export default function GenrePlaylistTreeWheel<T extends TrackBase>({
       isPlaying,
       setIsPlaying,
       play,
-      showPopup,
     ],
   );
 
