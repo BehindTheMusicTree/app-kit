@@ -42,18 +42,18 @@ describe("GenrePlayActions", () => {
     render(<GenrePlayActions genrePlaylist={canonical} playback={makePlayback()} />);
 
     expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual([
-      "Direct1",
+      "Genre1",
       "Canonical6",
-      "Canonical + regional10",
       "Regional4",
+      "All10",
     ]);
   });
 
-  it("offers Direct and All for a regional genre and disables an empty scope", () => {
+  it("offers Genre and All for a regional genre and disables an empty scope", () => {
     render(<GenrePlayActions genrePlaylist={regional} playback={makePlayback()} />);
 
     expect(screen.getAllByRole("button")).toHaveLength(2);
-    expect(screen.getByRole("button", { name: /Direct/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Genre/ })).toBeDisabled();
     expect(screen.getByRole("button", { name: /All/ })).toBeEnabled();
   });
 

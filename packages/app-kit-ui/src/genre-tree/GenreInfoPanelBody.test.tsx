@@ -39,12 +39,12 @@ describe("GenreInfoPanelBody music populations", () => {
   it("offers a Play button per scope with its playable count, in order", () => {
     renderPanel(139);
     const names = screen.getAllByRole("button").map((button) => button.textContent);
-    expect(names).toEqual(["Direct0", "Canonical139", "Canonical + regional139", "Regional0"]);
+    expect(names).toEqual(["Genre0", "Canonical139", "Regional0", "All139"]);
   });
 
   it("plays the clicked scope", () => {
     const { play, playlist } = renderPanel(139);
-    fireEvent.click(screen.getByRole("button", { name: /^Canonical \+ regional/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^All/ }));
     expect(play).toHaveBeenCalledWith(playlist, { coverage: "genreAndSubgenres", subgenres: "all" });
     fireEvent.click(screen.getByRole("button", { name: /^Canonical139/ }));
     expect(play).toHaveBeenLastCalledWith(playlist, { coverage: "genreAndSubgenres", subgenres: "canonical" });
@@ -52,7 +52,7 @@ describe("GenreInfoPanelBody music populations", () => {
 
   it("keeps an empty scope visible but disabled", () => {
     renderPanel(139);
-    expect(screen.getByRole("button", { name: /^Direct/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^Genre/ })).toBeDisabled();
     expect(screen.getByRole("button", { name: /^Regional/ })).toBeDisabled();
     expect(screen.getByRole("button", { name: /^Canonical139/ })).toBeEnabled();
   });
