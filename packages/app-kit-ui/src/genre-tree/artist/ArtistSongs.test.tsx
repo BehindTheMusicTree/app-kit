@@ -68,7 +68,7 @@ describe("ArtistSongs", () => {
     expect(await screen.findByRole("button", { name: "2. Song 2" })).toBeInTheDocument();
   });
 
-  it("plays the artist's full list in the current ordering, from the start or the clicked track", async () => {
+  it("plays the artist's full list in the current ordering from the clicked track, with no list-level Play all", async () => {
     fetchMock.mockResolvedValue({
       results: [song("r1", "No Video", null), song("r2", "Good")],
       page: 1,
@@ -77,11 +77,8 @@ describe("ArtistSongs", () => {
     });
     renderTracks();
 
-    fireEvent.click(await screen.findByRole("button", { name: "Play all" }));
-    expect(playNewTrackListMock).toHaveBeenLastCalledWith(ARTIST, "reference", {
-      ordering: "title",
-      startSongUuid: undefined,
-    });
+    await screen.findByRole("button", { name: "2. Good" });
+    expect(screen.queryByRole("button", { name: "Play all" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Year" }));
     fireEvent.click(await screen.findByRole("button", { name: "2. Good" }));
