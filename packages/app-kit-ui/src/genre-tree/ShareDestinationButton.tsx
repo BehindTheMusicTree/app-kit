@@ -12,7 +12,7 @@ export type ShareDestinationButtonProps = {
 };
 
 const className =
-  "group flex min-w-0 flex-1 flex-col items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-xs text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] disabled:cursor-not-allowed disabled:opacity-50";
+  "group flex min-w-0 flex-1 flex-col items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-caption text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] disabled:cursor-not-allowed disabled:opacity-50";
 
 function Contents({ icon, label }: Pick<ShareDestinationButtonProps, "icon" | "label">) {
   return (

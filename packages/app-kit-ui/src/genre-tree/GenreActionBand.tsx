@@ -116,7 +116,7 @@ export default function GenreActionBand({
         disabled={item.disabled}
         title={item.title}
         onClick={item.onClick}
-        className="group flex flex-col items-center gap-1 w-16 text-xs text-center text-[var(--color-text)] focus-visible:outline-none disabled:opacity-50"
+        className="group flex flex-col items-center gap-1 w-16 text-caption text-center text-[var(--color-text)] focus-visible:outline-none disabled:opacity-50"
       >
         <span className="flex items-center justify-center w-10 h-10 rounded-full group-focus-visible:ring-2 group-focus-visible:ring-[var(--color-focus-ring)] bg-[var(--color-surface-muted)] transition-colors group-hover:bg-[var(--color-border)] group-disabled:group-hover:bg-[var(--color-surface-muted)]">
           {item.icon}
@@ -138,7 +138,7 @@ export default function GenreActionBand({
           aria-label="Admin actions"
           className={`px-3.5 py-3 ${items.length > 0 ? "border-t border-[var(--color-border)]" : ""}`}
         >
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Admin</h3>
+          <h3 className="mb-2 text-caption font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Admin</h3>
           <div className="flex flex-wrap gap-1">{renderItems(adminItems)}</div>
         </section>
       )}

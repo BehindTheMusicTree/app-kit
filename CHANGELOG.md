@@ -11,6 +11,14 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Breaking
+
+- Requires `@behindthemusictree/ui` 0.20.0 or later and `@behindthemusictree/brand` 12.11.0 or later (the `text-body` and `text-caption` typographic scale).
+
+### Changed
+
+- `app-kit-ui`: popups and the genre tree use the `text-body` / `text-caption` scale instead of `text-sm` / `text-xs` and the `text-[0.8125rem]` literal. The dark player and `SharePopup`'s title keep their sizes.
+
 ## [37.1.0] - 2026-11-09
 
 ### Added

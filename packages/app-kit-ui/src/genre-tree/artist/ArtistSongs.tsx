@@ -80,12 +80,12 @@ export default function ArtistSongs({ artist, getBackendBaseUrl, renderArtistLin
             <button
               type="button"
               onClick={() => void play()}
-              className="flex w-fit items-center gap-1.5 px-3 py-1 text-xs font-medium bg-gray-900 text-white rounded-full hover:bg-gray-700"
+              className="flex w-fit items-center gap-1.5 px-3 py-1 text-caption font-medium bg-gray-900 text-white rounded-full hover:bg-gray-700"
             >
               <Play className="h-3.5 w-3.5" aria-hidden="true" />
               Play all
             </button>
-            <div role="group" aria-label="Sort songs by" className="flex gap-1 text-xs">
+            <div role="group" aria-label="Sort songs by" className="flex gap-1 text-caption">
               {SORTS.map((sort) => (
                 <button
                   key={sort.ordering}

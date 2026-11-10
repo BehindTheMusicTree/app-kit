@@ -159,7 +159,7 @@ export default function TrackListSidebar<T extends TrackBase>({
               <div className="name max-w-full truncate">{trackList.origin.label}</div>
             </div>
           </div>
-          <div className="info flex items-center text-sm text-[var(--color-text-muted)]">
+          <div className="info flex items-center text-body text-[var(--color-text-muted)]">
             {trackList.origin.type === TrackListOriginType.GENRE_PLAYLIST
               ? "Genre • "
               : trackList.origin.type === TrackListOriginType.ARTIST

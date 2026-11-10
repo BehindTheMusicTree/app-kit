@@ -24,7 +24,7 @@ export function useSongSearchGroup(
       content: (
         <span className={isSongSearchResultPlayable(song) ? undefined : "opacity-60"}>
           <span className="block truncate font-medium">{song.title}</span>
-          <span className="block truncate text-xs text-[var(--color-neutral-500)]">
+          <span className="block truncate text-caption text-[var(--color-neutral-500)]">
             {[song.artists.map((artist) => artist.name).join(", "), song.genre?.name ?? "No genre"].filter(Boolean).join(" · ")}
           </span>
         </span>

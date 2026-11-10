@@ -21,7 +21,7 @@ export default function ShareActionButton({ target, url }: ShareActionButtonProp
     <button
       type="button"
       onClick={openSharePopup}
-      className="group flex flex-col items-center gap-1 w-16 text-xs text-center text-[var(--color-text)] focus-visible:outline-none"
+      className="group flex flex-col items-center gap-1 w-16 text-caption text-center text-[var(--color-text)] focus-visible:outline-none"
       aria-label={`Share ${target.name}`}
       title={`Share ${target.name}`}
     >

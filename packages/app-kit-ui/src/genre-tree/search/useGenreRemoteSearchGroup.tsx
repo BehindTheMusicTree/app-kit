@@ -35,9 +35,9 @@ export function useGenreRemoteSearchGroup(
         <>
           <span className="block truncate font-medium">
             {genre.name}
-            {genre.isUmbrella && <span className="ml-2 text-xs font-normal italic text-[var(--color-text-muted)]">umbrella</span>}
+            {genre.isUmbrella && <span className="ml-2 text-caption font-normal italic text-[var(--color-text-muted)]">umbrella</span>}
           </span>
-          <span className="block truncate text-xs text-[var(--color-neutral-500)]">
+          <span className="block truncate text-caption text-[var(--color-neutral-500)]">
             {describe?.(genre) ?? `${genre.treeName} · ${genre.root.name}`}
           </span>
         </>
