@@ -871,7 +871,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             ref={panelRef}
             side="left"
             title={activePanel?.title ?? ""}
-            titleInSearch
+            titleInSearch={!isLoading && !isError}
             headerAccent={activePanel?.headerAccent}
             headerActions={expandButton}
             onClose={activePanel?.onClose ?? noop}

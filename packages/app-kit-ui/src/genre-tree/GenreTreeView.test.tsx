@@ -273,6 +273,14 @@ describe("GenreTreeView", () => {
     expect(refetch).toHaveBeenCalledTimes(1);
   });
 
+  it("keeps a host overlayPanel's own close button while the search field is hidden by a load error", () => {
+    useListFullGenrePlaylistsMock.mockReturnValue({ data: undefined, isPending: false, isError: true, refetch: vi.fn() });
+    renderView({ overlayPanel: { title: "About", content: <p>About body</p>, onClose: vi.fn() } });
+
+    expect(screen.queryByRole("combobox", { name: "Search" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Close" })).toBeInTheDocument();
+  });
+
   it("reports the typed search text and focus to the host", () => {
     const onSearchQueryChange = vi.fn();
     const onSearchFocus = vi.fn();
