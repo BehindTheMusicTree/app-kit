@@ -53,6 +53,7 @@ export const ArtistDetailedSchema = z.object({
     }),
   ),
   tracksCount: z.number().int(),
+  playableTracksCount: z.number().int(),
   image: ArtistImageSchema.nullable(),
 });
 

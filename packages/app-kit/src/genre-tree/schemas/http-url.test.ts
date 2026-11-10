@@ -40,6 +40,7 @@ describe("ArtistDetailedSchema URLs", () => {
     memberOf: [],
     albums: [],
     tracksCount: 0,
+    playableTracksCount: 0,
     image: {
       url: "https://upload.wikimedia.org/a.jpg",
       pageUrl: "https://commons.wikimedia.org/wiki/File:a.jpg",

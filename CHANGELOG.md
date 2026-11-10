@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- `ArtistDetailedSchema` carries `playableTracksCount` (songs with a genre and a playable video), served by grow-api, so the artist panel can enable or disable Play without loading the tracklist.
+
 ## [38.0.0] - 2026-11-10
 
 ### Fixed

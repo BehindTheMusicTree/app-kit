@@ -17,6 +17,7 @@ const EMPTY: ArtistDetailed = {
   memberOf: [],
   albums: [],
   tracksCount: 0,
+  playableTracksCount: 0,
   image: null,
 };
 
