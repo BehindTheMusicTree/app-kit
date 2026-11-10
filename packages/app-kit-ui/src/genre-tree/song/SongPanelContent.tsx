@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { Pause, Play } from "lucide-react";
-import { ActionBand, ActionButton, FieldList, PanelBleed, PanelSection, Skeleton } from "@behindthemusictree/ui";
+import { ActionBand, ActionButton, FieldList, PANEL_LABEL_CLASS, PanelBleed, PanelSection, Skeleton } from "@behindthemusictree/ui";
 import { PlayStates, usePlayer } from "@behindthemusictree/app-kit/player";
 import {
   ArtistNames,
@@ -77,7 +77,7 @@ function SongHistory({ uuid, getBackendBaseUrl }: { uuid: string; getBackendBase
   return (
     <PanelBleed padded className="border-t border-[var(--color-border)]">
       <details onToggle={(event) => setOpen(event.currentTarget.open)} className="pb-2.5">
-        <summary className="mt-2.5 cursor-pointer text-[0.6875rem] font-semibold uppercase text-[var(--color-text-muted)]">
+        <summary className={`mt-2.5 cursor-pointer ${PANEL_LABEL_CLASS}`}>
           History
         </summary>
         <div className="mt-1.5">{body}</div>
