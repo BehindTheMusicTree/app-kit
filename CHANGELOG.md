@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [40.0.0] - 2026-11-10
+
 ### Breaking
 
 - With an artist open, the tree is no longer pruned to their footprint: `useVisibleGenrePlaylists` and `useGenreTreeViewState` serve the whole canonical tree carrying the artist's counts (zero outside the footprint), and return the footprint as the new `focusUuids` (`undefined` without an artist). `GenreTreeView` draws every node outside it muted. Hosts that validated URL state against `genrePlaylists` now keep a genre outside the footprint instead of dropping it.
