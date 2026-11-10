@@ -11,7 +11,7 @@ function ExternalLink({ href, children }: { href: string; children: ReactNode })
 
 export default function ArtistPhoto({ image, name }: { image: ArtistImage; name: string }) {
   return (
-    <figure className="flex flex-col gap-1.5 px-6 py-2.5">
+    <figure className="flex flex-col gap-1.5">
       <img src={image.url} alt={name} className="h-64 w-full object-contain bg-[var(--color-surface-muted)] rounded" />
       <figcaption className="text-caption text-[var(--color-text-muted)]">
         Photo: <ExternalLink href={image.pageUrl}>{image.author ?? "Wikimedia Commons"}</ExternalLink>,{" "}

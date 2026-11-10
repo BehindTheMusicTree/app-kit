@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { ArrowLeftRight, MoveUpRight, Pencil, Plus, ZoomIn } from "lucide-react";
-import { ActionBand, ActionButton } from "@behindthemusictree/ui";
+import { ActionBand, ActionButton, PanelBleed } from "@behindthemusictree/ui";
 import type {
   GenreTreeAction,
   GenreTreeNode,
@@ -98,7 +98,10 @@ export default function GenreActionBand({
       <ActionButton key={item.key} icon={item.icon} label={item.label} disabled={item.disabled} title={item.title} onClick={item.onClick} />
     ));
 
+  if (!playActions && items.length === 0 && adminItems.length === 0 && !(shareTarget && shareUrl)) return null;
+
   return (
+    <PanelBleed>
     <ActionBand
       className="genre-action-band"
       section={{ title: "Admin", label: "Admin actions", children: renderItems(adminItems) }}
@@ -107,5 +110,6 @@ export default function GenreActionBand({
       {renderItems(items)}
       {shareTarget && shareUrl && <ShareActionButton target={shareTarget} url={shareUrl} />}
     </ActionBand>
+    </PanelBleed>
   );
 }

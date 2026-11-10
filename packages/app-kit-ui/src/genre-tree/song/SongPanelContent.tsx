@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { Pause, Play } from "lucide-react";
-import { ActionBand, ActionButton, FieldList, PanelSection, Skeleton } from "@behindthemusictree/ui";
+import { ActionBand, ActionButton, FieldList, PanelBleed, PanelSection, Skeleton } from "@behindthemusictree/ui";
 import { PlayStates, usePlayer } from "@behindthemusictree/app-kit/player";
 import {
   ArtistNames,
@@ -75,15 +75,14 @@ function SongHistory({ uuid, getBackendBaseUrl }: { uuid: string; getBackendBase
       );
 
   return (
-    <details
-      onToggle={(event) => setOpen(event.currentTarget.open)}
-      className="px-6 pb-2.5 mt-2.5 border-t border-[var(--color-border)]"
-    >
-      <summary className="mt-2.5 cursor-pointer text-[0.6875rem] font-semibold uppercase text-[var(--color-text-muted)]">
-        History
-      </summary>
-      <div className="mt-1.5">{body}</div>
-    </details>
+    <PanelBleed padded className="border-t border-[var(--color-border)]">
+      <details onToggle={(event) => setOpen(event.currentTarget.open)} className="pb-2.5">
+        <summary className="mt-2.5 cursor-pointer text-[0.6875rem] font-semibold uppercase text-[var(--color-text-muted)]">
+          History
+        </summary>
+        <div className="mt-1.5">{body}</div>
+      </details>
+    </PanelBleed>
   );
 }
 
@@ -158,6 +157,7 @@ export default function SongPanelContent(props: SongPanelContentProps) {
 
   return (
     <>
+      <PanelBleed>
       <ActionBand>
         <ActionButton
           icon={isPlaying ? <Pause aria-hidden="true" className="w-5 h-5" /> : <Play aria-hidden="true" className="w-5 h-5" />}
@@ -168,8 +168,9 @@ export default function SongPanelContent(props: SongPanelContentProps) {
         />
         {shareUrl && <ShareActionButton target={shareTarget} url={shareUrl} />}
       </ActionBand>
+      </PanelBleed>
       {song.artists && song.artists.length > 0 && (
-        <p className="px-6 pt-2.5 text-[var(--color-text-muted)]">
+        <p className="text-[var(--color-text-muted)]">
           <ArtistNames artists={song.artists} renderArtistLink={renderArtistLink} />
         </p>
       )}

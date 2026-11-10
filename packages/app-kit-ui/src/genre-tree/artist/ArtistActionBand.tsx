@@ -1,7 +1,7 @@
 "use client";
 
 import { Pause, Play } from "lucide-react";
-import { ActionBand, ActionButton } from "@behindthemusictree/ui";
+import { ActionBand, ActionButton, PanelBleed } from "@behindthemusictree/ui";
 import { TrackListOriginType, useTrackList, type ArtistDetailed, type SongDetailed } from "@behindthemusictree/app-kit/genre-tree";
 import { usePlayer } from "@behindthemusictree/app-kit/player";
 import type { ReactNode } from "react";
@@ -29,6 +29,7 @@ export default function ArtistActionBand({ artist, share }: ArtistActionBandProp
     });
   };
   return (
+    <PanelBleed>
     <ActionBand>
       <ActionButton
         icon={playing ? <Pause aria-hidden="true" className="w-5 h-5" /> : <Play aria-hidden="true" className="w-5 h-5" />}
@@ -40,5 +41,6 @@ export default function ArtistActionBand({ artist, share }: ArtistActionBandProp
       />
       {share}
     </ActionBand>
+    </PanelBleed>
   );
 }
