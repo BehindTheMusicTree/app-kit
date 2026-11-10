@@ -60,7 +60,7 @@ export function useSongPanel({
         ...panel,
         title: "Song",
         content: (
-          <div aria-busy="true" className="flex flex-col gap-2.5 px-6 py-2.5">
+          <div aria-busy="true" className="flex flex-col gap-2.5">
             <Skeleton className="h-3 w-16" />
             <Skeleton className="h-4 w-32" />
             <Skeleton className="h-3 w-16" />
@@ -72,13 +72,13 @@ export function useSongPanel({
       return {
         ...panel,
         title: "Song not found",
-        content: <p className="px-6 py-2.5 text-[var(--color-text-muted)]">This song does not exist.</p>,
+        content: <p className="text-[var(--color-text-muted)]">This song does not exist.</p>,
       };
     case "error":
       return {
         ...panel,
         title: "Song",
-        content: <p className="px-6 py-2.5 text-red-600">Could not load this song.</p>,
+        content: <p className="text-red-600">Could not load this song.</p>,
       };
     case "success": {
       const { song } = result;

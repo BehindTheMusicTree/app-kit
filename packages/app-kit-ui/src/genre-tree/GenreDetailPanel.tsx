@@ -118,12 +118,12 @@ export function useGenreDetailContent<O extends CriteriaOverview>({
   if (isError) return {
     name: null,
     title: "Genre unavailable",
-    content: <p role="alert" className="p-4 text-body text-[var(--color-text)]">This genre could not be loaded.</p>,
+    content: <p role="alert" className="text-body text-[var(--color-text)]">This genre could not be loaded.</p>,
   };
   if (isPending || !detail || !view) return {
     name: null,
     title: "Loading genre…",
-    content: <div className="flex flex-col gap-3 p-4" aria-busy="true" data-testid="genre-detail-panel-skeleton">
+    content: <div className="flex flex-col gap-3" aria-busy="true" data-testid="genre-detail-panel-skeleton">
       <Skeleton className="h-6 w-2/3" />
       <Skeleton className="h-4 w-full" />
       <Skeleton className="h-4 w-3/4" />

@@ -894,7 +894,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             onExpandedChange={activePanel?.onExpandedChange}
             aside={activePanel?.aside}
             edgeTab={detailTab}
-            headerClassName={activePanel?.titleInSearch ? undefined : "pt-[calc(var(--layout-search-h)+var(--layout-panel-inset)+0.5rem)]"}
+            headerClassName={activePanel?.titleInSearch ? undefined : "pt-search-clear"}
           >
             {activePanel?.aside && !activePanel.expanded ? (
               <>
