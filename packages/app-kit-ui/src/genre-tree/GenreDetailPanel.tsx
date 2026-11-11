@@ -8,7 +8,6 @@ import {
   getTextColorOnFill,
   TEXT_COLOR,
   tintSurface,
-  type GenreNodeRelations,
   type GenreNodeStyle,
   type GenreTreeNode,
   type InfoPanelChild,
@@ -81,13 +80,13 @@ type GenreDetailContentOptions<O extends CriteriaOverview> = {
   trailing?: ReactNode;
   genrePlaylist?: CriteriaPlaylistSimple;
   expanded?: boolean;
-  /** How the mounted tree draws this genre and its relatives; genres it omits fall back to the root color. */
-  treeRelations?: GenreNodeRelations | null;
+  /** How the mounted tree draws this genre and its relatives, by genre uuid; genres it omits fall back to the root color. */
+  treeStyles?: ReadonlyMap<GenreUuid, GenreNodeStyle>;
 };
 
 /** Shared entity data and content; the host owns the panel shell and placement. */
 export function useGenreDetailContent<O extends CriteriaOverview>({
-  genreUuid, scope, getBackendBaseUrl, onSelectGenre, extras, band, playback: hostPlayback, trailing, genrePlaylist: hostPlaylist, expanded, treeRelations,
+  genreUuid, scope, getBackendBaseUrl, onSelectGenre, extras, band, playback: hostPlayback, trailing, genrePlaylist: hostPlaylist, expanded, treeStyles,
 }: GenreDetailContentOptions<O>) {
   const { data: detail, isPending, isError } = useFetchGenreDetail(genreUuid, scope, getBackendBaseUrl);
   const defaultPlayback = useGenrePlaylistPlayback({ scope, genrePlaylists: [], artist: extras?.artist });
@@ -96,19 +95,12 @@ export function useGenreDetailContent<O extends CriteriaOverview>({
   const view = useMemo(() => {
     if (!detail) return null;
     const rootColor = getGenreTreeColor(detail.root.wikidataId);
-    const treeStyles = new Map<string, GenreNodeStyle>();
-    if (treeRelations) {
-      const drawn = [treeRelations, treeRelations.parentNode, ...treeRelations.childNodes, ...treeRelations.ancestorNodes];
-      for (const entry of drawn) {
-        if (entry) treeStyles.set(entry.node.id, { fill: entry.fill, textColor: entry.textColor });
-      }
-    }
     const relative = (genre: CriteriaMinimum, parentId: string | null): InfoPanelChild => ({
       node: toNode(genre, parentId),
-      ...(treeStyles.get(genre.uuid) ?? { fill: tintSurface(rootColor), textColor: TEXT_COLOR }),
+      ...(treeStyles?.get(genre.uuid) ?? { fill: tintSurface(rootColor), textColor: TEXT_COLOR }),
     });
     const ancestors = [...detail.ascendants].sort((a, b) => b.degree - a.degree);
-    const own = treeStyles.get(detail.uuid) ?? { fill: rootColor, textColor: getTextColorOnFill(rootColor) };
+    const own = treeStyles?.get(detail.uuid) ?? { fill: rootColor, textColor: getTextColorOnFill(rootColor) };
     return {
       node: {
         id: detail.uuid,
@@ -125,7 +117,7 @@ export function useGenreDetailContent<O extends CriteriaOverview>({
         relative(ascendant, index === 0 ? null : ancestors[index - 1].ascendant.uuid),
       ),
     };
-  }, [detail, scope, treeRelations]);
+  }, [detail, scope, treeStyles]);
 
   if (isError) return {
     name: null,

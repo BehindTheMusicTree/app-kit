@@ -37,6 +37,7 @@ import type { GenreDetailSlots } from "./GenreDetailExtras";
 import type { GenrePlaylistTracksSlots } from "./GenrePlaylistTracks";
 import type { HostOverlayPanel } from "./overlayPanel";
 import { toTreeNodes } from "./playlist-tree/toTreeNodes";
+import { toGenreNodeStyles } from "./playlist-tree/toGenreNodeStyles";
 import type { RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
 
 import GenrePlaylistTreePerRoot from "./playlist-tree/TreePerRoot";
@@ -443,6 +444,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     resolveStyle,
   );
 
+  const treeStyles = useMemo(() => toGenreNodeStyles(relations, visibleGenrePlaylists), [relations, visibleGenrePlaylists]);
+
   const [selectionHistory, setSelectionHistory] = useState<{ current: GenreUuid | null; previous: GenreUuid | null }>({ current: selectedGenreUuid, previous: null });
   if (selectionHistory.current !== selectedGenreUuid) {
     setSelectionHistory({ current: selectedGenreUuid, previous: selectionHistory.current ?? selectionHistory.previous });
@@ -493,7 +496,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     scope, getBackendBaseUrl,
     onSelectGenre: (uuid) => { reopenPanel(); selectGenre(uuid); },
     expanded: isExpanded,
-    treeRelations: relations,
+    treeStyles,
     playback,
     genrePlaylist: selectedGenrePlaylist,
     band: {
