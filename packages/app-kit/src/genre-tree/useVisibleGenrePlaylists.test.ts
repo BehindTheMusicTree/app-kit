@@ -61,7 +61,7 @@ describe("useVisibleGenrePlaylists artist projection", () => {
     genreAndSubgenresTracksCount: { all: 2 },
     catalogue: { genreOnlyTracksCount: 2, genreAndSubgenresTracksCount: { all: 2 } },
   };
-  const artist = { ...options, artistUuid: "artist" };
+  const artist = { ...options, artistUuid: "3f0d7b1e-8a3c-4d57-9a53-2b7f4f9c0a11" };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -95,6 +95,16 @@ describe("useVisibleGenrePlaylists artist projection", () => {
 
     expect(result.current.isFetching).toBe(true);
     expect(result.current.focusUuids).toBeUndefined();
+  });
+
+  it.each([[""], ["not-a-uuid"]])("serves the plain tree and never loads counts for the malformed artist %j", (artistUuid) => {
+    useArtistGenreCountsMock.mockReturnValue({ data: [rockCount], isPending: true, isPlaceholderData: false });
+    const { result } = renderHook(() => useVisibleGenrePlaylists({ ...options, artistUuid }));
+
+    expect(useArtistGenreCountsMock).toHaveBeenCalledWith(null, options.getBackendBaseUrl);
+    expect(result.current.genrePlaylists).toBe(tree);
+    expect(result.current.focusUuids).toBeUndefined();
+    expect(result.current.isFetching).toBe(false);
   });
 
   it("ignores counts when no artist is open", () => {
