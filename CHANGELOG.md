@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [41.0.0] - 2026-11-11
+
 ### Breaking
 
 - The transport rethrows a backend 404 on a GET to the caller instead of raising the global connectivity popup (BAC4040) and resolving `null`. Callers of `useFetchWrapper`/`usePlaybackFetch` that relied on the popup plus a `null` result must now catch the error (see `isNotFoundError`); other errors, and a 404 on a write, still reach the popup. This applies to every GET, so a 404 from a misrouted list, search or tree request is no longer popped either: the query reports `isError`.
