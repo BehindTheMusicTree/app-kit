@@ -36,6 +36,13 @@ describe("useSongHistory", () => {
     expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
   });
 
+  it.each([[""], ["not-a-uuid"]])("stays idle and disabled for the malformed uuid %j", (bad) => {
+    const { result } = renderHook(() => useSongHistory(bad, getBackendBaseUrl, true));
+
+    expect(result.current).toEqual({ status: "idle" });
+    expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
+  });
+
   it("fetches the history once enabled, forwarding the abort signal", async () => {
     const { result } = renderHook(() => useSongHistory(uuid, getBackendBaseUrl, true));
     const options = useQueryWithParseMock.mock.calls[0][0];

@@ -21,6 +21,7 @@ export * from "./TrackListSidebarVisibilityContext";
 export { ArtistNames } from "./ArtistNames";
 export type { RenderArtistLink } from "./ArtistNames";
 export type { RenderSongLink } from "./song-link";
+export type { RenderPlaceLink } from "./place-link";
 // Models
 export {
   default as TrackList,

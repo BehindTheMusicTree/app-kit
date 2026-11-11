@@ -11,6 +11,18 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [42.0.0] - 2026-11-11
+
+### Breaking
+
+- `ArtistDetailedSchema` requires `origin` (nullable): a backend that does not send it yet fails parsing, and `ArtistDetailed` fixtures must add `origin`.
+
+### Added
+
+- `ArtistDetailed.origin` (`ArtistOrigin | null`: place name, kind, `begin_area`/`area` source, Wikidata id, coordinates, map `regionId`), read from the artist endpoint. The artist panel shows it as "Born in" (person), "Formed in" (group) or "From" (other types or an `area` source) with the country; it replaces the "Country" field when present.
+- `RenderPlaceLink` render prop (`GenreTreeView`, `EntityDetailPanel`, `useEntityPanel`, `useArtistPanel`) renders the origin as a link to its map region; plain text when omitted or when the origin has no `regionId`.
+
+
 ## [41.0.0] - 2026-11-11
 
 ### Breaking
@@ -26,6 +38,15 @@ easy to spot when bumping.
 - app-kit-ui: the genre detail panel shows the overview image with an "Image: <author>, <license>" credit, above the Links section and independent of `renderSummary`. It is rendered by the new `CommonsPhoto` (`image`, `alt`, `creditLabel` defaulting to "Photo"); `ArtistPhoto` now wraps it. Covered by `CommonsPhoto.test.tsx` and `GenreDetailExtras.test.tsx`.
 - `isNotFoundError`, `resourceRetry`, `toResourceResult` and `ResourceResult` (transport) for turning a 404 on a single resource into panel state.
 - `toGenreUuid` (genre-tree) to validate a raw value as a genre uuid.
+- `ArtistUuidSchema`, `SongUuidSchema`, `toArtistUuid` and `toSongUuid` (genre-tree), the same for artist and song ids.
+
+### Fixed
+
+- `useArtistGenreCounts`, `useSongHistory` and `useVisibleGenrePlaylists` no longer put a raw, malformed id (e.g. `?artist=foo` or an empty value) in an API path: it is validated like `useArtist` and `useSong`, so no request is made (the 400 used to be retried three times and left the tree loading). `useArtist` and `useSong` now share the same parsers.
+
+### CI
+
+- Pin the shared release workflows to the lag-tolerant github-workflows commit 79c1362, so tag creation tolerates GitHub read-after-write delays.
 
 ## [40.1.0] - 2026-11-11
 

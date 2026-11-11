@@ -48,6 +48,7 @@ describe("ArtistDetailedSchema URLs", () => {
       license: "CC BY 4.0",
       licenseUrl: null,
     },
+    origin: null,
   };
 
   it("accepts http(s) links and image URLs", () => {

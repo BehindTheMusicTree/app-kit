@@ -39,7 +39,7 @@ import type { GenrePlaylistTracksSlots } from "./GenrePlaylistTracks";
 import type { HostOverlayPanel } from "./overlayPanel";
 import { toTreeNodes } from "./playlist-tree/toTreeNodes";
 import { toGenreNodeStyles } from "./playlist-tree/toGenreNodeStyles";
-import type { RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
+import type { RenderArtistLink, RenderPlaceLink } from "@behindthemusictree/app-kit/genre-tree";
 
 import GenrePlaylistTreePerRoot from "./playlist-tree/TreePerRoot";
 import GenrePlaylistTreeWheel from "./playlist-tree/TreeWheel";
@@ -157,6 +157,8 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   /** When set, song titles in the info panel's track list render through it (e.g. a router `Link` to the song).
    * By default they are buttons that open the song panel. */
   renderSongLink?: RenderSongLink;
+  /** When set, the artist panel renders the artist's origin through it (e.g. a router `Link` to the map region). */
+  renderPlaceLink?: RenderPlaceLink;
   /** Resolves a selected genre, artist or song to a share URL using the host app's routes. */
   getShareUrl?: GetGenreTreeShareUrl;
 } & ArtistSearchProps &
@@ -224,6 +226,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   songSearch = true,
   onSongSelect,
   renderSongLink,
+  renderPlaceLink,
   renderSummary,
   renderEssentialTracks,
   renderSongLeading,
@@ -381,6 +384,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     getShareUrl: getShareUrlRef.current,
     renderArtistLink: resolvedRenderArtistLink,
     renderSongLink: resolvedRenderSongLink,
+    renderPlaceLink,
     song: {
       uuid: songUuid,
       expanded: controlledSongExpanded ?? (songUuid !== null && expandedSongUuid === songUuid),
