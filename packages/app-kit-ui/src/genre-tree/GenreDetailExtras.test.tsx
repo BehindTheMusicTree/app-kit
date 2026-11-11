@@ -106,6 +106,42 @@ describe("GenreDetailExtras", () => {
     expect(renderEssentialTracks).toHaveBeenCalledWith(overview);
   });
 
+  describe("image", () => {
+    const image = {
+      url: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Rock.jpg/500px-Rock.jpg",
+      pageUrl: "https://commons.wikimedia.org/wiki/File:Rock.jpg",
+      author: "Jane Doe",
+      license: "CC BY-SA 4.0",
+      licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    };
+
+    it("shows the Commons image named after the genre with an Image credit", () => {
+      useFetchGenreOverviewMock.mockReturnValue({ data: { ...overview, name: "Rock", image }, isPending: false });
+      renderExtras();
+
+      expect(screen.getByRole("img", { name: "Rock" })).toHaveAttribute("src", image.url);
+      expect(screen.getByRole("figure")).toHaveTextContent(/^Image: Jane Doe/);
+    });
+
+    it("shows the image even when renderSummary replaces the summary body", () => {
+      useFetchGenreOverviewMock.mockReturnValue({ data: { ...overview, name: "Rock", image }, isPending: false });
+      renderExtras({ renderSummary: () => <p>custom</p> });
+
+      expect(screen.getByRole("img", { name: "Rock" })).toBeInTheDocument();
+    });
+
+    it("renders no image when it is null or missing", () => {
+      useFetchGenreOverviewMock.mockReturnValue({ data: { ...overview, image: null }, isPending: false });
+      const { unmount } = renderExtras();
+      expect(screen.queryByRole("figure")).not.toBeInTheDocument();
+      unmount();
+
+      useFetchGenreOverviewMock.mockReturnValue({ data: overview, isPending: false });
+      renderExtras();
+      expect(screen.queryByRole("figure")).not.toBeInTheDocument();
+    });
+  });
+
   it("does not render the description", () => {
     useFetchGenreOverviewMock.mockReturnValue({
       data: { ...overview, description: "music genre" },
