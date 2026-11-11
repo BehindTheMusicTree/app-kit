@@ -13,7 +13,7 @@ easy to spot when bumping.
 
 ### Breaking
 
-- The transport rethrows a backend 404 on a GET to the caller instead of raising the global connectivity popup (BAC4040) and resolving `null`. Callers of `useFetchWrapper`/`usePlaybackFetch` that relied on the popup plus a `null` result must now catch the error (see `isNotFoundError`); other errors, and a 404 on a write, still reach the popup.
+- The transport rethrows a backend 404 on a GET to the caller instead of raising the global connectivity popup (BAC4040) and resolving `null`. Callers of `useFetchWrapper`/`usePlaybackFetch` that relied on the popup plus a `null` result must now catch the error (see `isNotFoundError`); other errors, and a 404 on a write, still reach the popup. This applies to every GET, so a 404 from a misrouted list, search or tree request is no longer popped either: the query reports `isError`.
 - `useFetchGenreDetail(id: string | null, ...)` returns `UseGenreResult` (`idle`, `loading`, `not-found`, `error`, or `success` with `genre`) instead of the query result, and accepts a raw URL value: a malformed uuid is `not-found` without a request, and a 404 is not retried.
 - `GenreDetailPanelProps.genreUuid` and `selectedGenreUuid` (`GenreTreeView`, `useGenreTreeViewState`) are `string` instead of `GenreUuid`. A value naming no genre renders a "Genre not found" panel that can be closed.
 - `useArtist`, `useSong`, `useArtistGenreCounts` and `useSongHistory` no longer pass `skipGlobalError`; the transport change covers them.

@@ -563,7 +563,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
       onClose: otherPanel.onClose,
       searchName: otherPanel.title,
     };
-  } else if (selectedGenreUuid) {
+  } else if (selectedGenreUuid !== null) {
     activePanel = {
       title: genreContent.title,
       content: genreContent.content,
