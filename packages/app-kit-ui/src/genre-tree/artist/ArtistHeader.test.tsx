@@ -75,7 +75,7 @@ describe("ArtistHeader", () => {
   describe("origin", () => {
     const origin = {
       name: "Liverpool",
-      kind: "City",
+      kind: "city",
       source: "begin_area" as const,
       wikidataId: "Q24826",
       longitude: -2.98,
@@ -117,7 +117,11 @@ describe("ArtistHeader", () => {
     });
 
     it("does not repeat the country when the origin is the country", () => {
-      render(<ArtistHeader artist={{ ...EMPTY, country: "GB", origin: { ...origin, name: "United Kingdom", kind: "Country" } }} />);
+      render(
+        <ArtistHeader
+          artist={{ ...EMPTY, country: "GB", origin: { ...origin, name: "United Kingdom", kind: "country" } }}
+        />,
+      );
       expect(screen.getByText("United Kingdom")).toBeInTheDocument();
     });
   });

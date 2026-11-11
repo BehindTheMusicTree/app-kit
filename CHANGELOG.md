@@ -11,14 +11,15 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Breaking
+
+- `ArtistDetailedSchema` requires `origin` (nullable): a backend that does not send it yet fails parsing, and `ArtistDetailed` fixtures must add `origin`.
+
 ### Added
 
 - `ArtistDetailed.origin` (`ArtistOrigin | null`: place name, kind, `begin_area`/`area` source, Wikidata id, coordinates, map `regionId`), read from the artist endpoint. The artist panel shows it as "Born in" (person), "Formed in" (group) or "From" (other types or an `area` source) with the country; it replaces the "Country" field when present.
 - `RenderPlaceLink` render prop (`GenreTreeView`, `EntityDetailPanel`, `useEntityPanel`, `useArtistPanel`) renders the origin as a link to its map region; plain text when omitted or when the origin has no `regionId`.
 
-### Changed
-
-- `ArtistDetailedSchema` requires `origin` (nullable): a backend that does not send it yet fails parsing.
 
 ## [41.0.0] - 2026-11-11
 

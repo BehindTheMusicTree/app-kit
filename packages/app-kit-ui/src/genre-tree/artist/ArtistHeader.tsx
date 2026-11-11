@@ -27,7 +27,7 @@ function OriginValue({
   return (
     <>
       {place}
-      {country && country !== origin.name && `, ${country}`}
+      {country && origin.kind !== "country" && `, ${country}`}
     </>
   );
 }

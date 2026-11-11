@@ -1,7 +1,12 @@
 "use client";
 
 import { Skeleton } from "@behindthemusictree/ui";
-import { useArtist, type RenderArtistLink, type RenderPlaceLink, type RenderSongLink } from "@behindthemusictree/app-kit/genre-tree";
+import {
+  useArtist,
+  type RenderArtistLink,
+  type RenderPlaceLink,
+  type RenderSongLink,
+} from "@behindthemusictree/app-kit/genre-tree";
 import ArtistActionBand from "./ArtistActionBand";
 import ArtistHeader from "./ArtistHeader";
 import ArtistPhoto from "./ArtistPhoto";
