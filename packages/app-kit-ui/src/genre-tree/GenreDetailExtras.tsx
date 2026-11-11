@@ -10,6 +10,7 @@ import { Scope } from "@behindthemusictree/app-kit/transport";
 import { useFetchGenreOverview } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaPlaylistMinimum, type GenreUuid } from "@behindthemusictree/app-kit/genre-tree";
 import { ClampedText } from "./ClampedText";
+import CommonsPhoto from "./CommonsPhoto";
 import { GenrePlaylistTracks, type GenrePlaylistTracksSlots } from "./GenrePlaylistTracks";
 import type { RenderSongLink } from "@behindthemusictree/app-kit/genre-tree";
 import { RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
@@ -82,11 +83,12 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
   }
   if (!overview) return <>{family}</>;
 
-  const { summary, summarySourceUrl, essentialSongs } = overview;
+  const { summary, summarySourceUrl, essentialSongs, image } = overview;
   const wikidataUrl = wikidataId ? `https://www.wikidata.org/wiki/${encodeURIComponent(wikidataId)}` : null;
 
   return (
     <>
+      {image && <CommonsPhoto image={image} alt={overview.name} creditLabel="Image" />}
       {(summarySourceUrl || wikidataUrl) && (
         <PanelSection title="Links">
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-caption text-[var(--color-text)]">

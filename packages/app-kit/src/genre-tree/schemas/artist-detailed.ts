@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { ArtistMinimumSchema } from "./artist-minimum";
+import { CommonsImageSchema, type CommonsImage } from "./commons-image";
 import { HttpUrlSchema } from "./http-url";
 
 const ArtistMembershipSchema = z.object({
@@ -23,13 +24,7 @@ export const ARTIST_LINK_KINDS = [
   "social",
 ] as const;
 
-export const ArtistImageSchema = z.object({
-  url: HttpUrlSchema,
-  pageUrl: HttpUrlSchema,
-  author: z.string().nullable(),
-  license: z.string(),
-  licenseUrl: HttpUrlSchema.nullable(),
-});
+export const ArtistImageSchema = CommonsImageSchema;
 
 export const ArtistDetailedSchema = z.object({
   uuid: z.string().uuid(),
@@ -57,7 +52,7 @@ export const ArtistDetailedSchema = z.object({
   image: ArtistImageSchema.nullable(),
 });
 
-export type ArtistImage = z.infer<typeof ArtistImageSchema>;
+export type ArtistImage = CommonsImage;
 export type ArtistDetailed = z.infer<typeof ArtistDetailedSchema>;
 export type ArtistMembership = ArtistDetailed["members"][number];
 export type ArtistLink = ArtistDetailed["links"][number];

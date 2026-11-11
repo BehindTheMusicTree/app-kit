@@ -44,6 +44,7 @@ export * from "./schemas/ids";
 export * from "./schemas/genre-music";
 export * from "./schemas/artist-minimum";
 export * from "./schemas/artist-search";
+export * from "./schemas/commons-image";
 export * from "./schemas/artist-detailed";
 export * from "./schemas/artist-genre-count";
 export * from "./schemas/album-minimum";
