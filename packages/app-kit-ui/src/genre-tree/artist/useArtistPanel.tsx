@@ -1,7 +1,7 @@
 "use client";
 
 import { Skeleton } from "@behindthemusictree/ui";
-import { useArtist, type RenderArtistLink, type RenderSongLink } from "@behindthemusictree/app-kit/genre-tree";
+import { useArtist, type RenderArtistLink, type RenderPlaceLink, type RenderSongLink } from "@behindthemusictree/app-kit/genre-tree";
 import ArtistActionBand from "./ArtistActionBand";
 import ArtistHeader from "./ArtistHeader";
 import ArtistPhoto from "./ArtistPhoto";
@@ -21,6 +21,8 @@ export interface ArtistPanelOptions {
   /** Renders member and song artist names. */
   renderArtistLink: RenderArtistLink;
   renderSongLink?: RenderSongLink;
+  /** Renders the artist's origin as a link to its map region; plain text when omitted. */
+  renderPlaceLink?: RenderPlaceLink;
   expanded: boolean;
   onExpandedChange: (expanded: boolean) => void;
   onClose: () => void;
@@ -34,6 +36,7 @@ export function useArtistPanel({
   getShareUrl,
   renderArtistLink,
   renderSongLink,
+  renderPlaceLink,
   expanded,
   onExpandedChange,
   onClose,
@@ -87,7 +90,7 @@ export function useArtistPanel({
               share={shareTarget && shareUrl ? <ShareActionButton target={shareTarget} url={shareUrl} /> : undefined}
             />
             {artist.image && <ArtistPhoto image={artist.image} name={artist.name} />}
-            <ArtistHeader artist={artist} />
+            <ArtistHeader artist={artist} renderPlaceLink={renderPlaceLink} />
             <ArtistMembers title="Members" memberships={artist.members} renderArtistLink={renderArtistLink} />
             <ArtistMembers title="Member of" memberships={artist.memberOf} renderArtistLink={renderArtistLink} />
             {artist.tracksCount > 0 && (

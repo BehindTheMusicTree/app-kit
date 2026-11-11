@@ -19,6 +19,7 @@ const EMPTY: ArtistDetailed = {
   tracksCount: 0,
   playableTracksCount: 0,
   image: null,
+  origin: null,
 };
 
 describe("ArtistHeader", () => {
@@ -69,5 +70,55 @@ describe("ArtistHeader", () => {
   ])("formats active years %o as %s", (years, expected) => {
     render(<ArtistHeader artist={{ ...EMPTY, ...years }} />);
     expect(screen.getByText(expected)).toBeInTheDocument();
+  });
+
+  describe("origin", () => {
+    const origin = {
+      name: "Liverpool",
+      kind: "City",
+      source: "begin_area" as const,
+      wikidataId: "Q24826",
+      longitude: -2.98,
+      latitude: 53.41,
+      regionId: "r1",
+    };
+
+    it.each([
+      ["person", "begin_area", "Born in"],
+      ["group", "begin_area", "Formed in"],
+      ["orchestra", "begin_area", "From"],
+      ["group", "area", "From"],
+    ] as const)("labels a %s origin from %s as %s", (type, source, label) => {
+      render(<ArtistHeader artist={{ ...EMPTY, type, country: "GB", origin: { ...origin, source } }} />);
+      expect(screen.getByText(label)).toBeInTheDocument();
+      expect(screen.getByText("Liverpool, United Kingdom")).toBeInTheDocument();
+      expect(screen.queryByText("Country")).not.toBeInTheDocument();
+    });
+
+    it("renders the place through renderPlaceLink when the origin has a region", () => {
+      render(
+        <ArtistHeader
+          artist={{ ...EMPTY, type: "person", country: "GB", origin }}
+          renderPlaceLink={(place) => <a href={`/map?region=${place.regionId}`}>{place.name}</a>}
+        />,
+      );
+      expect(screen.getByRole("link", { name: "Liverpool" })).toHaveAttribute("href", "/map?region=r1");
+    });
+
+    it("falls back to text when the origin has no region", () => {
+      render(
+        <ArtistHeader
+          artist={{ ...EMPTY, type: "person", origin: { ...origin, regionId: null } }}
+          renderPlaceLink={(place) => <a href={`/map?region=${place.regionId}`}>{place.name}</a>}
+        />,
+      );
+      expect(screen.queryByRole("link")).not.toBeInTheDocument();
+      expect(screen.getByText("Liverpool")).toBeInTheDocument();
+    });
+
+    it("does not repeat the country when the origin is the country", () => {
+      render(<ArtistHeader artist={{ ...EMPTY, country: "GB", origin: { ...origin, name: "United Kingdom", kind: "Country" } }} />);
+      expect(screen.getByText("United Kingdom")).toBeInTheDocument();
+    });
   });
 });

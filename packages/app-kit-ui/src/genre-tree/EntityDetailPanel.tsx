@@ -2,7 +2,7 @@
 
 import { useState, type ComponentProps } from "react";
 import { DetailPanel } from "@behindthemusictree/ui";
-import type { RenderArtistLink, RenderSongLink } from "@behindthemusictree/app-kit/genre-tree";
+import type { RenderArtistLink, RenderPlaceLink, RenderSongLink } from "@behindthemusictree/app-kit/genre-tree";
 import type { Scope } from "@behindthemusictree/app-kit/transport";
 import { useEntityPanel } from "./useEntityPanel";
 import type { SongGenreNavigation } from "./song/useSongPanel";
@@ -21,6 +21,7 @@ export type EntityDetailPanelProps = {
   renderArtistLink?: RenderArtistLink;
   /** Titles render as buttons that open the song by default. */
   renderSongLink?: RenderSongLink;
+  renderPlaceLink?: RenderPlaceLink;
   collapsed?: boolean;
   edgeTab?: ComponentProps<typeof DetailPanel>["edgeTab"];
 } & SongGenreNavigation;
@@ -38,6 +39,7 @@ export function EntityDetailPanel({
   onArtistUuidChange,
   renderArtistLink,
   renderSongLink,
+  renderPlaceLink,
   collapsed,
   edgeTab,
   ...navigation
@@ -51,6 +53,7 @@ export function EntityDetailPanel({
     getBackendBaseUrl,
     getArtistBackendBaseUrl,
     getShareUrl,
+    renderPlaceLink,
     renderArtistLink:
       renderArtistLink ??
       ((artist) =>

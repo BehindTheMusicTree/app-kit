@@ -43,5 +43,5 @@ Third-party brand colors (Spotify, Google) stay literal.
 
 - `GenreTreeView` takes `className` on its root (no outer margin by default) and
   `showDisplayOptions` (default `true`) to hide the "Tree display options" group.
-- Render props (`renderArtistLink`, `renderSummary`, `renderTracksToolbar`, …) replace pieces of
+- Render props (`renderArtistLink`, `renderPlaceLink`, `renderSummary`, `renderTracksToolbar`, …) replace pieces of
   the genre detail panel.

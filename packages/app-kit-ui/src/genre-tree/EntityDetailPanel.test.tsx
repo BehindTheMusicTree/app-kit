@@ -46,6 +46,7 @@ const artist = {
   tracksCount: 1,
   playableTracksCount: 1,
   image: null,
+  origin: null,
 };
 const rock = { uuid: "gp-rock", name: "Rock" };
 

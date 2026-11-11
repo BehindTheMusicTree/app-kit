@@ -26,6 +26,16 @@ export const ARTIST_LINK_KINDS = [
 
 export const ArtistImageSchema = CommonsImageSchema;
 
+export const ArtistOriginSchema = z.object({
+  name: z.string(),
+  kind: z.string(),
+  source: z.enum(["begin_area", "area"]),
+  wikidataId: z.string().nullable(),
+  longitude: z.number().nullable(),
+  latitude: z.number().nullable(),
+  regionId: z.string().nullable(),
+});
+
 export const ArtistDetailedSchema = z.object({
   uuid: z.string().uuid(),
   name: z.string(),
@@ -50,9 +60,11 @@ export const ArtistDetailedSchema = z.object({
   tracksCount: z.number().int(),
   playableTracksCount: z.number().int(),
   image: ArtistImageSchema.nullable(),
+  origin: ArtistOriginSchema.nullable(),
 });
 
 export type ArtistImage = CommonsImage;
+export type ArtistOrigin = z.infer<typeof ArtistOriginSchema>;
 export type ArtistDetailed = z.infer<typeof ArtistDetailedSchema>;
 export type ArtistMembership = ArtistDetailed["members"][number];
 export type ArtistLink = ArtistDetailed["links"][number];
