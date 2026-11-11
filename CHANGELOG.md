@@ -25,6 +25,10 @@ easy to spot when bumping.
 - `isNotFoundError`, `resourceRetry`, `toResourceResult` and `ResourceResult` (transport) for turning a 404 on a single resource into panel state.
 - `toGenreUuid` (genre-tree) to validate a raw value as a genre uuid.
 
+### CI
+
+- Pin the shared release workflows to the lag-tolerant github-workflows commit 79c1362, so tag creation tolerates GitHub read-after-write delays.
+
 ## [40.1.0] - 2026-11-11
 
 ### Fixed
