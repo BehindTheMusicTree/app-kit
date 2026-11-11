@@ -1,6 +1,6 @@
 {
   "name": "@behindthemusictree/app-kit-ui",
-  "version": "40.0.0",
+  "version": "40.1.0",
   "description": "Styled BehindTheMusicTree React components (popups, auth callback, genre tree) built on the headless @behindthemusictree/app-kit",
   "repository": {
     "type": "git",

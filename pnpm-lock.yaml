@@ -10,8 +10,8 @@ catalogs:
       specifier: ^12.12.0
       version: 12.12.0
     '@behindthemusictree/genre-tree-view':
-      specifier: 9.2.0
-      version: 9.2.0
+      specifier: 9.2.1
+      version: 9.2.1
     '@behindthemusictree/ui':
       specifier: ^0.21.2
       version: 0.21.2
@@ -45,7 +45,7 @@ importers:
         version: 12.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@behindthemusictree/genre-tree-view':
         specifier: 'catalog:'
-        version: 9.2.0(@behindthemusictree/ui@0.21.2(@behindthemusictree/brand@12.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 9.2.1(@behindthemusictree/ui@0.21.2(@behindthemusictree/brand@12.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@behindthemusictree/ui':
         specifier: 'catalog:'
         version: 0.21.2(@behindthemusictree/brand@12.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -152,7 +152,7 @@ importers:
     dependencies:
       '@behindthemusictree/genre-tree-view':
         specifier: 'catalog:'
-        version: 9.2.0(@behindthemusictree/ui@0.21.2(@behindthemusictree/brand@12.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 9.2.1(@behindthemusictree/ui@0.21.2(@behindthemusictree/brand@12.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -344,8 +344,8 @@ packages:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
 
-  '@behindthemusictree/genre-tree-view@9.2.0':
-    resolution: {integrity: sha512-X05CP5/CjyrUeMUgqgVxiWTrMKkbMdoykPeDR2YVpyP1jkv/7f3Mr2inUOR/vKP3uiWoC5pKDrHyEiLunkRzzw==}
+  '@behindthemusictree/genre-tree-view@9.2.1':
+    resolution: {integrity: sha512-xM2+eIS/1T43pYhZFMKQDUvBqWwgnzOXJof64S5KoSC5P58snqXvztOpMWFSRWGJ70srR/NHJR5H5LsbDXeX5w==}
     peerDependencies:
       '@behindthemusictree/ui': ^0.21.2
       react: '>=18.0.0'
@@ -2312,7 +2312,7 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  '@behindthemusictree/genre-tree-view@9.2.0(@behindthemusictree/ui@0.21.2(@behindthemusictree/brand@12.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@behindthemusictree/genre-tree-view@9.2.1(@behindthemusictree/ui@0.21.2(@behindthemusictree/brand@12.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@behindthemusictree/ui': 0.21.2(@behindthemusictree/brand@12.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       d3: 7.9.0
