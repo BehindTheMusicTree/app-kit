@@ -213,7 +213,7 @@ describe("useGenreTreeViewState", () => {
   });
 
   describe("with an artist", () => {
-    const artistUuid = "a1";
+    const artistUuid = "3f0d7b1e-8a3c-4d57-9a53-2b7f4f9c0a11";
     const counts = [
       { genrePlaylist: "pop", songsCount: 2, tracksCount: 1 },
       { genrePlaylist: "rock", songsCount: 2, tracksCount: 1 },

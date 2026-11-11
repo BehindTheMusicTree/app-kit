@@ -512,7 +512,7 @@ describe("GenreTreeView", () => {
     it("keeps the tree mounted and turns busy on while an artist's counts load", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist()], isPending: false, isFetching: false });
       useArtistGenreCountsMock.mockReturnValue({ data: undefined, isPending: true, isError: false });
-      renderView({ viewMode: "wheel", artistUuid: "a1" });
+      renderView({ viewMode: "wheel", artistUuid: "3f0d7b1e-8a3c-4d57-9a53-2b7f4f9c0a11" });
 
       expect(screen.getByTestId("tree-wheel")).toBeInTheDocument();
       expect(lastWheelProps().genrePlaylists).toHaveLength(1);

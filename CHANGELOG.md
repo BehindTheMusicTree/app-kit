@@ -26,6 +26,15 @@ easy to spot when bumping.
 - app-kit-ui: the genre detail panel shows the overview image with an "Image: <author>, <license>" credit, above the Links section and independent of `renderSummary`. It is rendered by the new `CommonsPhoto` (`image`, `alt`, `creditLabel` defaulting to "Photo"); `ArtistPhoto` now wraps it. Covered by `CommonsPhoto.test.tsx` and `GenreDetailExtras.test.tsx`.
 - `isNotFoundError`, `resourceRetry`, `toResourceResult` and `ResourceResult` (transport) for turning a 404 on a single resource into panel state.
 - `toGenreUuid` (genre-tree) to validate a raw value as a genre uuid.
+- `ArtistUuidSchema`, `SongUuidSchema`, `toArtistUuid` and `toSongUuid` (genre-tree), the same for artist and song ids.
+
+### Fixed
+
+- `useArtistGenreCounts`, `useSongHistory` and `useVisibleGenrePlaylists` no longer put a raw, malformed id (e.g. `?artist=foo` or an empty value) in an API path: it is validated like `useArtist` and `useSong`, so no request is made (the 400 used to be retried three times and left the tree loading). `useArtist` and `useSong` now share the same parsers.
+
+### CI
+
+- Pin the shared release workflows to the lag-tolerant github-workflows commit 79c1362, so tag creation tolerates GitHub read-after-write delays.
 
 ## [40.1.0] - 2026-11-11
 
