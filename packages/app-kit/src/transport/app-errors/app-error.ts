@@ -84,6 +84,10 @@ export class ServiceError extends ConnectivityError {
   }
 }
 
+/** The backend answered 404 for the requested resource. */
+export const isNotFoundError = (error: unknown): error is BackendError =>
+  error instanceof BackendError && error.code === ErrorCode.BACKEND_NOT_FOUND;
+
 /**
  * Union type of all error classes.
  * Required because TypeScript's type system doesn't automatically recognize

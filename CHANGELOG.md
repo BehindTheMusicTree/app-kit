@@ -11,10 +11,19 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Breaking
+
+- The transport rethrows a backend 404 on a GET to the caller instead of raising the global connectivity popup (BAC4040) and resolving `null`. Callers of `useFetchWrapper`/`usePlaybackFetch` that relied on the popup plus a `null` result must now catch the error (see `isNotFoundError`); other errors, and a 404 on a write, still reach the popup. This applies to every GET, so a 404 from a misrouted list, search or tree request is no longer popped either: the query reports `isError`.
+- `useFetchGenreDetail(id: string | null, ...)` returns `UseGenreResult` (`idle`, `loading`, `not-found`, `error`, or `success` with `genre`) instead of the query result, and accepts a raw URL value: a malformed uuid is `not-found` without a request, and a 404 is not retried.
+- `GenreDetailPanelProps.genreUuid` and `selectedGenreUuid` (`GenreTreeView`, `useGenreTreeViewState`) are `string` instead of `GenreUuid`. A value naming no genre renders a "Genre not found" panel that can be closed.
+- `useArtist`, `useSong`, `useArtistGenreCounts` and `useSongHistory` no longer pass `skipGlobalError`; the transport change covers them.
+
 ### Added
 
 - `CommonsImageSchema` / `CommonsImage` (genre-tree): the Wikimedia Commons image with its attribution, generalised from the artist photo. `ArtistImageSchema` and `ArtistImage` stay as aliases. `CriteriaOverviewSchema` gains an optional nullable `image`, so hosts whose API does not send it keep validating.
 - app-kit-ui: the genre detail panel shows the overview image with an "Image: <author>, <license>" credit, above the Links section and independent of `renderSummary`. It is rendered by the new `CommonsPhoto` (`image`, `alt`, `creditLabel` defaulting to "Photo"); `ArtistPhoto` now wraps it. Covered by `CommonsPhoto.test.tsx` and `GenreDetailExtras.test.tsx`.
+- `isNotFoundError`, `resourceRetry`, `toResourceResult` and `ResourceResult` (transport) for turning a 404 on a single resource into panel state.
+- `toGenreUuid` (genre-tree) to validate a raw value as a genre uuid.
 
 ## [40.1.0] - 2026-11-11
 

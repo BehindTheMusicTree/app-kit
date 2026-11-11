@@ -226,6 +226,32 @@ describe("useFetchWrapper", () => {
       expect(setConnectivityErrorMock).toHaveBeenCalledWith(error);
     });
 
+    it("rethrows a 404 without raising the global connectivity error", () => {
+      const handleError = getHandleError();
+      const error = new BackendError(ErrorCode.BACKEND_NOT_FOUND);
+
+      expect(() => handleError(error)).toThrow(error);
+      expect(setConnectivityErrorMock).not.toHaveBeenCalled();
+    });
+
+    it("still raises the global connectivity error for a 404 on a write", () => {
+      const { result } = renderHook(() => useFetchWrapper(() => "https://api.example.com"));
+      result.current.fetch("me/genres/", true, true, { method: "PUT" });
+      const handleError = rawFetchMock.mock.calls[0][6] as (error: Error) => void;
+      const error = new BackendError(ErrorCode.BACKEND_NOT_FOUND);
+
+      expect(() => handleError(error)).not.toThrow();
+      expect(setConnectivityErrorMock).toHaveBeenCalledWith(error);
+    });
+
+    it("still raises the global connectivity error for a 500", () => {
+      const handleError = getHandleError();
+      const error = new BackendError(ErrorCode.BACKEND_INTERNAL_ERROR);
+
+      expect(() => handleError(error)).not.toThrow();
+      expect(setConnectivityErrorMock).toHaveBeenCalledWith(error);
+    });
+
     it("sets the connectivity error without throwing for a regular BackendError code", () => {
       const handleError = getHandleError();
       const error = new BackendError(ErrorCode.BACKEND_AUTH_ERROR);

@@ -45,7 +45,7 @@ describe("useSongHistory", () => {
     expect(options.queryKey).toEqual(["referenceSongs", "history", uuid]);
     expect(options.schema).toBe(SongHistorySchema);
     await options.queryFn({ signal });
-    expect(fetchMock).toHaveBeenCalledWith(`library/songs/${uuid}/history/`, true, false, { signal }, undefined, false, true);
+    expect(fetchMock).toHaveBeenCalledWith(`library/songs/${uuid}/history/`, true, false, { signal });
   });
 
   it("reports entries on success and error on failure", () => {

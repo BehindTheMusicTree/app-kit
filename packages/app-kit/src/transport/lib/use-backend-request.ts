@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 import { useConnectivityError } from "../connectivity-error-context";
 import { useSession } from "../../auth/SessionContext";
-import { BackendError, AuthRequired, ConnectivityError } from "../app-errors/app-error";
+import { BackendError, AuthRequired, ConnectivityError, isNotFoundError } from "../app-errors/app-error";
 import { fetchWrapper as rawFetch } from "../fetch-wrapper";
 import { createAppErrorFromErrorCode } from "../app-errors/app-error-factory";
 import { ErrorCode } from "../app-errors/app-error-codes";
@@ -18,7 +18,7 @@ export const useBackendRequest = (getBackendBaseUrl: () => string) => {
   const { setConnectivityError } = useConnectivityError();
   const { clearSession, session, sessionRestored } = useSession();
 
-  const handleError = useCallback((error: Error) => {
+  const handleError = useCallback((error: Error, isRead: boolean) => {
     if (error instanceof ConnectivityError) {
       const authDetailErrors = [
         ErrorCode.BACKEND_GOOGLE_OAUTH_CODE_INVALID_OR_EXPIRED,
@@ -28,6 +28,11 @@ export const useBackendRequest = (getBackendBaseUrl: () => string) => {
         ErrorCode.BACKEND_GOOGLE_OAUTH_MISCONFIGURED,
       ];
       if (error instanceof BackendError && authDetailErrors.includes(error.code)) {
+        throw error;
+      }
+      // A missing resource is the reader's state to show, not a connectivity failure. A write that
+      // hits a 404 is unexpected, so it still raises the popup.
+      if (isRead && isNotFoundError(error)) {
         throw error;
       }
       if (error instanceof AuthRequired) {
@@ -57,6 +62,7 @@ export const useBackendRequest = (getBackendBaseUrl: () => string) => {
     skipGlobalError: boolean = false,
     onResponse?: ResponseHook,
   ) => {
+    const isRead = (options.method ?? "GET").toUpperCase() === "GET";
     const baseUrl = getBackendBaseUrl().replace(/\/+$/, "");
     const endpointPath = String(backendEndpointOrUrl);
     if (fromBackend && endpointPath.startsWith("/")) {
@@ -70,7 +76,7 @@ export const useBackendRequest = (getBackendBaseUrl: () => string) => {
       session?.accessToken || undefined,
       queryParams,
       handleMissingRequiredSession,
-      skipGlobalError ? undefined : handleError,
+      skipGlobalError ? undefined : (error: Error) => handleError(error, isRead),
       expectBinary,
       baseUrl,
       onResponse,

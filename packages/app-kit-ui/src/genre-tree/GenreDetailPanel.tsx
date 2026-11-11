@@ -34,7 +34,8 @@ import type { GenreTreeShareTarget } from "./share";
 import { useGenrePlaylistPlayback } from "./playlist-tree/useGenrePlaylistPlayback";
 
 export type GenreDetailPanelProps<O extends CriteriaOverview> = {
-  genreUuid: GenreUuid;
+  /** May be a raw URL value: one that names no genre renders "Genre not found". */
+  genreUuid: string;
   scope: Scope;
   getBackendBaseUrl: () => string;
   onClose: () => void;
@@ -70,7 +71,7 @@ function toNode(genre: CriteriaMinimum, parentId: string | null): GenreTreeNode 
 }
 
 type GenreDetailContentOptions<O extends CriteriaOverview> = {
-  genreUuid: GenreUuid | null;
+  genreUuid: string | null;
   scope: Scope;
   getBackendBaseUrl: () => string;
   onSelectGenre: (uuid: GenreUuid) => void;
@@ -88,7 +89,8 @@ type GenreDetailContentOptions<O extends CriteriaOverview> = {
 export function useGenreDetailContent<O extends CriteriaOverview>({
   genreUuid, scope, getBackendBaseUrl, onSelectGenre, extras, band, playback: hostPlayback, trailing, genrePlaylist: hostPlaylist, expanded, treeStyles,
 }: GenreDetailContentOptions<O>) {
-  const { data: detail, isPending, isError } = useFetchGenreDetail(genreUuid, scope, getBackendBaseUrl);
+  const result = useFetchGenreDetail(genreUuid, scope, getBackendBaseUrl);
+  const detail = result.status === "success" ? result.genre : undefined;
   const defaultPlayback = useGenrePlaylistPlayback({ scope, genrePlaylists: [], artist: extras?.artist });
   const playback = hostPlayback ?? defaultPlayback;
 
@@ -119,12 +121,17 @@ export function useGenreDetailContent<O extends CriteriaOverview>({
     };
   }, [detail, scope, treeStyles]);
 
-  if (isError) return {
+  if (result.status === "not-found") return {
+    name: null,
+    title: "Genre not found",
+    content: <p className="text-[var(--color-text-muted)]">This genre does not exist.</p>,
+  };
+  if (result.status === "error") return {
     name: null,
     title: "Genre unavailable",
     content: <p role="alert" className="text-body text-[var(--color-text)]">This genre could not be loaded.</p>,
   };
-  if (isPending || !detail || !view) return {
+  if (!detail || !view) return {
     name: null,
     title: "Loading genre…",
     content: <div className="flex flex-col gap-3" aria-busy="true" data-testid="genre-detail-panel-skeleton">

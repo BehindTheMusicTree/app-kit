@@ -15,7 +15,7 @@ vi.mock("../transport/lib/use-query-with-parse", () => ({
 }));
 
 import { useArtistGenreCounts } from "./useArtistGenreCounts";
-import { AppError } from "../transport/app-errors/app-error";
+import { BackendError } from "../transport/app-errors/app-error";
 import { ErrorCode } from "../transport/app-errors/app-error-codes";
 
 const getBackendBaseUrl = () => "https://backend.example.com";
@@ -40,7 +40,7 @@ describe("useArtistGenreCounts", () => {
     expect(options.queryKey).toEqual(["artistGenreCounts", "https://backend.example.com", uuid, "genreMusicV1"]);
     expect(options.enabled).toBe(true);
     await options.queryFn();
-    expect(fetchMock).toHaveBeenCalledWith(`artists/${uuid}/genre-counts/`, true, false, undefined, undefined, false, true);
+    expect(fetchMock).toHaveBeenCalledWith(`artists/${uuid}/genre-counts/`, true, false);
   });
 
   it("parses the sparse camelCase payload", () => {
@@ -58,7 +58,7 @@ describe("useArtistGenreCounts", () => {
     renderHook(() => useArtistGenreCounts(uuid, getBackendBaseUrl));
     const { retry } = useQueryWithParseMock.mock.calls[0][0];
 
-    expect(retry(0, new AppError(ErrorCode.BACKEND_NOT_FOUND))).toBe(false);
+    expect(retry(0, new BackendError(ErrorCode.BACKEND_NOT_FOUND))).toBe(false);
     expect(retry(0, new Error("boom"))).toBe(true);
     expect(retry(3, new Error("boom"))).toBe(false);
   });
