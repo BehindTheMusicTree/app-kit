@@ -28,7 +28,7 @@ export const ArtistImageSchema = CommonsImageSchema;
 
 export const ArtistOriginSchema = z.object({
   name: z.string(),
-  kind: z.string(),
+  kind: z.string().nullable(),
   source: z.enum(["begin_area", "area"]),
   wikidataId: z.string().nullable(),
   longitude: z.number().nullable(),
