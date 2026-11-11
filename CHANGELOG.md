@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- The genre detail panel colors a genre and its family from the tree again. The tree's node styles were keyed by genre playlist uuid but looked up by genre uuid, so every lookup missed and each node fell back to the root's gray (Mainstream Pop showed gray instead of white). `useGenreDetailContent` now takes `treeStyles` keyed by genre uuid, built by the new `toGenreNodeStyles`; the hook is not part of the public exports, so no consumer change. Tests use distinct playlist and genre uuids.
+
 ### Changed
 
 - `ArtistSongs` no longer renders its own "Play all" button: the artist panel's action band already has Play.
