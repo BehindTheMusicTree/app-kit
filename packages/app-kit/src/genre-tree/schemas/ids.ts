@@ -7,3 +7,9 @@ export const GenrePlaylistUuidSchema = z.string().uuid().brand<"GenrePlaylistUui
 
 export type GenreUuid = z.infer<typeof GenreUuidSchema>;
 export type GenrePlaylistUuid = z.infer<typeof GenrePlaylistUuidSchema>;
+
+/** The id as a `GenreUuid`, or null when it is absent or malformed (e.g. a raw URL value). */
+export function toGenreUuid(value: string | null): GenreUuid | null {
+  const parsed = GenreUuidSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+}

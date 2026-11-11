@@ -61,11 +61,11 @@ const renderPanel = (props: Partial<React.ComponentProps<typeof GenreDetailPanel
 describe("GenreDetailPanel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useFetchGenreDetailMock.mockReturnValue({ data: detail, isPending: false, isError: false });
+    useFetchGenreDetailMock.mockReturnValue({ status: "success", genre: detail });
   });
 
   it("shows a skeleton while the genre loads", () => {
-    useFetchGenreDetailMock.mockReturnValue({ data: undefined, isPending: true, isError: false });
+    useFetchGenreDetailMock.mockReturnValue({ status: "loading" });
     const onClose = vi.fn();
     renderPanel({ onClose });
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
@@ -74,8 +74,20 @@ describe("GenreDetailPanel", () => {
     expect(screen.getByTestId("genre-detail-panel-skeleton")).toBeInTheDocument();
   });
 
+  it("shows a not-found state, closable, when the genre does not exist", () => {
+    useFetchGenreDetailMock.mockReturnValue({ status: "not-found" });
+    const onClose = vi.fn();
+    renderPanel({ onClose });
+
+    expect(screen.getByText("Genre not found")).toBeInTheDocument();
+    expect(screen.getByText("This genre does not exist.")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it("shows an error instead of an empty panel when the genre fails to load", () => {
-    useFetchGenreDetailMock.mockReturnValue({ data: undefined, isPending: false, isError: true });
+    useFetchGenreDetailMock.mockReturnValue({ status: "error" });
     renderPanel();
 
     expect(screen.getByRole("alert")).toHaveTextContent("could not be loaded");
@@ -114,7 +126,7 @@ describe("GenreDetailPanel", () => {
 
 
   it("opens a genre without a playlist and navigates by genre UUID", () => {
-    useFetchGenreDetailMock.mockReturnValue({ data: { ...detail, criteriaPlaylist: null }, isPending: false, isError: false });
+    useFetchGenreDetailMock.mockReturnValue({ status: "success", genre: { ...detail, criteriaPlaylist: null } });
     const onSelectGenre = vi.fn();
     renderPanel({ onSelectGenre });
     expect(screen.getByRole("complementary", { name: detail.name })).toBeInTheDocument();
@@ -125,7 +137,7 @@ describe("GenreDetailPanel", () => {
   it("replaces previous genre content with a closable loading state on navigation", () => {
     const props = { genreUuid: detail.uuid, scope: "reference" as const, getBackendBaseUrl: () => "https://b", onClose: vi.fn(), onSelectGenre: vi.fn() };
     const view = render(<GenreDetailPanel {...props} />);
-    useFetchGenreDetailMock.mockReturnValue({ data: undefined, isPending: true, isError: false });
+    useFetchGenreDetailMock.mockReturnValue({ status: "loading" });
     view.rerender(<GenreDetailPanel {...props} genreUuid={makeGenreUuid("brittany")} />);
     expect(screen.queryByText(detail.name)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Close" })).toBeInTheDocument();
@@ -165,7 +177,7 @@ describe("GenreDetailPanel", () => {
     });
 
     it("paints a white root with dark text when no tree is mounted", () => {
-      useFetchGenreDetailMock.mockReturnValue({ data: { ...detail, root: { ...root, wikidataId: "Q37073" } }, isPending: false, isError: false });
+      useFetchGenreDetailMock.mockReturnValue({ status: "success", genre: { ...detail, root: { ...root, wikidataId: "Q37073" } } });
       const panel = content();
       expect(panel.headerAccent?.background).toBe("#FFFFFF");
       expect(panel.headerAccent?.color).toBe(getTextColorOnFill("#FFFFFF"));

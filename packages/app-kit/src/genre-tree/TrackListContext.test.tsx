@@ -709,14 +709,15 @@ describe("TrackListContext", () => {
 
     it("rejects when the playlist doesn't contain startSongUuid (404)", async () => {
       const { result } = renderHook(() => useTrackList(), { wrapper });
-      // The fetch wrapper reports a backend 404 as a connectivity error and resolves null.
-      fetchMock.mockResolvedValueOnce(null);
+      // The fetch wrapper rethrows a backend 404 to its caller.
+      const notFound = new BackendError(ErrorCode.BACKEND_NOT_FOUND);
+      fetchMock.mockRejectedValueOnce(notFound);
 
       await expect(
         act(async () => {
           await result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me", { startSongUuid: "b0" });
         }),
-      ).rejects.toThrow("received null response");
+      ).rejects.toBe(notFound);
 
       expect(loadTrackForPlayerMock).not.toHaveBeenCalled();
     });

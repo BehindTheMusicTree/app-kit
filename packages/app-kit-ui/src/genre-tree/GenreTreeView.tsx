@@ -24,6 +24,7 @@ import type {
 import {
   CriteriaMinimum,
   CriteriaPlaylistSimple,
+  toGenreUuid,
   type GenreUuid,
   type ArtistSearchResult,
   type RenderSongLink,
@@ -85,8 +86,11 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   /** Controlled view mode. When provided, the internal Stacked/Wheel toggle is not rendered — the consumer owns that UI. */
   viewMode?: GenreTreeViewMode;
-  /** Selected genre entity, including genres outside the rendered tree. */
-  selectedGenreUuid?: GenreUuid | null;
+  /**
+   * Selected genre entity, including genres outside the rendered tree. A raw URL value is accepted as is:
+   * one that names no genre opens a "not found" panel.
+   */
+  selectedGenreUuid?: string | null;
   /** Called on every user-driven selection change (tree click, search pick, search clear). */
   onSelectedGenreUuidChange?: (genreUuid: GenreUuid | null) => void;
   /** Mount-only seed for the pan/zoom (wheel, pop-core and stacked views), replacing the initial fit. */
@@ -446,9 +450,10 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
 
   const treeStyles = useMemo(() => toGenreNodeStyles(relations, visibleGenrePlaylists), [relations, visibleGenrePlaylists]);
 
-  const [selectionHistory, setSelectionHistory] = useState<{ current: GenreUuid | null; previous: GenreUuid | null }>({ current: selectedGenreUuid, previous: null });
-  if (selectionHistory.current !== selectedGenreUuid) {
-    setSelectionHistory({ current: selectedGenreUuid, previous: selectionHistory.current ?? selectionHistory.previous });
+  const validSelectedGenreUuid = toGenreUuid(selectedGenreUuid);
+  const [selectionHistory, setSelectionHistory] = useState<{ current: GenreUuid | null; previous: GenreUuid | null }>({ current: validSelectedGenreUuid, previous: null });
+  if (selectionHistory.current !== validSelectedGenreUuid) {
+    setSelectionHistory({ current: validSelectedGenreUuid, previous: selectionHistory.current ?? selectionHistory.previous });
   }
   const handlePrevious = selectionHistory.previous ? () => selectGenre(selectionHistory.previous) : undefined;
 
@@ -489,7 +494,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   const canToggleSide = !readOnly && criteria !== undefined && criteria !== null && parentPlaylist !== undefined && parentPlaylist.parent === null;
   const side = criteria?.side ?? "core";
   const popSibling = canToggleSide && side === "core" ? visibleGenrePlaylists.find((sibling) => sibling.parent?.uuid === parentPlaylist.uuid && sibling.uuid !== genrePlaylist?.uuid && sibling.criteria?.side === "pop") : undefined;
-  const shareTarget: GenreTreeShareTarget | undefined = selectedGenreUuid ? { kind: "genre", genreUuid: selectedGenreUuid, name: criteria?.name ?? "Genre", scope, artistUuid } : undefined;
+  const shareTarget: GenreTreeShareTarget | undefined = validSelectedGenreUuid ? { kind: "genre", genreUuid: validSelectedGenreUuid, name: criteria?.name ?? "Genre", scope, artistUuid } : undefined;
   const shareUrl = shareTarget ? getShareUrlRef.current?.(shareTarget) ?? undefined : undefined;
   const genreContent = useGenreDetailContent<O>({
     genreUuid: selectedGenreUuid,
