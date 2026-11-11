@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [42.0.0] - 2026-11-11
+
 ### Breaking
 
 - `ArtistDetailedSchema` requires `origin` (nullable): a backend that does not send it yet fails parsing, and `ArtistDetailed` fixtures must add `origin`.
