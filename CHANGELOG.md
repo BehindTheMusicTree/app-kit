@@ -20,6 +20,8 @@ easy to spot when bumping.
 
 ### Added
 
+- `CommonsImageSchema` / `CommonsImage` (genre-tree): the Wikimedia Commons image with its attribution, generalised from the artist photo. `ArtistImageSchema` and `ArtistImage` stay as aliases. `CriteriaOverviewSchema` gains an optional nullable `image`, so hosts whose API does not send it keep validating.
+- app-kit-ui: the genre detail panel shows the overview image with an "Image: <author>, <license>" credit, above the Links section and independent of `renderSummary`. It is rendered by the new `CommonsPhoto` (`image`, `alt`, `creditLabel` defaulting to "Photo"); `ArtistPhoto` now wraps it. Covered by `CommonsPhoto.test.tsx` and `GenreDetailExtras.test.tsx`.
 - `isNotFoundError`, `resourceRetry`, `toResourceResult` and `ResourceResult` (transport) for turning a 404 on a single resource into panel state.
 - `toGenreUuid` (genre-tree) to validate a raw value as a genre uuid.
 
