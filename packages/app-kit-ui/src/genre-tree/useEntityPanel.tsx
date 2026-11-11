@@ -1,6 +1,6 @@
 "use client";
 
-import type { RenderArtistLink, RenderSongLink } from "@behindthemusictree/app-kit/genre-tree";
+import type { RenderArtistLink, RenderPlaceLink, RenderSongLink } from "@behindthemusictree/app-kit/genre-tree";
 import type { Scope } from "@behindthemusictree/app-kit/transport";
 import { useArtistPanel } from "./artist/useArtistPanel";
 import { useSongPanel, type SongGenreNavigation } from "./song/useSongPanel";
@@ -22,6 +22,7 @@ export type EntityPanelOptions = {
   getShareUrl?: GetGenreTreeShareUrl;
   renderArtistLink: RenderArtistLink;
   renderSongLink: RenderSongLink;
+  renderPlaceLink?: RenderPlaceLink;
   song: EntityPanelState;
   artist: EntityPanelState;
 } & SongGenreNavigation;
@@ -34,6 +35,7 @@ export function useEntityPanel({
   getShareUrl,
   renderArtistLink,
   renderSongLink,
+  renderPlaceLink,
   song,
   artist,
   ...navigation
@@ -53,6 +55,7 @@ export function useEntityPanel({
     getShareUrl,
     renderArtistLink,
     renderSongLink,
+    renderPlaceLink,
   });
   return songPanel ?? artistPanel;
 }

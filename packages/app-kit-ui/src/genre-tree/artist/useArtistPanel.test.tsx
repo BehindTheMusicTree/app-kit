@@ -33,6 +33,7 @@ const artist = {
   tracksCount: 3,
   playableTracksCount: 2,
   image: null,
+  origin: null,
 };
 
 function Harness({ uuid }: { uuid: string | null }) {
