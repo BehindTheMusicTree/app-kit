@@ -33,6 +33,13 @@ describe("useArtistGenreCounts", () => {
     expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
   });
 
+  it.each([[""], ["not-a-uuid"]])("is disabled for the malformed uuid %j", (bad) => {
+    renderHook(() => useArtistGenreCounts(bad, getBackendBaseUrl));
+
+    expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("fetches the artist's genre counts under a base-url-scoped key", async () => {
     renderHook(() => useArtistGenreCounts(uuid, getBackendBaseUrl));
     const options = useQueryWithParseMock.mock.calls[0][0];

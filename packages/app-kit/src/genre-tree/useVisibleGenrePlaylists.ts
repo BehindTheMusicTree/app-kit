@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { Scope } from "../transport/lib/scope";
 import { CriteriaPlaylistSimple } from "./schemas/criteria-playlist/simple";
+import { toArtistUuid } from "./schemas/ids";
 import { useArtistGenreCounts } from "./useArtistGenreCounts";
 import { useListFullGenrePlaylists } from "./useGenrePlaylist";
 import { projectGenrePlaylistsForArtist } from "./lib/project-genre-playlists-for-artist";
@@ -19,14 +20,15 @@ export interface UseVisibleGenrePlaylistsOptions {
  * carries the artist's counts and `focusUuids` names their footprint (undefined otherwise); genres
  * outside it stay navigable and renderers draw them muted. While the artist's counts load the
  * current tree stays (with the previous artist's projection) and `isFetching` is true; `isLoading`
- * is true only until the first tree arrives. If the counts fail (unknown artist, backend error) the
+ * is true only until the first tree arrives. If the counts fail (unknown or malformed artist, backend error) the
  * plain tree is served, the artist panel being where that failure is shown.
  */
 export function useVisibleGenrePlaylists({ scope, getBackendBaseUrl, artistUuid = null }: UseVisibleGenrePlaylistsOptions) {
   const { data: tree, isPending: isTreePending, isFetching: isTreeFetching, isError: isTreeError, refetch } = useListFullGenrePlaylists(scope, getBackendBaseUrl);
-  const counts = useArtistGenreCounts(artistUuid, getBackendBaseUrl);
-  const artistCounts = artistUuid !== null ? counts.data : undefined;
-  const isCountsLoading = artistUuid !== null && (counts.isPending || counts.isPlaceholderData);
+  const validArtistUuid = toArtistUuid(artistUuid);
+  const counts = useArtistGenreCounts(validArtistUuid, getBackendBaseUrl);
+  const artistCounts = validArtistUuid !== null ? counts.data : undefined;
+  const isCountsLoading = validArtistUuid !== null && (counts.isPending || counts.isPlaceholderData);
 
   const projection = useMemo<{ genrePlaylists: CriteriaPlaylistSimple[]; focusUuids: ReadonlySet<string> | undefined }>(() => {
     if (!tree) return { genrePlaylists: [], focusUuids: undefined };
