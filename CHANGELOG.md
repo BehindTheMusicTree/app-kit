@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Fixed
+
+- `ArtistOriginSchema.kind` accepts `null` (a MusicBrainz area without a type, allowed by grow-api since #464), so the artist detail no longer fails validation for such an artist. The inferred `ArtistOrigin["kind"]` type is now `string | null`; a `RenderPlaceLink` callback that reads `place.kind` as a string must handle null.
+
 ## [42.0.0] - 2026-11-11
 
 ### Breaking
