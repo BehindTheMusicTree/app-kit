@@ -17,7 +17,7 @@ export function useSongHistory(uuid: string | null, getBackendBaseUrl: () => str
     getBackendBaseUrl,
     queryKey: libraryQueryKeys.reference.songs.history(uuid),
     queryFn: (fetchBound, { signal }) =>
-      fetchBound(libraryEndpoints.reference.songs.history(uuid as string), true, false, { signal }, undefined, false, true),
+      fetchBound(libraryEndpoints.reference.songs.history(uuid as string), true, false, { signal }),
     schema: SongHistorySchema,
     enabled: active,
     context: "useSongHistory",

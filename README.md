@@ -83,8 +83,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow, including hotfixes
 ## Genre identity and selection
 
 `GenreTreeView` and `useGenreTreeViewState` accept `selectedGenreUuid` and
-`onSelectedGenreUuidChange`, both using branded `GenreUuid` values. Parse external
-IDs with `GenreUuidSchema`. Renderer node IDs and playlist UUIDs remain internal
+`onSelectedGenreUuidChange`. `selectedGenreUuid` is a raw `string | null`, so a URL
+value can be passed as is: one that names no genre shows "Genre not found" in the
+panel. `onSelectedGenreUuidChange` reports branded `GenreUuid` values. Renderer node IDs and playlist UUIDs remain internal
 visualization/playback identities; they are never selection aliases.
 
 A selected genre loads its own detail endpoint even when it has no node or

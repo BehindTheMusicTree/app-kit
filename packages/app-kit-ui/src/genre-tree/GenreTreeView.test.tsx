@@ -105,12 +105,12 @@ vi.mock("../../../app-kit/src/genre-tree/useGenre", async (importOriginal) => ({
   useFetchGenreDetail: (id: string | null) => {
     const playlists = useListFullGenrePlaylistsMock().data ?? [];
     const playlist = playlists.find((p: { criteria?: { uuid: string } }) => p.criteria?.uuid === id);
-    if (!playlist) return { data: undefined, isPending: false, isError: true };
+    if (!playlist) return { status: "not-found" };
     const parent = playlists.find((p: { uuid: string }) => p.uuid === playlist.parent?.uuid);
-    return { data: { uuid: id, name: playlist.name, root: { uuid: makeGenreUuid("root"), name: "Root", wikidataId: "Q1" },
+    return { status: "success", genre: { uuid: id, name: playlist.name, root: { uuid: makeGenreUuid("root"), name: "Root", wikidataId: "Q1" },
       parent: parent?.criteria ?? null, children: playlists.filter((p: { parent?: { uuid: string } }) => p.parent?.uuid === playlist.uuid).map((p: { criteria: unknown }) => p.criteria).filter(Boolean),
       ascendants: parent ? [{ degree: 1, ascendant: parent.criteria }] : [], criteriaPlaylist: playlist, catalogue: playlist.catalogue, tracksCount: playlist.tracksCount,
-    }, isPending: false, isError: false };
+    } };
   },
   useFetchGenreOverview: (id: string | null) => useFetchGenreOverviewMock(id),
   usePrefetchGenreOverview: () => prefetchGenreOverviewMock,
@@ -375,6 +375,14 @@ describe("GenreTreeView", () => {
     expect(first.onViewportChange).toBeUndefined();
     expect(second.defaultViewport).toBe(defaultViewport);
     expect(second.onViewportChange).toBe(onViewportChange);
+  });
+
+  it("shows the not-found panel for a selected uuid that names no genre", () => {
+    useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist({ uuid: "gp1" })], isPending: false });
+    renderView({ selectedGenreUuid: "not-a-genre" });
+
+    expect(screen.getByText("Genre not found")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it.each(["wheel", "pop-core"] as const)("forwards navigation updates in %s", (viewMode) => {

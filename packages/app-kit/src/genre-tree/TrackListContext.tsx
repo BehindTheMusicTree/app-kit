@@ -14,8 +14,7 @@ import { genreMusicQueryParams, type GenreMusicSelection } from "./lib/genre-mus
 import { usePlaybackContext } from "../transport/PlaybackContext";
 import { usePlaybackFetch } from "../transport/usePlaybackFetch";
 import { usePlaybackQuery } from "../transport/lib/use-playback-query";
-import { BackendError } from "../transport/app-errors/app-error";
-import { ErrorCode } from "../transport/app-errors/app-error-codes";
+import { isNotFoundError } from "../transport/app-errors/app-error";
 import { useSession } from "../auth/SessionContext";
 import { PaginatedResponseSchema } from "../transport/lib/paginated-response";
 import { parseWithLog } from "../transport/lib/parse-with-log";
@@ -464,7 +463,7 @@ export function TrackListProvider<T extends TrackBase>({
     if (origin instanceof TrackListOriginFromCriteriaPlaylist) {
       void playNewTrackListFromGenrePlaylist(origin.criteriaPlaylist, origin.scope, { startSongUuid: selected?.uuid, selection: origin.selection, artistUuid: origin.artistUuid })
         .catch((error: unknown) => {
-          if (error instanceof BackendError && error.code === ErrorCode.BACKEND_NOT_FOUND) {
+          if (isNotFoundError(error)) {
             return playNewTrackListFromGenrePlaylist(origin.criteriaPlaylist, origin.scope, { selection: origin.selection, artistUuid: origin.artistUuid }).catch(() => {});
           }
         });
@@ -472,7 +471,7 @@ export function TrackListProvider<T extends TrackBase>({
       const options = { ordering: origin.ordering, genreUuid: origin.genreUuid, selection: origin.selection };
       void playNewTrackListFromArtist(origin.artist, origin.scope, { ...options, startSongUuid: selected?.uuid })
         .catch((error: unknown) => {
-          if (error instanceof BackendError && error.code === ErrorCode.BACKEND_NOT_FOUND) {
+          if (isNotFoundError(error)) {
             return playNewTrackListFromArtist(origin.artist, origin.scope, options).catch(() => {});
           }
         });
@@ -480,7 +479,7 @@ export function TrackListProvider<T extends TrackBase>({
       const options = { selection: origin.selection };
       void playNewTrackListFromGenreCatalogue(origin.genre, origin.scope, { ...options, startSongUuid: selected?.uuid })
         .catch((error: unknown) => {
-          if (error instanceof BackendError && error.code === ErrorCode.BACKEND_NOT_FOUND) {
+          if (isNotFoundError(error)) {
             return playNewTrackListFromGenreCatalogue(origin.genre, origin.scope, options).catch(() => {});
           }
         });

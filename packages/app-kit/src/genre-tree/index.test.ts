@@ -42,6 +42,8 @@ describe("genre-tree barrel", () => {
   it("re-exports schemas", () => {
     expect(genreTree.UuidResourceSchema).toBeTypeOf("object");
     expect(genreTree.ArtistMinimumSchema).toBeTypeOf("object");
+    expect(genreTree.CommonsImageSchema).toBeTypeOf("object");
+    expect(genreTree.ArtistImageSchema).toBe(genreTree.CommonsImageSchema);
     expect(genreTree.AlbumMinimumSchema).toBeTypeOf("object");
     expect(genreTree.MbArtistDetailedSchema).toBeTypeOf("object");
     expect(genreTree.MbRecordingDetailedSchema).toBeTypeOf("object");

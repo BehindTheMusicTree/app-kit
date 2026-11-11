@@ -84,9 +84,10 @@ vi.mock("../../../app-kit/src/genre-tree/useGenre", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useFetchGenreDetail: (id: string | null) => {
     const playlist = playlists.find((p) => p.criteria.uuid === id);
-    return { data: playlist ? { uuid: id, name: playlist.name, root: playlist.criteria,
+    if (!playlist) return { status: "not-found" };
+    return { status: "success", genre: { uuid: id, name: playlist.name, root: playlist.criteria,
       parent: null, children: [], ascendants: [], criteriaPlaylist: playlist, tracksCount: 3,
-    } : undefined, isPending: false, isError: !playlist };
+    } };
   },
   useFetchGenreOverview: (id: string | null) => useFetchGenreOverviewMock(id),
   usePrefetchGenreOverview: () => prefetchGenreOverviewMock,

@@ -7,6 +7,7 @@ export * from "./site-urls";
 export * from "./connectivity-error-context";
 export * from "./lib/parse-with-log";
 export * from "./lib/paginated-response";
+export * from "./lib/resource-result";
 export * from "./lib/scope";
 export * from "./lib/use-query-with-parse";
 export * from "./lib/use-playback-query";

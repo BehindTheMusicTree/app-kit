@@ -11,13 +11,14 @@ import { PaginatedResponseSchema } from "../transport/lib/paginated-response";
 import { useQueryWithParse } from "../transport/lib/use-query-with-parse";
 import { useValidatedMutation } from "../transport/lib/use-validated-mutation";
 import { Scope } from "../transport/lib/scope";
+import { resourceRetry, toResourceResult, type ResourceResult } from "../transport/lib/resource-result";
 import { CriteriaDetailedSchema, CriteriaDetailed } from "./schemas/criteria/detailed";
 import { CriteriaOverviewSchema, CriteriaOverview } from "./schemas/criteria/overview";
 import { CriteriaMinimumSchema } from "./schemas/criteria/minimum";
 import { CriteriaSimpleSchema } from "./schemas/criteria/simple";
 import { CriteriaCreationSchema } from "./schemas/criteria/creation";
 import { CriteriaUpdateSchema } from "./schemas/criteria/update";
-import { GenreUuidSchema, type GenreUuid } from "./schemas/ids";
+import { GenreUuidSchema, toGenreUuid, type GenreUuid } from "./schemas/ids";
 import { genreEndpoints, genreQueryKeys, genreUpdateMutationKey } from "./api/genres";
 
 export function useListGenres(
@@ -52,26 +53,36 @@ export function useFetchGenre(scope: Scope, getBackendBaseUrl: () => string) {
   );
 }
 
+export type UseGenreResult<D extends CriteriaDetailed = CriteriaDetailed> =
+  | Exclude<ResourceResult<D>, { status: "success" }>
+  | { status: "success"; genre: D };
+
+/** `id` may be a raw URL value: a malformed uuid is not found without a request. */
 export function useFetchGenreDetail<D extends CriteriaDetailed = CriteriaDetailed>(
-  id: GenreUuid | null,
+  id: string | null,
   scope: Scope,
   getBackendBaseUrl: () => string,
   // The default only applies when D is left at its CriteriaDetailed default.
   schema: z.ZodType<D, unknown> = (scope === "reference" ? ReferenceGenreDetailedSchema : CriteriaDetailedSchema) as unknown as z.ZodType<D, unknown>,
-) {
+): UseGenreResult<D> {
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
   const queryKeys = scope === "reference" ? genreQueryKeys.reference : genreQueryKeys.me;
   const endpoints = scope === "reference" ? genreEndpoints.reference : genreEndpoints.me;
 
+  const validUuid = toGenreUuid(id);
   // Disabled queries never run queryFn, so the empty placeholder is only a stable cache key.
-  const genreUuid = id ?? ("" as GenreUuid);
-  return useQueryWithParse({
+  const genreUuid = validUuid ?? ("" as GenreUuid);
+  const { data, error, isPending } = useQueryWithParse({
     queryKey: scope === "reference" ? [...queryKeys.detail(genreUuid), getBackendBaseUrl(), "genreMusicV1"] : queryKeys.detail(genreUuid),
     queryFn: () => fetch(endpoints.detail(genreUuid), true, scope === "me"),
     schema,
     context: "useFetchGenreDetail",
-    enabled: id !== null,
+    enabled: validUuid !== null,
+    retry: resourceRetry,
   });
+
+  const result = toResourceResult({ id, isValidId: validUuid !== null, data, error, isPending });
+  return result.status === "success" ? { status: "success", genre: result.data } : result;
 }
 
 const GenreByWikidataIdSchema = PaginatedResponseSchema(CriteriaMinimumSchema);
@@ -109,6 +120,7 @@ function useGenreOverviewQueryOptions<O extends CriteriaOverview>(
         queryFn: async () =>
           parseWithLog(schema, await fetch(endpoints.overview(id), true, scope === "me"), "useFetchGenreOverview"),
         staleTime: GENRE_OVERVIEW_STALE_TIME_MS,
+        retry: resourceRetry,
       };
     },
     [fetch, scope, schema],

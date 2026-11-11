@@ -23,8 +23,11 @@ export interface UseGenreTreeViewStateOptions<O extends CriteriaOverview = Crite
   viewMode?: GenreViewMode;
   /** Projects this artist onto the tree (see `useVisibleGenrePlaylists`). */
   artistUuid?: string | null;
-  /** Entity selection is independent of the visible renderer nodes. */
-  selectedGenreUuid?: GenreUuid | null;
+  /**
+   * Entity selection is independent of the visible renderer nodes. It may be a raw URL value that names no
+   * genre (malformed or missing); the detail panel shows it as not found.
+   */
+  selectedGenreUuid?: string | null;
   onSelectedGenreUuidChange?: (genreUuid: GenreUuid | null) => void;
   criteriaOverviewSchema?: z.ZodType<O, unknown>;
 }
@@ -43,7 +46,7 @@ export interface UseGenreTreeViewStateResult {
   /** Playlists the current view mode may show: unaccepted roots and, outside stacked/outline, criteria-less playlists are hidden. */
   visibleGenrePlaylists: CriteriaPlaylistSimple[];
   groupedGenrePlaylistsByRoot: Record<string, CriteriaPlaylistSimple[]>;
-  selectedGenreUuid: GenreUuid | null;
+  selectedGenreUuid: string | null;
   selectedNodeId: string | null;
   selectGenre: (genreUuid: GenreUuid | null) => void;
   selectedGenrePlaylist: CriteriaPlaylistSimple | undefined;
@@ -76,7 +79,7 @@ export function useGenreTreeViewState<O extends CriteriaOverview = CriteriaOverv
   const [internalSelectedGenreUuid, setInternalSelectedGenreUuid] = useState<GenreUuid | null>(null);
 
   const isSelectionControlled = controlledSelectedGenreUuid !== undefined;
-  const selectedGenreUuid = isSelectionControlled ? controlledSelectedGenreUuid : internalSelectedGenreUuid;
+  const selectedGenreUuid: string | null = isSelectionControlled ? controlledSelectedGenreUuid : internalSelectedGenreUuid;
   const selectGenre = useCallback(
     (nodeId: GenreUuid | null) => {
       if (!isSelectionControlled) setInternalSelectedGenreUuid(nodeId);
