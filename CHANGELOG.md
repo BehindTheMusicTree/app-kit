@@ -23,6 +23,10 @@ easy to spot when bumping.
 - Parent popup (`ChangeParentPopup`): a **Make root** button, shown when the genre has a parent, with an inline confirm step.
 - `isRetryableError` (transport) and `AUTH_DETAIL_ERROR_CODES`: one classification of which failures a retry can fix.
 
+### Changed
+
+- `GenreDetailPanel`: the Ancestors section now ends on the selected genre (non-clickable) and draws every ancestor at the Family section's size; a long parent label in Family wraps instead of being truncated. Requires `@behindthemusictree/genre-tree-view` 10.0.0 (catalog bumped).
+
 ### Fixed
 
 - A rejected token (`AuthRequired`, BAC4010) no longer re-sends the request up to three times, re-raising the popup and clearing the session each time: `resourceRetry` skips `AuthRequired`, not-found, forbidden, bad-request, client and auth-detail errors.
