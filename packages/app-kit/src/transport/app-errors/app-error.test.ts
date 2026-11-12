@@ -55,6 +55,8 @@ describe("isRetryableError", () => {
     expect(isRetryableError(new AuthRequired(ErrorCode.BACKEND_UNAUTHORIZED))).toBe(false);
     expect(isRetryableError(new InvalidInputError(ErrorCode.BACKEND_INVALID_INPUT, {}))).toBe(false);
     expect(isRetryableError(new BackendError(ErrorCode.BACKEND_NOT_FOUND))).toBe(false);
+    expect(isRetryableError(new BackendError(ErrorCode.BACKEND_FORBIDDEN))).toBe(false);
+    expect(isRetryableError(new BackendError(ErrorCode.BACKEND_SPOTIFY_AUTHORIZATION_REQUIRED))).toBe(false);
     for (const code of AUTH_DETAIL_ERROR_CODES) {
       expect(isRetryableError(new BackendError(code))).toBe(false);
     }

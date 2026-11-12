@@ -21,7 +21,7 @@ easy to spot when bumping.
 
 ### Fixed
 
-- A rejected token (`AuthRequired`, BAC4010) no longer re-sends the request up to three times, re-raising the popup and clearing the session each time: `resourceRetry` skips `AuthRequired`, not-found, bad-request, client and auth-detail errors.
+- A rejected token (`AuthRequired`, BAC4010) no longer re-sends the request up to three times, re-raising the popup and clearing the session each time: `resourceRetry` skips `AuthRequired`, not-found, forbidden, bad-request, client and auth-detail errors.
 
 ## [42.0.2] - 2026-11-12
 

@@ -180,6 +180,14 @@ describe("TrackListContext", () => {
     });
   });
 
+  it("rejects with TracksFailureAlreadyReportedError when the request rejected with a reported AppError", async () => {
+    const { result } = renderHook(() => useTrackList(), { wrapper });
+    fetchMock.mockRejectedValueOnce(new BackendError(ErrorCode.BACKEND_UNAUTHORIZED));
+    await act(async () => {
+      await expect(result.current.playNewTrackListFromGenrePlaylist(genrePlaylist, "me")).rejects.toBeInstanceOf(TracksFailureAlreadyReportedError);
+    });
+  });
+
   it("keeps a schema failure distinct from an already-reported failure when starting from a song", async () => {
     const { result } = renderHook(() => useTrackList(), { wrapper });
     fetchMock.mockResolvedValueOnce(null);

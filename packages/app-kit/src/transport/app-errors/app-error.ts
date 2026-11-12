@@ -96,6 +96,11 @@ export const isRetryableError = (error: unknown): boolean => {
   if (error instanceof AuthRequired || error instanceof ClientError || error instanceof BadRequestError) return false;
   if (isNotFoundError(error)) return false;
   if (error instanceof BackendError && AUTH_DETAIL_ERROR_CODES.includes(error.code)) return false;
+  if (
+    error instanceof BackendError &&
+    (error.code === ErrorCode.BACKEND_FORBIDDEN || error.code === ErrorCode.BACKEND_SPOTIFY_AUTHORIZATION_REQUIRED)
+  )
+    return false;
   return true;
 };
 
