@@ -11,6 +11,14 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Breaking
+
+- `ParentChange.to` (app-kit-ui, `onParentChanged`) is now `GenreUuid | null`; `null` means the genre was made a root. Handle it before using `to`.
+
+### Added
+
+- Parent popup (`ChangeParentPopup`): a **Make root** button, shown when the genre has a parent, with an inline confirm step.
+
 ## [33.0.0] - 2026-11-05
 
 ### Breaking

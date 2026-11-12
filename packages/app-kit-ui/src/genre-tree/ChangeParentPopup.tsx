@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   CriteriaPlaylistSimple,
@@ -13,7 +13,7 @@ import type { Scope } from "@behindthemusictree/app-kit/transport";
 import BasePopup from "../popup/BasePopup";
 import GenreSearch from "./GenreSearch";
 
-export type ParentChange = { genre: GenreUuid; from: GenreUuid | null; to: GenreUuid };
+export type ParentChange = { genre: GenreUuid; from: GenreUuid | null; to: GenreUuid | null };
 
 type ChangeParentPopupProps = {
   genrePlaylist: ReparentCandidate;
@@ -38,22 +38,26 @@ export default function ChangeParentPopup({
     [genrePlaylists, genrePlaylist.uuid],
   );
 
-  const handleSelect = (newParent: ReparentCandidate) => {
+  const [confirmingRoot, setConfirmingRoot] = useState(false);
+
+  const handleMove = (to: GenreUuid | null) => {
     const genre = genrePlaylist.criteria.uuid;
     const parentPlaylistUuid = genrePlaylist.parent?.uuid;
     const from = parentPlaylistUuid
       ? (genrePlaylists.find(({ uuid }) => uuid === parentPlaylistUuid)?.criteria?.uuid ?? null)
       : null;
     mutate(
-      { uuid: genre, data: { parent: newParent.criteria.uuid } },
+      { uuid: genre, data: { parent: to } },
       {
         onSuccess: () => {
           onClose();
-          onParentChanged?.({ genre, from, to: newParent.criteria.uuid });
+          onParentChanged?.({ genre, from, to });
         },
       },
     );
   };
+
+  const handleSelect = (newParent: ReparentCandidate) => handleMove(newParent.criteria.uuid);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -68,6 +72,26 @@ export default function ChangeParentPopup({
       <p className="mb-3 text-sm text-[var(--color-text-muted)]">
         Current parent: {genrePlaylist.parent?.name ?? "none"}
       </p>
+      {genrePlaylist.parent &&
+        (confirmingRoot ? (
+          <div className="mb-3 text-sm">
+            <p className="mb-2">
+              {genrePlaylist.name} and its descendants will no longer be under {genrePlaylist.parent.name}.
+            </p>
+            <div className="flex gap-2">
+              <button type="button" disabled={isPending} onClick={() => handleMove(null)}>
+                Confirm
+              </button>
+              <button type="button" disabled={isPending} onClick={() => setConfirmingRoot(false)}>
+                Back
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button type="button" className="mb-3 text-sm underline" onClick={() => setConfirmingRoot(true)}>
+            Make root
+          </button>
+        ))}
       <div aria-busy={isPending} className={isPending ? "pointer-events-none opacity-60" : undefined}>
         <GenreSearch
           genrePlaylists={candidates}
