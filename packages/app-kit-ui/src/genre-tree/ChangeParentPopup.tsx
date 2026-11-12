@@ -10,7 +10,9 @@ import {
   useUpdateGenre,
 } from "@behindthemusictree/app-kit/genre-tree";
 import type { Scope } from "@behindthemusictree/app-kit/transport";
+import { Button } from "@behindthemusictree/ui";
 import BasePopup from "../popup/BasePopup";
+import { PopupButtons } from "../popup/PopupButtons";
 import GenreSearch from "./GenreSearch";
 
 export type ParentChange = { genre: GenreUuid; from: GenreUuid | null; to: GenreUuid | null };
@@ -78,19 +80,21 @@ export default function ChangeParentPopup({
             <p className="mb-2">
               {genrePlaylist.name} and its descendants will no longer be under {genrePlaylist.parent.name}.
             </p>
-            <div className="flex gap-2">
-              <button type="button" disabled={isPending} onClick={() => handleMove(null)}>
+            <PopupButtons alignment="left">
+              <Button disabled={isPending} onClick={() => handleMove(null)}>
                 Confirm
-              </button>
-              <button type="button" disabled={isPending} onClick={() => setConfirmingRoot(false)}>
+              </Button>
+              <Button variant="secondary" disabled={isPending} onClick={() => setConfirmingRoot(false)}>
                 Back
-              </button>
-            </div>
+              </Button>
+            </PopupButtons>
           </div>
         ) : (
-          <button type="button" className="mb-3 text-sm underline" onClick={() => setConfirmingRoot(true)}>
-            Make root
-          </button>
+          <div className="mb-3">
+            <Button variant="secondary" onClick={() => setConfirmingRoot(true)}>
+              Make root
+            </Button>
+          </div>
         ))}
       <div aria-busy={isPending} className={isPending ? "pointer-events-none opacity-60" : undefined}>
         <GenreSearch
