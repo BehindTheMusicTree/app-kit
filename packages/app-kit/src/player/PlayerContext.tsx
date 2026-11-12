@@ -217,6 +217,7 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
       audioElementRef.current = audio;
 
       audio.addEventListener("loadedmetadata", () => {
+        if (audioElementRef.current !== audio) return;
         setDuration(audio.duration);
       });
 

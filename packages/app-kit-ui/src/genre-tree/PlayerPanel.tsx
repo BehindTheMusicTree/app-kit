@@ -113,9 +113,11 @@ export default function PlayerPanel({
             <span className="min-w-0 truncate text-sm font-semibold">
               {loadedTrackTitle || lastLoadedTrackTitle}
             </span>
-            <IconButton aria-label="Close player" onClick={stop}>
-              <X aria-hidden="true" className="h-4 w-4" />
-            </IconButton>
+            {playerTrackObject && (
+              <IconButton aria-label="Close player" onClick={stop}>
+                <X aria-hidden="true" className="h-4 w-4" />
+              </IconButton>
+            )}
           </div>
           <div className="relative w-full shrink-0">
             <PlayerVideoSurface className="aspect-video w-full bg-black" />
