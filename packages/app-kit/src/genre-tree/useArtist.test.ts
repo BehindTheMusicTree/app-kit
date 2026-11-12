@@ -16,13 +16,13 @@ vi.mock("../transport/lib/use-query-with-parse", () => ({
 
 import { useArtist } from "./useArtist";
 import { ArtistDetailedSchema } from "./schemas/artist-detailed";
-import { AppError } from "../transport/app-errors/app-error";
+import { BackendError } from "../transport/app-errors/app-error";
 import { ErrorCode } from "../transport/app-errors/app-error-codes";
 
 const getBackendBaseUrl = () => "https://backend.example.com";
 const uuid = "3f0d7b1e-8a3c-4d57-9a53-2b7f4f9c0a11";
 const artist = { uuid, name: "Radiohead" };
-const notFound = new AppError(ErrorCode.BACKEND_NOT_FOUND);
+const notFound = new BackendError(ErrorCode.BACKEND_NOT_FOUND);
 
 describe("useArtist", () => {
   beforeEach(() => {
@@ -52,7 +52,7 @@ describe("useArtist", () => {
     expect(options.schema).toBe(ArtistDetailedSchema);
     expect(options.enabled).toBe(true);
     await options.queryFn();
-    expect(fetchMock).toHaveBeenCalledWith(`artists/${uuid}/`, true, false, undefined, undefined, false, true);
+    expect(fetchMock).toHaveBeenCalledWith(`artists/${uuid}/`, true, false);
   });
 
   it("reports loading, then success", () => {

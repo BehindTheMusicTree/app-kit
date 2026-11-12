@@ -1,40 +1,31 @@
 "use client";
 
-import { z } from "zod";
-
-import { AppError, ErrorCode } from "../transport/app-errors";
-import { useFetchWrapper } from "../transport/useFetchWrapper";
-import { useQueryWithParse } from "../transport/lib/use-query-with-parse";
+import { usePlaybackQuery } from "../transport/lib/use-playback-query";
+import { resourceRetry, toResourceResult, type ResourceResult } from "../transport/lib/resource-result";
 import { SongDetailedSchema, type SongDetailed } from "./schemas/song/detailed";
+import { toSongUuid } from "./schemas/ids";
 import { libraryEndpoints, libraryQueryKeys } from "./api/library";
 
-const isNotFound = (error: Error | null) => error instanceof AppError && error.code === ErrorCode.BACKEND_NOT_FOUND;
-
 export type UseSongResult =
-  | { status: "idle" }
-  | { status: "not-found" }
-  | { status: "error" }
-  | { status: "loading" }
+  | Exclude<ResourceResult<SongDetailed>, { status: "success" }>
   | { status: "success"; song: SongDetailed };
 
+/** `null` = absent (idle); any string is validated, and a malformed one is not found without a request. */
 export function useSong(uuid: string | null, getBackendBaseUrl: () => string): UseSongResult {
-  const { fetch } = useFetchWrapper(getBackendBaseUrl);
   // grow-api answers 400 to a malformed uuid; treat it as not found, and never put a raw URL value in the path.
-  const isUuid = uuid !== null && z.string().uuid().safeParse(uuid).success;
-  const { data, isPending, error } = useQueryWithParse({
-    queryKey: libraryQueryKeys.reference.songs.detail(uuid),
-    // A missing song is shown in the panel, not raised as an app-wide connectivity error.
-    queryFn: ({ signal }) =>
-      fetch(libraryEndpoints.reference.songs.detail(uuid as string), true, false, { signal }, undefined, false, true),
+  const id = toSongUuid(uuid);
+  const isUuid = id !== null;
+  const { data, isPending, error } = usePlaybackQuery({
+    getBackendBaseUrl,
+    queryKey: libraryQueryKeys.reference.songs.detail(id),
+    queryFn: (fetchBound, { signal }) =>
+      fetchBound(libraryEndpoints.reference.songs.detail(id as string), true, false, { signal }),
     schema: SongDetailedSchema,
     enabled: isUuid,
-    retry: (failureCount, retryError) => !isNotFound(retryError) && failureCount < 3,
+    retry: resourceRetry,
     context: "useSong",
   });
 
-  if (uuid === null) return { status: "idle" };
-  if (!isUuid || isNotFound(error)) return { status: "not-found" };
-  if (error) return { status: "error" };
-  if (isPending) return { status: "loading" };
-  return { status: "success", song: data };
+  const result = toResourceResult({ id: uuid, isValidId: isUuid, data, error, isPending });
+  return result.status === "success" ? { status: "success", song: result.data } : result;
 }

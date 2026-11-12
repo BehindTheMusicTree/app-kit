@@ -19,6 +19,233 @@ easy to spot when bumping.
 
 - Parent popup (`ChangeParentPopup`): a **Make root** button, shown when the genre has a parent, with an inline confirm step.
 
+### Fixed
+
+- YouTube player iframe now fills `PlayerVideoSurface` instead of using the API's 640x390 default (off-center play button, cropped video).
+
+## [42.0.1] - 2026-11-11
+
+### Fixed
+
+- `ArtistOriginSchema.kind` accepts `null` (a MusicBrainz area without a type, allowed by grow-api since #464), so the artist detail no longer fails validation for such an artist. The inferred `ArtistOrigin["kind"]` type is now `string | null`; a `RenderPlaceLink` callback that reads `place.kind` as a string must handle null.
+
+## [42.0.0] - 2026-11-11
+
+### Breaking
+
+- `ArtistDetailedSchema` requires `origin` (nullable): a backend that does not send it yet fails parsing, and `ArtistDetailed` fixtures must add `origin`.
+
+### Added
+
+- `ArtistDetailed.origin` (`ArtistOrigin | null`: place name, kind, `begin_area`/`area` source, Wikidata id, coordinates, map `regionId`), read from the artist endpoint. The artist panel shows it as "Born in" (person), "Formed in" (group) or "From" (other types or an `area` source) with the country; it replaces the "Country" field when present.
+- `RenderPlaceLink` render prop (`GenreTreeView`, `EntityDetailPanel`, `useEntityPanel`, `useArtistPanel`) renders the origin as a link to its map region; plain text when omitted or when the origin has no `regionId`.
+
+
+## [41.0.0] - 2026-11-11
+
+### Breaking
+
+- The transport rethrows a backend 404 on a GET to the caller instead of raising the global connectivity popup (BAC4040) and resolving `null`. Callers of `useFetchWrapper`/`usePlaybackFetch` that relied on the popup plus a `null` result must now catch the error (see `isNotFoundError`); other errors, and a 404 on a write, still reach the popup. This applies to every GET, so a 404 from a misrouted list, search or tree request is no longer popped either: the query reports `isError`.
+- `useFetchGenreDetail(id: string | null, ...)` returns `UseGenreResult` (`idle`, `loading`, `not-found`, `error`, or `success` with `genre`) instead of the query result, and accepts a raw URL value: a malformed uuid is `not-found` without a request, and a 404 is not retried.
+- `GenreDetailPanelProps.genreUuid` and `selectedGenreUuid` (`GenreTreeView`, `useGenreTreeViewState`) are `string` instead of `GenreUuid`. A value naming no genre renders a "Genre not found" panel that can be closed.
+- `useArtist`, `useSong`, `useArtistGenreCounts` and `useSongHistory` no longer pass `skipGlobalError`; the transport change covers them.
+
+### Added
+
+- `CommonsImageSchema` / `CommonsImage` (genre-tree): the Wikimedia Commons image with its attribution, generalised from the artist photo. `ArtistImageSchema` and `ArtistImage` stay as aliases. `CriteriaOverviewSchema` gains an optional nullable `image`, so hosts whose API does not send it keep validating.
+- app-kit-ui: the genre detail panel shows the overview image with an "Image: <author>, <license>" credit, above the Links section and independent of `renderSummary`. It is rendered by the new `CommonsPhoto` (`image`, `alt`, `creditLabel` defaulting to "Photo"); `ArtistPhoto` now wraps it. Covered by `CommonsPhoto.test.tsx` and `GenreDetailExtras.test.tsx`.
+- `isNotFoundError`, `resourceRetry`, `toResourceResult` and `ResourceResult` (transport) for turning a 404 on a single resource into panel state.
+- `toGenreUuid` (genre-tree) to validate a raw value as a genre uuid.
+- `ArtistUuidSchema`, `SongUuidSchema`, `toArtistUuid` and `toSongUuid` (genre-tree), the same for artist and song ids.
+
+### Fixed
+
+- `useArtistGenreCounts`, `useSongHistory` and `useVisibleGenrePlaylists` no longer put a raw, malformed id (e.g. `?artist=foo` or an empty value) in an API path: it is validated like `useArtist` and `useSong`, so no request is made (the 400 used to be retried three times and left the tree loading). `useArtist` and `useSong` now share the same parsers.
+
+### CI
+
+- Pin the shared release workflows to the lag-tolerant github-workflows commit 79c1362, so tag creation tolerates GitHub read-after-write delays.
+
+## [40.1.0] - 2026-11-11
+
+### Fixed
+
+- The genre detail panel colors a genre and its family from the tree again. The tree's node styles were keyed by genre playlist uuid but looked up by genre uuid, so every lookup missed and each node fell back to the root's gray (Mainstream Pop showed gray instead of white). `useGenreDetailContent` now takes `treeStyles` keyed by genre uuid, built by the new `toGenreNodeStyles`; the hook is not part of the public exports, so no consumer change. Tests use distinct playlist and genre uuids.
+
+### Changed
+
+- `ArtistSongs` no longer renders its own "Play all" button: the artist panel's action band already has Play.
+- Bumps `@behindthemusictree/genre-tree-view` to 9.2.1 (every node of the genre panel's Family section is drawn at one size, so a selected genre with no songs no longer shrinks next to its relatives).
+
+## [40.0.0] - 2026-11-10
+
+### Breaking
+
+- With an artist open, the tree is no longer pruned to their footprint: `useVisibleGenrePlaylists` and `useGenreTreeViewState` serve the whole canonical tree carrying the artist's counts (zero outside the footprint), and return the footprint as the new `focusUuids` (`undefined` without an artist). `GenreTreeView` draws every node outside it muted. Hosts that validated URL state against `genrePlaylists` now keep a genre outside the footprint instead of dropping it.
+- `pruneGenrePlaylistsForArtist` is replaced by `projectGenrePlaylistsForArtist`, which returns `{ genrePlaylists, focusUuids }` over the whole tree. The footprint is now only the genres with the artist's songs in their subtree: the Mainstream Pop root and the scene children of Core electronic are no longer kept in it, so they are muted for an artist without songs there.
+- `GenreTreeView`'s `overlayPanel.title` must be a string: like a genre's name or the artist and song panels' titles, it now fills the search field, whose "Close panel" button closes the overlay. The overlay's header no longer shows its own title or close button.
+
+### Added
+
+- `GenrePlaylistTreeWheel`, `GenrePlaylistTreeWheelRadialPopCore` and `GenrePlaylistTreePerRoot` take `focusUuids`; `toTreeNodes` sets `muted` on every node outside it, so every view mode, the stacked view included, mutes genres outside the footprint.
+
+### Fixed
+
+- HTTP 502/503/504 responses now map to `BACKEND_UNAVAILABLE` (backend scope) or `SERVICE_INTERNAL_ERROR` instead of `CLIENT_UNKNOWN`, so the global connectivity popup shows them.
+- Playing a genre playlist whose tracks fail to load now shows the error popup with the real error code and never rejects; callers use `void play(...)`. When the global connectivity popup already reports the failure, `fetchGenrePlaylistTracksPage` and `playNewTrackListFromGenrePlaylist` reject with the new `TracksFailureAlreadyReportedError` and no second popup is shown. Previously the failure surfaced only as an unhandled "ClientError: Unknown error" with no popup.
+
+### Changed
+
+- `GenrePlaylistTreeWheel` and `GenrePlaylistTreePerRoot` build their nodes with `toTreeNodes`, so they now also pass `detached`, `umbrella` and `scene`.
+- Requires `@behindthemusictree/genre-tree-view` 9.2.0 (the `muted` node flag) and `@behindthemusictree/ui` `^0.21.2`.
+- `useGenrePlaylistPlayback` (and so `GenreTreeView`, `GenreDetailPanel`, `TreeWheel`, `TreePerRoot`, `TreeWheelRadialPopCore`) now calls `usePopup`: render them inside a `PopupProvider`.
+
+## [39.0.0] - 2026-11-10
+
+### Breaking
+
+- Detail-panel content no longer carries its own horizontal margin or section-level vertical padding: the `DetailPanel` body (ui 0.21) provides both. A host `overlayPanel` that added its own margin must remove it, or the margin is applied twice. Action bands, the song history divider and the selection bar span the panel edges through `PanelBleed`.
+- `ArtistDetailed` (and `ArtistDetailedSchema`) gains a required `playableTracksCount`. The artist endpoint must send it (grow-api does), and consumers that build `ArtistDetailed` fixtures or mocks must include it.
+- Requires `@behindthemusictree/ui` 0.21.1 or later (`ActionBand`, `ActionButton`, `PanelBleed`, `PanelStack`) and `@behindthemusictree/brand` 12.12.0 or later, and `@behindthemusictree/genre-tree-view` 9.1.0 or later (`getTextColorOnFill`, white Mainstream Pop root).
+- `GenreActionBand`: `onPlayPause` and `isPlaying` are replaced by a `playActions` node rendered before the other actions.
+- `GenrePlaylistPlayback`: `playingNodeId` becomes `playing` (`{ uuid, selectionKey }`), and `play(genrePlaylist, selection?)` accepts the coverage to play.
+- `GenreInfoPanelBody`: the `countsContext` prop is removed and the "Catalogue / Playlist" count lines are replaced by Play buttons, so an artist-filtered genre panel no longer says "all artists".
+
+### Changed
+
+- The song history toggle uses the shared panel label style (`PANEL_LABEL_CLASS`), like every other panel label.
+
+### Added
+
+- `useGenreDetailContent` accepts `treeRelations`, the styles a mounted tree draws for the genre and its relatives. `GenreTreeView` passes them, so the Family and Ancestors dots take the tree's exact colors for every genre (not a pale tint of the root), and the header accent comes from one place. Without a tree, a genre falls back to its root color with readable text, so Mainstream Pop and Hyperpop show white with dark text instead of grey.
+- `ArtistDetailedSchema` carries `playableTracksCount` (songs with a genre and a playable video), served by grow-api, so the artist panel can enable or disable Play without loading the tracklist.
+- Genre, regional-genre, artist and song detail panels offer icon Play buttons in the action band, each showing its playable-song count: Genre · Canonical · Regional · All for a canonical genre, Genre · All for a regional one. The play triangle is the same on every button (filled); Canonical and Regional show the Grow tree and globe faintly behind it, All the left half of the tree and the right half of the globe. A count of 0 stays visible but disabled; an unplayable song or an artist with no playable song gets a disabled Play.
+
+## [38.0.0] - 2026-11-10
+
+### Fixed
+
+- `GenreTreeView` (`regions` placement): on desktop the search field and artist filter sit at the panel inset from the top and left edge, so the search is centered in the detail panel's header band.
+
+### Breaking
+
+- Requires `@behindthemusictree/ui` 0.20.0 or later and `@behindthemusictree/brand` 12.11.0 or later (the `text-body` and `text-caption` typographic scale).
+
+### Changed
+
+- `app-kit-ui`: popups and the genre tree use the `text-body` / `text-caption` scale instead of `text-sm` / `text-xs` and the `text-[0.8125rem]` literal. The dark player and `SharePopup`'s title keep their sizes.
+- Removed the per-repo graphify `hook-guard` in `.claude/settings.json`; the global agent-config freshness hook replaces it.
+
+## [37.1.0] - 2026-11-09
+
+### Added
+
+- `app-kit-ui/genre-tree`: `useEntityPanel` and `EntityDetailPanel` show the song or artist detail (song first) for a host without a genre tree. A song's genre opens through `onSelectGenre`, or through `getGenrePath` and `onSelectGenrePlaylist` where the tree holds it. `GenreTreeView` uses `useEntityPanel` with no change in behavior.
+
+## [37.0.0] - 2026-11-09
+
+### Breaking
+
+- `GenreDetailPanel` replaces `headerClassName` with `titleInSearch`, for hosts whose floating search field shows the genre's name and closes the panel.
+- Requires `@behindthemusictree/ui` 0.19.0 or later (`DetailPanel`'s `titleInSearch`).
+
+### Added
+
+- `GenreSearch`: `showClear` and `clearLabel`. `SearchBox`: `clearLabel`.
+- `useGenreDetailContent` returns `name`, `null` while the genre loads or fails.
+
+### Fixed
+
+- `GenreTreeView` shows a genre's name only in the search field again, without a panel close button. The search cross shows only while such a panel is open, closes it and unselects the item, and the field no longer reads "Loading genre…" or "Genre unavailable".
+
+## [36.0.0] - 2026-11-09
+
+### Breaking
+
+- `useFetchWrapper` no longer carries the playback country: `acceptRefreshedContext` is removed and its `fetch` is country-agnostic. A GET whose response depends on the viewer's playback country must use `usePlaybackFetch` (`fetchBound` for queries, `fetchLatest` for explicit play intents) or `usePlaybackQuery`. In development, a GET answered with `X-Playback-Country` through `useFetchWrapper` logs a `console.error`.
+- `UseGenreTreeViewStateResult` gains required `isError` and `refetch` fields; hosts that build their own state result must supply them.
+
+### Added
+
+- `usePlaybackFetch` and `usePlaybackQuery` (transport) bind a request to the playback context: the query key carries `playback.key`, the query waits for the context to be ready and retries once if the context changed mid-request. `useRemoteSearch` accepts a `fetch` option.
+- `useGenreTreeViewState` and `useVisibleGenrePlaylists` expose `isError` and `refetch`; `GenreTreeView` shows an error with Retry when the tree fails to load and nothing is cached.
+
+### Fixed
+
+- The genre tree no longer loads blank on first visit when the playback country resolves while the tree request is in flight. Song, song history, song search, track list, artist songs and genre playlist reads now use the explicit playback binding.
+
+## [35.0.0] - 2026-11-09
+
+### Breaking
+
+- Genre selection uses branded `GenreUuid` through `selectedGenreUuid` / `onSelectedGenreUuidChange`; remove playlist-ID aliases. Genre share targets carry `genreUuid` instead of `genrePlaylistUuid`. Hosts must migrate URL producers and consumers together.
+
+### Fixed
+
+- Load tree and standalone genre details by entity UUID, including genres absent from the rendered tree or without a playlist. Keep loading and error panels closable and reopen a collapsed panel on repeated selection.
+- Accept genre detail responses without embedded tracks or descendants; these are fetched separately.
+
+## [34.1.0] - 2026-11-08
+
+### Improved
+
+- Precompute local genre search names/trigrams, defer result ranking, and expose stable bounded indexed ranking for place and regional genre searches. Keep the unloaded lexicon identity stable across renders and isolate typing/remote search in a subtree with injectable host search groups.
+
+## [34.0.0] - 2026-11-07
+
+### Breaking
+
+- Reference genre detail/tree parsers require explicit catalogue and playlist summaries from the updated Grow API. Personal (`me`) responses retain their existing contract.
+
+### Added
+
+- Separate reference genre catalogue and playlist counts, preserve explicit subgenre selections through playback, and size artist trees from playlist membership.
+
+### Fixed
+
+- Play genre catalogue rows through the catalogue, including playable songs outside playlist membership; genre Play continues to queue playlist members.
+
+## [33.3.0] - 2026-11-07
+
+### Added
+
+- `GenreSearchResultSchema` has `wikidataId` (`string | null`), served by `genres/search/`; requires a grow-api that returns it.
+- app-kit-ui: `GenreTreeView` accepts `onSearchQueryChange(text)` and `onSearchFocus()`, and always reports the typed text, so a host can resolve its own `extraSearchGroups` (previously only when it had groups at mount).
+
+### Changed
+
+- `useRemoteSearch` replaces `keepPrevious` with `scope`: previous results stay while the next query loads only as long as the scope is unchanged.
+
+### Fixed
+
+- `useSongSearch` no longer empties its results on every keystroke while a playback key is set (`LinkSongsDialog`, tree song search): the playback key is now the scope.
+
+## [33.2.0] - 2026-11-07
+
+### Added
+
+- `useRemoteSearch`, the debounced typeahead core (`SEARCH_DEBOUNCE_MS`, `SEARCH_QUERY_MIN_LENGTH`) that `useArtistSearch`, `useSongSearch` and the new `useGenreRemoteSearch` (`genres/search/`) are built on.
+- `useRegionGenreLexicon` and `RegionGenreLexiconSchema` for `regions/map/genres/`.
+- `foldSearchText`, `trigramSimilarity` and `rankByName`: accent-folded, ranked (exact, prefix, substring, fuzzy) local matching.
+- `useSearchQueryState`, the query/selection state behind `useGenreSearch`, reusable with any result source.
+- `useSongSearch` accepts `limit`, `genre` and `playable` options.
+- app-kit-ui: `SearchBox` (a `SearchCombobox` over any number of `SearchGroup`s) with the `useArtistSearchGroup`, `useSongSearchGroup` and `useGenreRemoteSearchGroup` hooks, and `GenreTreeView` `extraSearchGroups` to add host-provided groups (e.g. places).
+
+### Changed
+
+- `searchGenrePlaylistsByName` (and so `useGenreSearch`) ranks matches and ignores accents instead of listing substring matches in tree order.
+- app-kit-ui: `GenreSearch` is built on `SearchBox`; `GenreSearchExtraGroup` is now an alias of `SearchGroup`. `GenreSearch` gains `onFocus`.
+- Require UI ^0.18.0 for the `SearchCombobox` primitive.
+
+## [33.1.0] - 2026-11-06
+
+### Added
+
+- Scope song and playlist queries to verified playback context, discard stale responses, and recover from YouTube failures with bounded video-level exclusions and explicit retry.
+
+### Changed
+
+- `GenreSearch` (app-kit-ui): the search input no longer shows the focus ring.
 ## [33.0.0] - 2026-11-05
 
 ### Breaking

@@ -6,3 +6,11 @@ globalThis.ResizeObserver ??= class {
   unobserve() {}
   disconnect() {}
 };
+
+// jsdom has no matchMedia; the animated region globe subscribes to prefers-reduced-motion.
+window.matchMedia ??= ((query: string) => ({
+  matches: false,
+  media: query,
+  addEventListener() {},
+  removeEventListener() {},
+})) as unknown as typeof window.matchMedia;

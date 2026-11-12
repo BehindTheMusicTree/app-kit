@@ -56,6 +56,7 @@ export const fetchWrapper = async <T>(
   handleError?: (error: Error) => void,
   expectBinary: boolean = false,
   backendBaseUrl?: string,
+  onResponse?: (response: Response) => void | Promise<void>,
 ): Promise<T | null> => {
   const urlWithParams = queryParams
     ? `${url}${url.includes("?") ? "&" : "?"}${new URLSearchParams(
@@ -81,9 +82,16 @@ export const fetchWrapper = async <T>(
     return null;
   }
 
+  let responseHookFailed = false;
   try {
     assertWellFormedRequest(finalUrl, finalOptions);
     const result = await fetchWithNetworkRetry(finalUrl, finalOptions);
+    try {
+      await onResponse?.(result);
+    } catch (error) {
+      responseHookFailed = true;
+      throw error;
+    }
 
     if (!result.ok) {
       const appError = await createAppErrorFromResult(result, backendBaseUrl);
@@ -100,9 +108,7 @@ export const fetchWrapper = async <T>(
       return result.json();
     }
   } catch (caughtError: unknown) {
-    // A caller that aborts its own request (React Query cancelling a superseded query) is not a
-    // connectivity failure; reporting it would raise the global offline popup.
-    if (isCallerAbort(caughtError, finalOptions.signal)) throw caughtError;
+    if (responseHookFailed || isCallerAbort(caughtError, finalOptions.signal)) throw caughtError;
     let appError: AppError | null = null;
     if (caughtError instanceof AppError) {
       appError = caughtError;

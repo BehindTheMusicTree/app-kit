@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { CriteriaPlaylistSimple } from "./schemas/criteria-playlist/simple";
-import { searchGenrePlaylistsByName } from "./lib/genre-search";
+import { useDeferredValue, useMemo } from "react";
+import { createNameIndex, rankNameIndex } from "./lib/search-text";
+import { useSearchQueryState } from "./useSearchQueryState";
 
 export interface UseGenreSearchOptions<T extends CriteriaPlaylistSimple = CriteriaPlaylistSimple> {
   genrePlaylists: T[];
@@ -23,33 +24,32 @@ export interface UseGenreSearchResult<T extends CriteriaPlaylistSimple = Criteri
   select: (genrePlaylist: T) => void;
 }
 
+/** In-memory genre search over already-loaded genre playlists. */
 export function useGenreSearch<T extends CriteriaPlaylistSimple = CriteriaPlaylistSimple>({
   genrePlaylists,
   onSelect,
   selectedName = null,
   onClear,
 }: UseGenreSearchOptions<T>): UseGenreSearchResult<T> {
-  const [query, setQuery] = useState(selectedName ?? "");
-  const [prevSelectedName, setPrevSelectedName] = useState(selectedName);
-  if (selectedName !== prevSelectedName) {
-    setPrevSelectedName(selectedName);
-    setQuery(selectedName ?? "");
-  }
-
-  const results = query !== "" && query !== selectedName ? searchGenrePlaylistsByName(genrePlaylists, query) : [];
+  const { query, setQuery, isTyping, canClear, clear, notifyPick } = useSearchQueryState({ selectedName, onClear });
+  const index = useMemo(
+    () => createNameIndex(genrePlaylists, (playlist) => playlist.name, (playlist) => playlist.viewsCount ?? 0),
+    [genrePlaylists],
+  );
+  const deferredQuery = useDeferredValue(query);
+  const results = useMemo(
+    () => isTyping ? rankNameIndex(index, deferredQuery) : [],
+    [index, deferredQuery, isTyping],
+  );
 
   return {
     query,
     setQuery,
     results,
-    canClear: query !== "" || selectedName !== null,
-    clear: () => {
-      setQuery("");
-      onClear?.();
-    },
+    canClear,
+    clear,
     select: (genrePlaylist) => {
-      // A new pick refills the query via the selectedName change; re-picking the shown genre does not change it.
-      setQuery(genrePlaylist.name === selectedName ? selectedName : "");
+      notifyPick(genrePlaylist.name);
       onSelect(genrePlaylist);
     },
   };

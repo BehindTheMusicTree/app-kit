@@ -74,13 +74,13 @@ export default function TrackUploadPopup({
               <div className="flex items-center space-x-3">
                 {getStatusIcon(item.status)}
                 <div>
-                  <div className="font-medium text-sm truncate max-w-xs" title={item.file.name}>
+                  <div className="font-medium text-body truncate max-w-xs" title={item.file.name}>
                     {item.file.name}
                   </div>
-                  <div className="text-xs text-[var(--color-neutral-500)]">{(item.file.size / 1024 / 1024).toFixed(1)} MB</div>
+                  <div className="text-caption text-[var(--color-neutral-500)]">{(item.file.size / 1024 / 1024).toFixed(1)} MB</div>
                 </div>
               </div>
-              <div className="text-sm text-[var(--color-neutral-600)]">{getStatusText(item.status)}</div>
+              <div className="text-body text-[var(--color-neutral-600)]">{getStatusText(item.status)}</div>
             </div>
 
             {item.status === "uploading" && (
@@ -93,7 +93,7 @@ export default function TrackUploadPopup({
             )}
 
             {item.status === "error" && item.error && (
-              <div className="text-[var(--color-red-500)] text-sm mt-2">
+              <div className="text-[var(--color-red-500)] text-body mt-2">
                 {item.error.name === "InvalidInputError"
                   ? "Upload failed due to invalid file data. Please check your file and try again."
                   : item.error.name === "ZodError"
@@ -106,7 +106,7 @@ export default function TrackUploadPopup({
 
         {allComplete && (
           <div className="flex justify-between items-center">
-            <div className="text-sm text-[var(--color-neutral-600)]">
+            <div className="text-body text-[var(--color-neutral-600)]">
               {successfulCount} successful, {errorCount} failed
             </div>
           </div>

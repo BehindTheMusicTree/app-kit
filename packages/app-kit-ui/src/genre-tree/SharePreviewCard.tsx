@@ -19,11 +19,11 @@ export default function SharePreviewCard({ target, url }: SharePreviewCardProps)
           <Icon aria-hidden="true" className="h-10 w-10" />
         </div>
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 p-4">
-          <span className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-muted)]">{typeLabel}</span>
+          <span className="text-caption font-medium uppercase tracking-wide text-[var(--color-text-muted)]">{typeLabel}</span>
           <span className="truncate text-base font-semibold text-[var(--color-text)]" title={target.name}>
             {target.name}
           </span>
-          <span className="truncate text-sm text-[var(--color-primary)]" title={url}>
+          <span className="truncate text-body text-[var(--color-primary)]" title={url}>
             {url}
           </span>
         </div>

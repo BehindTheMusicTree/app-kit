@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { ArtistMinimumSchema } from "./artist-minimum";
+import { CommonsImageSchema, type CommonsImage } from "./commons-image";
 import { HttpUrlSchema } from "./http-url";
 
 const ArtistMembershipSchema = z.object({
@@ -23,12 +24,16 @@ export const ARTIST_LINK_KINDS = [
   "social",
 ] as const;
 
-export const ArtistImageSchema = z.object({
-  url: HttpUrlSchema,
-  pageUrl: HttpUrlSchema,
-  author: z.string().nullable(),
-  license: z.string(),
-  licenseUrl: HttpUrlSchema.nullable(),
+export const ArtistImageSchema = CommonsImageSchema;
+
+export const ArtistOriginSchema = z.object({
+  name: z.string(),
+  kind: z.string().nullable(),
+  source: z.enum(["begin_area", "area"]),
+  wikidataId: z.string().nullable(),
+  longitude: z.number().nullable(),
+  latitude: z.number().nullable(),
+  regionId: z.string().nullable(),
 });
 
 export const ArtistDetailedSchema = z.object({
@@ -53,10 +58,13 @@ export const ArtistDetailedSchema = z.object({
     }),
   ),
   tracksCount: z.number().int(),
+  playableTracksCount: z.number().int(),
   image: ArtistImageSchema.nullable(),
+  origin: ArtistOriginSchema.nullable(),
 });
 
-export type ArtistImage = z.infer<typeof ArtistImageSchema>;
+export type ArtistImage = CommonsImage;
+export type ArtistOrigin = z.infer<typeof ArtistOriginSchema>;
 export type ArtistDetailed = z.infer<typeof ArtistDetailedSchema>;
 export type ArtistMembership = ArtistDetailed["members"][number];
 export type ArtistLink = ArtistDetailed["links"][number];

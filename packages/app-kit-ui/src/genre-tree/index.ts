@@ -13,6 +13,7 @@ export { default as GenrePlaylistTreePerRoot } from "./playlist-tree/TreePerRoot
 export type { GenrePlaylistTreePerRootProps } from "./playlist-tree/TreePerRoot";
 export { default as GenreSearch } from "./GenreSearch";
 export type { GenreSearchProps, GenreSearchExtraGroup } from "./GenreSearch";
+export * from "./search";
 export {
   GenreTreeSkeleton,
   GenreTreeWheelSkeleton,
@@ -30,3 +31,10 @@ export { default as TrackPositionPlayPause } from "./TrackPositionPlayPause";
 export type { TrackPositionPlayPauseProps } from "./TrackPositionPlayPause";
 export { default as Rating } from "./Rating";
 export type { RatingProps } from "./Rating";
+
+export type { GenreSearchGroupsProps } from "./GenreTreeSearch";
+export { useEntityPanel } from "./useEntityPanel";
+export type { EntityPanelOptions, EntityPanelState } from "./useEntityPanel";
+export { EntityDetailPanel } from "./EntityDetailPanel";
+export type { EntityDetailPanelProps } from "./EntityDetailPanel";
+export type { SongGenreNavigation } from "./song/useSongPanel";

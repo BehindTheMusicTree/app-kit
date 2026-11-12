@@ -5,6 +5,7 @@
  * Kept origins: a single track, a genre playlist, and an artist (their playable songs,
  * paged through `playNewTrackListFromArtist`).
  */
+import type { GenreMusicSelection } from "../lib/genre-music-selection";
 import { TrackBase } from "../schemas/track/base";
 import { CriteriaPlaylistMinimum } from "../schemas/criteria-playlist/minimum";
 import type { GenreUuid } from "../schemas/ids";
@@ -37,6 +38,8 @@ export class TrackListOriginFromCriteriaPlaylist extends TrackListOrigin {
     public criteriaPlaylist: CriteriaPlaylistMinimum,
     scope: Scope,
     public from?: string,
+    public selection?: GenreMusicSelection,
+    public artistUuid?: string,
   ) {
     super(TrackListOriginType.GENRE_PLAYLIST, criteriaPlaylist.name, criteriaPlaylist.uuid, scope);
   }
@@ -55,7 +58,21 @@ export class TrackListOriginFromArtist extends TrackListOrigin {
     public from?: string,
     /** Narrows the artist's songs to this genre's subtree. */
     public genreUuid?: GenreUuid,
+    public selection?: GenreMusicSelection,
   ) {
     super(TrackListOriginType.ARTIST, artist.name, artist.uuid, scope);
   }
+}
+
+export class TrackListOriginFromGenreCatalogue extends TrackListOrigin {
+  constructor(
+    public genre: { uuid: GenreUuid; name: string },
+    scope: Scope,
+    public from?: string,
+    public selection?: GenreMusicSelection,
+  ) {
+    super(TrackListOriginType.GENRE_CATALOGUE, genre.name, genre.uuid, scope);
+  }
+  readonly ordering = "title";
+  get genreUuid() { return this.genre.uuid; }
 }

@@ -4,11 +4,13 @@ import type { ReactNode } from "react";
 import { PanelSection, Skeleton } from "@behindthemusictree/ui";
 import { z } from "zod";
 
+import type { GenreMusicSelection } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaOverview } from "@behindthemusictree/app-kit/genre-tree";
 import { Scope } from "@behindthemusictree/app-kit/transport";
 import { useFetchGenreOverview } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaPlaylistMinimum, type GenreUuid } from "@behindthemusictree/app-kit/genre-tree";
 import { ClampedText } from "./ClampedText";
+import CommonsPhoto from "./CommonsPhoto";
 import { GenrePlaylistTracks, type GenrePlaylistTracksSlots } from "./GenrePlaylistTracks";
 import type { RenderSongLink } from "@behindthemusictree/app-kit/genre-tree";
 import { RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
@@ -24,7 +26,9 @@ export type GenreDetailSlots<O extends CriteriaOverview> = {
 
 export type GenreDetailExtrasProps<O extends CriteriaOverview> = GenreDetailSlots<O> & GenrePlaylistTracksSlots & {
   genreUuid: GenreUuid;
-  genrePlaylist: CriteriaPlaylistMinimum;
+  genrePlaylist: CriteriaPlaylistMinimum | null;
+  genreName?: string;
+  selection?: GenreMusicSelection;
   wikidataId?: string | null;
   scope: Scope;
   getBackendBaseUrl: () => string;
@@ -43,6 +47,8 @@ export type GenreDetailExtrasProps<O extends CriteriaOverview> = GenreDetailSlot
 export function GenreDetailExtras<O extends CriteriaOverview>({
   genreUuid,
   genrePlaylist,
+  genreName,
+  selection,
   wikidataId,
   scope,
   getBackendBaseUrl,
@@ -77,14 +83,15 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
   }
   if (!overview) return <>{family}</>;
 
-  const { summary, summarySourceUrl, essentialSongs } = overview;
+  const { summary, summarySourceUrl, essentialSongs, image } = overview;
   const wikidataUrl = wikidataId ? `https://www.wikidata.org/wiki/${encodeURIComponent(wikidataId)}` : null;
 
   return (
     <>
+      {image && <CommonsPhoto image={image} alt={overview.name} creditLabel="Image" />}
       {(summarySourceUrl || wikidataUrl) && (
         <PanelSection title="Links">
-          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-[var(--color-text)]">
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-caption text-[var(--color-text)]">
             {summarySourceUrl && (
               <a
                 href={summarySourceUrl}
@@ -114,7 +121,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
         {renderSummary ? (
           renderSummary(overview)
         ) : (
-          <ClampedText key={genreUuid} className="text-[0.8125rem] leading-[1.45] text-[var(--color-text)]">
+          <ClampedText key={genreUuid} className="text-body text-[var(--color-text)]">
             {summary ?? "—"}
           </ClampedText>
         )}
@@ -126,7 +133,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
           {renderEssentialTracks ? (
             renderEssentialTracks(overview)
           ) : essentialSongs && essentialSongs.length > 0 ? (
-            <ul className="text-[0.8125rem] leading-[1.45] text-[var(--color-text)]">
+            <ul className="text-body text-[var(--color-text)]">
               {essentialSongs.map((track) => (
                 <li key={track.uuid} className="py-1">
                   {track.title}
@@ -134,13 +141,15 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
               ))}
             </ul>
           ) : (
-            <p className="text-[0.8125rem] leading-[1.45] text-[var(--color-text)]">—</p>
+            <p className="text-body text-[var(--color-text)]">—</p>
           )}
         </PanelSection>
       )}
       <GenrePlaylistTracks
         genreUuid={genreUuid}
         genrePlaylist={genrePlaylist}
+        genreName={genreName}
+        selection={selection}
         scope={scope}
         getBackendBaseUrl={getBackendBaseUrl}
         renderArtistLink={renderArtistLink}

@@ -82,7 +82,7 @@ describe("useGenrePlaylist", () => {
       renderHook(() => useListFullGenrePlaylists("reference", getBackendBaseUrl));
       const { queryKey, enabled, queryFn } = useQueryWithParseMock.mock.calls[0][0];
 
-      expect(queryKey).toEqual(["referenceGenrePlaylists", "https://backend.example.com", "full"]);
+      expect(queryKey).toEqual(["referenceGenrePlaylists", "https://backend.example.com", "full", "genreMusicV1"]);
       expect(enabled).toBe(true);
 
       const result = await queryFn();
@@ -192,7 +192,7 @@ describe("useGenrePlaylist", () => {
       result.current.invalidateFullGenrePlaylists();
 
       expect(invalidateQueriesMock).toHaveBeenCalledWith({
-        queryKey: ["referenceGenrePlaylists", "https://backend.example.com", "full"],
+        queryKey: ["referenceGenrePlaylists", "https://backend.example.com", "full", "genreMusicV1"],
       });
     });
   });

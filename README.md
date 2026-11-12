@@ -33,6 +33,23 @@ Pieces are decoupled from any single app: `PlayerProvider` takes an injected `lo
 `useAuthCallback` takes injected pathnames and handlers, and track lists take an optional
 `renderArtistLink`.
 
+## Genre music summaries
+
+Reference genre detail and tree hooks require separate catalogue and playlist counts:
+`genreOnlyTracksCount` and `genreAndSubgenresTracksCount`. Canonical genres expose inclusive
+`canonical`, `regional`, and `all` counts; regional genres expose `all`. Inclusive counts already
+contain the genre itself, and `all` is a deduplicated union. Personal playlists retain their
+existing count contract.
+
+`GenreMusicSelection` selects `genreOnly` or `genreAndSubgenres` with a subgenre scope. Use
+`genreMusicCount` for the corresponding count and `genreMusicQueryParams` for API parameters.
+Reference playback defaults to canonical subgenres for canonical genres and all subgenres for
+regional genres. Playlist playback intersects actual members, including when filtered by artist;
+the detail panel's song list describes the catalogue. Catalogue row playback uses
+`playNewTrackListFromGenreCatalogue` (or the artist catalogue when filtered), so a playable
+catalogue song need not belong to the genre playlist. Country availability can further restrict
+the playback queue without changing global counts.
+
 ## Development
 
 ```bash
@@ -62,3 +79,22 @@ tag and publishes both packages through the existing OIDC workflow. After public
 integrate `main` back into `develop` through a PR. Do not create or push release tags locally.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow, including hotfixes.
+
+## Genre identity and selection
+
+`GenreTreeView` and `useGenreTreeViewState` accept `selectedGenreUuid` and
+`onSelectedGenreUuidChange`. `selectedGenreUuid` is a raw `string | null`, so a URL
+value can be passed as is: one that names no genre shows "Genre not found" in the
+panel. `onSelectedGenreUuidChange` reports branded `GenreUuid` values. Renderer node IDs and playlist UUIDs remain internal
+visualization/playback identities; they are never selection aliases.
+
+A selected genre loads its own detail endpoint even when it has no node or
+playlist. Family and ancestor navigation reports genre UUIDs. Genre share targets
+use `{ kind: "genre", genreUuid, name, scope }` (plus optional artist context).
+Hosts should write `?genre=<genre UUID>` consistently across views and handle old
+playlist links as unavailable entities, without reinterpreting them.
+
+Hosts injecting `SearchGroups` receive `onSelectGenre(uuid)` to open remote results
+in the current view. A geographic region is optional context, independent of the
+selected genre. Selection actions should reopen collapsed panels even when the
+UUID is unchanged.

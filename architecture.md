@@ -97,6 +97,16 @@ the root containing the resolved selected genre receives it. Hosts provide a fre
 navigation and update focus, selection, and restoration together. Restoration is silent and user
 interaction supersedes a pending request; outline ignores it.
 
+`createNameIndex` prepares folded names and trigrams once per immutable collection.
+`rankNameIndex` preserves `rankByName` ordering and supports a bounded result count.
+Rebuild the index when names or view counts change.
+
+`GenreTreeView.SearchGroups` accepts a component receiving deferred `query`, `focused`,
+and a `children(groups)` render callback. Host search hooks belong in this component
+so typing and remote search updates stay inside the search subtree. Keep the component
+identity stable; legacy `onSearchQueryChange` callbacks still notify the host and can
+therefore rerender it. Focus enables lazy data loading for the lifetime of the search.
+
 ## Cross-module coupling (why splitting is on)
 
 Several subpaths share stateful singletons across entry points even though each is built as an

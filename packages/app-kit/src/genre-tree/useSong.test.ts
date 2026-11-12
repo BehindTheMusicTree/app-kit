@@ -9,6 +9,9 @@ const { fetchMock, useQueryWithParseMock } = vi.hoisted(() => ({
 vi.mock("../transport/useFetchWrapper", () => ({
   useFetchWrapper: () => ({ fetch: fetchMock }),
 }));
+vi.mock("../transport/usePlaybackFetch", () => ({
+  usePlaybackFetch: () => ({ fetchBound: fetchMock, fetchLatest: fetchMock }),
+}));
 
 vi.mock("../transport/lib/use-query-with-parse", () => ({
   useQueryWithParse: (options: unknown) => useQueryWithParseMock(options),
@@ -16,13 +19,13 @@ vi.mock("../transport/lib/use-query-with-parse", () => ({
 
 import { useSong } from "./useSong";
 import { SongDetailedSchema } from "./schemas/song/detailed";
-import { AppError } from "../transport/app-errors/app-error";
+import { BackendError } from "../transport/app-errors/app-error";
 import { ErrorCode } from "../transport/app-errors/app-error-codes";
 
 const getBackendBaseUrl = () => "https://backend.example.com";
 const uuid = "3f0d7b1e-8a3c-4d57-9a53-2b7f4f9c0a11";
 const song = { uuid, title: "Creep" };
-const notFound = new AppError(ErrorCode.BACKEND_NOT_FOUND);
+const notFound = new BackendError(ErrorCode.BACKEND_NOT_FOUND);
 
 describe("useSong", () => {
   beforeEach(() => {
@@ -53,7 +56,7 @@ describe("useSong", () => {
     expect(options.enabled).toBe(true);
     const signal = new AbortController().signal;
     await options.queryFn({ signal });
-    expect(fetchMock).toHaveBeenCalledWith(`library/songs/${uuid}/`, true, false, { signal }, undefined, false, true);
+    expect(fetchMock).toHaveBeenCalledWith(`library/songs/${uuid}/`, true, false, { signal });
   });
 
   it("reports loading, then success", () => {

@@ -38,6 +38,24 @@ describe("fetchWrapper", () => {
     );
   });
 
+  it.each([200, 404, 500])("discards stale responses before parsing status %s or raising global errors", async (status) => {
+    const response = new Response("{}", { status });
+    const json = vi.spyOn(response, "json");
+    vi.mocked(fetch).mockResolvedValue(response);
+    const handleError = vi.fn();
+    const aborted = new DOMException("Playback context changed", "AbortError");
+    const onResponse = vi.fn(async () => { throw aborted; });
+
+    await expect(fetchWrapper(
+      "things/", false, {}, undefined, undefined, undefined, handleError, false, undefined, onResponse,
+    )).rejects.toBe(aborted);
+
+    expect(json).not.toHaveBeenCalled();
+    expect(createAppErrorFromResultMock).not.toHaveBeenCalled();
+    expect(createNetworkOrBackendErrorMock).not.toHaveBeenCalled();
+    expect(handleError).not.toHaveBeenCalled();
+  });
+
   it("returns null without reading the body for a 204 No Content response", async () => {
     const json = vi.fn();
     vi.mocked(fetch).mockResolvedValue({ ok: true, status: 204, json } as unknown as Response);
@@ -268,14 +286,14 @@ describe("fetchWrapper", () => {
   it("does not retry a GET aborted by its signal", async () => {
     const controller = new AbortController();
     controller.abort();
-    vi.mocked(fetch).mockRejectedValue(new DOMException("Aborted", "AbortError"));
-    createNetworkOrBackendErrorMock.mockReturnValue(new AppError(ErrorCode.BACKEND_AUTH_ERROR));
+    const aborted = new DOMException("Aborted", "AbortError");
+    vi.mocked(fetch).mockRejectedValue(aborted);
+    const handleError = vi.fn();
 
-    await expect(
-      fetchWrapper("things/", false, { signal: controller.signal }, undefined, undefined, undefined, vi.fn()),
-    ).rejects.toMatchObject({ name: "AbortError" });
+    await expect(fetchWrapper("things/", false, { signal: controller.signal }, undefined, undefined, undefined, handleError)).rejects.toBe(aborted);
 
     expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
+    expect(handleError).not.toHaveBeenCalled();
   });
 
   it("rethrows a caller abort without reporting it as a connectivity error", async () => {

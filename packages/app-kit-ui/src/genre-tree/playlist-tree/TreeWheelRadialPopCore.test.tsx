@@ -26,6 +26,11 @@ vi.mock("@behindthemusictree/genre-tree-view", () => ({
   },
 }));
 
+vi.mock("@behindthemusictree/app-kit/popup", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  usePopup: () => ({ showPopup: vi.fn(), hidePopup: vi.fn() }),
+}));
+
 vi.mock("@behindthemusictree/app-kit/genre-tree", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useTrackList: () => useTrackListMock(),
@@ -191,7 +196,7 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
 
   it("reports the playing node id when the track list is a genre playlist", () => {
     useTrackListMock.mockReturnValue({
-      trackList: { origin: { type: "GENRE_PLAYLIST", uuid: makeGenrePlaylistUuid("gp1") } },
+      trackList: { origin: { type: "GENRE_PLAYLIST", scope: "me", uuid: makeGenrePlaylistUuid("gp1") } },
       playNewTrackListFromGenrePlaylist: vi.fn(),
     });
     renderWheelRadialPopCore();
@@ -220,7 +225,7 @@ describe("GenrePlaylistTreeWheelRadialPopCore", () => {
       const setIsPlaying = vi.fn();
       usePlayerMock.mockReturnValue({ isPlaying: false, setIsPlaying });
       useTrackListMock.mockReturnValue({
-        trackList: { origin: { type: "GENRE_PLAYLIST", uuid: makeGenrePlaylistUuid("gp1") } },
+        trackList: { origin: { type: "GENRE_PLAYLIST", scope: "me", uuid: makeGenrePlaylistUuid("gp1") } },
         playNewTrackListFromGenrePlaylist: vi.fn(),
       });
       renderWheelRadialPopCore();

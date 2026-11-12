@@ -7,21 +7,22 @@ import { FaPlay, FaPause } from "react-icons/fa";
 import { PanelSection, RingLoader, Skeleton } from "@behindthemusictree/ui";
 
 import { useSession } from "@behindthemusictree/app-kit/auth";
-import { useFetchWrapper } from "@behindthemusictree/app-kit/transport";
+import { usePlaybackContext, usePlaybackFetch } from "@behindthemusictree/app-kit/transport";
 import { PaginatedResponseSchema } from "@behindthemusictree/app-kit/transport";
 import { parseWithLog } from "@behindthemusictree/app-kit/transport";
 import { usePlayer } from "@behindthemusictree/app-kit/player";
 import { PlayStates } from "@behindthemusictree/app-kit/player";
 import { usePopup } from "@behindthemusictree/app-kit/popup";
 import InternalErrorPopup from "../popup/InternalErrorPopup";
-import { ErrorCode } from "@behindthemusictree/app-kit/transport";
+import { AppError, ErrorCode } from "@behindthemusictree/app-kit/transport";
 import { Scope } from "@behindthemusictree/app-kit/transport";
+import { genreMusicQueryParams, type GenreMusicSelection } from "@behindthemusictree/app-kit/genre-tree";
 import { genrePlaylistQueryKeys } from "@behindthemusictree/app-kit/genre-tree";
 import { libraryEndpoints, libraryQueryKeys } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaPlaylistMinimum, type GenreUuid } from "@behindthemusictree/app-kit/genre-tree";
 import { TrackBase } from "@behindthemusictree/app-kit/genre-tree";
 import { isSong, songUnplayableReason, SongDetailedSchema } from "@behindthemusictree/app-kit/genre-tree";
-import { GenrePlaylistTracksPage, useTrackList } from "@behindthemusictree/app-kit/genre-tree";
+import { GenrePlaylistTracksPage, TracksFailureAlreadyReportedError, useTrackList } from "@behindthemusictree/app-kit/genre-tree";
 import { MusicBrainzRecordingLink } from "./MusicBrainzRecordingLink";
 import { ArtistNames, RenderArtistLink, type RenderSongLink } from "@behindthemusictree/app-kit/genre-tree";
 import { capitalize, useTrackNoun } from "@behindthemusictree/app-kit/track-noun";
@@ -62,7 +63,9 @@ export type GenrePlaylistTracksSlots = {
 
 export type GenrePlaylistTracksProps = GenrePlaylistTracksSlots & {
   genreUuid: GenreUuid;
-  genrePlaylist: CriteriaPlaylistMinimum;
+  genrePlaylist: CriteriaPlaylistMinimum | null;
+  genreName?: string;
+  selection?: GenreMusicSelection;
   scope: Scope;
   getBackendBaseUrl: () => string;
   /** When set, artist names render through it (e.g. a router `Link`). */
@@ -75,12 +78,14 @@ export type GenrePlaylistTracksProps = GenrePlaylistTracksSlots & {
 
 /**
  * "reference" lists the genre's whole songs catalogue (genre subtree), playable or not, while
- * playing goes through the playable-only playlist. Other scopes have no catalogue endpoint; their
+ * row playback uses the playable catalogue. The genre Play action uses playlist members. Other scopes have no catalogue endpoint; their
  * playlist is the catalogue (e.g. hear's uploaded tracks are always playable).
  */
 export function GenrePlaylistTracks({
   genreUuid,
   genrePlaylist,
+  genreName: selectedGenreName,
+  selection,
   scope,
   getBackendBaseUrl,
   renderArtistLink,
@@ -90,37 +95,45 @@ export function GenrePlaylistTracks({
   renderTracksToolbar,
   artist = null,
 }: GenrePlaylistTracksProps) {
-  const { fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist, playNewTrackListFromArtist } = useTrackList();
+  const { fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist, playNewTrackListFromArtist, playNewTrackListFromGenreCatalogue } = useTrackList();
   const { session, sessionRestored } = useSession();
   const { playerTrackObject, playState, handlePlayPauseAction } = usePlayer();
   const { showPopup } = usePopup();
   const trackNoun = useTrackNoun();
-  const { uuid } = genrePlaylist;
+  const uuid = genrePlaylist?.uuid;
+  const genreName = selectedGenreName ?? genrePlaylist?.name ?? "Genre";
 
-  const { fetch } = useFetchWrapper(getBackendBaseUrl);
+  const { fetchBound } = usePlaybackFetch(getBackendBaseUrl);
+  const playback = usePlaybackContext();
 
   const { data, isPending, isError, refetch, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery({
-    queryKey:
+    queryKey: [...(
       scope === "me"
-        ? genrePlaylistQueryKeys.me.tracks(uuid)
+        ? (uuid ? genrePlaylistQueryKeys.me.tracks(uuid) : ["missing-personal-genre-playlist", genreUuid])
         : artist
-          ? [...libraryQueryKeys.reference.songs.byGenre(getBackendBaseUrl(), genreUuid), "artist", artist.uuid]
-          : libraryQueryKeys.reference.songs.byGenre(getBackendBaseUrl(), genreUuid),
+          ? [...libraryQueryKeys.reference.songs.byGenre(getBackendBaseUrl(), genreUuid, selection), "artist", artist.uuid]
+          : libraryQueryKeys.reference.songs.byGenre(getBackendBaseUrl(), genreUuid, selection)
+    ), ...(playback.key ? [playback.key] : [])],
     queryFn: async ({ pageParam }): Promise<Omit<GenrePlaylistTracksPage<TrackBase>, "total" | "nextPage"> & { total: number | null; nextPage: number | string | null }> => {
-      if (scope === "me") return fetchGenrePlaylistTracksPage(uuid, scope, Number(pageParam));
-      const response = await fetch(
+      if (scope === "me") {
+        if (!uuid) throw new Error("Personal genre has no playlist");
+        return fetchGenrePlaylistTracksPage(uuid, scope, Number(pageParam));
+      }
+      const response = await fetchBound(
         libraryEndpoints.reference.songs.list(),
         true,
         false,
         {},
-        { genre: genreUuid, ...(artist && { artist: artist.uuid }), pageSize: CATALOGUE_PAGE_SIZE, withTotal: false, ...(pageParam && { cursor: pageParam }) },
+        { genre: genreUuid, ...genreMusicQueryParams(selection), ...(artist && { artist: artist.uuid }), pageSize: CATALOGUE_PAGE_SIZE, withTotal: false, ...(pageParam && { cursor: pageParam }) },
       );
       const parsed = parseWithLog(SongPageSchema, response, "GenrePlaylistTracks");
       return { tracks: parsed.results, total: parsed.overallTotal, nextPage: parsed.next ? nextCursor(parsed.next) : null };
     },
     initialPageParam: scope === "me" ? 1 : "",
     getNextPageParam: (lastPage) => lastPage.nextPage ?? undefined,
-    enabled: scope !== "me" || (sessionRestored && !!session?.accessToken),
+    enabled: playback.ready && (scope !== "me" || (uuid !== undefined && sessionRestored && !!session?.accessToken)),
+    retry: (failureCount, error) => failureCount < 1 && error instanceof DOMException && error.name === "AbortError",
+    retryDelay: 0,
   });
 
   // State, not a ref object: PanelSection unmounts its body when collapsed, so the observer must
@@ -143,11 +156,16 @@ export function GenrePlaylistTracks({
 
   const play = (startSongUuid: string) => {
     const started = artist
-      ? playNewTrackListFromArtist(artist, scope, { startSongUuid, ordering: "title", genreUuid })
-      : playNewTrackListFromGenrePlaylist(genrePlaylist, scope, { startSongUuid });
+      ? playNewTrackListFromArtist(artist, scope, {
+        startSongUuid, ordering: "title", genreUuid, ...(selection && { selection }),
+      })
+      : scope === "reference"
+        ? playNewTrackListFromGenreCatalogue({ uuid: genreUuid, name: genreName }, scope, { startSongUuid, ...(selection && { selection }) })
+        : genrePlaylist ? playNewTrackListFromGenrePlaylist(genrePlaylist, scope, { startSongUuid }) : Promise.reject(new Error("Personal genre has no playlist"));
     started.catch((error) => {
       console.error("Failed to play genre playlist:", error);
-      showPopup(<InternalErrorPopup errorCode={ErrorCode.CLIENT_UNKNOWN} />);
+      if (error instanceof TracksFailureAlreadyReportedError) return;
+      showPopup(<InternalErrorPopup errorCode={error instanceof AppError ? error.code : ErrorCode.CLIENT_UNKNOWN} />);
     });
   };
 
@@ -155,7 +173,9 @@ export function GenrePlaylistTracks({
     <PanelSection title={`${capitalize(trackNoun.plural)}${total !== undefined ? ` (${total})` : ""}`}>
       <div>
       {renderTracksToolbar?.()}
-      {isPending ? (
+      {scope === "me" && !genrePlaylist ? (
+        <p>—</p>
+      ) : isPending ? (
         <Skeleton className="h-4 w-3/4" aria-busy="true" />
       ) : isError && tracks.length === 0 ? (
         <p role="alert">
@@ -167,7 +187,7 @@ export function GenrePlaylistTracks({
       ) : tracks.length === 0 ? (
         <p>—</p>
       ) : (
-        <ul className="mt-1 max-h-64 overflow-y-auto text-[0.8125rem] leading-[1.45] [container-type:inline-size]" aria-label={`${genrePlaylist.name} ${trackNoun.plural}`}>
+        <ul className="mt-1 max-h-64 overflow-y-auto text-body [container-type:inline-size]" aria-label={`${genreName} ${trackNoun.plural}`}>
           {tracks.map((track, index) => {
             const label = track.artists?.length
               ? `${track.title} — ${track.artists.map((artist) => artist.name).join(", ")}`

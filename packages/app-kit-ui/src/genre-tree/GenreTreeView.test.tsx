@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { screen, fireEvent, act, cleanup, waitFor, within } from "@testing-library/react";
 import { render } from "../test-utils";
 import { z } from "zod";
+import { makeGenreUuid } from "@behindthemusictree/app-kit/genre-tree/testing";
 import ChangeParentPopup from "./ChangeParentPopup";
 
 const nodeStyleResolver = () => ({ fill: "#336699", textColor: "#ffffff" });
@@ -101,6 +102,16 @@ vi.mock("./artist/ArtistSongs", () => ({ default: () => <p>Songs list</p> }));
 
 vi.mock("../../../app-kit/src/genre-tree/useGenre", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
+  useFetchGenreDetail: (id: string | null) => {
+    const playlists = useListFullGenrePlaylistsMock().data ?? [];
+    const playlist = playlists.find((p: { criteria?: { uuid: string } }) => p.criteria?.uuid === id);
+    if (!playlist) return { status: "not-found" };
+    const parent = playlists.find((p: { uuid: string }) => p.uuid === playlist.parent?.uuid);
+    return { status: "success", genre: { uuid: id, name: playlist.name, root: { uuid: makeGenreUuid("root"), name: "Root", wikidataId: "Q1" },
+      parent: parent?.criteria ?? null, children: playlists.filter((p: { parent?: { uuid: string } }) => p.parent?.uuid === playlist.uuid).map((p: { criteria: unknown }) => p.criteria).filter(Boolean),
+      ascendants: parent ? [{ degree: 1, ascendant: parent.criteria }] : [], criteriaPlaylist: playlist, catalogue: playlist.catalogue, tracksCount: playlist.tracksCount,
+    } };
+  },
   useFetchGenreOverview: (id: string | null) => useFetchGenreOverviewMock(id),
   usePrefetchGenreOverview: () => prefetchGenreOverviewMock,
   useUpdateGenre: () => ({ mutate: updateGenreMock }),
@@ -178,15 +189,20 @@ function stubRaf() {
   };
 }
 
+function strGenreKey(uuid: unknown) { return typeof uuid === "string" && /^gp\d+$/.test(uuid) ? uuid.replace("gp", "c") : "c1"; }
+
 function makePlaylist(overrides: Record<string, unknown> = {}) {
+  const count = typeof overrides.tracksCount === "number" ? overrides.tracksCount : 3;
   return {
     uuid: "gp1",
     name: "Jazz",
     root: { uuid: "root1" },
     parent: null,
     tracksCount: 3,
+    genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: count, regional: 0, all: count },
+    catalogue: { genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: count, regional: 0, all: count } },
     viewsCount: 0,
-    criteria: { uuid: "c1", name: "Jazz" },
+    criteria: { uuid: makeGenreUuid(strGenreKey(overrides.uuid)), name: "Jazz" },
     isUnacceptedRoot: false,
     ...overrides,
   };
@@ -242,6 +258,57 @@ describe("GenreTreeView", () => {
       "w-full",
       "relative",
     );
+  });
+
+  it("shows an error with Retry instead of an empty tree when the tree fails to load", () => {
+    const refetch = vi.fn();
+    useListFullGenrePlaylistsMock.mockReturnValue({ data: undefined, isPending: false, isError: true, refetch });
+    renderView();
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Couldn't load the genre tree.");
+    expect(screen.queryByTestId("genre-tree-wheel-skeleton")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Add root" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps a host overlayPanel's own close button while the search field is hidden by a load error", () => {
+    useListFullGenrePlaylistsMock.mockReturnValue({ data: undefined, isPending: false, isError: true, refetch: vi.fn() });
+    renderView({ overlayPanel: { title: "About", content: <p>About body</p>, onClose: vi.fn() } });
+
+    expect(screen.queryByRole("combobox", { name: "Search" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Close" })).toBeInTheDocument();
+  });
+
+  it("reports the typed search text and focus to the host", () => {
+    const onSearchQueryChange = vi.fn();
+    const onSearchFocus = vi.fn();
+    renderView({ onSearchQueryChange, onSearchFocus });
+
+    const input = screen.getByRole("combobox");
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: "bossa" } });
+
+    expect(onSearchFocus).toHaveBeenCalled();
+    expect(onSearchQueryChange).toHaveBeenCalledWith("bossa");
+  });
+
+  it("keeps host search groups and typing updates inside the search subtree", async () => {
+    const queries: string[] = [];
+    function Groups({ query, children }: { query: string; children: (groups: import("./search").SearchGroup[]) => ReactNode }) {
+      queries.push(query);
+      return children([]);
+    }
+    renderView({ SearchGroups: Groups });
+    treePerRootPropsMock.mockClear();
+    treeWheelPropsMock.mockClear();
+    treeWheelRadialPopCorePropsMock.mockClear();
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "bossa" } });
+    await waitFor(() => expect(queries).toContain("bossa"));
+    expect(treePerRootPropsMock).not.toHaveBeenCalled();
+    expect(treeWheelPropsMock).not.toHaveBeenCalled();
+    expect(treeWheelRadialPopCorePropsMock).not.toHaveBeenCalled();
   });
 
   it("calls handleGenreCreationAction(null) when Add root is clicked", () => {
@@ -300,7 +367,7 @@ describe("GenreTreeView", () => {
     });
     const defaultViewport = { x: 10, y: 20, zoom: 1.5 };
     const onViewportChange = vi.fn();
-    renderView({ selectedNodeId: "gp2", defaultViewport, onViewportChange });
+    renderView({ selectedGenreUuid: makeGenreUuid("c2"), defaultViewport, onViewportChange });
     fireEvent.click(screen.getByRole("button", { name: "Stacked" }));
 
     const [first, second] = treePerRootPropsMock.mock.calls.slice(-2).map(([p]) => p);
@@ -310,16 +377,24 @@ describe("GenreTreeView", () => {
     expect(second.onViewportChange).toBe(onViewportChange);
   });
 
+  it("shows the not-found panel for a selected uuid that names no genre", () => {
+    useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist({ uuid: "gp1" })], isPending: false });
+    renderView({ selectedGenreUuid: "not-a-genre" });
+
+    expect(screen.getByText("Genre not found")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it.each(["wheel", "pop-core"] as const)("forwards navigation updates in %s", (viewMode) => {
     useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" } })], isPending: false });
     const viewportRestore = { viewport: { x: 10, y: 20, zoom: 2 }, revision: "first" };
     const onFocusGenreChange = vi.fn();
     const base = { scope: "me" as const, handleGenreCreationAction: vi.fn(), handleGenreRenameAction: vi.fn(), getBackendBaseUrl, artistSearch: false as const, viewMode, onFocusGenreChange };
-    const view = render(<GenreTreeView {...base} focusGenreUuid={null} selectedNodeId={null} viewportRestore={viewportRestore} />);
+    const view = render(<GenreTreeView {...base} focusGenreUuid={null} selectedGenreUuid={null} viewportRestore={viewportRestore} />);
     const calls = viewMode === "wheel" ? treeWheelPropsMock : treeWheelRadialPopCorePropsMock;
     expect(calls.mock.calls.at(-1)?.[0].viewportRestore).toBe(viewportRestore);
     const next = { viewport: { x: 3, y: 4, zoom: 1 }, revision: "second" };
-    view.rerender(<GenreTreeView {...base} focusGenreUuid="gp1" selectedNodeId="gp1" viewportRestore={next} />);
+    view.rerender(<GenreTreeView {...base} focusGenreUuid="gp1" selectedGenreUuid={makeGenreUuid("c1")} viewportRestore={next} />);
     const props = calls.mock.calls.at(-1)?.[0];
     expect(props.viewportRestore).toBe(next);
     expect(props.selectedNodeId).toBe("gp1");
@@ -328,7 +403,7 @@ describe("GenreTreeView", () => {
 
   it("keeps a stacked request pending until its selected root resolves", () => {
     const viewportRestore = { viewport: { x: 1, y: 2, zoom: 1 }, revision: 7 };
-    const props = { scope: "me" as const, handleGenreCreationAction: vi.fn(), handleGenreRenameAction: vi.fn(), getBackendBaseUrl, artistSearch: false as const, viewMode: "stacked" as const, selectedNodeId: "gp2", viewportRestore };
+    const props = { scope: "me" as const, handleGenreCreationAction: vi.fn(), handleGenreRenameAction: vi.fn(), getBackendBaseUrl, artistSearch: false as const, viewMode: "stacked" as const, selectedGenreUuid: makeGenreUuid("c2"), viewportRestore };
     useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist({ uuid: "gp1", root: { uuid: "root1" } })], isPending: false });
     const view = render(<GenreTreeView {...props} />);
     expect(treePerRootPropsMock.mock.calls.at(-1)?.[0].viewportRestore).toBeUndefined();
@@ -337,10 +412,10 @@ describe("GenreTreeView", () => {
     const [first, second] = treePerRootPropsMock.mock.calls.slice(-2).map(([p]) => p);
     expect(first.viewportRestore).toBeUndefined();
     expect(second.viewportRestore).toBe(viewportRestore);
-    view.rerender(<GenreTreeView {...props} selectedNodeId="gp1" />);
+    view.rerender(<GenreTreeView {...props} selectedGenreUuid={makeGenreUuid("c1")} />);
     expect(treePerRootPropsMock.mock.calls.slice(-2).every(([p]) => p.viewportRestore === undefined)).toBe(true);
     const next = { ...viewportRestore, revision: 8 };
-    view.rerender(<GenreTreeView {...props} selectedNodeId="gp1" viewportRestore={next} />);
+    view.rerender(<GenreTreeView {...props} selectedGenreUuid={makeGenreUuid("c1")} viewportRestore={next} />);
     expect(treePerRootPropsMock.mock.calls.at(-2)?.[0].viewportRestore).toBe(next);
 
   });
@@ -437,7 +512,7 @@ describe("GenreTreeView", () => {
     it("keeps the tree mounted and turns busy on while an artist's counts load", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({ data: [makePlaylist()], isPending: false, isFetching: false });
       useArtistGenreCountsMock.mockReturnValue({ data: undefined, isPending: true, isError: false });
-      renderView({ viewMode: "wheel", artistUuid: "a1" });
+      renderView({ viewMode: "wheel", artistUuid: "3f0d7b1e-8a3c-4d57-9a53-2b7f4f9c0a11" });
 
       expect(screen.getByTestId("tree-wheel")).toBeInTheDocument();
       expect(lastWheelProps().genrePlaylists).toHaveLength(1);
@@ -521,7 +596,7 @@ describe("GenreTreeView", () => {
 
   it("renders the danger zone and the expanded state in the genre panel", () => {
     useListFullGenrePlaylistsMock.mockReturnValue({
-      data: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } })],
+      data: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: makeGenreUuid("c1"), name: "Jazz" } })],
       isPending: false,
     });
     const onExpandedChange = vi.fn();
@@ -609,13 +684,13 @@ describe("GenreTreeView", () => {
     });
 
     describe("detail edge tab", () => {
-      const tabProps = { placement: "regions", selectedNodeId: "gp1" } as const;
+      const tabProps = { placement: "regions", selectedGenreUuid: makeGenreUuid("c1") } as const;
 
       it("is absent without a selection or outside regions placement", () => {
         renderView({ placement: "regions", onCollapsedChange: vi.fn() });
         expect(screen.queryByRole("button", { name: "Hide panel" })).not.toBeInTheDocument();
         cleanup();
-        renderView({ selectedNodeId: "gp1", onCollapsedChange: vi.fn() });
+        renderView({ selectedGenreUuid: makeGenreUuid("c1"), onCollapsedChange: vi.fn() });
         expect(screen.queryByRole("button", { name: "Hide panel" })).not.toBeInTheDocument();
       });
 
@@ -627,16 +702,16 @@ describe("GenreTreeView", () => {
           vi.unstubAllGlobals();
         });
 
-        it("stays hidden while the genre playlists load", () => {
+        it("opens the selected entity while the genre playlists load", () => {
           useListFullGenrePlaylistsMock.mockReturnValue({ data: undefined, isPending: true });
           renderView({ ...tabProps, viewMode: "stacked" });
-          expect(screen.queryByLabelText("Hide panel")).not.toBeInTheDocument();
+          expect(screen.getByLabelText("Hide panel")).toBeInTheDocument();
         });
 
-        it("fades in with the wheel only after its handoff reveals it", () => {
+        it("opens the selected entity before the wheel handoff", () => {
           const raf = stubRaf();
           renderView({ ...tabProps, viewMode: "wheel" });
-          expect(tabWrapper()).toHaveAttribute("data-collapsed", "true");
+          expect(tabWrapper()).toHaveAttribute("data-collapsed", "false");
           act(() => {
             raf.flush();
             raf.flush();
@@ -1249,31 +1324,25 @@ describe("GenreTreeView", () => {
 
     function sectionOrder() {
       const labels = ["Essential tracks", "Summary", "Family", "Ancestors"];
-      // A PanelSection title sits in a button next to its chevron icon; the other titles are plain leaves.
-      return Array.from(document.body.querySelectorAll("*"))
-        .filter((el) => {
-          const ownText = Array.from(el.childNodes)
-            .filter((node) => node.nodeType === Node.TEXT_NODE)
-            .map((node) => node.textContent)
-            .join("");
-          return labels.includes(ownText);
-        })
-        .map((el) => el.textContent);
+      return labels.flatMap((label) => screen.queryAllByText(label, { exact: true }))
+        .sort((a, b) => a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1)
+        .map((element) => element.textContent);
     }
 
     function mockOverview(overviews: Record<string, Record<string, unknown>>) {
-      useFetchGenreOverviewMock.mockImplementation((id: string | null) =>
-        id !== null && overviews[id]
-          ? { data: { uuid: id, name: "", summary: null, ...overviews[id] }, isPending: false }
-          : { data: undefined, isPending: false },
-      );
+      useFetchGenreOverviewMock.mockImplementation((id: string | null) => {
+        const overview = Object.entries(overviews).find(([key]) => makeGenreUuid(key) === id)?.[1];
+        return overview
+          ? { data: { uuid: id, name: "", summary: null, ...overview }, isPending: false }
+          : { data: undefined, isPending: false };
+      });
     }
 
     beforeEach(() => {
       useListFullGenrePlaylistsMock.mockReturnValue({
         data: [
-          makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } }),
-          makePlaylist({ uuid: "gp2", criteria: { uuid: "c2", name: "Blues" } }),
+          makePlaylist({ uuid: "gp1", criteria: { uuid: makeGenreUuid("c1"), name: "Jazz" } }),
+          makePlaylist({ uuid: "gp2", criteria: { uuid: makeGenreUuid("c2"), name: "Blues" } }),
           makePlaylist({ uuid: "gp3", criteria: null }),
         ],
         isPending: false,
@@ -1284,7 +1353,7 @@ describe("GenreTreeView", () => {
       renderView();
       selectGenre();
 
-      expect(useFetchGenreOverviewMock).toHaveBeenCalledWith("c1");
+      expect(useFetchGenreOverviewMock).toHaveBeenCalledWith(makeGenreUuid("c1"));
     });
 
     it("keeps Family and Ancestors for a genre with no overview", () => {
@@ -1306,12 +1375,12 @@ describe("GenreTreeView", () => {
     it("places Ancestors right after Family for a genre with an ancestor", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
         data: [
-          makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } }),
+          makePlaylist({ uuid: "gp1", criteria: { uuid: makeGenreUuid("c1"), name: "Jazz" } }),
           makePlaylist({
             uuid: "gp4",
             root: { uuid: "gp1" },
             parent: { uuid: "gp1" },
-            criteria: { uuid: "c4", name: "Bebop" },
+            criteria: { uuid: makeGenreUuid("c4"), name: "Bebop" },
           }),
         ],
         isPending: false,
@@ -1320,6 +1389,10 @@ describe("GenreTreeView", () => {
       renderView();
       selectGenre("gp4");
 
+      expect(sectionOrder()).toEqual(["Summary", "Family", "Ancestors", "Essential tracks"]);
+      fireEvent.click(screen.getByRole("button", { name: "Extend panel" }));
+      expect(sectionOrder()).toEqual(["Ancestors", "Summary", "Family", "Essential tracks"]);
+      fireEvent.click(screen.getByRole("button", { name: "Shrink panel" }));
       expect(sectionOrder()).toEqual(["Summary", "Family", "Ancestors", "Essential tracks"]);
     });
 
@@ -1417,8 +1490,8 @@ describe("GenreTreeView", () => {
       vi.useFakeTimers();
       useListFullGenrePlaylistsMock.mockReturnValue({
         data: [
-          makePlaylist({ uuid: "gp1", criteria: { uuid: "c1", name: "Jazz" } }),
-          makePlaylist({ uuid: "gp2", criteria: { uuid: "c2", name: "Blues" } }),
+          makePlaylist({ uuid: "gp1", criteria: { uuid: makeGenreUuid("c1"), name: "Jazz" } }),
+          makePlaylist({ uuid: "gp2", criteria: { uuid: makeGenreUuid("c2"), name: "Blues" } }),
           makePlaylist({ uuid: "gp3", criteria: null }),
         ],
         isPending: false,
@@ -1441,7 +1514,7 @@ describe("GenreTreeView", () => {
       expect(prefetchGenreOverviewMock).not.toHaveBeenCalled();
       vi.advanceTimersByTime(100);
 
-      expect(prefetchGenreOverviewMock).toHaveBeenCalledExactlyOnceWith("c1");
+      expect(prefetchGenreOverviewMock).toHaveBeenCalledExactlyOnceWith(makeGenreUuid("c1"));
     });
 
     it("only prefetches the last node when the pointer sweeps across rows", () => {
@@ -1453,7 +1526,7 @@ describe("GenreTreeView", () => {
       hover("gp2");
       vi.advanceTimersByTime(100);
 
-      expect(prefetchGenreOverviewMock).toHaveBeenCalledExactlyOnceWith("c2");
+      expect(prefetchGenreOverviewMock).toHaveBeenCalledExactlyOnceWith(makeGenreUuid("c2"));
     });
 
     it("doesn't prefetch a node with no associated criteria", () => {
@@ -1500,13 +1573,13 @@ describe("GenreTreeView", () => {
   describe("genre search", () => {
     it("selecting a search result updates the info panel the same way a node click does", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } })],
+        data: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: makeGenreUuid("c1"), name: "Jazz" } })],
         isPending: false,
       });
       useFetchGenreOverviewMock.mockImplementation((id: string | null) =>
-        id === "c1"
+        id === makeGenreUuid("c1")
           ? {
-              data: { uuid: "c1", name: "Jazz", summary: "Improvised music with swung rhythms.", essentialSongs: [] },
+              data: { uuid: makeGenreUuid("c1"), name: "Jazz", summary: "Improvised music with swung rhythms.", essentialSongs: [] },
               isPending: false,
             }
           : { data: undefined, isPending: false },
@@ -1525,7 +1598,7 @@ describe("GenreTreeView", () => {
 
     it("passes the selected node id through to the active tree renderer for highlighting", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } })],
+        data: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: makeGenreUuid("c1"), name: "Jazz" } })],
         isPending: false,
       });
       renderView();
@@ -1541,7 +1614,7 @@ describe("GenreTreeView", () => {
 
     it("fills the search bar with the selected genre's name and clears everything on ✕", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } })],
+        data: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: makeGenreUuid("c1"), name: "Jazz" } })],
         isPending: false,
       });
       renderView();
@@ -1554,10 +1627,23 @@ describe("GenreTreeView", () => {
       expect(input).toHaveValue("Jazz");
       expect(screen.queryByRole("button", { name: "Close" })).not.toBeInTheDocument();
 
-      fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
+      fireEvent.click(screen.getByRole("button", { name: "Close panel" }));
 
       expect(input).toHaveValue("");
       expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].selectedNodeId).toBeNull();
+    });
+
+    it("offers the close cross only while a panel is open", () => {
+      useListFullGenrePlaylistsMock.mockReturnValue({
+        data: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: makeGenreUuid("c1"), name: "Jazz" } })],
+        isPending: false,
+      });
+      renderView();
+      fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
+
+      fireEvent.change(screen.getByRole("combobox", { name: "Search" }), { target: { value: "Ja" } });
+
+      expect(screen.queryByRole("button", { name: "Close panel" })).not.toBeInTheDocument();
     });
 
     function openBand(id: string) {
@@ -1567,7 +1653,7 @@ describe("GenreTreeView", () => {
     }
 
     it("plays the selected genre from the action band's Play button", () => {
-      const jazz = makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } });
+      const jazz = makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: makeGenreUuid("c1"), name: "Jazz" } });
       useListFullGenrePlaylistsMock.mockReturnValue({ data: [jazz], isPending: false });
       renderView();
       fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
@@ -1575,22 +1661,22 @@ describe("GenreTreeView", () => {
       fireEvent.change(screen.getByRole("combobox", { name: "Search" }), { target: { value: "Ja" } });
       fireEvent.mouseDown(screen.getByRole("option", { name: "Jazz" }));
       openBand("gp1");
-      fireEvent.click(screen.getByRole("button", { name: "Play" }));
+      fireEvent.click(screen.getByRole("button", { name: /^Canonical3/ }));
 
       expect(playNewTrackListFromGenrePlaylistMock).toHaveBeenCalledWith(jazz, "me");
     });
 
     it("pauses instead of reloading when the selected genre is already the playing tracklist", () => {
-      const jazz = makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } });
+      const jazz = makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: makeGenreUuid("c1"), name: "Jazz" } });
       useListFullGenrePlaylistsMock.mockReturnValue({ data: [jazz], isPending: false });
-      trackListState.value = { origin: { type: "GENRE_PLAYLIST", uuid: "gp1" } };
+      trackListState.value = { origin: { type: "GENRE_PLAYLIST", uuid: "gp1", scope: "me" } };
       renderView();
       fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
 
       fireEvent.change(screen.getByRole("combobox", { name: "Search" }), { target: { value: "Ja" } });
       fireEvent.mouseDown(screen.getByRole("option", { name: "Jazz" }));
       openBand("gp1");
-      fireEvent.click(screen.getByRole("button", { name: "Play" }));
+      fireEvent.click(screen.getByRole("button", { name: /^Canonical3/ }));
 
       expect(setIsPlayingMock).toHaveBeenCalledWith(true);
       expect(playNewTrackListFromGenrePlaylistMock).not.toHaveBeenCalled();
@@ -1598,7 +1684,7 @@ describe("GenreTreeView", () => {
     });
 
     it("logs when loading the genre playlist tracks fails", async () => {
-      const jazz = makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } });
+      const jazz = makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: makeGenreUuid("c1"), name: "Jazz" } });
       useListFullGenrePlaylistsMock.mockReturnValue({ data: [jazz], isPending: false });
       const failure = new Error("boom");
       playNewTrackListFromGenrePlaylistMock.mockRejectedValueOnce(failure);
@@ -1609,19 +1695,19 @@ describe("GenreTreeView", () => {
       fireEvent.change(screen.getByRole("combobox", { name: "Search" }), { target: { value: "Ja" } });
       fireEvent.mouseDown(screen.getByRole("option", { name: "Jazz" }));
       openBand("gp1");
-      fireEvent.click(screen.getByRole("button", { name: "Play" }));
+      fireEvent.click(screen.getByRole("button", { name: /^Canonical3/ }));
 
       await waitFor(() => expect(errorSpy).toHaveBeenCalledWith("Failed to load genre playlist tracks:", failure));
       errorSpy.mockRestore();
     });
 
     it("zooms from the action band in pop-core when the selected genre has children", () => {
-      const parent = makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" }, criteria: { uuid: "c1", name: "Mainstream Pop" } });
+      const parent = makePlaylist({ uuid: "gp1", name: "Mainstream Pop", root: { uuid: "gp1" }, criteria: { uuid: makeGenreUuid("c1"), name: "Mainstream Pop" } });
       const child = makePlaylist({
         uuid: "gp2",
         name: "Bebop",
         parent: { uuid: "gp1" },
-        criteria: { uuid: "c2", name: "Bebop", side: "pop" },
+        criteria: { uuid: makeGenreUuid("c2"), name: "Bebop", side: "pop" },
       });
       useListFullGenrePlaylistsMock.mockReturnValue({ data: [parent, child], isPending: false });
       const onFocusGenreChange = vi.fn();
@@ -1635,7 +1721,7 @@ describe("GenreTreeView", () => {
     });
 
     it("wires the action band's Add, Rename and Parent actions to the host callbacks", () => {
-      const jazz = makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } });
+      const jazz = makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: makeGenreUuid("c1"), name: "Jazz" } });
       useListFullGenrePlaylistsMock.mockReturnValue({ data: [jazz], isPending: false });
       const props = renderView();
       fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
@@ -1651,8 +1737,8 @@ describe("GenreTreeView", () => {
     });
 
     describe("change parent popup", () => {
-      const jazz = makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } });
-      const rock = makePlaylist({ uuid: "gp3", name: "Rock", criteria: { uuid: "c3", name: "Rock" } });
+      const jazz = makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: makeGenreUuid("c1"), name: "Jazz" } });
+      const rock = makePlaylist({ uuid: "gp3", name: "Rock", criteria: { uuid: makeGenreUuid("c3"), name: "Rock" } });
 
       it("shows the popup through the popup context", () => {
         useListFullGenrePlaylistsMock.mockReturnValue({ data: [jazz, rock], isPending: false });
@@ -1695,24 +1781,24 @@ describe("GenreTreeView", () => {
     });
 
     describe("side toggle", () => {
-      const root = makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } });
+      const root = makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: makeGenreUuid("c1"), name: "Jazz" } });
       const bebop = makePlaylist({
         uuid: "gp2",
         name: "Bebop",
         parent: { uuid: "gp1" },
-        criteria: { uuid: "c2", name: "Bebop", side: "core" },
+        criteria: { uuid: makeGenreUuid("c2"), name: "Bebop", side: "core" },
       });
       const smoothJazz = makePlaylist({
         uuid: "gp3",
         name: "Smooth Jazz",
         parent: { uuid: "gp1" },
-        criteria: { uuid: "c3", name: "Smooth Jazz", side: "pop" },
+        criteria: { uuid: makeGenreUuid("c3"), name: "Smooth Jazz", side: "pop" },
       });
       const hardBop = makePlaylist({
         uuid: "gp4",
         name: "Hard Bop",
         parent: { uuid: "gp2" },
-        criteria: { uuid: "c4", name: "Hard Bop" },
+        criteria: { uuid: makeGenreUuid("c4"), name: "Hard Bop" },
       });
 
       function openWheelBand(nodeId: string, props: Parameters<typeof renderView>[0] = {}) {
@@ -1726,7 +1812,7 @@ describe("GenreTreeView", () => {
         openWheelBand("gp3");
         fireEvent.click(screen.getByRole("button", { name: "Make core" }));
 
-        expect(updateGenreMock).toHaveBeenCalledWith({ uuid: "c3", data: { side: "core" } });
+        expect(updateGenreMock).toHaveBeenCalledWith({ uuid: makeGenreUuid("c3"), data: { side: "core" } });
       });
 
       it("disables Make pop when the root already has a pop child", () => {
@@ -1744,7 +1830,7 @@ describe("GenreTreeView", () => {
         openBand("gp2");
         fireEvent.click(screen.getByRole("button", { name: "Make pop" }));
 
-        expect(updateGenreMock).toHaveBeenCalledWith({ uuid: "c2", data: { side: "pop" } });
+        expect(updateGenreMock).toHaveBeenCalledWith({ uuid: makeGenreUuid("c2"), data: { side: "pop" } });
       });
 
       it("is hidden for roots and deeper descendants", () => {
@@ -1777,8 +1863,8 @@ describe("GenreTreeView", () => {
     it("returns to the previously selected genre from the search field's Previous button", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
         data: [
-          makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } }),
-          makePlaylist({ uuid: "gp2", name: "Blues", criteria: { uuid: "c2", name: "Blues" } }),
+          makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: makeGenreUuid("c1"), name: "Jazz" } }),
+          makePlaylist({ uuid: "gp2", name: "Blues", criteria: { uuid: makeGenreUuid("c2"), name: "Blues" } }),
         ],
         isPending: false,
       });
@@ -1796,12 +1882,12 @@ describe("GenreTreeView", () => {
     it("follows a controlled selectedNodeId and reports user selections without owning them", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
         data: [
-          makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } }),
-          makePlaylist({ uuid: "gp2", name: "Blues", criteria: { uuid: "c2", name: "Blues" } }),
+          makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: makeGenreUuid("c1"), name: "Jazz" } }),
+          makePlaylist({ uuid: "gp2", name: "Blues", criteria: { uuid: makeGenreUuid("c2"), name: "Blues" } }),
         ],
         isPending: false,
       });
-      const onSelectedNodeIdChange = vi.fn();
+      const onSelectedGenreUuidChange = vi.fn();
       const props: GenreTreeViewProps = {
         scope: "me",
         handleGenreCreationAction: vi.fn(),
@@ -1809,8 +1895,8 @@ describe("GenreTreeView", () => {
         getBackendBaseUrl,
         artistSearch: false,
         viewMode: "wheel",
-        selectedNodeId: "gp1",
-        onSelectedNodeIdChange,
+        selectedGenreUuid: makeGenreUuid("c1"),
+        onSelectedGenreUuidChange,
       };
       const { rerender } = render(<GenreTreeView {...props} />);
       const input = screen.getByRole("combobox", { name: "Search" });
@@ -1822,10 +1908,10 @@ describe("GenreTreeView", () => {
         treeWheelPropsMock.mock.calls.at(-1)?.[0].onSelectedNodeChange({ id: "gp2" });
       });
 
-      expect(onSelectedNodeIdChange).toHaveBeenCalledWith("gp2");
+      expect(onSelectedGenreUuidChange).toHaveBeenCalledWith(makeGenreUuid("c2"));
       expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].selectedNodeId).toBe("gp1");
 
-      rerender(<GenreTreeView {...props} selectedNodeId="gp2" />);
+      rerender(<GenreTreeView {...props} selectedGenreUuid={makeGenreUuid("c2")} />);
 
       expect(treeWheelPropsMock.mock.calls.at(-1)?.[0].selectedNodeId).toBe("gp2");
       expect(input).toHaveValue("Blues");
@@ -1833,7 +1919,7 @@ describe("GenreTreeView", () => {
 
     it("shows the name of a genre selected from the tree in the search bar", () => {
       useListFullGenrePlaylistsMock.mockReturnValue({
-        data: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } })],
+        data: [makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: makeGenreUuid("c1"), name: "Jazz" } })],
         isPending: false,
       });
       renderView();
@@ -1958,8 +2044,8 @@ describe("GenreTreeView", () => {
     beforeEach(() => {
       useListFullGenrePlaylistsMock.mockReturnValue({
         data: [
-          makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } }),
-          makePlaylist({ uuid: "gp2", name: "Blues", criteria: { uuid: "c2", name: "Blues" } }),
+          makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: makeGenreUuid("c1"), name: "Jazz" } }),
+          makePlaylist({ uuid: "gp2", name: "Blues", criteria: { uuid: makeGenreUuid("c2"), name: "Blues" } }),
         ],
         isPending: false,
       });
@@ -2001,7 +2087,7 @@ describe("GenreTreeView", () => {
       expect(screen.getByRole("complementary", { name: "Band" })).toBeInTheDocument();
       expect(onArtistSelect).toHaveBeenCalledWith(suggestion);
 
-      fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
+      fireEvent.click(screen.getByRole("button", { name: "Close panel" }));
       expect(screen.queryByRole("complementary", { name: /.+/ })).not.toBeInTheDocument();
     });
 
@@ -2043,31 +2129,31 @@ describe("GenreTreeView", () => {
 
     it("follows a controlled artistUuid and keeps it as a filter while a genre is selected", () => {
       const onArtistUuidChange = vi.fn();
-      const onSelectedNodeIdChange = vi.fn();
+      const onSelectedGenreUuidChange = vi.fn();
       const props: GenreTreeViewProps = {
         ...baseProps(),
-        selectedNodeId: "gp1",
-        onSelectedNodeIdChange,
+        selectedGenreUuid: makeGenreUuid("c1"),
+        onSelectedGenreUuidChange,
         artistUuid: null,
         onArtistUuidChange,
       };
       const { rerender } = render(<GenreTreeView {...props} />);
 
       pickSuggestion();
-      expect(onSelectedNodeIdChange).toHaveBeenCalledWith(null);
+      expect(onSelectedGenreUuidChange).toHaveBeenCalledWith(null);
       expect(onArtistUuidChange).toHaveBeenCalledWith(suggestion.uuid);
       expect(screen.queryByRole("complementary", { name: "Band" })).not.toBeInTheDocument();
 
-      rerender(<GenreTreeView {...props} selectedNodeId={null} artistUuid={suggestion.uuid} />);
+      rerender(<GenreTreeView {...props} selectedGenreUuid={null} artistUuid={suggestion.uuid} />);
       expect(screen.getByRole("complementary", { name: "Band" })).toBeInTheDocument();
 
       onArtistUuidChange.mockClear();
-      onSelectedNodeIdChange.mockClear();
+      onSelectedGenreUuidChange.mockClear();
       act(() => wheelProps().onSelectedNodeChange({ id: "gp2" }));
       expect(onArtistUuidChange).not.toHaveBeenCalled();
-      expect(onSelectedNodeIdChange).toHaveBeenCalledWith("gp2");
+      expect(onSelectedGenreUuidChange).toHaveBeenCalledWith(makeGenreUuid("c2"));
 
-      rerender(<GenreTreeView {...props} selectedNodeId="gp2" artistUuid={suggestion.uuid} />);
+      rerender(<GenreTreeView {...props} selectedGenreUuid={makeGenreUuid("c2")} artistUuid={suggestion.uuid} />);
       expect(screen.queryByRole("complementary", { name: "Band" })).not.toBeInTheDocument();
       expect(screen.getAllByRole("button", { name: "Clear artist filter Band" })[0]).toBeDefined();
       fireEvent.click(screen.getAllByRole("button", { name: "Clear artist filter Band" })[0]);
@@ -2075,20 +2161,20 @@ describe("GenreTreeView", () => {
     });
 
     it("reopens the artist panel from the filter chip by clearing the selected genre", () => {
-      const onSelectedNodeIdChange = vi.fn();
+      const onSelectedGenreUuidChange = vi.fn();
       useArtistMock.mockReturnValue({ status: "success", artist: { name: "Band", members: [], albums: [], links: [] } });
       render(
         <GenreTreeView
           {...baseProps()}
-          selectedNodeId="gp1"
-          onSelectedNodeIdChange={onSelectedNodeIdChange}
+          selectedGenreUuid={makeGenreUuid("c1")}
+          onSelectedGenreUuidChange={onSelectedGenreUuidChange}
           artistUuid={suggestion.uuid}
           onArtistUuidChange={vi.fn()}
         />,
       );
 
       fireEvent.click(screen.getAllByRole("button", { name: "Show artist Band" })[0]);
-      expect(onSelectedNodeIdChange).toHaveBeenCalledWith(null);
+      expect(onSelectedGenreUuidChange).toHaveBeenCalledWith(null);
     });
 
     it("lets a host overlayPanel take precedence", () => {
@@ -2157,16 +2243,19 @@ describe("GenreTreeView", () => {
       expect(screen.queryByRole("button", { name: "Close" })).not.toBeInTheDocument();
       expect(screen.getByRole("combobox", { name: "Search" })).toHaveValue("Band");
 
-      fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
+      fireEvent.click(screen.getByRole("button", { name: "Close panel" }));
       expect(onArtistUuidChange).toHaveBeenCalledWith(null);
     });
 
-    it("leaves a host overlayPanel's header and the search field alone", () => {
+    it("shows a host overlayPanel's title in the search field and closes it from there, like the artist panel", () => {
       const overlayPanel = { title: "About", content: "x", onClose: vi.fn() };
       render(<GenreTreeView {...baseProps()} overlayPanel={overlayPanel} artistUuid={suggestion.uuid} />);
 
-      expect(screen.getByRole("button", { name: "Close" })).toBeInTheDocument();
-      expect(screen.getByRole("combobox", { name: "Search" })).toHaveValue("");
+      expect(screen.queryByRole("button", { name: "Close" })).not.toBeInTheDocument();
+      expect(screen.getByRole("combobox", { name: "Search" })).toHaveValue("About");
+
+      fireEvent.click(screen.getByRole("button", { name: "Close panel" }));
+      expect(overlayPanel.onClose).toHaveBeenCalledOnce();
     });
 
     it("drives the artist panel from the edge tab", () => {
@@ -2203,7 +2292,7 @@ describe("GenreTreeView", () => {
       uuid: "44444444-4444-4444-4444-444444444444",
       title: "Karma Police",
       artists: [{ uuid: "a1", name: "Radiohead", isSpecialPurpose: false }],
-      genre: { uuid: "c2", name: "Blues" },
+      genre: { uuid: makeGenreUuid("c2"), name: "Blues" },
       youtubeVideo: { id: "vid", unplayableReason: null },
       firstReleaseYear: 1997,
     };
@@ -2220,8 +2309,8 @@ describe("GenreTreeView", () => {
     beforeEach(() => {
       useListFullGenrePlaylistsMock.mockReturnValue({
         data: [
-          makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: "c1", name: "Jazz" } }),
-          makePlaylist({ uuid: "gp2", name: "Blues", parent: { uuid: "gp1", name: "Jazz" }, criteria: { uuid: "c2", name: "Blues" } }),
+          makePlaylist({ uuid: "gp1", name: "Jazz", criteria: { uuid: makeGenreUuid("c1"), name: "Jazz" } }),
+          makePlaylist({ uuid: "gp2", name: "Blues", parent: { uuid: "gp1", name: "Jazz" }, criteria: { uuid: makeGenreUuid("c2"), name: "Blues" } }),
         ],
         isPending: false,
       });
@@ -2275,7 +2364,7 @@ describe("GenreTreeView", () => {
       expect(screen.getByRole("complementary", { name: "Karma Police" })).toBeInTheDocument();
       expect(screen.getByRole("combobox", { name: "Search" })).toHaveValue("Karma Police");
 
-      fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
+      fireEvent.click(screen.getByRole("button", { name: "Close panel" }));
       expect(onSongUuidChange).toHaveBeenLastCalledWith(null);
       expect(screen.queryByRole("complementary", { name: /.+/ })).not.toBeInTheDocument();
     });
@@ -2290,13 +2379,13 @@ describe("GenreTreeView", () => {
 
     it("selects a genre from the song's lineage and closes the song", () => {
       const onSongUuidChange = vi.fn();
-      const onSelectedNodeIdChange = vi.fn();
-      render(<GenreTreeView {...baseProps()} songUuid={hit.uuid} onSongUuidChange={onSongUuidChange} onSelectedNodeIdChange={onSelectedNodeIdChange} />);
+      const onSelectedGenreUuidChange = vi.fn();
+      render(<GenreTreeView {...baseProps()} songUuid={hit.uuid} onSongUuidChange={onSongUuidChange} onSelectedGenreUuidChange={onSelectedGenreUuidChange} />);
 
       fireEvent.click(within(screen.getByRole("complementary")).getByRole("button", { name: "Blues" }));
 
       expect(onSongUuidChange).toHaveBeenCalledWith(null);
-      expect(onSelectedNodeIdChange).toHaveBeenCalledWith("gp2");
+      expect(onSelectedGenreUuidChange).toHaveBeenCalledWith(makeGenreUuid("c2"));
     });
 
     it("clears the song when a genre is picked from the search", () => {

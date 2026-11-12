@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { keepPreviousData } from "@tanstack/react-query";
 
 const { fetchMock, useQueryWithParseMock } = vi.hoisted(() => ({
   fetchMock: vi.fn(),
@@ -9,6 +8,9 @@ const { fetchMock, useQueryWithParseMock } = vi.hoisted(() => ({
 
 vi.mock("../transport/useFetchWrapper", () => ({
   useFetchWrapper: () => ({ fetch: fetchMock }),
+}));
+vi.mock("../transport/usePlaybackFetch", () => ({
+  usePlaybackFetch: () => ({ fetchBound: fetchMock, fetchLatest: fetchMock }),
 }));
 
 vi.mock("../transport/lib/use-query-with-parse", () => ({
@@ -93,7 +95,7 @@ describe("useSongSearch", () => {
 
     rerender({ text: "taylor s" });
 
-    expect(useQueryWithParseMock.mock.calls.at(-1)?.[0].placeholderData).toBe(keepPreviousData);
+    expect(useQueryWithParseMock.mock.calls.at(-1)?.[0].placeholderData("previous")).toBe("previous");
     expect(result.current.songs).toEqual([swift]);
     expect(result.current.settled).toBe(false);
 

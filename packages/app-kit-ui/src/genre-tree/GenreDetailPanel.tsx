@@ -1,13 +1,14 @@
 "use client";
 
-import { useMemo, type ComponentProps } from "react";
+import { useMemo, type ReactNode, type ComponentProps } from "react";
 import {
-  ACCENT_TEXT_COLOR,
   GenreNodeAncestors,
   GenreNodeFamily,
   getGenreTreeColor,
+  getTextColorOnFill,
   TEXT_COLOR,
   tintSurface,
+  type GenreNodeStyle,
   type GenreTreeNode,
   type InfoPanelChild,
 } from "@behindthemusictree/genre-tree-view";
@@ -16,9 +17,15 @@ import { Maximize2, Minimize2 } from "lucide-react";
 
 import {
   useFetchGenreDetail,
+  genreMusicCount,
+  GenrePlaylistSummarySchema,
+  GenreCatalogueCountsSchema,
+  CriteriaMinimumSchema,
+  type CriteriaPlaylistSimple,
   type CriteriaMinimum,
   type CriteriaOverview,
   type GenreUuid,
+  GenreUuidSchema,
 } from "@behindthemusictree/app-kit/genre-tree";
 import type { Scope } from "@behindthemusictree/app-kit/transport";
 
@@ -27,7 +34,8 @@ import type { GenreTreeShareTarget } from "./share";
 import { useGenrePlaylistPlayback } from "./playlist-tree/useGenrePlaylistPlayback";
 
 export type GenreDetailPanelProps<O extends CriteriaOverview> = {
-  genreUuid: GenreUuid;
+  /** May be a raw URL value: one that names no genre renders "Genre not found". */
+  genreUuid: string;
   scope: Scope;
   getBackendBaseUrl: () => string;
   onClose: () => void;
@@ -44,6 +52,8 @@ export type GenreDetailPanelProps<O extends CriteriaOverview> = {
   /** Tab on the panel's inner edge, for hosts that hide and show the panel. */
   edgeTab?: ComponentProps<typeof DetailPanel>["edgeTab"];
   extras?: GenreInfoPanelBodyProps<O>["extras"];
+  /** The host's search field shows this genre's name and closes the panel. */
+  titleInSearch?: boolean;
 };
 
 // Relatives from the detail endpoint carry no song count, so the family dots share one size.
@@ -60,74 +70,83 @@ function toNode(genre: CriteriaMinimum, parentId: string | null): GenreTreeNode 
   };
 }
 
-/** A genre's detail panel driven by one uuid, with no tree behind it. The tree's own panel shares its body. */
-export function GenreDetailPanel<O extends CriteriaOverview>({
-  genreUuid,
-  scope,
-  getBackendBaseUrl,
-  onClose,
-  onSelectGenre,
-  onZoomIn,
-  shareUrl,
-  shareTarget,
-  collapsed,
-  expanded,
-  onExpandedChange,
-  edgeTab,
-  extras,
-}: GenreDetailPanelProps<O>) {
-  const { data: detail, isPending, isError } = useFetchGenreDetail(genreUuid, scope, getBackendBaseUrl);
-  const playback = useGenrePlaylistPlayback({ scope, genrePlaylists: [] });
+type GenreDetailContentOptions<O extends CriteriaOverview> = {
+  genreUuid: string | null;
+  scope: Scope;
+  getBackendBaseUrl: () => string;
+  onSelectGenre: (uuid: GenreUuid) => void;
+  extras?: GenreInfoPanelBodyProps<O>["extras"];
+  band?: Partial<GenreInfoPanelBodyProps<O>["band"]>;
+  playback?: GenreInfoPanelBodyProps<O>["playback"];
+  trailing?: ReactNode;
+  genrePlaylist?: CriteriaPlaylistSimple;
+  expanded?: boolean;
+  /** How the mounted tree draws this genre and its relatives, by genre uuid; genres it omits fall back to the root color. */
+  treeStyles?: ReadonlyMap<GenreUuid, GenreNodeStyle>;
+};
+
+/** Shared entity data and content; the host owns the panel shell and placement. */
+export function useGenreDetailContent<O extends CriteriaOverview>({
+  genreUuid, scope, getBackendBaseUrl, onSelectGenre, extras, band, playback: hostPlayback, trailing, genrePlaylist: hostPlaylist, expanded, treeStyles,
+}: GenreDetailContentOptions<O>) {
+  const result = useFetchGenreDetail(genreUuid, scope, getBackendBaseUrl);
+  const detail = result.status === "success" ? result.genre : undefined;
+  const defaultPlayback = useGenrePlaylistPlayback({ scope, genrePlaylists: [], artist: extras?.artist });
+  const playback = hostPlayback ?? defaultPlayback;
 
   const view = useMemo(() => {
     if (!detail) return null;
     const rootColor = getGenreTreeColor(detail.root.wikidataId);
     const relative = (genre: CriteriaMinimum, parentId: string | null): InfoPanelChild => ({
       node: toNode(genre, parentId),
-      fill: tintSurface(rootColor),
-      textColor: TEXT_COLOR,
+      ...(treeStyles?.get(genre.uuid) ?? { fill: tintSurface(rootColor), textColor: TEXT_COLOR }),
     });
     const ancestors = [...detail.ascendants].sort((a, b) => b.degree - a.degree);
+    const own = treeStyles?.get(detail.uuid) ?? { fill: rootColor, textColor: getTextColorOnFill(rootColor) };
     return {
       node: {
         id: detail.uuid,
         parentId: detail.parent?.uuid ?? null,
         name: detail.name,
-        itemCount: detail.tracksCount,
+        itemCount: scope === "reference" ? genreMusicCount(detail.criteriaPlaylist ? GenrePlaylistSummarySchema.parse(detail.criteriaPlaylist) : GenreCatalogueCountsSchema.parse(detail.catalogue)) : detail.tracksCount,
         wikidataId: detail.wikidataId,
       } satisfies GenreTreeNode,
-      fill: rootColor,
+      fill: own.fill,
+      textColor: own.textColor,
       parentNode: detail.parent ? relative(detail.parent, null) : null,
       childNodes: detail.children.map((child) => relative(child, detail.uuid)),
       ancestorNodes: ancestors.map(({ ascendant }, index) =>
         relative(ascendant, index === 0 ? null : ancestors[index - 1].ascendant.uuid),
       ),
     };
-  }, [detail]);
+  }, [detail, scope, treeStyles]);
 
-  if (isError) {
-    return (
-      <div role="alert" className="p-4 text-sm text-[var(--color-text)]">
-        This genre could not be loaded.
-      </div>
-    );
-  }
-  if (isPending || !detail || !view) {
-    return (
-      <div className="flex flex-col gap-3 p-4" aria-busy="true" data-testid="genre-detail-panel-skeleton">
-        <Skeleton className="h-6 w-2/3" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-3/4" />
-      </div>
-    );
-  }
+  if (result.status === "not-found") return {
+    name: null,
+    title: "Genre not found",
+    content: <p className="text-[var(--color-text-muted)]">This genre does not exist.</p>,
+  };
+  if (result.status === "error") return {
+    name: null,
+    title: "Genre unavailable",
+    content: <p role="alert" className="text-body text-[var(--color-text)]">This genre could not be loaded.</p>,
+  };
+  if (!detail || !view) return {
+    name: null,
+    title: "Loading genre…",
+    content: <div className="flex flex-col gap-3" aria-busy="true" data-testid="genre-detail-panel-skeleton">
+      <Skeleton className="h-6 w-2/3" />
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-3/4" />
+    </div>,
+  };
 
-  const selectGenre = (nodeId: string) => onSelectGenre(nodeId as GenreUuid);
+  const selectGenre = (nodeId: string) => onSelectGenre(GenreUuidSchema.parse(nodeId));
   const family = (
     <GenreNodeFamily
       node={view.node}
       fill={view.fill}
-      textColor={ACCENT_TEXT_COLOR}
+      textColor={view.textColor}
       parentNode={view.parentNode}
       childNodes={view.childNodes}
       onSelectNode={selectGenre}
@@ -135,44 +154,46 @@ export function GenreDetailPanel<O extends CriteriaOverview>({
   );
   const ancestors = <GenreNodeAncestors ancestorNodes={view.ancestorNodes} onSelectNode={selectGenre} />;
 
-  return (
-    <DetailPanel
-      side="left"
-      title={view.node.name}
-      headerAccent={{ background: view.fill, color: ACCENT_TEXT_COLOR }}
-      headerActions={
-        onExpandedChange ? (
-          <IconButton
-            aria-label={expanded ? "Shrink panel" : "Extend panel"}
-            style={{ color: "inherit" }}
-            onClick={() => onExpandedChange(!expanded)}
-          >
-            {expanded ? (
-              <Minimize2 aria-hidden="true" className="h-4 w-4" />
-            ) : (
-              <Maximize2 aria-hidden="true" className="h-4 w-4" />
-            )}
-          </IconButton>
-        ) : undefined
-      }
-      onClose={onClose}
-      collapsed={collapsed}
-      expanded={expanded}
-      onExpandedChange={onExpandedChange}
-      edgeTab={edgeTab}
-    >
+  return {
+    name: detail.name,
+    title: detail.name,
+    headerAccent: { background: view.fill, color: view.textColor },
+    aside: expanded ? ancestors : undefined,
+    content: <>
       <GenreInfoPanelBody<O>
-        family={<>{family}{ancestors}</>}
+        family={<>{family}{!expanded && ancestors}</>}
         genreUuid={detail.uuid}
-        genrePlaylist={{ ...detail.criteriaPlaylist, tracksCount: detail.tracksCount }}
+        genrePlaylist={hostPlaylist ?? (detail.criteriaPlaylist === null ? null : scope === "reference" ? { ...GenrePlaylistSummarySchema.parse(detail.criteriaPlaylist), criteria: CriteriaMinimumSchema.parse(detail) } : { ...detail.criteriaPlaylist, criteria: CriteriaMinimumSchema.parse(detail), tracksCount: detail.tracksCount })}
+        catalogue={detail.catalogue}
         wikidataId={detail.wikidataId}
         scope={scope}
         getBackendBaseUrl={getBackendBaseUrl}
         playback={playback}
-        band={{ node: view.node, onZoomIn, shareUrl, shareTarget: shareUrl ? shareTarget : undefined }}
+        band={{ node: view.node, ...band, shareTarget: band?.shareTarget?.kind === "genre" ? { ...band.shareTarget, name: detail.name } : band?.shareTarget }}
         extras={extras}
       />
-      {!expanded && ancestors}
+      {trailing}
+    </>,
+  };
+}
+
+export function GenreDetailPanel<O extends CriteriaOverview>({
+  genreUuid, scope, getBackendBaseUrl, onClose, onSelectGenre, onZoomIn,
+  shareUrl, shareTarget, collapsed, expanded, onExpandedChange, edgeTab, extras, titleInSearch,
+}: GenreDetailPanelProps<O>) {
+  const panel = useGenreDetailContent({
+    genreUuid, scope, getBackendBaseUrl, onSelectGenre, extras, expanded,
+    band: { onZoomIn, shareUrl, shareTarget: shareUrl ? shareTarget : undefined },
+  });
+  return (
+    <DetailPanel side="left" title={panel.title} headerAccent={panel.headerAccent}
+      onClose={onClose} collapsed={collapsed} expanded={expanded}
+      onExpandedChange={onExpandedChange} edgeTab={edgeTab} aside={panel.aside} titleInSearch={titleInSearch}
+      headerActions={onExpandedChange ? <IconButton aria-label={expanded ? "Shrink panel" : "Extend panel"} onClick={() => onExpandedChange(!expanded)}>
+        {expanded ? <Minimize2 aria-hidden="true" className="h-4 w-4" /> : <Maximize2 aria-hidden="true" className="h-4 w-4" />}
+      </IconButton> : undefined}
+    >
+      {panel.content}
     </DetailPanel>
   );
 }

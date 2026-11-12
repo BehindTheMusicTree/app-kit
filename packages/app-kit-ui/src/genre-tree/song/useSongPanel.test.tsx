@@ -43,7 +43,7 @@ function Harness({ uuid, onSelectGenre = vi.fn(), genrePath = [rock, alt] }: { u
     getBackendBaseUrl: () => "/api",
     renderArtistLink: ({ name }) => name,
     getGenrePath: () => genrePath as never,
-    onSelectGenre: onSelectGenre as never,
+    onSelectGenrePlaylist: onSelectGenre as never,
     expanded: false,
     onExpandedChange: vi.fn(),
     onClose: vi.fn(),
@@ -125,14 +125,38 @@ describe("useSongPanel", () => {
     expect(handlePlayPauseActionMock).toHaveBeenCalled();
   });
 
-  it("explains why an unplayable song has no Play button", () => {
+  it("explains why an unplayable song cannot be played", () => {
     useSongMock.mockReturnValue({
       status: "success",
       song: { ...song, youtubeVideo: { id: "vid", unplayableReason: "private", viewCount: null } },
     });
     render(<Harness uuid={UUID} />);
 
-    expect(screen.queryByRole("button", { name: "Play" })).not.toBeInTheDocument();
-    expect(screen.getByText("Private video")).toBeInTheDocument();
+    const play = screen.getByRole("button", { name: "Play" });
+    expect(play).toBeDisabled();
+    expect(play).toHaveAttribute("title", "Private video");
+  });
+
+  it("selects the genre itself when the host has no tree", () => {
+    useSongMock.mockReturnValue({ status: "success", song });
+    const onSelectGenre = vi.fn();
+    function NoTree() {
+      const panel = useSongPanel({
+        uuid: UUID,
+        scope: "me",
+        getBackendBaseUrl: () => "/api",
+        renderArtistLink: ({ name }) => name,
+        onSelectGenre,
+        expanded: false,
+        onExpandedChange: vi.fn(),
+        onClose: vi.fn(),
+      });
+      return <section>{panel?.content}</section>;
+    }
+    render(<NoTree />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Alternative rock" }));
+
+    expect(onSelectGenre).toHaveBeenCalledWith(song.genre);
   });
 });

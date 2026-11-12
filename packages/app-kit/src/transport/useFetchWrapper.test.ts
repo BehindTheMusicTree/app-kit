@@ -15,6 +15,15 @@ const {
   createAppErrorFromErrorCodeMock: vi.fn(),
 }));
 
+const playbackState = vi.hoisted(() => ({
+  key: null as string | null,
+  country: null as string | null,
+  snapshot: () => ({ key: playbackState.key, country: playbackState.country }),
+  refresh: vi.fn(async (_force?: boolean) => null as string | null),
+  isCurrent: vi.fn(() => true),
+}));
+vi.mock("./PlaybackContext", () => ({ usePlaybackContext: () => playbackState }));
+
 vi.mock("./connectivity-error-context", () => ({
   useConnectivityError: () => ({ setConnectivityError: setConnectivityErrorMock }),
 }));
@@ -38,7 +47,50 @@ let useSessionState: { clearSession: () => void; session: { accessToken?: string
 describe("useFetchWrapper", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    playbackState.key = null;
+    playbackState.country = null;
+    playbackState.isCurrent.mockReturnValue(true);
     useSessionState = { clearSession: clearSessionMock, session: { accessToken: "token" }, sessionRestored: true };
+  });
+
+  it("never touches the playback context, whatever the endpoint", async () => {
+    playbackState.key = "FR:1";
+    playbackState.isCurrent.mockReturnValue(false);
+    rawFetchMock.mockResolvedValueOnce({ results: [] });
+    const { result } = renderHook(() => useFetchWrapper(() => "https://api.example.com"));
+    await expect(result.current.fetch("genre-playlists/tree/", true, false)).resolves.toEqual({ results: [] });
+    expect(playbackState.refresh).not.toHaveBeenCalled();
+  });
+
+  describe("playback drift guard", () => {
+    const run = async (options: RequestInit, headers: Record<string, string>) => {
+      const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+      rawFetchMock.mockImplementationOnce(async (...args: unknown[]) => {
+        await (args[9] as ((response: Response) => Promise<void>) | undefined)?.(new Response(null, { headers }));
+        return {};
+      });
+      const { result } = renderHook(() => useFetchWrapper(() => "https://api.example.com"));
+      await result.current.fetch("library/songs/", true, false, options);
+      return spy;
+    };
+
+    it("logs an error for a GET stamped with X-Playback-Country", async () => {
+      const spy = await run({}, { "X-Playback-Country": "FR" });
+      expect(spy).toHaveBeenCalledWith(expect.stringContaining("library/songs/"));
+      spy.mockRestore();
+    });
+
+    it("stays silent for a stamped PATCH", async () => {
+      const spy = await run({ method: "PATCH" }, { "X-Playback-Country": "FR" });
+      expect(spy).not.toHaveBeenCalled();
+      spy.mockRestore();
+    });
+
+    it("stays silent for an unstamped GET", async () => {
+      const spy = await run({}, {});
+      expect(spy).not.toHaveBeenCalled();
+      spy.mockRestore();
+    });
   });
 
   it("builds the backend url from a relative endpoint and calls rawFetch", () => {
@@ -171,6 +223,32 @@ describe("useFetchWrapper", () => {
       const error = new BackendError(ErrorCode.BACKEND_SPOTIFY_AUTHORIZATION_REQUIRED);
 
       expect(() => handleError(error)).toThrow(error);
+      expect(setConnectivityErrorMock).toHaveBeenCalledWith(error);
+    });
+
+    it("rethrows a 404 without raising the global connectivity error", () => {
+      const handleError = getHandleError();
+      const error = new BackendError(ErrorCode.BACKEND_NOT_FOUND);
+
+      expect(() => handleError(error)).toThrow(error);
+      expect(setConnectivityErrorMock).not.toHaveBeenCalled();
+    });
+
+    it("still raises the global connectivity error for a 404 on a write", () => {
+      const { result } = renderHook(() => useFetchWrapper(() => "https://api.example.com"));
+      result.current.fetch("me/genres/", true, true, { method: "PUT" });
+      const handleError = rawFetchMock.mock.calls[0][6] as (error: Error) => void;
+      const error = new BackendError(ErrorCode.BACKEND_NOT_FOUND);
+
+      expect(() => handleError(error)).not.toThrow();
+      expect(setConnectivityErrorMock).toHaveBeenCalledWith(error);
+    });
+
+    it("still raises the global connectivity error for a 500", () => {
+      const handleError = getHandleError();
+      const error = new BackendError(ErrorCode.BACKEND_INTERNAL_ERROR);
+
+      expect(() => handleError(error)).not.toThrow();
       expect(setConnectivityErrorMock).toHaveBeenCalledWith(error);
     });
 

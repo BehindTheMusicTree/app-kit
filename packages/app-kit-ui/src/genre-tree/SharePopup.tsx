@@ -155,12 +155,12 @@ export default function SharePopup({ target, url, onClose }: SharePopupProps) {
             )}
           </div>
           {copyStatus === "failed" && (
-            <p role="alert" className="text-center text-sm text-[var(--color-red-500)]">
+            <p role="alert" className="text-center text-body text-[var(--color-red-500)]">
               Could not copy the link.
             </p>
           )}
           {shareError && (
-            <p role="alert" className="text-center text-sm text-[var(--color-red-500)]">
+            <p role="alert" className="text-center text-body text-[var(--color-red-500)]">
               {shareError}
             </p>
           )}

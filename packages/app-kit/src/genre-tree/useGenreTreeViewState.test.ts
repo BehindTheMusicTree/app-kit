@@ -20,6 +20,7 @@ vi.mock("./useGenre", () => ({
 }));
 
 import { useGenreTreeViewState } from "./useGenreTreeViewState";
+import { GenreUuidSchema } from "./schemas/ids";
 import type { CriteriaPlaylistSimple } from "./schemas/criteria-playlist/simple";
 
 const makePlaylist = (
@@ -32,8 +33,10 @@ const makePlaylist = (
     name,
     parent: overrides.parent ? { uuid: overrides.parent } : null,
     root: { uuid: overrides.root ?? uuid },
-    criteria: overrides.criteria === false ? null : { uuid: `c-${uuid}` },
+    criteria: overrides.criteria === false ? null : { uuid: uuid === "pop" ? "00000000-0000-4000-8000-000000000001" : `c-${uuid}` },
     isUnacceptedRoot: overrides.isUnacceptedRoot ?? false,
+    genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: 3, regional: 0, all: 3 },
+    catalogue: { genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: 3, regional: 0, all: 3 } },
   }) as unknown as CriteriaPlaylistSimple;
 
 const pop = makePlaylist("pop", "Mainstream Pop");
@@ -42,10 +45,12 @@ const genreless = makePlaylist("none", "Genreless", { criteria: false });
 const unaccepted = makePlaylist("un", "Pending", { isUnacceptedRoot: true });
 const unacceptedChild = makePlaylist("unc", "Child", { parent: "un", root: "un" });
 
+const refetchMock = vi.fn();
+
 const options = { scope: "public" as never, getBackendBaseUrl: () => "https://b.example.com" };
 
-const mockData = (data: CriteriaPlaylistSimple[] | undefined, isPending = false) =>
-  useListFullGenrePlaylistsMock.mockReturnValue({ data, isPending });
+const mockData = (data: CriteriaPlaylistSimple[] | undefined, isPending = false, isError = false) =>
+  useListFullGenrePlaylistsMock.mockReturnValue({ data, isPending, isError, refetch: refetchMock });
 
 describe("useGenreTreeViewState", () => {
   beforeEach(() => {
@@ -65,6 +70,21 @@ describe("useGenreTreeViewState", () => {
 
     expect(result.current.isLoading).toBe(true);
     expect(result.current.genrePlaylists).toEqual([]);
+  });
+
+  it("exposes a failed tree load with refetch, and keeps pop-core for when the retry succeeds", () => {
+    mockData(undefined, false, true);
+    const { result, rerender } = renderHook(() => useGenreTreeViewState(options));
+
+    expect(result.current.isError).toBe(true);
+    expect(result.current.genrePlaylists).toEqual([]);
+    result.current.refetch();
+    expect(refetchMock).toHaveBeenCalledTimes(1);
+
+    mockData([pop, rock]);
+    rerender();
+    expect(result.current.isError).toBe(false);
+    expect(result.current.viewMode).toBe("pop-core");
   });
 
   it("indexes and groups playlists", () => {
@@ -115,8 +135,8 @@ describe("useGenreTreeViewState", () => {
   });
 
   it("manages an internal selection and reports changes", () => {
-    const onSelectedNodeIdChange = vi.fn();
-    const { result } = renderHook(() => useGenreTreeViewState({ ...options, onSelectedNodeIdChange }));
+    const onSelectedGenreUuidChange = vi.fn();
+    const { result } = renderHook(() => useGenreTreeViewState({ ...options, onSelectedGenreUuidChange }));
 
     act(() => result.current.selectNode({ id: "rock" }));
     expect(result.current.selectedNodeId).toBe("rock");
@@ -129,20 +149,29 @@ describe("useGenreTreeViewState", () => {
     expect(result.current.selectedNodeId).toBeNull();
 
     act(() => result.current.selectNode(null));
-    expect(onSelectedNodeIdChange).toHaveBeenLastCalledWith(null);
-    expect(onSelectedNodeIdChange).toHaveBeenCalledTimes(4);
+    expect(onSelectedGenreUuidChange).toHaveBeenLastCalledWith(null);
+    expect(onSelectedGenreUuidChange).toHaveBeenCalledTimes(4);
   });
 
   it("does not change a controlled selection but still reports", () => {
-    const onSelectedNodeIdChange = vi.fn();
+    const onSelectedGenreUuidChange = vi.fn();
     const { result } = renderHook(() =>
-      useGenreTreeViewState({ ...options, selectedNodeId: "pop", onSelectedNodeIdChange }),
+      useGenreTreeViewState({ ...options, selectedGenreUuid: GenreUuidSchema.parse("00000000-0000-4000-8000-000000000001"), onSelectedGenreUuidChange }),
     );
 
     act(() => result.current.selectNode({ id: "rock" }));
 
     expect(result.current.selectedNodeId).toBe("pop");
-    expect(onSelectedNodeIdChange).toHaveBeenCalledWith("rock");
+    expect(onSelectedGenreUuidChange).toHaveBeenCalledWith(rock.criteria!.uuid);
+  });
+
+  it("keeps an entity absent from the tree without highlighting a playlist alias", () => {
+    const uuid = GenreUuidSchema.parse("00000000-0000-4000-8000-000000000002");
+    const onSelectedGenreUuidChange = vi.fn();
+    const { result } = renderHook(() => useGenreTreeViewState({ ...options, selectedGenreUuid: uuid, onSelectedGenreUuidChange }));
+    expect(result.current.selectedGenreUuid).toBe(uuid);
+    expect(result.current.selectedNodeId).toBeNull();
+    expect(onSelectedGenreUuidChange).not.toHaveBeenCalled();
   });
 
   it("toggles wheel rotation", () => {
@@ -184,11 +213,14 @@ describe("useGenreTreeViewState", () => {
   });
 
   describe("with an artist", () => {
-    const artistUuid = "a1";
+    const artistUuid = "3f0d7b1e-8a3c-4d57-9a53-2b7f4f9c0a11";
     const counts = [
       { genrePlaylist: "pop", songsCount: 2, tracksCount: 1 },
       { genrePlaylist: "rock", songsCount: 2, tracksCount: 1 },
-    ];
+    ].map((row) => ({ ...row,
+      genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: row.tracksCount, regional: 0, all: row.tracksCount },
+      catalogue: { genreOnlyTracksCount: 0, genreAndSubgenresTracksCount: { canonical: row.songsCount, regional: 0, all: row.songsCount } },
+    }));
 
     it("keeps the current tree and reports fetching while counts load", () => {
       const { result } = renderHook(() => useGenreTreeViewState({ ...options, artistUuid }));
@@ -199,25 +231,27 @@ describe("useGenreTreeViewState", () => {
       expect(result.current.genrePlaylists.length).toBeGreaterThan(0);
     });
 
-    it("keeps pruning by the previous artist's counts while the next artist's load", () => {
+    it("keeps the previous artist's projection while the next artist's counts load", () => {
       useArtistGenreCountsMock.mockReturnValue({ data: counts, isPending: false, isPlaceholderData: true, error: null });
       const { result } = renderHook(() => useGenreTreeViewState({ ...options, artistUuid }));
 
       expect(result.current.isFetching).toBe(true);
-      expect(result.current.genrePlaylists.map((gp) => gp.uuid)).toEqual(["pop", "rock"]);
+      expect([...result.current.focusUuids!]).toEqual(["pop", "rock"]);
     });
 
-    it("serves the pruned tree with the artist's counts to every consumer", () => {
+    it("serves the whole tree with the artist's counts and their footprint to every consumer", () => {
       mockData([pop, rock, makePlaylist("jazz", "Jazz", { parent: "pop", root: "pop" })]);
       useArtistGenreCountsMock.mockReturnValue({ data: counts, isPending: false, error: null });
-      const { result } = renderHook(() => useGenreTreeViewState({ ...options, artistUuid, selectedNodeId: "rock" }));
+      const { result } = renderHook(() => useGenreTreeViewState({ ...options, artistUuid, selectedGenreUuid: rock.criteria!.uuid }));
 
       expect(result.current.isLoading).toBe(false);
       expect(result.current.visibleGenrePlaylists.map((gp) => [gp.uuid, gp.tracksCount])).toEqual([
         ["pop", 1],
         ["rock", 1],
+        ["jazz", 0],
       ]);
-      expect(result.current.genrePlaylistByNodeId.has("jazz")).toBe(false);
+      expect([...result.current.focusUuids!]).toEqual(["pop", "rock"]);
+      expect(result.current.genrePlaylistByNodeId.has("jazz")).toBe(true);
       expect(result.current.selectedGenrePlaylist?.uuid).toBe("rock");
       expect(result.current.canShowPopCore).toBe(true);
     });
@@ -227,6 +261,7 @@ describe("useGenreTreeViewState", () => {
       const { result } = renderHook(() => useGenreTreeViewState({ ...options, artistUuid }));
 
       expect(result.current.genrePlaylists).toHaveLength(5);
+      expect(result.current.focusUuids).toBeUndefined();
     });
   });
 });

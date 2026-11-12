@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
 import { render } from "../test-utils";
+import { makeGenreUuid } from "@behindthemusictree/app-kit/genre-tree/testing";
 import { GenreTreeView } from "./GenreTreeView";
 
 const {
@@ -81,6 +82,13 @@ vi.mock("./artist/ArtistSongs", () => ({ default: () => <p>Songs list</p> }));
 
 vi.mock("../../../app-kit/src/genre-tree/useGenre", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
+  useFetchGenreDetail: (id: string | null) => {
+    const playlist = playlists.find((p) => p.criteria.uuid === id);
+    if (!playlist) return { status: "not-found" };
+    return { status: "success", genre: { uuid: id, name: playlist.name, root: playlist.criteria,
+      parent: null, children: [], ascendants: [], criteriaPlaylist: playlist, tracksCount: 3,
+    } };
+  },
   useFetchGenreOverview: (id: string | null) => useFetchGenreOverviewMock(id),
   usePrefetchGenreOverview: () => prefetchGenreOverviewMock,
   useUpdateGenre: () => ({ mutate: updateGenreMock }),
@@ -96,8 +104,8 @@ vi.mock("./GenrePlaylistTracks", () => ({
 vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
 
 const playlists = [
-  { uuid: "pop", name: "Mainstream Pop", root: { uuid: "pop" }, parent: null, tracksCount: 3, criteria: { uuid: "pop-criteria", name: "Mainstream Pop" } },
-  { uuid: "rock", name: "Rock", root: { uuid: "rock" }, parent: null, tracksCount: 3, criteria: { uuid: "rock-criteria", name: "Rock" } },
+  { uuid: "pop", name: "Mainstream Pop", root: { uuid: "pop" }, parent: null, tracksCount: 3, criteria: { uuid: makeGenreUuid("pop-criteria"), name: "Mainstream Pop" } },
+  { uuid: "rock", name: "Rock", root: { uuid: "rock" }, parent: null, tracksCount: 3, criteria: { uuid: makeGenreUuid("rock-criteria"), name: "Rock" } },
 ];
 
 describe("GenreTreeView with the real renderer", () => {
@@ -111,41 +119,41 @@ describe("GenreTreeView with the real renderer", () => {
   afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
   it("keeps the controlled selection and search in agreement", async () => {
-    const onSelectedNodeIdChange = vi.fn();
-    const props = { scope: "me" as const, viewMode: "wheel" as const, artistSearch: false as const, songSearch: false, handleGenreCreationAction: vi.fn(), handleGenreRenameAction: vi.fn(), getBackendBaseUrl: () => "", onSelectedNodeIdChange };
-    const view = render(<GenreTreeView {...props} selectedNodeId={null} />);
+    const onSelectedGenreUuidChange = vi.fn();
+    const props = { scope: "me" as const, viewMode: "wheel" as const, artistSearch: false as const, songSearch: false, handleGenreCreationAction: vi.fn(), handleGenreRenameAction: vi.fn(), getBackendBaseUrl: () => "", onSelectedGenreUuidChange };
+    const view = render(<GenreTreeView {...props} selectedGenreUuid={null} />);
     const node = await screen.findByText("Mainstream Pop");
     fireEvent.click(node);
-    expect(onSelectedNodeIdChange).toHaveBeenCalledWith("pop");
+    expect(onSelectedGenreUuidChange).toHaveBeenCalledWith(makeGenreUuid("pop-criteria"));
     expect(screen.getByRole("combobox", { name: "Search a genre" })).toHaveValue("");
     expect(screen.queryByRole("complementary", { name: /.+/ })).not.toBeInTheDocument();
-    view.rerender(<GenreTreeView {...props} selectedNodeId="pop" />);
+    view.rerender(<GenreTreeView {...props} selectedGenreUuid={makeGenreUuid("pop-criteria")} />);
     await waitFor(() => expect(screen.getByRole("combobox", { name: "Search a genre" })).toHaveValue("Mainstream Pop"));
     await waitFor(() => expect(screen.queryByRole("complementary", { name: /.+/ })).toBeInTheDocument());
-    view.rerender(<GenreTreeView {...props} selectedNodeId={null} />);
+    view.rerender(<GenreTreeView {...props} selectedGenreUuid={null} />);
     await waitFor(() => expect(screen.getByRole("combobox", { name: "Search a genre" })).toHaveValue(""));
     expect(screen.queryByRole("complementary", { name: /.+/ })).not.toBeInTheDocument();
   });
   it.each(["wheel", "pop-core"] as const)("restores mounted %s silently and accepts a later selection", async (viewMode) => {
     vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({ x: 0, y: 0, left: 0, top: 0, right: 800, bottom: 600, width: 800, height: 600, toJSON() {} });
     const onViewportChange = vi.fn();
-    const onSelectedNodeIdChange = vi.fn();
-    const props = { scope: "me" as const, viewMode, artistSearch: false as const, songSearch: false, handleGenreCreationAction: vi.fn(), handleGenreRenameAction: vi.fn(), getBackendBaseUrl: () => "", onSelectedNodeIdChange, onViewportChange, focusGenreUuid: null, onFocusGenreChange: vi.fn() };
-    const view = render(<GenreTreeView {...props} selectedNodeId={null} />);
+    const onSelectedGenreUuidChange = vi.fn();
+    const props = { scope: "me" as const, viewMode, artistSearch: false as const, songSearch: false, handleGenreCreationAction: vi.fn(), handleGenreRenameAction: vi.fn(), getBackendBaseUrl: () => "", onSelectedGenreUuidChange, onViewportChange, focusGenreUuid: null, onFocusGenreChange: vi.fn() };
+    const view = render(<GenreTreeView {...props} selectedGenreUuid={null} />);
     const viewport = view.container.querySelector(".gtv-wheel-container")!;
     const stage = viewport.querySelector<HTMLElement>(":scope > div[style*='transform']")!;
     const first = { viewport: { x: 30, y: 40, zoom: 2 }, revision: "back-1" };
-    view.rerender(<GenreTreeView {...props} selectedNodeId="pop" viewportRestore={first} />);
+    view.rerender(<GenreTreeView {...props} selectedGenreUuid={makeGenreUuid("pop-criteria")} viewportRestore={first} />);
     await waitFor(() => expect(stage.style.transform).toContain("scale(2)"));
     expect(view.container.querySelector(".gtv-wheel-container")).toBe(viewport);
     expect(screen.getByRole("combobox", { name: "Search a genre" })).toHaveValue("Mainstream Pop");
     const second = { viewport: { x: 50, y: 60, zoom: 3 }, revision: "back-2" };
-    view.rerender(<GenreTreeView {...props} selectedNodeId="pop" viewportRestore={second} />);
+    view.rerender(<GenreTreeView {...props} selectedGenreUuid={makeGenreUuid("pop-criteria")} viewportRestore={second} />);
     await waitFor(() => expect(stage.style.transform).toContain("scale(3)"));
     expect(onViewportChange).not.toHaveBeenCalled();
     fireEvent.click(view.container.querySelector("#group-rock")!);
-    await waitFor(() => expect(onSelectedNodeIdChange).toHaveBeenCalledWith("rock"));
-    view.rerender(<GenreTreeView {...props} selectedNodeId="rock" viewportRestore={second} />);
+    await waitFor(() => expect(onSelectedGenreUuidChange).toHaveBeenCalledWith(makeGenreUuid("rock-criteria")));
+    view.rerender(<GenreTreeView {...props} selectedGenreUuid={makeGenreUuid("rock-criteria")} viewportRestore={second} />);
     await waitFor(() => expect(screen.getByRole("combobox", { name: "Search a genre" })).toHaveValue("Rock"));
     expect(screen.queryByRole("complementary", { name: /.+/ })).toBeInTheDocument();
   });

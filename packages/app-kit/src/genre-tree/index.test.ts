@@ -6,11 +6,15 @@ describe("genre-tree barrel", () => {
   it("re-exports data hooks and view-state hooks", () => {
     expect(genreTree.useGenreTreeViewState).toBeTypeOf("function");
     expect(genreTree.useGenreSearch).toBeTypeOf("function");
-    expect(genreTree.useArtist).toBeTypeOf("function");
+    expect(genreTree.useGenreRemoteSearch).toBeTypeOf("function");
+    expect(genreTree.useRemoteSearch).toBeTypeOf("function");
+    expect(genreTree.useSearchQueryState).toBeTypeOf("function");
+    expect(genreTree.useRegionGenreLexicon).toBeTypeOf("function");
+    expect(genreTree.rankByName).toBeTypeOf("function");    expect(genreTree.useArtist).toBeTypeOf("function");
     expect(genreTree.useArtistSearch).toBeTypeOf("function");
     expect(genreTree.useArtistGenreCounts).toBeTypeOf("function");
     expect(genreTree.useVisibleGenrePlaylists).toBeTypeOf("function");
-    expect(genreTree.pruneGenrePlaylistsForArtist).toBeTypeOf("function");
+    expect(genreTree.projectGenrePlaylistsForArtist).toBeTypeOf("function");
     expect(genreTree.useListGenres).toBeTypeOf("function");
     expect(genreTree.useFetchGenre).toBeTypeOf("function");
     expect(genreTree.useListGenrePlaylists).toBeTypeOf("function");
@@ -38,6 +42,8 @@ describe("genre-tree barrel", () => {
   it("re-exports schemas", () => {
     expect(genreTree.UuidResourceSchema).toBeTypeOf("object");
     expect(genreTree.ArtistMinimumSchema).toBeTypeOf("object");
+    expect(genreTree.CommonsImageSchema).toBeTypeOf("object");
+    expect(genreTree.ArtistImageSchema).toBe(genreTree.CommonsImageSchema);
     expect(genreTree.AlbumMinimumSchema).toBeTypeOf("object");
     expect(genreTree.MbArtistDetailedSchema).toBeTypeOf("object");
     expect(genreTree.MbRecordingDetailedSchema).toBeTypeOf("object");

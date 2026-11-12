@@ -104,6 +104,18 @@ describe("GenreSearch", () => {
     expect(screen.getByLabelText("Search a genre")).toHaveValue("");
   });
 
+  it("lets the host hide the clear button even when the input has text", () => {
+    render(<GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} selectedName="Ambient" onClear={vi.fn()} showClear={false} />);
+
+    expect(screen.queryByRole("button", { name: "Clear search" })).not.toBeInTheDocument();
+  });
+
+  it("names the clear button after what the host makes it do", () => {
+    render(<GenreSearch genrePlaylists={genrePlaylists} onSelect={vi.fn()} selectedName="Ambient" onClear={vi.fn()} showClear clearLabel="Close panel" />);
+
+    expect(screen.getByRole("button", { name: "Close panel" })).toBeInTheDocument();
+  });
+
   describe("extraGroups", () => {
     const extra = (onSelect = vi.fn()) => [{
       key: "artists",

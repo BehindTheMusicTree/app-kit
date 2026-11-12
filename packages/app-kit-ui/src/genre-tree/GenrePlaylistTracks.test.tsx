@@ -3,8 +3,9 @@ import { screen, fireEvent, act } from "@testing-library/react";
 import { render } from "../test-utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-const { useTrackListMock, usePlayerMock, fetchMock, showPopupMock } = vi.hoisted(() => ({
+const { useTrackListMock, usePlayerMock, fetchMock, showPopupMock, playbackMock } = vi.hoisted(() => ({
   showPopupMock: vi.fn(),
+  playbackMock: vi.fn(),
   useTrackListMock: vi.fn(),
   usePlayerMock: vi.fn(),
   fetchMock: vi.fn(),
@@ -20,7 +21,8 @@ vi.mock("@behindthemusictree/app-kit/player", async (importOriginal) => ({
 }));
 vi.mock("@behindthemusictree/app-kit/transport", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
-  useFetchWrapper: () => ({ fetch: fetchMock }),
+  usePlaybackFetch: () => ({ fetchBound: fetchMock }),
+  usePlaybackContext: playbackMock,
   parseWithLog: (_schema: unknown, data: unknown) => data,
 }));
 
@@ -36,7 +38,7 @@ vi.mock("@behindthemusictree/app-kit/auth", async (importOriginal) => ({
 
 import { GenrePlaylistTracks } from "./GenrePlaylistTracks";
 import { PlayStates } from "@behindthemusictree/app-kit/player";
-import type { RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
+import type { GenreMusicSelection, RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
 import { makeGenrePlaylistUuid, makeGenreUuid } from "@behindthemusictree/app-kit/genre-tree/testing";
 
 const genrePlaylist = { uuid: makeGenrePlaylistUuid("p1"), name: "Jazz" };
@@ -58,11 +60,13 @@ describe("GenrePlaylistTracks", () => {
   const fetchGenrePlaylistTracksPage = vi.fn();
   const playNewTrackListFromGenrePlaylist = vi.fn().mockResolvedValue(undefined);
   const playNewTrackListFromArtist = vi.fn().mockResolvedValue(undefined);
+  const playNewTrackListFromGenreCatalogue = vi.fn().mockResolvedValue(undefined);
   const handlePlayPauseAction = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
-    useTrackListMock.mockReturnValue({ fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist, playNewTrackListFromArtist });
+    playbackMock.mockReturnValue({ key: null, ready: true });
+    useTrackListMock.mockReturnValue({ fetchGenrePlaylistTracksPage, playNewTrackListFromGenrePlaylist, playNewTrackListFromArtist, playNewTrackListFromGenreCatalogue });
     usePlayerMock.mockReturnValue({ playerTrackObject: null, playState: PlayStates.STOPPED, handlePlayPauseAction });
     vi.stubGlobal(
       "IntersectionObserver",
@@ -81,19 +85,30 @@ describe("GenrePlaylistTracks", () => {
     scope: "me" | "reference" = "reference",
     renderArtistLink?: RenderArtistLink,
     artist?: { uuid: string; name: string },
+    selection?: GenreMusicSelection,
+    playlist: typeof genrePlaylist | null = genrePlaylist,
   ) =>
     render(
       <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
         <GenrePlaylistTracks
           genreUuid={makeGenreUuid("g1")}
-          genrePlaylist={genrePlaylist}
+          genrePlaylist={playlist}
+          genreName="Jazz"
           scope={scope}
           getBackendBaseUrl={() => "https://b"}
           renderArtistLink={renderArtistLink}
           artist={artist}
+          selection={selection}
         />
       </QueryClientProvider>,
     );
+
+  it("shows an empty personal list without a playlist instead of loading forever", () => {
+    renderTracks("me", undefined, undefined, undefined, null);
+    expect(screen.getByText("—")).toBeInTheDocument();
+    expect(fetchGenrePlaylistTracksPage).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 
   it("lists the genre catalogue page by page and plays from the clicked song", async () => {
     const page1 = makeTracks(2, "a");
@@ -115,7 +130,33 @@ describe("GenrePlaylistTracks", () => {
 
     expect(fetchMock).toHaveBeenLastCalledWith("library/songs/", true, false, {}, { genre: makeGenreUuid("g1"), pageSize: 100, withTotal: false, cursor: "CUR2" });
     expect(fetchGenrePlaylistTracksPage).not.toHaveBeenCalled();
-    expect(playNewTrackListFromGenrePlaylist).toHaveBeenCalledWith(genrePlaylist, "reference", { startSongUuid: "b0" });
+    expect(playNewTrackListFromGenreCatalogue).toHaveBeenCalledWith({ uuid: makeGenreUuid("g1"), name: "Jazz" }, "reference", { startSongUuid: "b0" });
+    expect(playNewTrackListFromGenrePlaylist).not.toHaveBeenCalled();
+  });
+
+  it("lists and plays catalogue songs without a playlist", async () => {
+    fetchMock.mockResolvedValueOnce(songsPage(makeTracks(1, "regional")));
+    renderTracks("reference", undefined, undefined, undefined, null);
+    expect(await screen.findByRole("list", { name: "Jazz tracks" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Play Song regional0" }));
+    expect(playNewTrackListFromGenreCatalogue).toHaveBeenCalledWith(
+      { uuid: makeGenreUuid("g1"), name: "Jazz" }, "reference", { startSongUuid: "regional0" },
+    );
+  });
+
+  it("restarts the catalogue when playback context changes", async () => {
+    playbackMock.mockReturnValue({ key: "FR:1", ready: true });
+    fetchMock.mockResolvedValueOnce(songsPage(makeTracks(1, "old")))
+      .mockResolvedValueOnce(songsPage(makeTracks(1, "new")));
+    const { rerender } = renderTracks();
+    expect(await screen.findByRole("button", { name: "Play Song old0" })).toBeInTheDocument();
+    playbackMock.mockReturnValue({ key: "AL:2", ready: true });
+    rerender(<GenrePlaylistTracks
+      genreUuid={makeGenreUuid("g1")} genrePlaylist={genrePlaylist}
+      scope="reference" getBackendBaseUrl={() => "https://b"}
+    />);
+    expect(await screen.findByRole("button", { name: "Play Song new0" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Play Song old0" })).not.toBeInTheDocument();
   });
 
   it("keeps loading further pages after the section is collapsed and reopened", async () => {
@@ -140,11 +181,12 @@ describe("GenrePlaylistTracks", () => {
     expect(await screen.findByRole("button", { name: "Play Song b0" })).toBeInTheDocument();
   });
 
-  it("lists and plays only the artist's songs in the genre when an artist is set", async () => {
+  it("plays an artist catalogue song independently of playlist membership", async () => {
     const artist = { uuid: "a1", name: "Band" };
     fetchMock.mockResolvedValueOnce(songsPage(makeTracks(1, "x")));
 
-    renderTracks("reference", undefined, artist);
+    const selection = { coverage: "genreAndSubgenres" as const, subgenres: "regional" as const };
+    renderTracks("reference", undefined, artist, selection);
 
     fireEvent.click(await screen.findByRole("button", { name: "Play Song x0" }));
 
@@ -153,12 +195,10 @@ describe("GenrePlaylistTracks", () => {
       true,
       false,
       {},
-      { genre: makeGenreUuid("g1"), artist: "a1", pageSize: 100, withTotal: false },
+      { genre: makeGenreUuid("g1"), artist: "a1", coverage: "genre_and_subgenres", subgenres: "regional", pageSize: 100, withTotal: false },
     );
     expect(playNewTrackListFromArtist).toHaveBeenCalledWith(artist, "reference", {
-      startSongUuid: "x0",
-      ordering: "title",
-      genreUuid: makeGenreUuid("g1"),
+      startSongUuid: "x0", ordering: "title", genreUuid: makeGenreUuid("g1"), selection,
     });
     expect(playNewTrackListFromGenrePlaylist).not.toHaveBeenCalled();
   });
@@ -195,7 +235,7 @@ describe("GenrePlaylistTracks", () => {
   it("lists artists, logs and shows an error popup when playing fails", async () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const failure = new Error("boom");
-    playNewTrackListFromGenrePlaylist.mockRejectedValueOnce(failure);
+    playNewTrackListFromGenreCatalogue.mockRejectedValueOnce(failure);
     fetchMock.mockResolvedValueOnce(songsPage([{ uuid: "t1", title: "Song", artists: [{ uuid: "x", name: "A" }, { uuid: "y", name: "B" }] }]));
 
     renderTracks();

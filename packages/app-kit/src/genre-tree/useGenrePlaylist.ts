@@ -1,6 +1,7 @@
 "use client";
 
 import { z } from "zod";
+import { ReferenceGenrePlaylistSchema } from "./schemas/reference-genre";
 import { useQueryClient } from "@tanstack/react-query";
 import { useFetchWrapper } from "../transport/useFetchWrapper";
 import { useQueryWithParse } from "../transport/lib/use-query-with-parse";
@@ -79,7 +80,7 @@ export const useListFullGenrePlaylists = (scope: Scope, getBackendBaseUrl: () =>
   const { fetch } = useFetchWrapper(getBackendBaseUrl);
   const { session, sessionRestored } = useSession();
   const queryKey =
-    scope === "reference" ? genrePlaylistQueryKeys.reference.full(getBackendBaseUrl()) : genrePlaylistQueryKeys.me.full;
+    scope === "reference" ? [...genrePlaylistQueryKeys.reference.full(getBackendBaseUrl()), "genreMusicV1"] : genrePlaylistQueryKeys.me.full;
 
   const query = useQueryWithParse({
     queryKey,
@@ -95,7 +96,7 @@ export const useListFullGenrePlaylists = (scope: Scope, getBackendBaseUrl: () =>
               { page, pageSize: FULL_LIST_PAGE_SIZE, treeName: "canonical" },
             ),
           ),
-    schema: z.array(CriteriaPlaylistSimpleSchema),
+    schema: scope === "reference" ? z.array(ReferenceGenrePlaylistSchema) : z.array(CriteriaPlaylistSimpleSchema),
     context: "useListFullGenrePlaylists",
     enabled: scope === "reference" || (sessionRestored && !!session?.accessToken),
   });

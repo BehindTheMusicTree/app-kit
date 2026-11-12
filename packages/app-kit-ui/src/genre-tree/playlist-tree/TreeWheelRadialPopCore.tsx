@@ -1,5 +1,7 @@
 "use client";
 
+import { genrePlaylistTrackCount } from "@behindthemusictree/app-kit/genre-tree";
+
 import { useCallback, useMemo, type ReactNode } from "react";
 import {
   GenreTreeOutline,
@@ -72,6 +74,8 @@ export type GenrePlaylistTreeWheelRadialPopCoreProps<T extends TrackBase> = {
   onViewportChange?: (viewport: GenreTreeViewport) => void;
   /** What node play buttons play; defaults to each node's whole genre playlist. */
   playback?: GenrePlaylistPlayback;
+  /** The open artist's footprint; nodes outside it are drawn muted. */
+  focusUuids?: ReadonlySet<string>;
 } & GenreFocusProps &
   HostPanelProps;
 
@@ -107,9 +111,10 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
   };
   const { isPlaying, setIsPlaying } = usePlayer();
   const defaultPlayback = useGenrePlaylistPlayback<T>({ scope, genrePlaylists });
-  const { playingNodeId, play } = playback ?? defaultPlayback;
+  const { playing, play } = playback ?? defaultPlayback;
+  const playingNodeId = playing?.uuid ?? null;
 
-  const nodes = useMemo(() => toTreeNodes(genrePlaylists, sizeMetric), [genrePlaylists, sizeMetric]);
+  const nodes = useMemo(() => toTreeNodes(genrePlaylists, sizeMetric, props.focusUuids), [genrePlaylists, sizeMetric, props.focusUuids]);
 
   const handlePlayPause = useCallback(
     (nodeId: string) => {
@@ -121,13 +126,11 @@ export default function GenrePlaylistTreeWheelRadialPopCore<T extends TrackBase>
         return;
       }
 
-      if (genrePlaylist.tracksCount === 0) {
+      if (genrePlaylistTrackCount(genrePlaylist) === 0) {
         return;
       }
 
-      play(genrePlaylist).catch((error) => {
-        console.error("Failed to load genre playlist tracks:", error);
-      });
+      void play(genrePlaylist);
     },
     [genrePlaylists, playingNodeId, isPlaying, setIsPlaying, play],
   );

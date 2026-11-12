@@ -10,6 +10,11 @@ describe("genre-tree barrel", () => {
     expect(genreTree.GenreSearch).toBeTypeOf("function");
   });
 
+  it("re-exports the entity detail panel", () => {
+    expect(genreTree.EntityDetailPanel).toBeTypeOf("function");
+    expect(genreTree.useEntityPanel).toBeTypeOf("function");
+  });
+
   it("re-exports track-list components", () => {
     expect(genreTree.TrackListSidebar).toBeTypeOf("function");
     expect(genreTree.TrackItem).toBeTypeOf("function");

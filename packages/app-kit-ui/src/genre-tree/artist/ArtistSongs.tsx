@@ -2,7 +2,6 @@
 
 import { useState, type MouseEvent } from "react";
 import { keepPreviousData } from "@tanstack/react-query";
-import { Play } from "lucide-react";
 import { Pagination, PanelSection, Skeleton } from "@behindthemusictree/ui";
 import { usePlayer } from "@behindthemusictree/app-kit/player";
 import {
@@ -14,7 +13,7 @@ import {
   type RenderSongLink,
   type SongDetailed,
 } from "@behindthemusictree/app-kit/genre-tree";
-import { PaginatedResponseSchema, useFetchWrapper, useQueryWithParse } from "@behindthemusictree/app-kit/transport";
+import { PaginatedResponseSchema, usePlaybackQuery } from "@behindthemusictree/app-kit/transport";
 import TrackItem from "../track-list-sidebar/TrackItem";
 
 const SongPageSchema = PaginatedResponseSchema(SongDetailedSchema);
@@ -35,13 +34,13 @@ interface ArtistSongsProps {
 export default function ArtistSongs({ artist, getBackendBaseUrl, renderArtistLink, renderSongLink }: ArtistSongsProps) {
   const [page, setPage] = useState(1);
   const [ordering, setOrdering] = useState<Ordering>("title");
-  const { fetch } = useFetchWrapper(getBackendBaseUrl);
   const { playNewTrackListFromArtist } = useTrackList<SongDetailed>();
   const { playerTrackObject } = usePlayer();
-  const { data, isPending, isError } = useQueryWithParse({
+  const { data, isPending, isError } = usePlaybackQuery({
+    getBackendBaseUrl,
     queryKey: ["referenceSongs", "artist", artist.uuid, ordering, page],
-    queryFn: () =>
-      fetch(libraryEndpoints.reference.songs.list(), true, false, undefined, {
+    queryFn: (fetchBound) =>
+      fetchBound(libraryEndpoints.reference.songs.list(), true, false, undefined, {
         artist: artist.uuid,
         ordering,
         page,
@@ -76,16 +75,8 @@ export default function ArtistSongs({ artist, getBackendBaseUrl, renderArtistLin
         <p className="text-[var(--color-text-muted)]">No songs yet.</p>
       ) : (
         <>
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-            <button
-              type="button"
-              onClick={() => void play()}
-              className="flex w-fit items-center gap-1.5 px-3 py-1 text-xs font-medium bg-gray-900 text-white rounded-full hover:bg-gray-700"
-            >
-              <Play className="h-3.5 w-3.5" aria-hidden="true" />
-              Play all
-            </button>
-            <div role="group" aria-label="Sort songs by" className="flex gap-1 text-xs">
+          <div className="flex flex-wrap items-center justify-end gap-2 mb-2">
+            <div role="group" aria-label="Sort songs by" className="flex gap-1 text-caption">
               {SORTS.map((sort) => (
                 <button
                   key={sort.ordering}

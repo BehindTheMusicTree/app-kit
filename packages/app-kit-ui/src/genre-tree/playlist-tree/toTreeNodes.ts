@@ -3,7 +3,12 @@ import type { CriteriaPlaylistSimple } from "@behindthemusictree/app-kit/genre-t
 import { genrePlaylistSize, type GenreTreeSizeMetric } from "./size-metric";
 
 /** The tree nodes of a set of genre playlists, as every tree renderer and the host's detail panel see them. */
-export function toTreeNodes(genrePlaylists: CriteriaPlaylistSimple[], sizeMetric: GenreTreeSizeMetric): GenreTreeNode[] {
+export function toTreeNodes(
+  genrePlaylists: CriteriaPlaylistSimple[],
+  sizeMetric: GenreTreeSizeMetric,
+  /** The open artist's footprint: every node outside it is muted. Omit it to mute nothing. */
+  focusUuids?: ReadonlySet<string>,
+): GenreTreeNode[] {
   return genrePlaylists.map((genrePlaylist) => ({
     id: genrePlaylist.uuid,
     parentId: genrePlaylist.parent?.uuid ?? null,
@@ -15,5 +20,6 @@ export function toTreeNodes(genrePlaylists: CriteriaPlaylistSimple[], sizeMetric
     wikidataId: genrePlaylist.criteria?.wikidataId ?? null,
     umbrella: genrePlaylist.isUmbrella,
     scene: genrePlaylist.scene ?? undefined,
+    muted: focusUuids ? !focusUuids.has(genrePlaylist.uuid) : undefined,
   }));
 }

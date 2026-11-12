@@ -39,7 +39,7 @@ export default function SpotifyAuthErrorPopup({
           <div className="space-y-3 text-center">
             <p className="text-xl font-medium text-[var(--color-text)]">{message}</p>
             {details && (
-              <p className="text-sm text-[var(--color-neutral-500)] bg-[var(--color-neutral-100)] p-3 rounded-lg border border-[var(--color-neutral-100)]">{details}</p>
+              <p className="text-body text-[var(--color-neutral-500)] bg-[var(--color-neutral-100)] p-3 rounded-lg border border-[var(--color-neutral-100)]">{details}</p>
             )}
             <div className="space-y-2 text-center">
               <p className="text-base text-[var(--color-neutral-700)]">

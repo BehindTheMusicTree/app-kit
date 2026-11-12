@@ -40,6 +40,7 @@ describe("ArtistDetailedSchema URLs", () => {
     memberOf: [],
     albums: [],
     tracksCount: 0,
+    playableTracksCount: 0,
     image: {
       url: "https://upload.wikimedia.org/a.jpg",
       pageUrl: "https://commons.wikimedia.org/wiki/File:a.jpg",
@@ -47,6 +48,7 @@ describe("ArtistDetailedSchema URLs", () => {
       license: "CC BY 4.0",
       licenseUrl: null,
     },
+    origin: null,
   };
 
   it("accepts http(s) links and image URLs", () => {

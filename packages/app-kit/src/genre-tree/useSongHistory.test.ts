@@ -9,6 +9,9 @@ const { fetchMock, useQueryWithParseMock } = vi.hoisted(() => ({
 vi.mock("../transport/useFetchWrapper", () => ({
   useFetchWrapper: () => ({ fetch: fetchMock }),
 }));
+vi.mock("../transport/usePlaybackFetch", () => ({
+  usePlaybackFetch: () => ({ fetchBound: fetchMock, fetchLatest: fetchMock }),
+}));
 
 vi.mock("../transport/lib/use-query-with-parse", () => ({
   useQueryWithParse: (options: unknown) => useQueryWithParseMock(options),
@@ -33,6 +36,13 @@ describe("useSongHistory", () => {
     expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
   });
 
+  it.each([[""], ["not-a-uuid"]])("stays idle and disabled for the malformed uuid %j", (bad) => {
+    const { result } = renderHook(() => useSongHistory(bad, getBackendBaseUrl, true));
+
+    expect(result.current).toEqual({ status: "idle" });
+    expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
+  });
+
   it("fetches the history once enabled, forwarding the abort signal", async () => {
     const { result } = renderHook(() => useSongHistory(uuid, getBackendBaseUrl, true));
     const options = useQueryWithParseMock.mock.calls[0][0];
@@ -42,7 +52,7 @@ describe("useSongHistory", () => {
     expect(options.queryKey).toEqual(["referenceSongs", "history", uuid]);
     expect(options.schema).toBe(SongHistorySchema);
     await options.queryFn({ signal });
-    expect(fetchMock).toHaveBeenCalledWith(`library/songs/${uuid}/history/`, true, false, { signal }, undefined, false, true);
+    expect(fetchMock).toHaveBeenCalledWith(`library/songs/${uuid}/history/`, true, false, { signal });
   });
 
   it("reports entries on success and error on failure", () => {

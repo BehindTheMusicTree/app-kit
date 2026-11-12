@@ -75,6 +75,8 @@ import {
 } from "./useGenre";
 import { genreUpdateMutationKey } from "./api/genres";
 import { makeGenrePlaylistUuid, makeGenreUuid } from "./testing";
+import { BackendError } from "../transport/app-errors/app-error";
+import { ErrorCode } from "../transport/app-errors/app-error-codes";
 
 const getBackendBaseUrl = () => "https://backend.example.com";
 
@@ -95,6 +97,7 @@ describe("useGenre", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useSessionMock.mockReturnValue({ session: { accessToken: "token" }, sessionRestored: true });
+    useQueryWithParseMock.mockReturnValue({ data: undefined, error: null, isPending: true });
     useValidatedMutationMock.mockReturnValue({ mutate: vi.fn(), formErrors: [] });
   });
 
@@ -157,7 +160,7 @@ describe("useGenre", () => {
       renderHook(() => useFetchGenreDetail(makeGenreUuid("g1"), "reference", getBackendBaseUrl));
       const { queryKey, enabled, queryFn } = useQueryWithParseMock.mock.calls[0][0];
 
-      expect(queryKey).toEqual(["referenceGenres", "detail", makeGenreUuid("g1")]);
+      expect(queryKey).toEqual(["referenceGenres", "detail", makeGenreUuid("g1"), "https://backend.example.com", "genreMusicV1"]);
       expect(enabled).toBe(true);
 
       queryFn();
@@ -175,10 +178,48 @@ describe("useGenre", () => {
       expect(fetchMock).toHaveBeenCalledWith(`me/genres/${makeGenreUuid("g1")}/`, true, true);
     });
 
-    it("disables the query when there is no selected id", () => {
-      renderHook(() => useFetchGenreDetail(null, "me", getBackendBaseUrl));
+    it("is idle and disabled when there is no selected id", () => {
+      const { result } = renderHook(() => useFetchGenreDetail(null, "me", getBackendBaseUrl));
 
       expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
+      expect(result.current).toEqual({ status: "idle" });
+    });
+
+    it("is not found without a request when the uuid is malformed", () => {
+      const { result } = renderHook(() => useFetchGenreDetail("not-a-uuid", "me", getBackendBaseUrl));
+
+      expect(useQueryWithParseMock.mock.calls[0][0].enabled).toBe(false);
+      expect(result.current).toEqual({ status: "not-found" });
+    });
+
+    it("reports loading, then success with the genre", () => {
+      const genre = { uuid: makeGenreUuid("g1") };
+      const { result, rerender } = renderHook(() => useFetchGenreDetail(makeGenreUuid("g1"), "me", getBackendBaseUrl));
+      expect(result.current).toEqual({ status: "loading" });
+
+      useQueryWithParseMock.mockReturnValue({ data: genre, error: null, isPending: false });
+      rerender();
+      expect(result.current).toEqual({ status: "success", genre });
+    });
+
+    it("maps a 404 to not found and never retries it", () => {
+      const notFound = new BackendError(ErrorCode.BACKEND_NOT_FOUND);
+      useQueryWithParseMock.mockReturnValue({ data: undefined, error: notFound, isPending: false });
+      const { result } = renderHook(() => useFetchGenreDetail(makeGenreUuid("g1"), "me", getBackendBaseUrl));
+
+      expect(result.current).toEqual({ status: "not-found" });
+      expect(useQueryWithParseMock.mock.calls[0][0].retry(0, notFound)).toBe(false);
+    });
+
+    it("reports other failures as errors, retried up to three times", () => {
+      const failure = new Error("boom");
+      useQueryWithParseMock.mockReturnValue({ data: undefined, error: failure, isPending: false });
+      const { result } = renderHook(() => useFetchGenreDetail(makeGenreUuid("g1"), "me", getBackendBaseUrl));
+      const { retry } = useQueryWithParseMock.mock.calls[0][0];
+
+      expect(result.current).toEqual({ status: "error" });
+      expect(retry(2, failure)).toBe(true);
+      expect(retry(3, failure)).toBe(false);
     });
   });
 
