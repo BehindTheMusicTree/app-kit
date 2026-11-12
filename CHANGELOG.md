@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [43.0.0] - 2026-11-12
+
 ### Breaking
 
 - `PlayerPanel` no longer accepts the already-ignored `onClose` prop; remove it. Closing is built in (see Added).
