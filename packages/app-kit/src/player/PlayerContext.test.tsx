@@ -432,6 +432,7 @@ describe("PlayerProvider - loadTrackForPlayer (youtube)", () => {
     });
 
     expect(ytPlayerCtor).toHaveBeenCalledTimes(1);
+    expect(ytPlayerCtor.mock.calls[0][1]).toMatchObject({ width: "100%", height: "100%" });
 
     act(() => {
       ytPlayers[0].config.events.onReady();
@@ -782,7 +783,9 @@ describe("PlayerVideoSurface", () => {
       </PlayerProvider>,
     );
 
-    expect(container.querySelector(".video-surface")).not.toBeNull();
+    const surface = container.querySelector(".video-surface");
+    expect(surface).not.toBeNull();
+    expect(surface?.className).toContain("overflow-hidden");
   });
 });
 

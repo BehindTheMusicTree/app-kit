@@ -11,6 +11,12 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [42.0.2] - 2026-11-12
+
+### Fixed
+
+- YouTube player iframe now fills `PlayerVideoSurface` instead of using the API's 640x390 default (off-center play button, cropped video).
+
 ## [42.0.1] - 2026-11-11
 
 ### Fixed
