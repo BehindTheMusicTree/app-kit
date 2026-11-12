@@ -23,7 +23,7 @@ easy to spot when bumping.
 
 ### Changed
 
-- `GenreDetailPanel`: the Ancestors section now ends on the selected genre (non-clickable) and draws every ancestor at the Family section's size; a long parent label in Family wraps instead of being truncated. Requires the next `@behindthemusictree/genre-tree-view` release (pending, catalog pin not bumped yet).
+- `GenreDetailPanel`: the Ancestors section now ends on the selected genre (non-clickable) and draws every ancestor at the Family section's size; a long parent label in Family wraps instead of being truncated. Requires `@behindthemusictree/genre-tree-view` 10.0.0 (catalog bumped).
 
 ### Fixed
 
