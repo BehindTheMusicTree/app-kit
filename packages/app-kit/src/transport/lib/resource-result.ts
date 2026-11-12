@@ -1,10 +1,10 @@
-import { isNotFoundError } from "../app-errors/app-error";
+import { isNotFoundError, isRetryableError } from "../app-errors/app-error";
 
 const MAX_RESOURCE_ATTEMPTS = 3;
 
-/** React Query `retry` for a single resource: a 404 is final, other failures retry up to three times. */
+/** React Query `retry` for a single resource: final errors (see `isRetryableError`) never retry, others retry up to three times. */
 export const resourceRetry = (failureCount: number, error: Error) =>
-  !isNotFoundError(error) && failureCount < MAX_RESOURCE_ATTEMPTS;
+  isRetryableError(error) && failureCount < MAX_RESOURCE_ATTEMPTS;
 
 export type ResourceResult<T> =
   | { status: "idle" }
