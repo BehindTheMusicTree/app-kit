@@ -143,16 +143,18 @@ describe("fetchWrapper", () => {
     expect(createAppErrorFromResultMock).toHaveBeenCalledWith(response, undefined);
   });
 
-  it("calls handleError and returns null for a non-ok response when handleError is provided", async () => {
+  it("calls handleError then rejects with the app error for a non-ok GET, so callers keep the typed error", async () => {
     const response = { ok: false } as unknown as Response;
     vi.mocked(fetch).mockResolvedValue(response);
     const appError = new AppError(ErrorCode.BACKEND_AUTH_ERROR);
     createAppErrorFromResultMock.mockResolvedValue(appError);
     const handleError = vi.fn();
 
-    const result = await fetchWrapper("things/", false, {}, undefined, undefined, undefined, handleError);
+    await expect(
+      fetchWrapper("things/", false, {}, undefined, undefined, undefined, handleError),
+    ).rejects.toBe(appError);
 
-    expect(result).toBeNull();
+    expect(handleError).toHaveBeenCalledTimes(1);
     expect(handleError).toHaveBeenCalledWith(appError);
   });
 
@@ -195,11 +197,11 @@ describe("fetchWrapper", () => {
     vi.useFakeTimers();
 
     const pending = fetchWrapper("things/", false, {}, undefined, undefined, undefined, handleError);
+    const settled = expect(pending).rejects.toBe(appError);
     await vi.runAllTimersAsync();
-    const result = await pending;
+    await settled;
     vi.useRealTimers();
 
-    expect(result).toBeNull();
     expect(handleError).toHaveBeenCalledWith(appError);
     expect(vi.mocked(fetch)).toHaveBeenCalledTimes(3);
   });
@@ -263,9 +265,10 @@ describe("fetchWrapper", () => {
   it("passes a malformed-request ClientError to handleError", async () => {
     const handleError = vi.fn();
 
-    const result = await fetchWrapper("things/", false, { body: "x" }, undefined, undefined, undefined, handleError);
+    await expect(
+      fetchWrapper("things/", false, { body: "x" }, undefined, undefined, undefined, handleError),
+    ).rejects.toMatchObject({ code: ErrorCode.CLIENT_INTERNAL_ERROR });
 
-    expect(result).toBeNull();
     expect(handleError).toHaveBeenCalledWith(expect.objectContaining({ code: ErrorCode.CLIENT_INTERNAL_ERROR }));
     expect(vi.mocked(fetch)).not.toHaveBeenCalled();
   });
@@ -332,7 +335,9 @@ describe("fetchWrapper", () => {
     createNetworkOrBackendErrorMock.mockReturnValue(new AppError(ErrorCode.NETWORK_TIMEOUT));
     const handleError = vi.fn();
 
-    await fetchWrapper("things/", false, { signal: controller.signal }, undefined, undefined, undefined, handleError);
+    await expect(
+      fetchWrapper("things/", false, { signal: controller.signal }, undefined, undefined, undefined, handleError),
+    ).rejects.toBeInstanceOf(AppError);
 
     expect(handleError).toHaveBeenCalled();
   });
@@ -361,7 +366,7 @@ describe("fetchWrapper", () => {
     vi.mocked(fetch).mockResolvedValue({ ok: false, status: 500 } as unknown as Response);
     createAppErrorFromResultMock.mockResolvedValue(new AppError(ErrorCode.BACKEND_AUTH_ERROR));
 
-    await fetchWrapper("things/", false, {}, undefined, undefined, undefined, vi.fn());
+    await expect(fetchWrapper("things/", false, {}, undefined, undefined, undefined, vi.fn())).rejects.toBeInstanceOf(AppError);
 
     expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
   });
@@ -372,7 +377,7 @@ describe("fetchWrapper", () => {
     createAppErrorFromResultMock.mockResolvedValue(new AppError(ErrorCode.BACKEND_AUTH_ERROR));
     const handleError = vi.fn();
 
-    await fetchWrapper(
+    await expect(fetchWrapper(
       "things/",
       false,
       {},
@@ -382,7 +387,7 @@ describe("fetchWrapper", () => {
       handleError,
       false,
       "https://backend.example.com",
-    );
+    )).rejects.toBeInstanceOf(AppError);
 
     expect(createAppErrorFromResultMock).toHaveBeenCalledWith(response, "https://backend.example.com");
   });

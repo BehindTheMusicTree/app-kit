@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { BackendError } from "../app-errors/app-error";
+import { AuthRequired, BackendError, BadRequestError, NetworkError, ServiceError } from "../app-errors/app-error";
 import { ErrorCode } from "../app-errors/app-error-codes";
 import { resourceRetry, toResourceResult } from "./resource-result";
 
@@ -31,6 +31,20 @@ describe("toResourceResult", () => {
 });
 
 describe("resourceRetry", () => {
+  it("never retries an AuthRequired, so a rejected token gives one request", () => {
+    expect(resourceRetry(0, new AuthRequired(ErrorCode.BACKEND_UNAUTHORIZED))).toBe(false);
+  });
+
+  it("never retries a bad request or an auth-detail backend error", () => {
+    expect(resourceRetry(0, new BadRequestError(ErrorCode.BACKEND_INVALID_INPUT))).toBe(false);
+    expect(resourceRetry(0, new BackendError(ErrorCode.BACKEND_GOOGLE_AUTHENTICATION_ERROR))).toBe(false);
+  });
+
+  it("retries network and service failures", () => {
+    expect(resourceRetry(0, new NetworkError(ErrorCode.NETWORK_TIMEOUT))).toBe(true);
+    expect(resourceRetry(0, new ServiceError(ErrorCode.SERVICE_BAD_REQUEST))).toBe(true);
+  });
+
   it("never retries a 404", () => {
     expect(resourceRetry(0, notFound)).toBe(false);
   });

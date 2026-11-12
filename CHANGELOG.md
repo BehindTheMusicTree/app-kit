@@ -11,6 +11,18 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Breaking
+
+- `fetchWrapper` / `useFetchWrapper().fetch` / `usePlaybackFetch` now reject with the typed `AppError` on a failed GET or HEAD after reporting it to the global handler, instead of resolving `null`. Direct `await fetch(...)` callers on reads must handle the rejection (query functions need no change).
+
+### Added
+
+- `isRetryableError` (transport) and `AUTH_DETAIL_ERROR_CODES`: one classification of which failures a retry can fix.
+
+### Fixed
+
+- A rejected token (`AuthRequired`, BAC4010) no longer re-sends the request up to three times, re-raising the popup and clearing the session each time: `resourceRetry` skips `AuthRequired`, not-found, bad-request, client and auth-detail errors.
+
 ## [42.0.2] - 2026-11-12
 
 ### Fixed

@@ -6,7 +6,7 @@ import { useSession } from "../../auth/SessionContext";
 import { BackendError, AuthRequired, ConnectivityError, isNotFoundError } from "../app-errors/app-error";
 import { fetchWrapper as rawFetch } from "../fetch-wrapper";
 import { createAppErrorFromErrorCode } from "../app-errors/app-error-factory";
-import { ErrorCode } from "../app-errors/app-error-codes";
+import { AUTH_DETAIL_ERROR_CODES, ErrorCode } from "../app-errors/app-error-codes";
 
 export type ResponseHook = (response: Response) => void | Promise<void>;
 
@@ -20,14 +20,7 @@ export const useBackendRequest = (getBackendBaseUrl: () => string) => {
 
   const handleError = useCallback((error: Error, isRead: boolean) => {
     if (error instanceof ConnectivityError) {
-      const authDetailErrors = [
-        ErrorCode.BACKEND_GOOGLE_OAUTH_CODE_INVALID_OR_EXPIRED,
-        ErrorCode.BACKEND_SPOTIFY_USER_NOT_IN_ALLOWLIST,
-        ErrorCode.BACKEND_SPOTIFY_AUTHENTICATION_ERROR,
-        ErrorCode.BACKEND_GOOGLE_AUTHENTICATION_ERROR,
-        ErrorCode.BACKEND_GOOGLE_OAUTH_MISCONFIGURED,
-      ];
-      if (error instanceof BackendError && authDetailErrors.includes(error.code)) {
+      if (error instanceof BackendError && AUTH_DETAIL_ERROR_CODES.includes(error.code)) {
         throw error;
       }
       // A missing resource is the reader's state to show, not a connectivity failure. A write that

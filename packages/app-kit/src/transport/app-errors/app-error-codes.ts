@@ -56,3 +56,12 @@ export enum ErrorCode {
   // Backend invalid input
   BACKEND_INVALID_INPUT = "INP4220",
 }
+
+/** Backend auth failures that carry their own popup/flow: retrying cannot fix them. */
+export const AUTH_DETAIL_ERROR_CODES: readonly ErrorCode[] = [
+  ErrorCode.BACKEND_GOOGLE_OAUTH_CODE_INVALID_OR_EXPIRED,
+  ErrorCode.BACKEND_SPOTIFY_USER_NOT_IN_ALLOWLIST,
+  ErrorCode.BACKEND_SPOTIFY_AUTHENTICATION_ERROR,
+  ErrorCode.BACKEND_GOOGLE_AUTHENTICATION_ERROR,
+  ErrorCode.BACKEND_GOOGLE_OAUTH_MISCONFIGURED,
+];
