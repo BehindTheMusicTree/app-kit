@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { X } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 import {
   usePlayer,
@@ -11,7 +12,7 @@ import {
   type RenderArtistLink,
   type RenderSongLink,
 } from "@behindthemusictree/app-kit/genre-tree";
-import { PanelEdgeTab } from "@behindthemusictree/ui";
+import { IconButton, PanelEdgeTab } from "@behindthemusictree/ui";
 import PlayerControls from "./PlayerControls";
 import TrackListSidebar from "./track-list-sidebar/TrackListSidebar";
 
@@ -19,8 +20,6 @@ export interface PlayerPanelProps {
   className?: string;
   /** Hidden via CSS, never unmounted, so the video keeps playing while the host hides the panel. */
   isVisible?: boolean;
-  /** @deprecated The player no longer closes; its header action minimizes to video-only mode. */
-  onClose?: () => void;
   /** Controlled extended state; uncontrolled when omitted. */
   expanded?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
@@ -46,7 +45,7 @@ export default function PlayerPanel({
   renderArtistLink,
   renderSongLink,
 }: PlayerPanelProps) {
-  const { playerTrackObject, retryPlayback } = usePlayer();
+  const { playerTrackObject, retryPlayback, stop } = usePlayer();
   const { toggleTrackListSidebar, isTrackListSidebarVisible } =
     useTrackListSidebarVisibility();
   const [lastLoadedTrackTitle, setLastLoadedTrackTitle] = useState("");
@@ -114,6 +113,9 @@ export default function PlayerPanel({
             <span className="min-w-0 truncate text-sm font-semibold">
               {loadedTrackTitle || lastLoadedTrackTitle}
             </span>
+            <IconButton aria-label="Close player" onClick={stop}>
+              <X aria-hidden="true" className="h-4 w-4" />
+            </IconButton>
           </div>
           <div className="relative w-full shrink-0">
             <PlayerVideoSurface className="aspect-video w-full bg-black" />

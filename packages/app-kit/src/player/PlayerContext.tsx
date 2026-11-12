@@ -98,6 +98,8 @@ interface PlayerContextType {
   setPlayState: (state: PlayStates) => void;
   handlePlayPauseAction: () => void;
   loadTrackForPlayer: (trackId: string) => void;
+  /** Stops playback and unloads the current track, so `playerTrackObject` becomes `null`. */
+  stop: () => void;
   isLoading: boolean;
   handleNextTrack: (
     trackList: PlayerTrack[],
@@ -357,6 +359,28 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
     [loadTrack, loadAudioTrack, loadYoutubeTrack, playback.key],
   );
 
+  const stop = useCallback(() => {
+    generation.current++;
+    terminal.current = true;
+    currentTrackIdRef.current = null;
+    currentTimeRef.current = 0;
+    if (audioElementRef.current) {
+      audioElementRef.current.pause();
+      audioElementRef.current = null;
+    }
+    if (youtubePlayerRef.current) {
+      youtubePlayerRef.current.destroy();
+      youtubePlayerRef.current = null;
+    }
+    videoContainerRef.current?.replaceChildren();
+    setPlayerTrackObject(null);
+    setPlaybackConfirmedTrackId(null);
+    setDuration(0);
+    setIsLoading(false);
+    setPlayState(PlayStates.STOPPED);
+    setIsPlaying(false);
+  }, []);
+
   const previousPlaybackKey = useRef(playback.key);
   useEffect(() => {
     if (previousPlaybackKey.current === playback.key) return;
@@ -470,6 +494,7 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
       setPlayState,
       handlePlayPauseAction,
       loadTrackForPlayer,
+      stop,
       isLoading,
       handleNextTrack,
       handlePreviousTrack,
@@ -489,6 +514,7 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
       isLoading,
       handlePlayPauseAction,
       loadTrackForPlayer,
+      stop,
       handleNextTrack,
       handlePreviousTrack,
       onTrackEnd,

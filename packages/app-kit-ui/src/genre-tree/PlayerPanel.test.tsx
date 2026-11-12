@@ -66,6 +66,15 @@ describe("PlayerPanel", () => {
     expect(screen.queryByRole("button", { name: "Extend song list panel" })).not.toBeInTheDocument();
   });
 
+  it("stops playback from the close button", () => {
+    const stop = vi.fn();
+    setup(true);
+    usePlayerMock.mockReturnValue({ playerTrackObject: { track: { title: "Song A" } }, stop });
+    render(<PlayerPanel />);
+    fireEvent.click(screen.getByRole("button", { name: "Close player" }));
+    expect(stop).toHaveBeenCalledTimes(1);
+  });
+
   it("hides the song list from the From header", () => {
     setup(true);
     render(<PlayerPanel />);
@@ -106,7 +115,7 @@ describe("PlayerPanel", () => {
     expect(onExpandedChange).toHaveBeenCalledWith(false);
   });
 
-  it("minimizes to video-only without closing or unmounting the player", () => {
+  it("minimizes to video-only without unmounting the player", () => {
     setup(true);
     const onExpandedChange = vi.fn();
     const { container, rerender } = render(
@@ -124,7 +133,6 @@ describe("PlayerPanel", () => {
     expect(container.firstChild).toHaveClass("w-[var(--layout-right-w)]");
     expect(screen.getByTestId("video")).toBeInTheDocument();
     expect(screen.getByTestId("sidebar")).toHaveAttribute("data-collapsed", "true");
-    expect(screen.queryByRole("button", { name: "Close player" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Show tracks" }));
     expect(toggleTrackListSidebar).toHaveBeenCalledTimes(2);
