@@ -270,6 +270,9 @@ export function PlayerProvider({ children, loadTrack }: PlayerProviderProps) {
       await new Promise<void>((resolve) => {
         const player = new YT.Player(mount, {
           videoId: track.youtubeVideoId,
+          // Without these the API defaults to a 640x390 iframe that overflows the surface.
+          width: "100%",
+          height: "100%",
           playerVars: { autoplay: 1, controls: 0 },
           events: {
             onReady: () => {
@@ -506,10 +509,20 @@ export function usePlayer() {
   return context;
 }
 
-/** Mounts the YouTube IFrame player. Only needed by apps that play `"youtube"`-kind tracks. */
+const VIDEO_SURFACE_FILL_CLASSES = "relative overflow-hidden [&>iframe]:absolute [&>iframe]:inset-0 [&>iframe]:size-full";
+
+/**
+ * Mounts the YouTube IFrame player. Only needed by apps that play `"youtube"`-kind tracks.
+ * The iframe fills this element, so size it with `className` (e.g. `aspect-video w-full`).
+ */
 export function PlayerVideoSurface({ className }: { className?: string }) {
   const { videoContainerRef } = usePlayer();
-  return <div ref={videoContainerRef} className={className} />;
+  return (
+    <div
+      ref={videoContainerRef}
+      className={className ? `${VIDEO_SURFACE_FILL_CLASSES} ${className}` : VIDEO_SURFACE_FILL_CLASSES}
+    />
+  );
 }
 
 // Custom hook for components that need real-time currentTime updates
