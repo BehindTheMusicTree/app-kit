@@ -1,4 +1,4 @@
-import { ErrorCode } from "./app-error-codes";
+import { AUTH_DETAIL_ERROR_CODES, ErrorCode } from "./app-error-codes";
 import { ErrorMessages } from "./app-error-messages";
 
 export class AppError extends Error {
@@ -87,6 +87,22 @@ export class ServiceError extends ConnectivityError {
 /** The backend answered 404 for the requested resource. */
 export const isNotFoundError = (error: unknown): error is BackendError =>
   error instanceof BackendError && error.code === ErrorCode.BACKEND_NOT_FOUND;
+
+/**
+ * Whether repeating the same request can succeed. Auth, not-found, invalid-input and client errors
+ * are final; network, service and other backend failures may be transient.
+ */
+export const isRetryableError = (error: unknown): boolean => {
+  if (error instanceof AuthRequired || error instanceof ClientError || error instanceof BadRequestError) return false;
+  if (isNotFoundError(error)) return false;
+  if (error instanceof BackendError && AUTH_DETAIL_ERROR_CODES.includes(error.code)) return false;
+  if (
+    error instanceof BackendError &&
+    (error.code === ErrorCode.BACKEND_FORBIDDEN || error.code === ErrorCode.BACKEND_SPOTIFY_AUTHORIZATION_REQUIRED)
+  )
+    return false;
+  return true;
+};
 
 /**
  * Union type of all error classes.

@@ -31,7 +31,7 @@ type RawPaginatedResponse = {
  * first page, then fetches the rest with at most FULL_LIST_CONCURRENCY requests in flight.
  */
 const fetchAllPages = async (fetchPage: (page: number) => Promise<unknown>): Promise<unknown[]> => {
-  // fetch-wrapper resolves null (instead of throwing) when a handleError callback swallowed the failure.
+  // fetch-wrapper resolves null for an empty body (204) or a missing session.
   const fetchRequiredPage = async (page: number) => {
     const response = await fetchPage(page);
     if (response == null) throw new Error(`Paginated list page ${page} returned no body`);

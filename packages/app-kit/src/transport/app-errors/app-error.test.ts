@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { BackendError, BackendSpotifyUserNotAllowlistedError, InvalidInputError } from "./app-error";
-import { ErrorCode } from "./app-error-codes";
+import {
+  AuthRequired,
+  BackendError,
+  BackendSpotifyUserNotAllowlistedError,
+  InvalidInputError,
+  NetworkError,
+  ServiceError,
+  isRetryableError,
+} from "./app-error";
+import { AUTH_DETAIL_ERROR_CODES, ErrorCode } from "./app-error-codes";
 import { getSpotifyAllowlistMailtoHref } from "./app-error-messages";
 
 describe("app-error classes", () => {
@@ -39,5 +47,25 @@ describe("getSpotifyAllowlistMailtoHref", () => {
     expect(href).toContain("mailto:contact@example.com?");
     expect(href).toContain("subject=");
     expect(href).toContain("body=");
+  });
+});
+
+describe("isRetryableError", () => {
+  it("never retries final errors", () => {
+    expect(isRetryableError(new AuthRequired(ErrorCode.BACKEND_UNAUTHORIZED))).toBe(false);
+    expect(isRetryableError(new InvalidInputError(ErrorCode.BACKEND_INVALID_INPUT, {}))).toBe(false);
+    expect(isRetryableError(new BackendError(ErrorCode.BACKEND_NOT_FOUND))).toBe(false);
+    expect(isRetryableError(new BackendError(ErrorCode.BACKEND_FORBIDDEN))).toBe(false);
+    expect(isRetryableError(new BackendError(ErrorCode.BACKEND_SPOTIFY_AUTHORIZATION_REQUIRED))).toBe(false);
+    for (const code of AUTH_DETAIL_ERROR_CODES) {
+      expect(isRetryableError(new BackendError(code))).toBe(false);
+    }
+  });
+
+  it("retries transient failures", () => {
+    expect(isRetryableError(new NetworkError(ErrorCode.NETWORK_ERROR))).toBe(true);
+    expect(isRetryableError(new ServiceError(ErrorCode.SERVICE_INTERNAL_ERROR))).toBe(true);
+    expect(isRetryableError(new BackendError(ErrorCode.BACKEND_BAD_REQUEST))).toBe(true);
+    expect(isRetryableError(new Error("parse"))).toBe(true);
   });
 });

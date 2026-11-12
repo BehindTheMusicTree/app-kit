@@ -116,11 +116,8 @@ export const fetchWrapper = async <T>(
       appError = createNetworkOrBackendError(caughtError, finalUrl, backendBaseUrl);
     }
 
-    if (!handleError) throw appError;
-    handleError(appError);
-    // A mutation resolving to null reads as a schema mismatch downstream and hides the failure from onError.
-    const method = (finalOptions.method ?? "GET").toUpperCase();
-    if (method !== "GET" && method !== "HEAD") throw appError;
-    return null;
+    // Report it, then still reject: callers (React Query's retry policy) need the typed error.
+    handleError?.(appError);
+    throw appError;
   }
 };
