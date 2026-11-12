@@ -81,7 +81,7 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   handleGenreCreationAction: (parent: CriteriaMinimum | null) => void;
   handleGenreRenameAction: (genre: CriteriaMinimum) => void;
   getBackendBaseUrl: () => string;
-  /** Called after the Parent popup moved a genre; `from` and `to` are genre (criteria) uuids, `from` null for a root genre. */
+  /** Called after the Parent popup moved a genre; `from` and `to` are genre (criteria) uuids, `from` null for a root genre, `to` null when the genre was made a root. */
   onParentChanged?: (change: ParentChange) => void;
   additionalActions?: (node: GenreTreeNode) => GenreTreeAction[];
   /** Controlled view mode. When provided, the internal Stacked/Wheel toggle is not rendered — the consumer owns that UI. */

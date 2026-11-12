@@ -122,6 +122,45 @@ describe("ChangeParentPopup", () => {
     });
   });
 
+  describe("Make root", () => {
+    it("is hidden for a root genre", () => {
+      renderPopup({ genrePlaylist: blues });
+      expect(screen.queryByRole("button", { name: "Make root" })).not.toBeInTheDocument();
+    });
+
+    it("asks for confirmation, then sends a null parent and reports to: null", () => {
+      const onParentChanged = vi.fn();
+      const { onClose } = renderPopup({ onParentChanged });
+
+      fireEvent.click(screen.getByRole("button", { name: "Make root" }));
+      expect(screen.getByText(/Jazz and its descendants will no longer be under Rock/)).toBeInTheDocument();
+      expect(mutateMock).not.toHaveBeenCalled();
+
+      fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
+      expect(mutateMock).toHaveBeenCalledWith(
+        { uuid: "c-jazz", data: { parent: null } },
+        { onSuccess: expect.any(Function) },
+      );
+      mutateMock.mock.calls[0][1].onSuccess();
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(onParentChanged).toHaveBeenCalledWith({ genre: "c-jazz", from: "c-rock", to: null });
+    });
+
+    it("goes back without mutating", () => {
+      renderPopup();
+      fireEvent.click(screen.getByRole("button", { name: "Make root" }));
+      fireEvent.click(screen.getByRole("button", { name: "Back" }));
+      expect(screen.getByRole("button", { name: "Make root" })).toBeInTheDocument();
+      expect(mutateMock).not.toHaveBeenCalled();
+    });
+
+    it("shows a 400 message in the alert", () => {
+      mockMutation({ formErrors: [{ field: "parent", message: "Cannot make root" }] });
+      renderPopup();
+      expect(screen.getByRole("alert")).toHaveTextContent("Cannot make root");
+    });
+  });
+
   it("marks the search busy while the update is pending", () => {
     mockMutation({ isPending: true });
     renderPopup();

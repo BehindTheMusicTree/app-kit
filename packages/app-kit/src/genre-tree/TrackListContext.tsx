@@ -14,7 +14,7 @@ import { genreMusicQueryParams, type GenreMusicSelection } from "./lib/genre-mus
 import { usePlaybackContext } from "../transport/PlaybackContext";
 import { usePlaybackFetch } from "../transport/usePlaybackFetch";
 import { usePlaybackQuery } from "../transport/lib/use-playback-query";
-import { isNotFoundError } from "../transport/app-errors/app-error";
+import { AppError, isNotFoundError } from "../transport/app-errors/app-error";
 import { useSession } from "../auth/SessionContext";
 import { PaginatedResponseSchema } from "../transport/lib/paginated-response";
 import { parseWithLog } from "../transport/lib/parse-with-log";
@@ -232,7 +232,14 @@ export function TrackListProvider<T extends TrackBase>({
       const endpoint = genrePlaylistEndpoints[scope].tracks(uuid);
       if (scope === "me" && (selection || artistUuid)) throw new Error("Genre selections require reference scope");
       const params = { page, pageSize: TRACKS_PAGE_SIZE, ...(from && { from }), ...genreMusicQueryParams(selection), ...(artistUuid && { artist: artistUuid }) };
-      const response = await (page === 1 ? fetchLatest : fetchBound)(endpoint, true, scope === "me", {}, params, false, !!from);
+      let response: unknown;
+      try {
+        response = await (page === 1 ? fetchLatest : fetchBound)(endpoint, true, scope === "me", {}, params, false, !!from);
+      } catch (error) {
+        // fetch-wrapper already reported a failed first-page read to the user; callers must not raise a second popup.
+        if (error instanceof AppError && !from) throw new TracksFailureAlreadyReportedError();
+        throw error;
+      }
       if (response === null && !from) throw new TracksFailureAlreadyReportedError();
       const parsed = parseWithLog(pageSchema, response, "fetchGenrePlaylistTracksPage");
       return {

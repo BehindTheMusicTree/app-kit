@@ -165,6 +165,23 @@ describe("PlayerProvider - loadTrackForPlayer (audio)", () => {
     expect(result.current.playbackConfirmedTrackId).toBe("audio-1");
   });
 
+  it("stop() pauses and unloads the current track", async () => {
+    loadTrackMock.mockResolvedValue(makeAudioTrack());
+    const { result } = renderHook(() => usePlayer(), { wrapper });
+    await act(async () => {
+      result.current.loadTrackForPlayer("audio-1");
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    act(() => result.current.stop());
+
+    expect(audioInstances[0].pause).toHaveBeenCalled();
+    expect(result.current.playerTrackObject).toBeNull();
+    expect(result.current.isPlaying).toBe(false);
+    expect(result.current.playState).toBe(PlayStates.STOPPED);
+  });
+
   it("sets duration and currentTimeRef from audio events", async () => {
     loadTrackMock.mockResolvedValue(makeAudioTrack());
     const { result } = renderHook(() => usePlayer(), { wrapper });
