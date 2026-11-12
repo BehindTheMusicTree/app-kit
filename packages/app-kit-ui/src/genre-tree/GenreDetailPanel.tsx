@@ -152,7 +152,15 @@ export function useGenreDetailContent<O extends CriteriaOverview>({
       onSelectNode={selectGenre}
     />
   );
-  const ancestors = <GenreNodeAncestors ancestorNodes={view.ancestorNodes} onSelectNode={selectGenre} />;
+  const ancestors = (
+    <GenreNodeAncestors
+      node={view.node}
+      fill={view.fill}
+      textColor={view.textColor}
+      ancestorNodes={view.ancestorNodes}
+      onSelectNode={selectGenre}
+    />
+  );
 
   return {
     name: detail.name,
