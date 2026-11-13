@@ -48,6 +48,7 @@ function Harness({ uuid }: { uuid: string | null }) {
   if (!panel) return <p>No panel</p>;
   return (
     <section aria-label={typeof panel.title === "string" ? panel.title : undefined}>
+      {panel.cover}
       {panel.content}
       {"extraContent" in panel && <aside aria-label="Extra">{panel.extraContent}</aside>}
     </section>

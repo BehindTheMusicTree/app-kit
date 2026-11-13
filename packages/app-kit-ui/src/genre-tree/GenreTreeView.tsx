@@ -5,7 +5,7 @@ import { useIsMutating } from "@tanstack/react-query";
 import { z } from "zod";
 import { Plus } from "lucide-react";
 import { Maximize2, Minimize2 } from "lucide-react";
-import { IconTextButton, IconButton, Button, SegmentedControl, DetailPanel, useObscuredInset } from "@behindthemusictree/ui";
+import { IconTextButton, IconButton, Button, SegmentedControl, useObscuredInset } from "@behindthemusictree/ui";
 
 import {
   GenreTreeWheelSkeleton,
@@ -47,6 +47,7 @@ import GenrePlaylistTreeWheelRadialPopCore, { type GenreFocusProps } from "./pla
 import { GenreTreeWheelHandoff } from "./GenreTreeWheelHandoff";
 import { GenreTreeSearch, type GenreSearchGroupsProps } from "./GenreTreeSearch";
 import { type SearchGroup } from "./search";
+import { GenreOverviewDetailPanel } from "./GenreOverviewDetailPanel";
 import { useGenreDetailContent } from "./GenreDetailPanel";
 import ChangeParentPopup, { type ParentChange } from "./ChangeParentPopup";
 import { useEntityPanel } from "./useEntityPanel";
@@ -548,6 +549,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   type ActivePanel = {
     title: ReactNode;
     content: ReactNode;
+    cover?: ReactNode;
     aside?: ReactNode;
     expanded: boolean;
     onExpandedChange?: (expanded: boolean) => void;
@@ -561,6 +563,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     activePanel = {
       title: otherPanel.title,
       content: otherPanel.content,
+      cover: otherPanel.cover,
       aside: otherPanel.extraContent,
       expanded: otherPanel.expanded ?? false,
       onExpandedChange: otherPanel.onExpandedChange,
@@ -884,10 +887,15 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             </div>
           )}
           {/* Always mounted: useObscuredInset observes the node once, so it must exist when the host mounts. */}
-          <DetailPanel
+          <GenreOverviewDetailPanel
+            genreUuid={!otherPanel && genreContent.name && selectedGenreUuid ? toGenreUuid(selectedGenreUuid) : null}
+            scope={scope}
+            getBackendBaseUrl={getBackendBaseUrl}
+            criteriaOverviewSchema={criteriaOverviewSchema}
             ref={panelRef}
             side="left"
             title={activePanel?.title ?? ""}
+            cover={activePanel?.cover}
             titleInSearch={!isLoading && !isError}
             headerAccent={activePanel?.headerAccent}
             headerActions={expandButton}
@@ -906,7 +914,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             ) : (
               activePanel?.content
             )}
-          </DetailPanel>
+          </GenreOverviewDetailPanel>
         </div>
       </div>
     </div>

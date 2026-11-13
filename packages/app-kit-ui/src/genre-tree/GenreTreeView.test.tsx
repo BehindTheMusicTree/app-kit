@@ -1476,12 +1476,12 @@ describe("GenreTreeView", () => {
       expect(screen.getAllByText("—")).toHaveLength(2);
     });
 
-    // Perf regression guard: the tree never owns the overview fetch, otherwise every fetch state change re-renders it.
-    it("never fetches the overview from the tree's render", () => {
+    // The panel shell may subscribe to a disabled query before a genre is selected.
+    it("keeps the overview query disabled without a selected genre", () => {
       renderView();
       fireEvent.click(screen.getByRole("button", { name: "Wheel" }));
 
-      expect(useFetchGenreOverviewMock).not.toHaveBeenCalled();
+      expect(useFetchGenreOverviewMock.mock.calls.every(([id]) => id === null)).toBe(true);
     });
   });
 

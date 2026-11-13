@@ -11,6 +11,12 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- Require `@behindthemusictree/ui` ^0.25.0 for detail-panel covers; update the playground brand dependency to ^12.13.0.
+
+- Artist and genre detail panels display their image as a full-width cover behind the floating search field, with image credits preserved in the body. Host overlay panels can provide a `cover` slot.
+
 ## [43.0.0] - 2026-11-12
 
 ### Breaking
