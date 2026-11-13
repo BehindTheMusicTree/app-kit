@@ -9,7 +9,7 @@ import {
 } from "@behindthemusictree/app-kit/genre-tree";
 import ArtistActionBand from "./ArtistActionBand";
 import ArtistHeader from "./ArtistHeader";
-import ArtistPhoto from "./ArtistPhoto";
+import { CommonsCover, CommonsPhotoCredit } from "../CommonsPhoto";
 import ArtistMembers from "./ArtistMembers";
 import ArtistDiscography from "./ArtistDiscography";
 import ArtistSongs from "./ArtistSongs";
@@ -88,13 +88,14 @@ export function useArtistPanel({
       return {
         ...panel,
         title: artist.name,
+        cover: artist.image ? <CommonsCover image={artist.image} alt={artist.name} /> : undefined,
         content: (
           <>
             <ArtistActionBand
               artist={artist}
               share={shareTarget && shareUrl ? <ShareActionButton target={shareTarget} url={shareUrl} /> : undefined}
             />
-            {artist.image && <ArtistPhoto image={artist.image} name={artist.name} />}
+            {artist.image && <CommonsPhotoCredit image={artist.image} />}
             <ArtistHeader artist={artist} renderPlaceLink={renderPlaceLink} />
             <ArtistMembers title="Members" memberships={artist.members} renderArtistLink={renderArtistLink} />
             <ArtistMembers title="Member of" memberships={artist.memberOf} renderArtistLink={renderArtistLink} />

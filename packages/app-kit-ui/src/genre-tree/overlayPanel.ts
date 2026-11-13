@@ -5,6 +5,8 @@ export interface OverlayPanel {
   /** Plain text, like a genre's name: it fills the search field, whose clear button closes the panel. */
   title: string;
   content: ReactNode;
+  /** Full-width cover shown behind the floating search field. Keep image credits in content. */
+  cover?: ReactNode;
   /** Second column, shown only while expanded. */
   extraContent?: ReactNode;
   expanded: boolean;
