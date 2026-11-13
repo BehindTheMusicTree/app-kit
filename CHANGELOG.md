@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row.
+
 ## [43.0.0] - 2026-11-12
 
 ### Breaking

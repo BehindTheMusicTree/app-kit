@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowLeft } from "lucide-react";
+import type { ReactNode } from "react";
 import { SEARCH_LEADING_BUTTON_CLASS } from "@behindthemusictree/ui";
 
 import { CriteriaPlaylistSimple, useGenreSearch } from "@behindthemusictree/app-kit/genre-tree";
@@ -28,6 +29,10 @@ export type GenreSearchProps<T extends CriteriaPlaylistSimple = CriteriaPlaylist
   extraGroups?: SearchGroup[];
   /** Called when the input gains focus. */
   onFocus?: () => void;
+  trailingAction?: ReactNode;
+  trailingActionBreakpoint?: "sm" | "md";
+  /** Below this breakpoint the search fills its available width. Defaults to md. */
+  fullWidthBreakpoint?: "sm" | "md";
 };
 
 export default function GenreSearch<T extends CriteriaPlaylistSimple = CriteriaPlaylistSimple>({
@@ -42,6 +47,9 @@ export default function GenreSearch<T extends CriteriaPlaylistSimple = CriteriaP
   onQueryChange,
   extraGroups = [],
   onFocus,
+  trailingAction,
+  trailingActionBreakpoint,
+  fullWidthBreakpoint = "md",
 }: GenreSearchProps<T>) {
   const { query, setQuery, results, canClear, clear, select } = useGenreSearch({
     genrePlaylists,
@@ -79,7 +87,7 @@ export default function GenreSearch<T extends CriteriaPlaylistSimple = CriteriaP
   ];
 
   return (
-    <div className="genre-search w-[calc(var(--layout-detail-panel-w,25.5rem)-2*var(--layout-panel-inset,1rem))] shrink-0 max-md:w-full">
+    <div className={`genre-search w-[calc(var(--layout-detail-panel-w,25.5rem)-2*var(--layout-panel-inset,1rem))] shrink-0 ${fullWidthBreakpoint === "sm" ? "max-sm:w-full sm:max-md:max-w-sm" : "max-md:w-full"}`}>
       <SearchBox
         label={label}
         placeholder={placeholder}
@@ -110,6 +118,8 @@ export default function GenreSearch<T extends CriteriaPlaylistSimple = CriteriaP
           )
         }
         onFocus={onFocus}
+        trailingAction={trailingAction}
+        trailingActionBreakpoint={trailingActionBreakpoint}
       />
     </div>
   );
