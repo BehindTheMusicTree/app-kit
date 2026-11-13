@@ -45,3 +45,10 @@ Third-party brand colors (Spotify, Google) stay literal.
   `showDisplayOptions` (default `true`) to hide the "Tree display options" group.
 - Render props (`renderArtistLink`, `renderPlaceLink`, `renderSummary`, `renderTracksToolbar`, …) replace pieces of
   the genre detail panel.
+
+- Host overlay panels accept an optional `cover` React node, displayed full width behind
+  the floating search field. Keep photo credits in `content`. Artist and genre panels
+  use their overview image as the cover and retain its credits in the body.
+
+Detail-panel covers require `@behindthemusictree/ui` ^0.25.0. Its brand peer requires
+`@behindthemusictree/brand` ^12.13.0 when the brand stylesheet is used.
