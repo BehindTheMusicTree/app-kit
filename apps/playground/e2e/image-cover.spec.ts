@@ -14,15 +14,21 @@ async function selectGenre(search: Locator, page: Page, name: string) {
   await expect(search).toHaveValue(name);
 }
 
-test("genre cover scrolls beneath interactive search and clears across cached navigation", async ({ page }) => {
+test("genre cover scrolls beneath interactive search and clears across cached navigation", async ({ page, isMobile }) => {
   await page.goto(`/?genre=${pop}`);
   const search = page.getByRole("combobox", { name: /Search/ });
   await expect(search).toHaveValue("Picture Pop");
   const cover = await loadedCover(page, "Picture Pop");
   const panel = page.locator("[data-detail-panel]");
   const scroll = page.locator("[data-panel-cover-scroll]");
-  await page.getByRole("button", { name: "Extend panel", exact: true }).click();
-  await expect(panel).toHaveAttribute("data-expanded", "true");
+  if (isMobile) {
+    const resize = panel.getByRole("button", { name: "Resize panel", exact: true });
+    await resize.click();
+    await expect(resize).toHaveAttribute("aria-expanded", "true");
+  } else {
+    await page.getByRole("button", { name: "Extend panel", exact: true }).click();
+    await expect(panel).toHaveAttribute("data-expanded", "true");
+  }
   const searchBefore = await search.boundingBox();
   const coverBefore = await cover.boundingBox();
   expect(searchBefore).not.toBeNull();
@@ -50,8 +56,14 @@ test("genre cover scrolls beneath interactive search and clears across cached na
   await panel.getByRole("button", { name: "Show less", exact: true }).click();
   await expect(panel.getByRole("button", { name: "Show more", exact: true })).toBeVisible();
 
-  await page.getByRole("button", { name: "Shrink panel", exact: true }).click();
-  await expect(panel).toHaveAttribute("data-expanded", "false");
+  if (isMobile) {
+    const resize = panel.getByRole("button", { name: "Resize panel", exact: true });
+    await resize.click();
+    await expect(resize).toHaveAttribute("aria-expanded", "false");
+  } else {
+    await page.getByRole("button", { name: "Shrink panel", exact: true }).click();
+    await expect(panel).toHaveAttribute("data-expanded", "false");
+  }
   await selectGenre(search, page, "Imageless Rock");
   await expect(page).toHaveURL(new RegExp(rock));
   await expect(cover).toHaveCount(0);
@@ -64,11 +76,16 @@ test("genre cover scrolls beneath interactive search and clears across cached na
   await expect(credit).toHaveCount(0);
 });
 
-test("artist uses the shared cover and keeps its photo credit reachable", async ({ page }) => {
+test("artist uses the shared cover and keeps its photo credit reachable", async ({ page, isMobile }) => {
   await page.goto(`/?artist=${artistUuid}`);
   const cover = await loadedCover(page, "Cover Artist");
   const search = page.getByRole("combobox", { name: /Search/ });
   await expect(search).toHaveValue("Cover Artist");
+  if (isMobile) {
+    const resize = page.getByRole("button", { name: "Resize panel", exact: true });
+    await resize.click();
+    await expect(resize).toHaveAttribute("aria-expanded", "true");
+  }
   const box = await cover.boundingBox();
   const searchBox = await search.boundingBox();
   expect(searchBox!.y).toBeGreaterThanOrEqual(box!.y);
