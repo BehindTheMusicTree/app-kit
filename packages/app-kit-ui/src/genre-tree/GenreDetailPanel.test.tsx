@@ -2,11 +2,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, fireEvent, renderHook } from "@testing-library/react";
 import { render, TrackNounWrapper } from "../test-utils";
 
-const { useFetchGenreDetailMock, bodyMock } = vi.hoisted(() => ({ useFetchGenreDetailMock: vi.fn(), bodyMock: vi.fn() }));
+const { useFetchGenreDetailMock, useFetchGenreOverviewMock, bodyMock } = vi.hoisted(() => ({ useFetchGenreDetailMock: vi.fn(), useFetchGenreOverviewMock: vi.fn(), bodyMock: vi.fn() }));
 
 vi.mock("@behindthemusictree/app-kit/genre-tree", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useFetchGenreDetail: () => useFetchGenreDetailMock(),
+  useFetchGenreOverview: () => useFetchGenreOverviewMock(),
 }));
 vi.mock("./GenreInfoPanelBody", () => ({
   GenreInfoPanelBody: (props: { band: { onZoomIn?: () => void }; family: React.ReactNode }) => {
@@ -62,6 +63,15 @@ describe("GenreDetailPanel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useFetchGenreDetailMock.mockReturnValue({ status: "success", genre: detail });
+    useFetchGenreOverviewMock.mockReturnValue({ data: undefined });
+  });
+
+  it("passes the overview image to the panel cover without duplicating it in the body", () => {
+    useFetchGenreOverviewMock.mockReturnValue({ data: { name: detail.name, image: { url: "/genre.jpg" } } });
+    renderPanel({ titleInSearch: true });
+    expect(screen.getByRole("img", { name: detail.name }).closest("[data-panel-cover]")).toBeInTheDocument();
+    expect(screen.getAllByRole("img", { name: detail.name })).toHaveLength(1);
+    expect(bodyMock.mock.calls.at(-1)?.[0].extras.imageInCover).toBe(true);
   });
 
   it("shows a skeleton while the genre loads", () => {

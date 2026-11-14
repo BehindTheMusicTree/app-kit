@@ -91,6 +91,7 @@ export function EntityDetailPanel({
     <DetailPanel
       side="left"
       title={panel.title}
+      cover={panel.cover}
       titleInSearch
       onClose={panel.onClose}
       collapsed={collapsed}

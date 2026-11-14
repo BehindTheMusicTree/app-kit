@@ -10,7 +10,7 @@ import { Scope } from "@behindthemusictree/app-kit/transport";
 import { useFetchGenreOverview } from "@behindthemusictree/app-kit/genre-tree";
 import { CriteriaPlaylistMinimum, type GenreUuid } from "@behindthemusictree/app-kit/genre-tree";
 import { ClampedText } from "./ClampedText";
-import CommonsPhoto from "./CommonsPhoto";
+import CommonsPhoto, { CommonsPhotoCredit } from "./CommonsPhoto";
 import { GenrePlaylistTracks, type GenrePlaylistTracksSlots } from "./GenrePlaylistTracks";
 import type { RenderSongLink } from "@behindthemusictree/app-kit/genre-tree";
 import { RenderArtistLink } from "@behindthemusictree/app-kit/genre-tree";
@@ -25,6 +25,8 @@ export type GenreDetailSlots<O extends CriteriaOverview> = {
 };
 
 export type GenreDetailExtrasProps<O extends CriteriaOverview> = GenreDetailSlots<O> & GenrePlaylistTracksSlots & {
+  /** The shell already renders the overview image as its cover. */
+  imageInCover?: boolean;
   genreUuid: GenreUuid;
   genrePlaylist: CriteriaPlaylistMinimum | null;
   genreName?: string;
@@ -42,9 +44,9 @@ export type GenreDetailExtrasProps<O extends CriteriaOverview> = GenreDetailSlot
   family: ReactNode;
 };
 
-// Owns the overview fetch so its pending → success transitions re-render only the info panel,
-// not the tree that renders it.
+// Shares the overview query cache with the panel shell; neither subscription rerenders the tree.
 export function GenreDetailExtras<O extends CriteriaOverview>({
+  imageInCover = false,
   genreUuid,
   genrePlaylist,
   genreName,
@@ -88,7 +90,7 @@ export function GenreDetailExtras<O extends CriteriaOverview>({
 
   return (
     <>
-      {image && <CommonsPhoto image={image} alt={overview.name} creditLabel="Image" />}
+      {image && (imageInCover ? <CommonsPhotoCredit image={image} creditLabel="Image" /> : <CommonsPhoto image={image} alt={overview.name} creditLabel="Image" />)}
       {(summarySourceUrl || wikidataUrl) && (
         <PanelSection title="Links">
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-caption text-[var(--color-text)]">

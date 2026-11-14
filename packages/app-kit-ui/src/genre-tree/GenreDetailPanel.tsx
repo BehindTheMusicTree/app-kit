@@ -29,6 +29,7 @@ import {
 } from "@behindthemusictree/app-kit/genre-tree";
 import type { Scope } from "@behindthemusictree/app-kit/transport";
 
+import { GenreOverviewDetailPanel } from "./GenreOverviewDetailPanel";
 import { GenreInfoPanelBody, type GenreInfoPanelBodyProps } from "./GenreInfoPanelBody";
 import type { GenreTreeShareTarget } from "./share";
 import { useGenrePlaylistPlayback } from "./playlist-tree/useGenrePlaylistPlayback";
@@ -178,7 +179,7 @@ export function useGenreDetailContent<O extends CriteriaOverview>({
         getBackendBaseUrl={getBackendBaseUrl}
         playback={playback}
         band={{ node: view.node, ...band, shareTarget: band?.shareTarget?.kind === "genre" ? { ...band.shareTarget, name: detail.name } : band?.shareTarget }}
-        extras={extras}
+        extras={{ ...extras, imageInCover: true }}
       />
       {trailing}
     </>,
@@ -194,7 +195,7 @@ export function GenreDetailPanel<O extends CriteriaOverview>({
     band: { onZoomIn, shareUrl, shareTarget: shareUrl ? shareTarget : undefined },
   });
   return (
-    <DetailPanel side="left" title={panel.title} headerAccent={panel.headerAccent}
+    <GenreOverviewDetailPanel genreUuid={panel.name ? GenreUuidSchema.parse(genreUuid) : null} scope={scope} getBackendBaseUrl={getBackendBaseUrl} criteriaOverviewSchema={extras?.criteriaOverviewSchema} side="left" title={panel.title} headerAccent={panel.headerAccent}
       onClose={onClose} collapsed={collapsed} expanded={expanded}
       onExpandedChange={onExpandedChange} edgeTab={edgeTab} aside={panel.aside} titleInSearch={titleInSearch}
       headerActions={onExpandedChange ? <IconButton aria-label={expanded ? "Shrink panel" : "Extend panel"} onClick={() => onExpandedChange(!expanded)}>
@@ -202,6 +203,6 @@ export function GenreDetailPanel<O extends CriteriaOverview>({
       </IconButton> : undefined}
     >
       {panel.content}
-    </DetailPanel>
+    </GenreOverviewDetailPanel>
   );
 }
