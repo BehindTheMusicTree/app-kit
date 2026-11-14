@@ -107,23 +107,21 @@ root barrel (`src/index.ts`), and add a matching subpath entry to `tsup.config.t
 
 ```bash
 pnpm build   # tsup: ESM + CJS + .d.ts for every entry point
-pnpm lint    # tsc --noEmit across the workspace
-```
-
-Run `pnpm test` for the package unit and integration suites. All three commands must pass
-before opening a PR.
-
-The playground's Chromium tests use local API fixtures and need no backend credentials:
-
-```bash
-pnpm --filter app-kit-playground exec playwright install chromium
+pnpm lint    # tsc --noEmit across the workspace, including browser tests
+pnpm test    # Vitest suites with coverage thresholds
+pnpm --filter app-kit-playground exec playwright install chromium  # first run
 pnpm --filter app-kit-playground test:e2e
 ```
 
-To use an installed Chrome locally, prefix the test command with `PLAYWRIGHT_CHANNEL=chrome`.
-The tests start their own Vite server on port 5187 and exercise mobile search, account actions,
-and detail-sheet expansion/collapse. CI runs them after the package checks and retains traces
-and screenshots on failure.
+All checks must pass before opening a PR; CI runs them with Chromium installed.
+Browser tests exercise the real playground at desktop and 390px mobile widths. API and image
+requests use deterministic fixtures, so they need neither staging access nor an API key.
+Each run starts its own Vite server on an allocated port and never reuses an existing server.
+The suite also covers mobile search/account access and sheet controls at responsive breakpoints.
+To use installed Chrome locally, prefix the test command with `PLAYWRIGHT_CHANNEL=chrome`.
+CI retains screenshots and traces on failure.
+Failed browser tests save traces under `apps/playground/test-results/`; inspect one with
+`pnpm --filter app-kit-playground exec playwright show-trace <trace.zip>`.
 
 ### 6. Committing
 
@@ -133,7 +131,7 @@ the change being clearly described.
 
 ### 7. Pull Request Process
 
-1. Ensure `pnpm build && pnpm lint` pass locally.
+1. Ensure build, lint, unit/integration tests, and browser tests pass locally.
 2. Open a PR against `develop` describing what changed and why (never against `main` — see
    [§3](#3-branching-gitflow)).
 3. Add a bullet to `CHANGELOG.md` under `[Unreleased]` for any user-facing change (new export,

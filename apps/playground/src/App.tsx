@@ -132,8 +132,8 @@ function ReferenceGenreTree() {
   );
 
   return (
-    <>
-      <div className="flex items-center gap-1 mb-2" role="group" aria-label="Tree view mode">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex shrink-0 flex-wrap items-center gap-1 mb-2" role="group" aria-label="Tree view mode">
         {VIEW_MODES.map(({ mode, label }) => (
           <Button key={mode} variant={viewMode === mode ? "default" : "outline"} size="sm" onClick={() => setViewMode(mode)}>
             {label}
@@ -152,44 +152,46 @@ function ReferenceGenreTree() {
           Add root
         </Button>
       </div>
-      <GenreTreeView
-        scope="reference"
-        placement="regions"
-        searchTrailingAction={
-          <Button size="sm" onClick={() => showPopup(
-            <BasePopup title="Account" onClose={hidePopup} isDismissable>
-              Demo account
-            </BasePopup>,
-          )}>
-            Account
-          </Button>
-        }
-        searchFullWidthBreakpoint="sm"
-        viewMode={viewMode}
-        allowWheelRotation={allowWheelRotation}
-        floatingControlsLeading={
-          <Button
-            size="sm"
-            variant="outline"
-            aria-label={viewMode === "outline" ? "Show wheel view" : "Show outline view"}
-            onClick={() => setViewMode(viewMode === "outline" ? "pop-core" : "outline")}
-          >
-            {viewMode === "outline" ? "◉" : "☰"}
-          </Button>
-        }
-        showAddRoot={false}
-        focusGenreUuid={focusGenreUuid}
-        onFocusGenreChange={setFocusGenreUuid}
-        handleGenreCreationAction={showCriteriaCreationPopup}
-        handleGenreRenameAction={showGenreRenamePopup}
-        getBackendBaseUrl={getBackendBaseUrl}
-        selectedGenreUuid={selectedGenreUuid}
-        onSelectedGenreUuidChange={handleSelectedGenreUuidChange}
-        artistUuid={artistUuid}
-        onArtistUuidChange={handleArtistUuidChange}
-        getShareUrl={getShareUrl}
-      />
-    </>
+      <div className="min-h-0 flex-1">
+        <GenreTreeView
+          scope="reference"
+          placement="regions"
+          searchTrailingAction={
+            <Button size="sm" onClick={() => showPopup(
+              <BasePopup title="Account" onClose={hidePopup} isDismissable>
+                Demo account
+              </BasePopup>,
+            )}>
+              Account
+            </Button>
+          }
+          searchFullWidthBreakpoint="sm"
+          viewMode={viewMode}
+          allowWheelRotation={allowWheelRotation}
+          floatingControlsLeading={
+            <Button
+              size="sm"
+              variant="outline"
+              aria-label={viewMode === "outline" ? "Show wheel view" : "Show outline view"}
+              onClick={() => setViewMode(viewMode === "outline" ? "pop-core" : "outline")}
+            >
+              {viewMode === "outline" ? "◉" : "☰"}
+            </Button>
+          }
+          showAddRoot={false}
+          focusGenreUuid={focusGenreUuid}
+          onFocusGenreChange={setFocusGenreUuid}
+          handleGenreCreationAction={showCriteriaCreationPopup}
+          handleGenreRenameAction={showGenreRenamePopup}
+          getBackendBaseUrl={getBackendBaseUrl}
+          selectedGenreUuid={selectedGenreUuid}
+          onSelectedGenreUuidChange={handleSelectedGenreUuidChange}
+          artistUuid={artistUuid}
+          onArtistUuidChange={handleArtistUuidChange}
+          getShareUrl={getShareUrl}
+        />
+      </div>
+    </div>
   );
 }
 
