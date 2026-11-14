@@ -110,8 +110,20 @@ pnpm build   # tsup: ESM + CJS + .d.ts for every entry point
 pnpm lint    # tsc --noEmit across the workspace
 ```
 
-Both must pass before opening a PR. There is no test suite yet — until one exists, `pnpm build`
-(which runs the DTS build) is the primary type-safety check.
+Run `pnpm test` for the package unit and integration suites. All three commands must pass
+before opening a PR.
+
+The playground's Chromium tests use local API fixtures and need no backend credentials:
+
+```bash
+pnpm --filter app-kit-playground exec playwright install chromium
+pnpm --filter app-kit-playground test:e2e
+```
+
+To use an installed Chrome locally, prefix the test command with `PLAYWRIGHT_CHANNEL=chrome`.
+The tests start their own Vite server on port 5187 and exercise mobile search, account actions,
+and detail-sheet expansion/collapse. CI runs them after the package checks and retains traces
+and screenshots on failure.
 
 ### 6. Committing
 

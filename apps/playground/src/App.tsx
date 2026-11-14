@@ -155,6 +155,16 @@ function ReferenceGenreTree() {
       <GenreTreeView
         scope="reference"
         placement="regions"
+        searchTrailingAction={
+          <Button size="sm" onClick={() => showPopup(
+            <BasePopup title="Account" onClose={hidePopup} isDismissable>
+              Demo account
+            </BasePopup>,
+          )}>
+            Account
+          </Button>
+        }
+        searchFullWidthBreakpoint="sm"
         viewMode={viewMode}
         allowWheelRotation={allowWheelRotation}
         floatingControlsLeading={
