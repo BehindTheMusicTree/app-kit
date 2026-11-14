@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Changed
+
+- Use genre-tree-view 10.0.2 and validate against UI 0.26.0; app-kit-ui accepts UI ^0.26.0 alongside ^0.25.0 so hosts can share responsive detail-panel framing.
+
 ## [43.1.1] - 2026-11-14
 
 ### Fixed
