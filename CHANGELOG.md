@@ -13,6 +13,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - Deterministic desktop and mobile browser coverage for detail-panel covers, scrolling, search navigation, and image credits, plus real QueryClient tests for shared overview requests and stale-image prevention; CI enforces both.
 
 ### Changed
@@ -37,6 +38,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `usePlayer().stop()` stops playback and unloads the current track (`playerTrackObject` becomes `null`); `PlayerPanel` shows a **Close player** header button that calls it.
 - Parent popup (`ChangeParentPopup`): a **Make root** button, shown when the genre has a parent, with an inline confirm step.
 - `isRetryableError` (transport) and `AUTH_DETAIL_ERROR_CODES`: one classification of which failures a retry can fix.
@@ -69,6 +71,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `ArtistDetailed.origin` (`ArtistOrigin | null`: place name, kind, `begin_area`/`area` source, Wikidata id, coordinates, map `regionId`), read from the artist endpoint. The artist panel shows it as "Born in" (person), "Formed in" (group) or "From" (other types or an `area` source) with the country; it replaces the "Country" field when present.
 - `RenderPlaceLink` render prop (`GenreTreeView`, `EntityDetailPanel`, `useEntityPanel`, `useArtistPanel`) renders the origin as a link to its map region; plain text when omitted or when the origin has no `regionId`.
 
@@ -84,6 +87,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `CommonsImageSchema` / `CommonsImage` (genre-tree): the Wikimedia Commons image with its attribution, generalised from the artist photo. `ArtistImageSchema` and `ArtistImage` stay as aliases. `CriteriaOverviewSchema` gains an optional nullable `image`, so hosts whose API does not send it keep validating.
 - app-kit-ui: the genre detail panel shows the overview image with an "Image: <author>, <license>" credit, above the Links section and independent of `renderSummary`. It is rendered by the new `CommonsPhoto` (`image`, `alt`, `creditLabel` defaulting to "Photo"); `ArtistPhoto` now wraps it. Covered by `CommonsPhoto.test.tsx` and `GenreDetailExtras.test.tsx`.
 - `isNotFoundError`, `resourceRetry`, `toResourceResult` and `ResourceResult` (transport) for turning a 404 on a single resource into panel state.
@@ -119,6 +123,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `GenrePlaylistTreeWheel`, `GenrePlaylistTreeWheelRadialPopCore` and `GenrePlaylistTreePerRoot` take `focusUuids`; `toTreeNodes` sets `muted` on every node outside it, so every view mode, the stacked view included, mutes genres outside the footprint.
 
 ### Fixed
@@ -149,6 +154,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `useGenreDetailContent` accepts `treeRelations`, the styles a mounted tree draws for the genre and its relatives. `GenreTreeView` passes them, so the Family and Ancestors dots take the tree's exact colors for every genre (not a pale tint of the root), and the header accent comes from one place. Without a tree, a genre falls back to its root color with readable text, so Mainstream Pop and Hyperpop show white with dark text instead of grey.
 - `ArtistDetailedSchema` carries `playableTracksCount` (songs with a genre and a playable video), served by grow-api, so the artist panel can enable or disable Play without loading the tracklist.
 - Genre, regional-genre, artist and song detail panels offer icon Play buttons in the action band, each showing its playable-song count: Genre · Canonical · Regional · All for a canonical genre, Genre · All for a regional one. The play triangle is the same on every button (filled); Canonical and Regional show the Grow tree and globe faintly behind it, All the left half of the tree and the right half of the globe. A count of 0 stays visible but disabled; an unplayable song or an artist with no playable song gets a disabled Play.
@@ -172,6 +178,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `app-kit-ui/genre-tree`: `useEntityPanel` and `EntityDetailPanel` show the song or artist detail (song first) for a host without a genre tree. A song's genre opens through `onSelectGenre`, or through `getGenrePath` and `onSelectGenrePlaylist` where the tree holds it. `GenreTreeView` uses `useEntityPanel` with no change in behavior.
 
 ## [37.0.0] - 2026-11-09
@@ -183,6 +190,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `GenreSearch`: `showClear` and `clearLabel`. `SearchBox`: `clearLabel`.
 - `useGenreDetailContent` returns `name`, `null` while the genre loads or fails.
 
@@ -199,6 +207,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `usePlaybackFetch` and `usePlaybackQuery` (transport) bind a request to the playback context: the query key carries `playback.key`, the query waits for the context to be ready and retries once if the context changed mid-request. `useRemoteSearch` accepts a `fetch` option.
 - `useGenreTreeViewState` and `useVisibleGenrePlaylists` expose `isError` and `refetch`; `GenreTreeView` shows an error with Retry when the tree fails to load and nothing is cached.
 
@@ -231,6 +240,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - Separate reference genre catalogue and playlist counts, preserve explicit subgenre selections through playback, and size artist trees from playlist membership.
 
 ### Fixed
@@ -241,6 +251,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `GenreSearchResultSchema` has `wikidataId` (`string | null`), served by `genres/search/`; requires a grow-api that returns it.
 - app-kit-ui: `GenreTreeView` accepts `onSearchQueryChange(text)` and `onSearchFocus()`, and always reports the typed text, so a host can resolve its own `extraSearchGroups` (previously only when it had groups at mount).
 
@@ -256,6 +267,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `useRemoteSearch`, the debounced typeahead core (`SEARCH_DEBOUNCE_MS`, `SEARCH_QUERY_MIN_LENGTH`) that `useArtistSearch`, `useSongSearch` and the new `useGenreRemoteSearch` (`genres/search/`) are built on.
 - `useRegionGenreLexicon` and `RegionGenreLexiconSchema` for `regions/map/genres/`.
 - `foldSearchText`, `trigramSimilarity` and `rankByName`: accent-folded, ranked (exact, prefix, substring, fuzzy) local matching.
@@ -273,6 +285,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - Scope song and playlist queries to verified playback context, discard stale responses, and recover from YouTube failures with bounded video-level exclusions and explicit retry.
 
 ### Changed
@@ -333,6 +346,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `GenreDetailPanel` takes an `edgeTab` prop for hosts that hide and show the panel.
 
 ### Changed
@@ -349,6 +363,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - Song search and a song detail panel in `GenreTreeView`: the search box lists genres, artists and songs; a song opens a panel with play/pause, share, artists, genre lineage, year, views, plays, links, the genres it is essential in and its history. New props `songUuid`, `onSongUuidChange`, `songExpanded`, `onSongExpandedChange`, `songSearch`, `onSongSelect` and `renderSongLink` (also on `TrackItem`, `TrackListSidebar`, `PlayerPanel`, `ArtistSongs` and `GenreDetailExtras`).
 - `useSong`, `useSongSearch`, `useSongHistory` and their schemas, endpoints and query keys; a `song` share target.
 
@@ -372,6 +387,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - Support navigation-driven viewport restoration in graphical genre tree views.
 - `GenreDetailPanel`, a standalone genre detail panel driven by one genre uuid (no tree index needed), plus `GenreInfoPanelBody`, `GenreNodeActionBand`, `useLeftDetailPanelLayout` and `useGenrePlaylistPlayback` exports.
 - `useGenreByWikidataId` hook and `wikidataId` on the detailed criteria schema.
@@ -421,6 +437,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - Share genre and artist panels, and control playback and track navigation from the player.
 - `useTrackList().updateTrack(track)` replaces the track with the same `uuid` across every loaded page of the current tracklist, and replaces the selected track if it is that one. It does nothing when no track matches.
 - `GenreTreeView` accepts a host control beside the tree controls, including in outline view.
@@ -429,6 +446,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `GenreTreeView`'s admin action band has a "Make pop" / "Make core" toggle on a root's direct children, which writes the genre's `side`. "Make pop" is disabled, with a tooltip naming the current pop child, when the root already has one. Requires a grow API that accepts `side` on genre updates.
 - `CriteriaUpdateSchema` accepts `side`; `GenreActionBand` takes `side`, `onToggleSide` and `toggleSideDisabledReason`.
 
@@ -452,6 +470,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `GenreTreeView` accepts an optional `onParentChanged({ genre, from, to })`, called after the Parent popup moved a genre. The uuids are genre (criteria) uuids, so a host can undo with `PUT genres/<genre>/ { parent: from }`; `from` is `null` for a root genre. The `ParentChange` type is exported.
 - Search field shows a spinner in place of the magnifier (after a 300 ms grace delay) while artist results load; `useArtistSearch` returns a new `pending` flag and `GenreSearchExtraResults` accepts `loading`.
 
@@ -465,6 +484,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `GenreTreeView` shows one busy indicator on the tree (`busy` on `GenrePlaylistTreeWheel` and `GenrePlaylistTreeWheelRadialPopCore`) while the size metric re-renders, the tree refetches, an artist's counts load, or a genre update is in flight.
 - `genreUpdateMutationKey`, the mutation key of `useUpdateGenre`.
 - Genre playlists carry the optional `scene` (`commercial` | `underground`); the pop-core wheel forwards it so Core electronic's commercial and underground subtrees are stacked radially (genre-tree-view 5.1.0).
@@ -482,6 +502,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `GenreTreeView` toggle (bottom left of the zoom controls) sizing nodes by song count or by song views, via the `floatingControlsLeading` slot of `@behindthemusictree/genre-tree-view` 5.3.0 or later (now required). Controlled with the `sizeMetric` / `onSizeMetricChange` props, or uncontrolled starting on songs. Hidden, and sizing forced to songs, while an artist filters the tree.
 - `sizeMetric` and `floatingControlsLeading` props on `GenrePlaylistTreeWheel` and `GenrePlaylistTreeWheelRadialPopCore`.
 
@@ -545,6 +566,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - Artist filter in `GenreTreeView`: the tree shows only genres the artist has songs in (plus Mainstream Pop and the scene children of Core electronic), a chip next to the search bar shows the artist (click reopens the panel, x clears the filter), a selected genre's panel lists only the artist's songs, and play buttons queue only the artist's songs in that genre.
 - `useArtistGenreCounts`, `useVisibleGenrePlaylists`, `pruneGenrePlaylistsForArtist`, `ArtistGenreCountSchema` in `@behindthemusictree/app-kit/genre-tree`; `useGenreTreeViewState` takes an optional `artistUuid`.
 - `GenrePlaylistTracks` and `GenreDetailExtras` take an optional `artist`; the tree components take an optional `playback`.
@@ -571,6 +593,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `GenreTreeView` with `placement="regions"`: an expandable `overlayPanel` (one with `onExpandedChange`, e.g. an artist) takes the info panel's slot. It is compact first, and the edge tab extends, shrinks, hides and shows it like the genre panel. Requires `genre-tree-view` 4.6.0.
 - `@behindthemusictree/app-kit/genre-tree/testing` exports `makeGenreUuid` and `makeGenrePlaylistUuid` for test fixtures.
 
@@ -582,6 +605,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `GenreTreeView` accepts `defaultViewport` and `onViewportChange` (and re-exports the `GenreTreeViewport` type) so a consumer can restore and persist the pan/zoom position, e.g. in the URL. Wheel, pop-core and stacked views forward them (stacked: only to the tree holding the selection); outline ignores them.
 
 ## [19.0.0] - 2026-10-27
@@ -593,6 +617,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `PanelEdgeTab`: a Maps-style double edge tab (two stacked chevron buttons) for side panels.
 - `GenreTreeView` takes `collapsed` / `onCollapsedChange` (regions placement) and draws the detail panel's edge tab while a genre is selected: hide, extend, show and shrink.
 - `getReparentCandidates` lists the genres a genre can be moved under (excludes itself, its descendants and its current parent).
@@ -628,6 +653,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `GenreTreeView` takes `placement="regions"`: the info panel and its expanded/overlay modes sit in brand's left/center/right columns, and the overlay starts below the header band.
 - `PlayerPanel` takes controlled `expanded` / `onExpandedChange`; extended, it spans the center and right columns.
 
@@ -645,6 +671,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `PlayerPanel` (`app-kit-ui/genre-tree`): player panel with video, song list and a toggle that extends the panel leftwards (`extendedWidth` to stop short of a detail panel).
 
 ### Changed
@@ -732,6 +759,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `useArtistSearch(getBackendBaseUrl, text)` and `ArtistSearchResultSchema` / `ArtistSearchResultsSchema` (`@behindthemusictree/app-kit/genre-tree`): debounced `artists/search/` query (2+ characters, 8 results).
 - `GenreTreeView` searches artists by default: matches show under an "Artists" group in the search dropdown (name, disambiguation, matched alias), and the field is labelled "Search" instead of "Search a genre". `artistSearchBaseUrl` points the artist query at another backend; `artistSearch={false}` turns it off.
 
@@ -751,6 +779,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `TrackNounProvider` / `useTrackNoun()` (`@behindthemusictree/app-kit/track-noun`) and a `capitalize` helper: the app supplies the noun its UI uses for tracks (`{ singular, plural }`).
 
 ### Breaking
@@ -762,6 +791,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `GenreSearch` / `GenreTreeView`: optional `onQueryChange` / `onSearchQueryChange` and `extraResults` / `searchExtraResults` let the host add a second result group (e.g. artists) to the search dropdown, shown under "Genres" and the group's label. Unset, the dropdown is unchanged.
 - `GenreTreeView` (wheel, pop-core): genre-tree-view's "Previous" button now sits inside the search field, left of the genre name, and fades in sliding from the left; the field's left padding widens to make room.
 - `GenreActionBand`: Google Maps-style band under the detail panel header (icon over label) holding Play/Pause, Focus, Add, Rename, Parent and the `additionalActions`; genre-tree-view's own toolbar and its ⋮ menu are hidden.
@@ -774,6 +804,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `useUpdateGenre` returns `isPending`.
 
 ### Breaking
@@ -800,6 +831,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `isUmbrella` (optional) on the tree/list criteria-playlist payload, passed to the genre tree as `umbrella` (badge in the info panel, italic labels) and flagged in `GenreSearch` results.
 
 ### Changed
@@ -810,6 +842,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `GenreTreeView`: the genre search field now holds a Zoom in button (pop-core, when the selected genre is zoomable) and a Play/Pause button for the selected genre; the detail panel's own Zoom in and Play buttons are hidden in their favor.
 - `GenreTreeView`: optional `allowWheelRotation` prop to control wheel rotation from the host (hides the built-in Rotation toggle), and `showAddRoot` (default `true`) to hide the built-in Add root button.
 - `GenreSearch`: optional `onZoomIn`, `onPlayPause` and `isPlaying` props.
@@ -851,6 +884,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `app-kit` headless hooks: `useAuthCallback`, `useGenreTreeViewState`, `useGenreSearch`, `useTrackUpload`.
 - `GenreTreeView` (in `app-kit-ui`) takes `className` on its root, with no default `mt-4`, and `showDisplayOptions` (default `true`).
 
@@ -874,6 +908,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `GenreTreeView` accepts `overlayPanel?: { title; content; onClose }` and forwards it to every view; it renders over the map at the expanded detail panel's size, independent of selection (requires `@behindthemusictree/genre-tree-view` 2.4.0). In the stacked view only the first root draws it.
 
 ### Changed
@@ -884,12 +919,14 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `CriteriaOverview` carries `description` (English Wikidata short description) and `summarySourceUrl` (Wikipedia source of the summary). The genre panel shows the description above the Summary and a "Source: Wikipedia" link after it, outside the `renderSummary` slot.
 
 ## [11.5.0] - 2026-10-19
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `GenreTreeView` accepts a controlled selection: `selectedNodeId?: string | null` and `onSelectedNodeIdChange?: (nodeId: string | null) => void`. Without them the selection stays internal.
 
 ### Fixed
@@ -900,6 +937,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `GenreTreeView` (and the wheel / stacked / pop-core wrappers) pass through the genre-tree-view 2.3.1 info panel curation props: `editMode`, `onEditModeChange`, `renderTitleEditor`, `renderParentsEditor`, `renderDangerZone`, `expanded`, `onExpandedChange`.
 - Detail slots on `GenreTreeView`: `renderSummary` and `renderEssentialTracks` replace the default sections; `renderRecordingLeading`, `renderRecordingActions` and `renderTracksToolbar` decorate the recordings list.
 - `editGenreRecordingPages` helper to optimistically edit the cached genre recordings infinite query.
@@ -949,6 +987,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `playNewTrackListFromArtist` and the `ArtistRecordingsOrdering` / `PlayArtistOptions` types.
 - `ArtistMinimumSchema` gains `isSpecialPurpose` (optional boolean; grow-api >= 12.8.0 sends it, hear-api does not yet).
 
@@ -964,6 +1003,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `fetchGenrePlaylistTracksPage` takes an optional `from` track uuid (server `?from=`), and `TrackListOriginFromCriteriaPlaylist` carries it as `from` so later pages keep it.
 
 ### Fixed
@@ -990,6 +1030,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - Optional `getArtistHref(artist)` prop on `TrackItem`, `TrackListSidebar`, and `GenreTreeView` (genre detail panel track list): when set, artist names render as links. New exports `ArtistNames` and `GetArtistHref`.
 - `useTrackList().playNewTrackList(tracks, startTrackUuid, origin, scope)` plays an arbitrary track list, with an artist origin (`{ type: "artist", uuid, name }`, type `ArtistTrackListOriginInput`). New `TrackListOriginType.ARTIST`, `TrackListOriginFromArtist` and `TrackListFromArtist`; the sidebar labels it "Artist".
 - `PlayerTrackArtist` gains an optional `uuid`.
@@ -1023,6 +1064,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `onFocusGenreChange` now receives a second `reason` argument (`"zoom-in" | "back" | "search" | "rejected"`), so consumers can tell a rejected focus from the user's back action. New exported types `FocusChangeReason` and `GenreFocusProps`. Bumps `@behindthemusictree/genre-tree-view` to 1.20.0.
 
 ### Fixed
@@ -1051,12 +1093,14 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `GenreTreeView`: optional `focusGenreUuid` / `onFocusGenreChange` props control the pop-core wheel's zoom-in on a root's subtree ("Zoom in" button in the info panel, back button on the canvas). Pop-core view only; an unknown uuid throws, so consumers must validate untrusted input. Bumps `@behindthemusictree/genre-tree-view` to 1.19.1.
 
 ## [9.6.0] - 2026-10-13
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - Pop-core tree: once zoomed in, the current root's name is shown in an empty spot on the tree (map-style region label). Bumps `@behindthemusictree/genre-tree-view` to 1.18.0.
 
 ## [9.5.0] - 2026-10-12
@@ -1069,6 +1113,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - **genre-tree**: `YoutubeTrackDetailedSchema` parses `musicbrainzRecordingId` (nullable UUID, defaults to `null` when absent). New `musicBrainzRecordingUrl(track)` helper returns `https://musicbrainz.org/recording/<mbid>` or `null`. `TrackItem` and `GenrePlaylistTracks` render a "View on MusicBrainz" external link for tracks that have one.
 
 ## [9.3.3] - 2026-10-07
@@ -1095,6 +1140,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - **genre-tree**: `CriteriaPlaylistSimpleSchema` parses a required `isUnacceptedRoot` boolean (served by the tree and list endpoints since grow-api PR #182; not on the detail endpoint, so `CriteriaPlaylistDetailedSchema` is unchanged). Code building `CriteriaPlaylistSimple` objects by hand (e.g. test fixtures) must now set it.
 
 ### Changed
@@ -1117,6 +1163,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - **genre-tree**: `YoutubeTrackDetailedSchema` parses a nullable `youtubeUnplayableReason` (`not_found`, `not_embeddable`, `private`, `not_processed`, `region_whitelisted`; defaults to `null` when absent) and `unplayableReasonLabel(track)` returns its display label. Flagged tracks render greyed out with the reason in `GenrePlaylistTracks` and the track-list sidebar's `TrackItem`, can't be played, and are skipped when a genre playlist starts.
 - **player**: optional `YoutubePlayerTrack.unplayableReason`; `handleNextTrack` / `handlePreviousTrack` skip tracks that set it.
 
@@ -1144,6 +1191,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - **genre-tree**: `GenreTreeView` accepts `controlsOrientation?: "horizontal" | "vertical"` (default `"vertical"`), threaded into the wheel, pop-core and stacked renderers to lay out their floating zoom/pop/fit controls; `ControlsOrientation` type re-exported.
 
 ### Changed
@@ -1178,6 +1226,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - **genre-tree**: genre info panel tracks show a play/pause button on hover, left of the title (always visible on the current track). The row text itself no longer starts playback.
 
 ## [8.3.1] - 2026-10-01
@@ -1190,6 +1239,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - **genre-tree**: the genre info panel lists the genre playlist's tracks (`Tracks (total)`) with infinite scroll; clicking one plays the genre playlist from that track. `useTrackList()` gains `fetchGenrePlaylistTracksPage`, and `playNewTrackListFromGenrePlaylist` takes an optional `seed` (already-loaded tracks + `startIndex`) to start mid-playlist without refetching. `GenreTreeView` must render inside a `TrackListProvider` (both consumers already do).
 
 ### Changed
@@ -1206,6 +1256,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - **genre-tree**: Google Maps-style genre search — `GenreTreeView`'s search bar now sits first in the actions row at the info panel's width, shows the selected genre's name (whether picked from search or the tree), and its ✕ ("Clear search") clears the text, closes the info panel and deselects the node; the panel's own close button is hidden and the panel starts just below the bar. Typing over a selected name keeps the panel open and shows results above it. `GenreSearch` gains optional `selectedName` and `onClear` props. Tree renderers (`GenrePlaylistTreeWheel`, `GenrePlaylistTreeWheelRadialPopCore`, `GenrePlaylistTreePerRoot`) gain optional `onSelectedNodeChange` and `hideInfoPanelClose` props. Shared by both consumers of `GenreTreeView`. Bumps `@behindthemusictree/genre-tree-view` to 1.11.0.
 
 ## [8.1.3] - 2026-10-01
@@ -1258,6 +1309,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - **genre-tree**: `TrackList` carries `total` and `nextPage`; `useTrackList().loadMore()` appends the next page, and the provider loads it automatically when the selected track is within 10 of the end.
 - **genre-tree**: `TrackListSidebar` shows the playlist's total track count and loads more tracks when scrolled to the bottom.
 - **genre-tree**: `genrePlaylistEndpoints.tracks(uuid)` and `makeTrackPlaylistRelPageSchema(trackSchema)`.
@@ -1282,6 +1334,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - **genre-tree**: `useFetchGenreOverview`, `usePrefetchGenreOverview`, `CriteriaOverviewSchema`, and `genreEndpoints.*.overview` / `genreQueryKeys.*.overview`. The tree wrappers pass `onNodeHover` through.
 
 ### Changed
@@ -1307,6 +1360,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - **genre-tree**: `GenreTreeView` accepts `criteriaDetailedSchema` (extend `CriteriaDetailedSchema` to keep consumer-specific fields) and `renderGenreDetailExtras(detail)` (rendered after Summary); `useFetchGenreDetail` takes an optional schema.
 
 ## [5.1.2] - 2026-09-26
@@ -1333,6 +1387,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - Integrated graphify knowledge-graph tooling: post-commit/post-checkout hooks keep
   `graphify-out/graph.json` current, and Claude Code now consults it before grepping raw source.
 
@@ -1352,6 +1407,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - **genre-tree**: `GenreTreeView` now has a search box to find a genre by name and select it,
   highlighting the matching node in the tree.
 
@@ -1399,6 +1455,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - **genre-tree**: `CriteriaSimple` now includes `summary` (nullable string), and
   `CriteriaDetailed` now includes `essentialTracks` (`TrackMinimum[]`), matching the
   backend's list and detail genre responses respectively. `CriteriaCreationValues` and
@@ -1417,6 +1474,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - **Dev tooling**: Added a `launch` Claude Code skill (`.claude/skills/launch/`) documenting how
   to start the local dev environment.
 
@@ -1436,6 +1494,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - **genre-tree**: exported `GenreTreeViewSkeleton({ viewMode })`, the same viewMode-to-skeleton
   decision `GenreTreeView` uses internally for its loading state, so consumers lazy-loading
   `GenreTreeView` via `next/dynamic` can pass it as their `loading` fallback and never show the
@@ -1456,6 +1515,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - **playground**: header now displays the `@behindthemusictree/app-kit` version the playground
   is running against.
 - **genre-tree**: `TrackListSidebar` accepts an optional `layout?: "fixed" | "inline"` prop
@@ -1495,6 +1555,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - **genre-tree**: `GenreTreeWheelSkeleton` — a radial loading skeleton for the Wheel and Pop/Core
   tree views, shown by `GenreTreeView` in place of the linear `GenreTreeSkeleton` while those view
   modes are loading. Background pie sectors between the root chips are tinted with
@@ -1565,6 +1626,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - **genre-tree**: `GenreTreeView` supports a new `"pop-core"` view mode, delegating to a new
   `GenrePlaylistTreeWheelRadialPopCore` wrapper (`playlist-tree/TreeWheelRadialPopCore.tsx`) around
   `@behindthemusictree/genre-tree-view`'s `GenreTreeWheelRadialPopCore`. The internal view-mode
@@ -1582,6 +1644,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - **genre-tree**: `GenreTreeView` accepts an optional `readOnly` prop. When true, it hides the
   "Add root" and load-tree buttons and suppresses per-node create/rename/reparent affordances in
   both the stacked and wheel tree views, for a read-only/prototype consumer. Defaults to false,
@@ -1591,6 +1654,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - **genre-tree**: app-kit now re-exports `@behindthemusictree/genre-tree-view`'s stylesheet at
   `@behindthemusictree/app-kit/genre-tree/styles.css` (copied into `dist/genre-tree/styles.css` at
   build time). Consumers that only needed the CSS no longer need a direct dependency on
@@ -1610,6 +1674,7 @@ easy to spot when bumping.
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - **genre-tree**: `GenreTreeView` accepts an optional controlled `viewMode` prop (and exports the
   `GenreTreeViewMode` type). When provided, the internal Stacked/Wheel toggle buttons are not
   rendered, letting a consumer host that toggle elsewhere (e.g. a global app header). Omitting the
@@ -1718,6 +1783,7 @@ GenreTreeAction[]` prop forwarded unchanged to the underlying tree/wheel — con
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - **Player**: `PlayerTrack` is now a discriminated union (`AudioPlayerTrack` | `YoutubePlayerTrack`)
   instead of a single audio-only shape. Playback for both kinds is driven through a new
   `MediaController` interface (`AudioMediaController` / `YoutubeMediaController`), so
@@ -1759,6 +1825,7 @@ GenreTreeAction[]` prop forwarded unchanged to the underlying tree/wheel — con
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - **Popup**: Added `AuthErrorPopup`, `InternalErrorPopup`, `NetworkErrorPopup`, `AuthPopup`, and
   `SpotifyAuthErrorPopup`, extracted from `grow`/`hear`'s local copies (which were near-identical
   apart from `topOffset` and env-var reads). `InternalErrorPopup` and `SpotifyAuthErrorPopup` now
@@ -1845,6 +1912,7 @@ GenreTreeAction[]` prop forwarded unchanged to the underlying tree/wheel — con
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - `.github/skills/code-review/SKILL.md` — GitHub Copilot code review agent skill encoding this
   repo's decoupling, export-wiring, and changelog rules (per
   [GitHub's Agent Skills for code review](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review#mcp-servers-and-agent-skills)).
@@ -1950,6 +2018,7 @@ received null'] }` zod-flatten log. `fetchWrapper` legitimately returns `null` w
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - Vitest + `@vitest/coverage-v8` test infrastructure for `packages/app-kit`, with an 80% coverage
   threshold scoped to files exercised by tests, wired into `turbo run test` and CI.
 
@@ -1967,6 +2036,7 @@ received null'] }` zod-flatten log. `fetchWrapper` legitimately returns `null` w
 
 ### Added
 
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
 - Initial extraction of shared transport, auth, popup, UI, player, and genre-tree plumbing out of
   `grow-the-music-tree-frontend` into a standalone package: `transport` (fetch wrapper, query
   client, app-error types, subdomain base-URL builder), `auth` (session context, code-exchange

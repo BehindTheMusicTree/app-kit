@@ -117,6 +117,9 @@ All checks must pass before opening a PR; CI runs them with Chromium installed.
 Browser tests exercise the real playground at desktop and 390px mobile widths. API and image
 requests use deterministic fixtures, so they need neither staging access nor an API key.
 Each run starts its own Vite server on an allocated port and never reuses an existing server.
+The suite also covers mobile search/account access and sheet controls at responsive breakpoints.
+To use installed Chrome locally, prefix the test command with `PLAYWRIGHT_CHANNEL=chrome`.
+CI retains screenshots and traces on failure.
 Failed browser tests save traces under `apps/playground/test-results/`; inspect one with
 `pnpm --filter app-kit-playground exec playwright show-trace <trace.zip>`.
 

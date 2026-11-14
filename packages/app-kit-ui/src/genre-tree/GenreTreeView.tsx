@@ -127,6 +127,10 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   renderGenreDetailExtras?: (overview: O) => ReactNode;
   /** Host control displayed before the size metric in the floating controls. */
   floatingControlsLeading?: ReactNode;
+  /** Optional mobile action inside the search pill; e.g. the host's account menu. */
+  searchTrailingAction?: ReactNode;
+  /** Defaults to md. */
+  searchFullWidthBreakpoint?: "sm" | "md";
   /** Controlled size metric of the wheel and pop-core nodes: song count or summed song views. Uncontrolled when omitted
    * (starts on songs). The toggle is hidden while an artist filters the tree, which only has song counts. */
   sizeMetric?: GenreTreeSizeMetric;
@@ -205,6 +209,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   criteriaOverviewSchema,
   renderGenreDetailExtras,
   floatingControlsLeading,
+  searchTrailingAction,
+  searchFullWidthBreakpoint = "md",
   sizeMetric: controlledSizeMetric,
   onSizeMetricChange,
   renderArtistLink,
@@ -664,6 +670,9 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           onPrevious={handlePrevious}
           onQueryChange={onSearchQueryChange}
           onFocus={onSearchFocus}
+          trailingAction={searchTrailingAction}
+          trailingActionBreakpoint="md"
+          fullWidthBreakpoint={searchFullWidthBreakpoint}
           extraGroups={extraSearchGroups}
         />
       )}
@@ -715,14 +724,23 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   return (
     <div
       data-left-panel={isPanelShown && !isCollapsed ? undefined : "hidden"}
-      className={["genre-tree-view relative flex flex-col h-full", placement === "regions" && REGIONS_CLASS, className]
+      className={[
+        "genre-tree-view relative flex flex-col h-full",
+        placement === "regions" && REGIONS_CLASS,
+        placement === "regions" && searchTrailingAction && "max-md:[&:has([data-detail-panel][data-collapsed=false][data-sheet=true]_[aria-label='Resize_panel'][aria-expanded=true])_.actions-container]:top-[max(var(--layout-touch-target),env(safe-area-inset-top))]",
+        className,
+      ]
         .filter(Boolean)
         .join(" ")}
     >
       <div
         className={`actions-container absolute z-30 flex items-center gap-2 ${
           placement === "regions"
-            ? "left-[calc(var(--layout-gutter)+var(--layout-panel-inset))] top-[calc(var(--layout-gutter)+var(--layout-panel-inset))] md:left-[var(--layout-panel-inset)] md:top-[var(--layout-panel-inset)] max-md:right-[calc(var(--layout-gutter)+var(--layout-panel-inset))] max-md:top-[var(--layout-band-top)] max-md:flex-col max-md:items-stretch"
+            ? [
+                "left-[calc(var(--layout-gutter)+var(--layout-panel-inset))] top-[calc(var(--layout-gutter)+var(--layout-panel-inset))] md:left-[var(--layout-panel-inset)] md:top-[var(--layout-panel-inset)] max-md:flex-col max-md:items-stretch",
+                searchFullWidthBreakpoint === "sm" ? "max-sm:right-[calc(var(--layout-gutter)+var(--layout-panel-inset))]" : "max-md:right-[calc(var(--layout-gutter)+var(--layout-panel-inset))]",
+                searchTrailingAction ? "max-md:top-[max(var(--layout-panel-inset),env(safe-area-inset-top))]" : "max-md:top-[var(--layout-band-top)]",
+              ].join(" ")
             : "left-5 top-5"
         }`}
       >
