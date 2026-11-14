@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
+
 ### Changed
 
 - Update `@behindthemusictree/genre-tree-view` to 10.0.1 so its peer dependency accepts the UI 0.25 version used by app-kit-ui.

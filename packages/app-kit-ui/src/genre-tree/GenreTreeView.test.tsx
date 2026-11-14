@@ -281,6 +281,26 @@ describe("GenreTreeView", () => {
     expect(screen.getByRole("button", { name: "Close" })).toBeInTheDocument();
   });
 
+  it("keeps the host search action usable alongside search and clear", () => {
+    const onAccount = vi.fn();
+    const onClose = vi.fn();
+    renderView({
+      placement: "regions",
+      searchFullWidthBreakpoint: "sm",
+      overlayPanel: { title: "About", content: <p>About body</p>, onClose },
+      searchTrailingAction: <button onClick={onAccount}>Account</button>,
+    });
+
+    const input = screen.getByRole("combobox");
+    fireEvent.change(input, { target: { value: "Jazz" } });
+    fireEvent.click(screen.getByRole("button", { name: "Account" }));
+    expect(onAccount).toHaveBeenCalledOnce();
+    expect(input).toHaveValue("Jazz");
+    fireEvent.click(screen.getByRole("button", { name: "Close panel" }));
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(screen.getByRole("button", { name: "Account" })).toBeInTheDocument();
+  });
+
   it("reports the typed search text and focus to the host", () => {
     const onSearchQueryChange = vi.fn();
     const onSearchFocus = vi.fn();
