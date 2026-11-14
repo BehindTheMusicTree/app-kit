@@ -54,8 +54,7 @@ test("genre cover scrolls beneath interactive search and clears across cached na
   await expect(credit).toHaveAttribute("href", /commons.wikimedia.org/);
   await expect(panel.getByRole("link", { name: "CC BY 4.0" })).toHaveAttribute("href", "https://creativecommons.org/licenses/by/4.0/");
   const showLess = panel.getByRole("button", { name: "Show less", exact: true });
-  // The playground also scrolls at mobile sizes; center in both scroll ancestors.
-  await showLess.evaluate((element) => element.scrollIntoView({ block: "center", behavior: "instant" }));
+  await showLess.scrollIntoViewIfNeeded();
   await expect(showLess).toBeInViewport({ ratio: 1 });
   await showLess.click();
   await expect(panel.getByRole("button", { name: "Show more", exact: true })).toBeVisible();

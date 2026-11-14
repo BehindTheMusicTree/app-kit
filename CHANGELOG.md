@@ -26,7 +26,7 @@ easy to spot when bumping.
 
 ### Fixed
 
-- Make the playground use the device viewport so mobile previews exercise the responsive panel layout.
+- Make the playground use the device viewport, wrap its view controls, and fit the tree into the remaining height so mobile previews exercise the responsive panel layout without page overflow.
 
 ## [43.0.0] - 2026-11-12
 
