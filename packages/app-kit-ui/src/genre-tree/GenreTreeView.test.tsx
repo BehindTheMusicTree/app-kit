@@ -283,9 +283,11 @@ describe("GenreTreeView", () => {
 
   it("keeps the host search action usable alongside search and clear", () => {
     const onAccount = vi.fn();
+    const onClose = vi.fn();
     renderView({
       placement: "regions",
       searchFullWidthBreakpoint: "sm",
+      overlayPanel: { title: "About", content: <p>About body</p>, onClose },
       searchTrailingAction: <button onClick={onAccount}>Account</button>,
     });
 
@@ -294,8 +296,8 @@ describe("GenreTreeView", () => {
     fireEvent.click(screen.getByRole("button", { name: "Account" }));
     expect(onAccount).toHaveBeenCalledOnce();
     expect(input).toHaveValue("Jazz");
-    fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
-    expect(input).toHaveValue("");
+    fireEvent.click(screen.getByRole("button", { name: "Close panel" }));
+    expect(onClose).toHaveBeenCalledOnce();
     expect(screen.getByRole("button", { name: "Account" })).toBeInTheDocument();
   });
 

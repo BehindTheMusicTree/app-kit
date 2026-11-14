@@ -109,7 +109,8 @@ therefore rerender it. Focus enables lazy data loading for the lifetime of the s
 
 `GenreTreeView.searchTrailingAction` puts a host action inside the search below `md`
 (768px). In regions placement it also moves mobile search to the top inset, respecting
-`safe-area-inset-top`. `searchFullWidthBreakpoint` defaults to `"md"`; use `"sm"` to
+`safe-area-inset-top`. An expanded mobile sheet reserves its resize handle above the
+search so the handle remains reachable. `searchFullWidthBreakpoint` defaults to `"md"`; use `"sm"` to
 fill the available width only below 640px and keep a compact search at 640–767px.
 `GenreSearch` exposes the same controls as `trailingAction`, `trailingActionBreakpoint`
 and `fullWidthBreakpoint`; `SearchBox` forwards the action and its breakpoint to

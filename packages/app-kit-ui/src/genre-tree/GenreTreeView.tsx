@@ -724,7 +724,12 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   return (
     <div
       data-left-panel={isPanelShown && !isCollapsed ? undefined : "hidden"}
-      className={["genre-tree-view relative flex flex-col h-full", placement === "regions" && REGIONS_CLASS, className]
+      className={[
+        "genre-tree-view relative flex flex-col h-full",
+        placement === "regions" && REGIONS_CLASS,
+        placement === "regions" && searchTrailingAction && "max-md:[&:has([data-detail-panel][data-collapsed=false][data-sheet=true]_[aria-label='Resize_panel'][aria-expanded=true])_.actions-container]:top-[max(var(--layout-touch-target),env(safe-area-inset-top))]",
+        className,
+      ]
         .filter(Boolean)
         .join(" ")}
     >
