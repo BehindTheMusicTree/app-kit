@@ -248,6 +248,7 @@ describe("GenreTreeView with the real renderer", () => {
     await screen.findByText("About Mainstream Pop");
     expect(screen.getByRole("img", { name: "Mainstream Pop" })).toHaveAttribute("src", overview(id).image!.url);
     expect(screen.getByRole("link", { name: "Mainstream Pop photographer" })).toHaveAttribute("href", overview(id).image!.pageUrl);
+    expect(screen.getByRole("figure")).toContainElement(screen.getByRole("link", { name: "Mainstream Pop photographer" }));
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(treeCommit).toHaveBeenCalledTimes(commits);
 
