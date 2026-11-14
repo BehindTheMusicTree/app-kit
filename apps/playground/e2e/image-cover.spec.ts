@@ -8,13 +8,16 @@ async function loadedCover(page: Page, name: string) {
   const caption = cover.getByRole("figure").locator("figcaption");
   await expect(caption.getByRole("link", { name: "Fixture photographer" })).toHaveCount(1);
   await expect(page.getByRole("link", { name: "Fixture photographer" })).toHaveCount(1);
-  const imageBox = await cover.getByRole("img", { name, exact: true }).boundingBox();
-  const captionBox = await caption.boundingBox();
-  expect(imageBox).not.toBeNull();
-  expect(captionBox).not.toBeNull();
-  const gap = captionBox!.y - (imageBox!.y + imageBox!.height);
-  expect(gap).toBeGreaterThanOrEqual(0);
-  expect(gap).toBeLessThanOrEqual(8);
+  await expect(async () => {
+    const gap = await cover.getByRole("figure").evaluate((figure) => {
+      const image = figure.querySelector("img");
+      const caption = figure.querySelector("figcaption");
+      if (!image || !caption) throw new Error("Cover must contain an image and caption");
+      return caption.getBoundingClientRect().top - image.getBoundingClientRect().bottom;
+    });
+    expect(gap).toBeGreaterThanOrEqual(0);
+    expect(gap).toBeLessThanOrEqual(8);
+  }).toPass();
   return cover;
 }
 
