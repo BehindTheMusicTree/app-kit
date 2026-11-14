@@ -11,6 +11,8 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [43.1.0] - 2026-11-14
+
 ### Added
 
 - Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
