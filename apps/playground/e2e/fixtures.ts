@@ -32,7 +32,7 @@ export const test = base.extend<{ fixtureApi: void }>({
       else if (path === "regions/map/genres/") data = [];
       else if (path === "genres/search/") data = searchGenres.filter((genre) => genre.name.toLowerCase().includes((url.searchParams.get("q") ?? "").toLowerCase()));
       else if (path === "artists/search/") data = [];
-      else if (path === "songs/search/") data = [];
+      else if (path === "library/songs/search/") data = [];
       else if (path === "library/songs/") data = emptyPage;
       else if (path === `artists/${artistUuid}/genre-counts/`) data = [];
       else if (path === `artists/${artistUuid}/`) data = {
