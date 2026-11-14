@@ -121,6 +121,8 @@ describe("useArtistPanel", () => {
     render(<Harness uuid={UUID} />);
 
     expect(screen.getByRole("img", { name: "Band" })).toBeInTheDocument();
+    expect(screen.getByRole("figure")).toHaveTextContent("Photo: Jane Doe, CC BY-SA 4.0");
+    expect(screen.getAllByRole("link", { name: "Jane Doe" })).toHaveLength(1);
   });
 
   it("shows no photo when the artist has none", () => {

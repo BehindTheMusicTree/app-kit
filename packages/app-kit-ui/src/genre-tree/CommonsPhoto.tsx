@@ -18,8 +18,15 @@ export function CommonsPhotoCredit({ image, creditLabel = "Photo" }: { image: Co
   );
 }
 
-export function CommonsCover({ image, alt }: { image: CommonsImage; alt: string }) {
-  return <img src={image.url} alt={alt} className="h-64 w-full object-cover bg-[var(--color-surface-muted)]" />;
+export function CommonsCover({ image, alt, creditLabel }: { image: CommonsImage; alt: string; creditLabel?: string }) {
+  return (
+    <figure className="flex flex-col gap-1.5">
+      <img src={image.url} alt={alt} className="h-64 w-full object-cover bg-[var(--color-surface-muted)]" />
+      <figcaption className="px-panel-x">
+        <CommonsPhotoCredit image={image} creditLabel={creditLabel} />
+      </figcaption>
+    </figure>
+  );
 }
 
 export default function CommonsPhoto({

@@ -20,6 +20,6 @@ export const GenreOverviewDetailPanel = forwardRef<HTMLDivElement, Props>(functi
 ) {
   const { data: overview } = useFetchGenreOverview(genreUuid, scope, getBackendBaseUrl, criteriaOverviewSchema);
   return (
-    <DetailPanel {...props} ref={ref} cover={genreUuid && overview?.image ? <CommonsCover image={overview.image} alt={overview.name} /> : cover} />
+    <DetailPanel {...props} ref={ref} cover={genreUuid && overview?.image ? <CommonsCover image={overview.image} alt={overview.name} creditLabel="Image" /> : cover} />
   );
 });

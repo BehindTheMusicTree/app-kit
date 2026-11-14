@@ -11,6 +11,12 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [43.1.1] - 2026-11-14
+
+### Fixed
+
+- Keep genre and artist image credits directly below their cover image, before panel actions, without duplicating them in the body.
+
 ## [43.1.0] - 2026-11-14
 
 ### Added
