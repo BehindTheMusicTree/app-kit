@@ -11,6 +11,25 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [43.1.0] - 2026-11-14
+
+### Added
+
+- Search components forward a responsive trailing action. `GenreTreeView` exposes `searchTrailingAction` for a mobile account control and `searchFullWidthBreakpoint` to keep search compact until `sm`; with an action, mobile search moves into the top row while keeping an expanded sheet’s resize handle reachable. Playground Chromium regression tests cover search/account access and sheet expansion/collapse at mobile breakpoints.
+- Deterministic desktop and mobile browser coverage for detail-panel covers, scrolling, search navigation, and image credits, plus real QueryClient tests for shared overview requests and stale-image prevention; CI enforces both.
+
+### Changed
+
+- Update `@behindthemusictree/genre-tree-view` to 10.0.1 so its peer dependency accepts the UI 0.25 version used by app-kit-ui.
+
+- Require `@behindthemusictree/ui` ^0.25.0 for detail-panel covers; update the playground brand dependency to ^12.13.0.
+
+- Artist and genre detail panels display their image as a full-width cover behind the floating search field, with image credits preserved in the body. Host overlay panels can provide a `cover` slot.
+
+### Fixed
+
+- Make the playground use the device viewport, wrap its view controls, and fit the tree into the remaining height so mobile previews exercise the responsive panel layout without page overflow.
+
 ## [43.0.0] - 2026-11-12
 
 ### Breaking

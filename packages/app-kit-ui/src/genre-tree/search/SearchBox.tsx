@@ -19,6 +19,8 @@ export type SearchBoxProps = {
   clearLabel?: string;
   /** An action left of the text, e.g. a Previous button. */
   leading?: ReactNode;
+  trailingAction?: ReactNode;
+  trailingActionBreakpoint?: "sm" | "md";
   className?: string;
   /** Called when the input gains focus, e.g. to load an index lazily. */
   onFocus?: () => void;
@@ -35,6 +37,8 @@ export default function SearchBox({
   onClear,
   clearLabel,
   leading,
+  trailingAction,
+  trailingActionBreakpoint,
   className,
   onFocus,
 }: SearchBoxProps) {
@@ -72,6 +76,8 @@ export default function SearchBox({
         onClear={onClear}
         clearLabel={clearLabel}
         leading={leading}
+        trailingAction={trailingAction}
+        trailingActionBreakpoint={trailingActionBreakpoint}
         inputClassName="focus-visible:ring-0"
       />
     </div>

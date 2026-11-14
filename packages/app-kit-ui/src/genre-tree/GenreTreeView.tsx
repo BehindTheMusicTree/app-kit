@@ -5,7 +5,7 @@ import { useIsMutating } from "@tanstack/react-query";
 import { z } from "zod";
 import { Plus } from "lucide-react";
 import { Maximize2, Minimize2 } from "lucide-react";
-import { IconTextButton, IconButton, Button, SegmentedControl, DetailPanel, useObscuredInset } from "@behindthemusictree/ui";
+import { IconTextButton, IconButton, Button, SegmentedControl, useObscuredInset } from "@behindthemusictree/ui";
 
 import {
   GenreTreeWheelSkeleton,
@@ -47,6 +47,7 @@ import GenrePlaylistTreeWheelRadialPopCore, { type GenreFocusProps } from "./pla
 import { GenreTreeWheelHandoff } from "./GenreTreeWheelHandoff";
 import { GenreTreeSearch, type GenreSearchGroupsProps } from "./GenreTreeSearch";
 import { type SearchGroup } from "./search";
+import { GenreOverviewDetailPanel } from "./GenreOverviewDetailPanel";
 import { useGenreDetailContent } from "./GenreDetailPanel";
 import ChangeParentPopup, { type ParentChange } from "./ChangeParentPopup";
 import { useEntityPanel } from "./useEntityPanel";
@@ -126,6 +127,10 @@ export type GenreTreeViewProps<O extends CriteriaOverview = CriteriaOverview> = 
   renderGenreDetailExtras?: (overview: O) => ReactNode;
   /** Host control displayed before the size metric in the floating controls. */
   floatingControlsLeading?: ReactNode;
+  /** Optional mobile action inside the search pill; e.g. the host's account menu. */
+  searchTrailingAction?: ReactNode;
+  /** Defaults to md. */
+  searchFullWidthBreakpoint?: "sm" | "md";
   /** Controlled size metric of the wheel and pop-core nodes: song count or summed song views. Uncontrolled when omitted
    * (starts on songs). The toggle is hidden while an artist filters the tree, which only has song counts. */
   sizeMetric?: GenreTreeSizeMetric;
@@ -204,6 +209,8 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   criteriaOverviewSchema,
   renderGenreDetailExtras,
   floatingControlsLeading,
+  searchTrailingAction,
+  searchFullWidthBreakpoint = "md",
   sizeMetric: controlledSizeMetric,
   onSizeMetricChange,
   renderArtistLink,
@@ -548,6 +555,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   type ActivePanel = {
     title: ReactNode;
     content: ReactNode;
+    cover?: ReactNode;
     aside?: ReactNode;
     expanded: boolean;
     onExpandedChange?: (expanded: boolean) => void;
@@ -561,6 +569,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
     activePanel = {
       title: otherPanel.title,
       content: otherPanel.content,
+      cover: otherPanel.cover,
       aside: otherPanel.extraContent,
       expanded: otherPanel.expanded ?? false,
       onExpandedChange: otherPanel.onExpandedChange,
@@ -661,6 +670,9 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
           onPrevious={handlePrevious}
           onQueryChange={onSearchQueryChange}
           onFocus={onSearchFocus}
+          trailingAction={searchTrailingAction}
+          trailingActionBreakpoint="md"
+          fullWidthBreakpoint={searchFullWidthBreakpoint}
           extraGroups={extraSearchGroups}
         />
       )}
@@ -712,14 +724,23 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
   return (
     <div
       data-left-panel={isPanelShown && !isCollapsed ? undefined : "hidden"}
-      className={["genre-tree-view relative flex flex-col h-full", placement === "regions" && REGIONS_CLASS, className]
+      className={[
+        "genre-tree-view relative flex flex-col h-full",
+        placement === "regions" && REGIONS_CLASS,
+        placement === "regions" && searchTrailingAction && "max-md:[&:has([data-detail-panel][data-collapsed=false][data-sheet=true]_[aria-label='Resize_panel'][aria-expanded=true])_.actions-container]:top-[max(var(--layout-touch-target),env(safe-area-inset-top))]",
+        className,
+      ]
         .filter(Boolean)
         .join(" ")}
     >
       <div
         className={`actions-container absolute z-30 flex items-center gap-2 ${
           placement === "regions"
-            ? "left-[calc(var(--layout-gutter)+var(--layout-panel-inset))] top-[calc(var(--layout-gutter)+var(--layout-panel-inset))] md:left-[var(--layout-panel-inset)] md:top-[var(--layout-panel-inset)] max-md:right-[calc(var(--layout-gutter)+var(--layout-panel-inset))] max-md:top-[var(--layout-band-top)] max-md:flex-col max-md:items-stretch"
+            ? [
+                "left-[calc(var(--layout-gutter)+var(--layout-panel-inset))] top-[calc(var(--layout-gutter)+var(--layout-panel-inset))] md:left-[var(--layout-panel-inset)] md:top-[var(--layout-panel-inset)] max-md:flex-col max-md:items-stretch",
+                searchFullWidthBreakpoint === "sm" ? "max-sm:right-[calc(var(--layout-gutter)+var(--layout-panel-inset))]" : "max-md:right-[calc(var(--layout-gutter)+var(--layout-panel-inset))]",
+                searchTrailingAction ? "max-md:top-[max(var(--layout-panel-inset),env(safe-area-inset-top))]" : "max-md:top-[var(--layout-band-top)]",
+              ].join(" ")
             : "left-5 top-5"
         }`}
       >
@@ -884,10 +905,15 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             </div>
           )}
           {/* Always mounted: useObscuredInset observes the node once, so it must exist when the host mounts. */}
-          <DetailPanel
+          <GenreOverviewDetailPanel
+            genreUuid={!otherPanel && genreContent.name && selectedGenreUuid ? toGenreUuid(selectedGenreUuid) : null}
+            scope={scope}
+            getBackendBaseUrl={getBackendBaseUrl}
+            criteriaOverviewSchema={criteriaOverviewSchema}
             ref={panelRef}
             side="left"
             title={activePanel?.title ?? ""}
+            cover={activePanel?.cover}
             titleInSearch={!isLoading && !isError}
             headerAccent={activePanel?.headerAccent}
             headerActions={expandButton}
@@ -906,7 +932,7 @@ export function GenreTreeView<O extends CriteriaOverview = CriteriaOverview>({
             ) : (
               activePanel?.content
             )}
-          </DetailPanel>
+          </GenreOverviewDetailPanel>
         </div>
       </div>
     </div>
