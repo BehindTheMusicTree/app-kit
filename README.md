@@ -57,8 +57,9 @@ pnpm install
 pnpm dev     # builds the package in watch mode + runs apps/playground
 ```
 
-`apps/playground` is a small Vite app for manually exercising exported components against mock
-data — not published.
+`apps/playground` is a small Vite app for exercising exported components against the staging
+backend; it is not published. Its Playwright suite intercepts API and image requests with local
+fixtures and runs at desktop and mobile widths. See [verification commands](CONTRIBUTING.md#5-verifying).
 
 ## Branching
 

@@ -9,3 +9,5 @@ dist
 coverage/
 .claude/worktrees/
 graphify-out/
+playwright-report/
+test-results/

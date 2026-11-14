@@ -28,3 +28,7 @@ jobs:
       - run: pnpm build
       - run: pnpm lint
       - run: pnpm test
+      - name: Install browser test runtime
+        run: pnpm --filter app-kit-playground exec playwright install --with-deps chromium
+      - name: Browser integration tests
+        run: pnpm --filter app-kit-playground test:e2e

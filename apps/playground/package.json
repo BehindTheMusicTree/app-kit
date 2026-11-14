@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit && tsc -p tsconfig.e2e.json",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@behindthemusictree/app-kit": "workspace:*",
@@ -19,6 +20,8 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "@types/node": "^22.0.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@types/youtube": "^0.3.0",

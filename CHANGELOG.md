@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- Deterministic desktop and mobile browser coverage for detail-panel covers, scrolling, search navigation, and image credits, plus real QueryClient tests for shared overview requests and stale-image prevention; CI enforces both.
+
 ### Changed
 
 - Update `@behindthemusictree/genre-tree-view` to 10.0.1 so its peer dependency accepts the UI 0.25 version used by app-kit-ui.
@@ -18,6 +22,10 @@ easy to spot when bumping.
 - Require `@behindthemusictree/ui` ^0.25.0 for detail-panel covers; update the playground brand dependency to ^12.13.0.
 
 - Artist and genre detail panels display their image as a full-width cover behind the floating search field, with image credits preserved in the body. Host overlay panels can provide a `cover` slot.
+
+### Fixed
+
+- Make the playground use the device viewport so mobile previews exercise the responsive panel layout.
 
 ## [43.0.0] - 2026-11-12
 
