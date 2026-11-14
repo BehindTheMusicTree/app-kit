@@ -4,8 +4,8 @@ packages:
 
 catalog:
   "@behindthemusictree/brand": ^12.13.0
-  "@behindthemusictree/genre-tree-view": "10.0.1"
-  "@behindthemusictree/ui": ^0.25.0
+  "@behindthemusictree/genre-tree-view": "10.0.2"
+  "@behindthemusictree/ui": ^0.26.0
 
 allowBuilds:
   esbuild: true
