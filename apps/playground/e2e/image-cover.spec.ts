@@ -53,7 +53,10 @@ test("genre cover scrolls beneath interactive search and clears across cached na
   await expect(credit).toBeVisible();
   await expect(credit).toHaveAttribute("href", /commons.wikimedia.org/);
   await expect(panel.getByRole("link", { name: "CC BY 4.0" })).toHaveAttribute("href", "https://creativecommons.org/licenses/by/4.0/");
-  await panel.getByRole("button", { name: "Show less", exact: true }).click();
+  await scroll.evaluate((element) => { element.scrollTop = element.scrollHeight; });
+  const showLess = panel.getByRole("button", { name: "Show less", exact: true });
+  await expect(showLess).toBeInViewport();
+  await showLess.click();
   await expect(panel.getByRole("button", { name: "Show more", exact: true })).toBeVisible();
 
   if (isMobile) {
