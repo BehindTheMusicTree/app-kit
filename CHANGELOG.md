@@ -11,6 +11,10 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+### Added
+
+- Nonblocking CI drag-latency diagnostics with matched renderer inputs, captured surfaces, injected-delay calibration, and downloadable evidence.
+
 ## [43.1.4] - 2026-11-15
 
 ### Changed

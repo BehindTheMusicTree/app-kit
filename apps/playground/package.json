@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "lint": "tsc --noEmit && tsc -p tsconfig.e2e.json",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:latency": "playwright test --config playwright.latency.config.ts"
   },
   "dependencies": {
     "@behindthemusictree/app-kit": "workspace:*",

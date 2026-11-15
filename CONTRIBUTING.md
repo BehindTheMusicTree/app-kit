@@ -123,6 +123,45 @@ CI retains screenshots and traces on failure.
 Failed browser tests save traces under `apps/playground/test-results/`; inspect one with
 `pnpm --filter app-kit-playground exec playwright show-trace <trace.zip>`.
 
+### Drag latency diagnostic
+
+```bash
+pnpm --filter app-kit-playground test:latency
+# Installed Chrome: PLAYWRIGHT_CHANNEL=chrome pnpm --filter app-kit-playground test:latency
+```
+
+This isolated Chromium suite uses a versioned public reference-tree fixture and a dedicated
+Vite server. It needs no backend or credentials. It compares the full playground with the
+standalone renderer using the same visibility projection, verifies actual renderer-input
+hashes, geometry, dot counts and initial transforms, and starts a fresh browser for every
+matrix cell. Two repetitions alternate consumer order; `DRAG_LATENCY_REPETITIONS` accepts
+integers from 2 to 10. Each cell measures the first drag without preparatory pan/zoom and two
+subsequent drags. Automated mouse input does not establish MacBook trackpad equivalence.
+
+The primary observation is the first captured compositor surface whose attached magenta
+marker moves more than 1.5 CSS pixels after the first pressed pointer move. JPEG dimensions
+are normalized to CSS pixels, including Retina captures. Surface timestamps are aligned with
+`performance.timeOrigin`. This observes compositor surfaces, not physical screen presentation.
+Optional per-frame computed-style reads record first-transform timing; the matrix reports
+their observer effect separately. The marker, screencast and event listeners can also affect
+rendering, so these numbers describe an instrumented harness.
+
+Sensor validity is asserted: stationary pre-input and moved marker observations, unambiguous
+marker size/count, strictly ordered timestamps and pointer sequence, one measured injected
+delay, clean runtime, matching renderer inputs and geometry. A 300 ms injected main-thread
+block must add more than 150 ms to the median captured-surface latency for both consumers,
+with and without style reads, for cold and subsequent drags. This checks sensor sensitivity;
+there is no product latency budget. Missing observations fail the diagnostic.
+
+`latency-results/` contains per-cell JSON events, timing/marker positions and compressed raw
+JPEG frames, plus a final versioned summary with fixture/lockfile/input hashes and calibration
+and observer comparisons. The fixture contains public tree metadata and counts only; requests
+outside the local harness fail. `Drag latency diagnostic` runs on PRs into develop and manually,
+retains evidence for seven days even on failure, and is nonblocking (`continue-on-error`).
+The regular Validate build/lint/unit/browser gates remain mandatory. Inspect repeated CI runs
+and validity/calibration before proposing a product threshold; a green workflow alone is not
+evidence of valid timing because this job is nonblocking.
+
 ### 6. Committing
 
 Use [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `chore:`,
