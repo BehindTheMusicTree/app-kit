@@ -4,7 +4,7 @@ packages:
 
 catalog:
   "@behindthemusictree/brand": ^12.13.0
-  "@behindthemusictree/genre-tree-view": "10.0.3"
+  "@behindthemusictree/genre-tree-view": "10.0.4"
   "@behindthemusictree/ui": ^0.26.0
 
 allowBuilds:
