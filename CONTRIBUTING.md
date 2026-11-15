@@ -137,6 +137,11 @@ hashes, geometry, dot counts and initial transforms, and starts a fresh browser 
 matrix cell. Two repetitions alternate consumer order; `DRAG_LATENCY_REPETITIONS` accepts
 integers from 2 to 10. Each cell measures the first drag without preparatory pan/zoom and two
 subsequent drags. Automated mouse input does not establish MacBook trackpad equivalence.
+Each gesture presses the background and immediately moves 80 CSS pixels horizontally and
+10 vertically, with no inserted pause or intermediate moves. It holds for one second after
+the move to capture the response. `latencies` measures move-to-surface time;
+`clickLatencies` measures press-to-surface time, and `inputGaps` records the actual
+press-to-move interval so driver delay remains visible.
 
 The primary observation is the first captured compositor surface whose attached magenta
 marker moves more than 1.5 CSS pixels after the first pressed pointer move. JPEG dimensions

@@ -15,6 +15,10 @@ easy to spot when bumping.
 
 - Nonblocking CI drag-latency diagnostics with matched renderer inputs, captured surfaces, injected-delay calibration, and downloadable evidence.
 
+### Changed
+
+- Measure drag startup with an immediate click-and-drag, reporting both click-to-surface and move-to-surface delays.
+
 ## [43.1.4] - 2026-11-15
 
 ### Changed

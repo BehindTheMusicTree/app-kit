@@ -62,7 +62,8 @@ for (let repeat = 0; repeat < repetitions; repeat++) {
 
 test("audit matching and injected-delay sensitivity", async ({}, info) => {
   const summary = {
-    schemaVersion: 1,
+    schemaVersion: 2,
+    gesture: "press-then-immediate-80x10-move",
     revision: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
     fixtureSha256: sha256(fixtureBytes),
     lockfileSha256: sha256(await readFile(new URL("../../../pnpm-lock.yaml", import.meta.url), "utf8")),
