@@ -11,6 +11,12 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [43.1.4] - 2026-11-15
+
+### Changed
+
+- Use genre-tree-view 10.0.4 for immediate dragging from genre labels and chips.
+
 ## [43.1.3] - 2026-11-15
 
 ### Changed
