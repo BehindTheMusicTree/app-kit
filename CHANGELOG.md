@@ -11,6 +11,12 @@ easy to spot when bumping.
 
 ## [Unreleased]
 
+## [43.1.3] - 2026-11-15
+
+### Changed
+
+- Use genre-tree-view 10.0.3 for smoother touch pan and zoom.
+
 ## [43.1.2] - 2026-11-14
 
 ### Changed
