@@ -13,6 +13,8 @@ easy to spot when bumping.
 
 ### Added
 
+- Manual CI browser/backend experiments with sequential calibrated controls, GPU disable/restore comparisons, and complex-content rendering traces.
+
 - CI rectangle controls with rendering traces and input/frame timing evidence for drag diagnostics.
 
 - CI drag-latency diagnostics with matched renderer inputs, captured surfaces, injected-delay calibration, and downloadable evidence.

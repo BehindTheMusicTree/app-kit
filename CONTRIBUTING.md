@@ -201,6 +201,31 @@ surface artifacts additionally record host frame arrivals, input dispatch acknow
 page clocks and input event timestamps. Neither trace nor DOM observations establish
 physical-display latency; CI results cannot establish the cause of a local-only delay.
 
+For browser/backend experiments without local browser storage, manually dispatch `Drag latency
+diagnostic` with `experiment=true` and `order=full-first` or `shell-first`. Each Linux and Intel
+macOS job runs sequentially: full and Shell calibrated suites in the selected order, full
+Chromium with `--disable-gpu`, then full Chromium restored to its default arguments. All four
+suites retain both consumers, two fresh launches per cell, injected-delay calibration, audit
+assertions and the unchanged 100 ms budget. Failures are preserved; later phases still run and
+any failure makes the experiment job fail. There are no retries.
+
+Three additional phases capture rendering traces for default full Chromium, GPU-disabled full
+Chromium and Shell using only unobserved zero-dose baselines. Those filtered phases do not run
+the calibration audit or budget; compare them with the complete untraced suites to assess
+instrumentation effects. `DRAG_DIAGNOSTIC_DISABLE_GPU=1` and `DRAG_DIAGNOSTIC_TRACE=1` select
+these diagnostic options; omit them or use `0` to disable them. Every tree capture records
+browser arguments, version and `SystemInfo.getInfo` in `environment.json`. Verify the effective
+backend: disabling GPU is an intervention, not proof of which backend is active or of causality.
+Hosted runners may use software rendering even in the default configuration.
+
+`experiment-results/manifest.json` records the commit, fixture/lockfile hashes, fixed plan,
+phase commands, timestamps and exit codes. Per-phase logs and capture outputs are uploaded
+even on failure. For independent repetitions, dispatch the same pinned branch head three
+times with predefined orders `full-first`, `shell-first`, `full-first`, preserving all results
+rather than rerunning until green. Unrelated jobs may run concurrently on other runners;
+browser phases on one runner remain sequential. These experiments do not provision a GPU
+runner or establish that a local hardware-specific delay has been reproduced.
+
 ### 6. Committing
 
 Use [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `chore:`,
