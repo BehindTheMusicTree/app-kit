@@ -126,9 +126,18 @@ Failed browser tests save traces under `apps/playground/test-results/`; inspect 
 ### Drag latency diagnostic
 
 ```bash
-pnpm --filter app-kit-playground test:latency
-# Installed Chrome: PLAYWRIGHT_CHANNEL=chrome pnpm --filter app-kit-playground test:latency
+pnpm --filter app-kit-playground test:latency:analysis
+pnpm --filter app-kit-playground test:latency --project=chromium-headless
+pnpm --filter app-kit-playground test:latency --project=chromium-headless-shell
 ```
+
+The analysis suite checks the measurement algorithm without a browser or Vite server.
+The browser suite has two projects: `chromium-headless` runs bundled full Chromium headless;
+`chromium-headless-shell` runs Playwright Headless Shell at the same pinned version. Omitting `--project`
+runs both sequentially. `PLAYWRIGHT_CHANNEL` does not affect either diagnostic project.
+Functional desktop/mobile tests remain in `test:e2e` and the regular validation workflow.
+Explicit per-cell launches honor the project's channel and headless setting, including
+`--headed`; headed input must still pass the same pointer-sequence validity checks.
 
 This isolated Chromium suite uses a versioned public reference-tree fixture and a dedicated
 Vite server. It needs no backend or credentials. It compares the full playground with the
@@ -162,14 +171,19 @@ delay, clean runtime, matching renderer inputs and geometry. A 300 ms injected m
 block must add more than 150 ms to the median captured-surface latency for both consumers,
 with and without style reads, for cold and subsequent drags. This checks sensor sensitivity;
 the injected controls are excluded from the performance assertion. Missing observations fail
-the diagnostic. The median app-kit click-to-surface delay across baseline continuous gestures
+the diagnostic and invalidate the budget conclusion. A valid measurement above budget fails
+only the budget assertion; a valid measurement within budget passes both stages. The median app-kit click-to-surface delay across baseline continuous gestures
 must be at most 100 ms. This responsiveness budget is not calibrated across hardware.
 
 `latency-results/` contains per-cell JSON events, timing/marker positions and compressed raw
-JPEG frames, plus a final versioned summary with fixture/lockfile/input hashes and calibration
+JPEG frames, plus a budget attachment and a final versioned summary with fixture/lockfile/input hashes and calibration
 and observer comparisons. The fixture contains public tree metadata and counts only; requests
-outside the local harness fail. `Drag latency diagnostic` runs on PRs into develop and manually,
-retains evidence for seven days even on failure, and fails when the diagnostic fails. The
+outside the local harness fail. The summary records the project, channel and headless setting.
+`Drag latency diagnostic` runs on PRs into develop and manually. An independent analysis job
+gates the surface matrix: full Chromium on Linux and Intel macOS, and Headless Shell on both platforms. Each lane runs calibration and budget checks with one worker and no retries;
+failure in one lane does not cancel the others. Artifacts have separate platform and mode names,
+retain evidence for seven days even on failure, and jobs fail when the diagnostic fails.
+The identical 100 ms threshold is not calibrated between modes or runner hardware. The
 repository ruleset currently does not require this job to merge. Raw frame arrival order is
 preserved; analysis orders frames by compositor timestamp.
 
