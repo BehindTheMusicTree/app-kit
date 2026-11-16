@@ -36,8 +36,9 @@ test("tracking compares each surface with the latest received pointer position",
   const frames = [positions[0],
     { at: 30, point: { x: 60, y: 50, count: 256 } },
     { at: 40, point: { x: 110, y: 60, count: 256 } },
+    { at: 100, point: { x: 130, y: 60, count: 256 } },
   ];
   expect(analyze([continuous], frames, 0).tracking[0]).toEqual([
-    { at: 30, lagPx: 10 }, { at: 40, lagPx: 20 },
+    { at: 30, lagPx: 10 }, { at: 40, lagPx: 20 }, { at: 100, lagPx: 0 },
   ]);
 });

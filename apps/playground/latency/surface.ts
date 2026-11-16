@@ -248,7 +248,7 @@ export function analyze(gestures: Gesture[], positions: Position[], dose: number
     const moved = positions.find(frame => frame.at >= move.at && frame.at <= up.at && frame.point &&
       Math.hypot(frame.point.x - before!.point!.x, frame.point.y - before!.point!.y) > 1.5);
     expect(moved, "Missing moved surface observation").toBeDefined();
-    tracking.push(positions.filter(frame => frame.point && frame.at >= move.at && frame.at <= last.at).map(frame => {
+    tracking.push(positions.filter(frame => frame.point && frame.at >= move.at && frame.at <= up.at).map(frame => {
       const input = moves.filter(event => event.at <= frame.at).at(-1)!;
       return { at: frame.at, lagPx: Math.hypot(
         input.x - down.x - (frame.point!.x - before!.point!.x),
