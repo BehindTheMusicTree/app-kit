@@ -17,7 +17,7 @@ easy to spot when bumping.
 
 ### Changed
 
-- Measure drag startup with an immediate click-and-drag, reporting both click-to-surface and move-to-surface delays.
+- Measure continuous drag tracking and fail the diagnostic job when median baseline startup exceeds 100 ms.
 
 ## [43.1.4] - 2026-11-15
 

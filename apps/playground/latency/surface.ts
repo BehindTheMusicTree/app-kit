@@ -26,7 +26,7 @@ type Position = { at: number; point: (Point & { count: number }) | null };
 export type Capture = {
   consumer: Consumer; dose: number; observe: boolean; browser: string;
   preparation: { viewport: Point & { width: number; height: number }; initial: Sample; dots: number; nodes: string };
-  gestures: Gesture[]; positions: Position[]; latencies: number[]; clickLatencies: number[]; inputGaps: number[]; transforms: (number | null)[];
+  gestures: Gesture[]; positions: Position[]; latencies: number[]; clickLatencies: number[]; inputGaps: number[]; transforms: (number | null)[]; tracking: { at: number; lagPx: number }[][];
 };
 
 export async function capture(
@@ -138,7 +138,18 @@ export async function capture(
       }, { dose, observe });
       await page.mouse.down();
       // Send the drag immediately after the press; only hold afterward to observe its response.
-      await page.mouse.move(origin.x + 80, origin.y + 10);
+      const pending: Promise<unknown>[] = [];
+      const started = performance.now();
+      for (let step = 1; step <= 60; step++) {
+        const wait = started + (step - 1) * 16 - performance.now();
+        if (wait > 0) await new Promise(resolve => setTimeout(resolve, wait));
+        // Do not await dispatch: a blocked renderer must not throttle the input producer.
+        pending.push(cdp.send("Input.dispatchMouseEvent", {
+          type: "mouseMoved", x: origin.x + step * 80 / 60,
+          y: origin.y + step * 10 / 60, button: "left", buttons: 1,
+        }));
+      }
+      await Promise.all(pending);
       await page.waitForTimeout(1000);
       await page.mouse.up();
       await page.waitForTimeout(150);
@@ -153,14 +164,14 @@ export async function capture(
     await cdp.send("Page.stopScreencast");
     const positions = await decodeFrames(page, frames, marker);
     await writeFile(info.outputPath("observations.json"), JSON.stringify({ preparation, positions }, null, 2));
-    const { latencies, clickLatencies, inputGaps, transforms } = analyze(gestures, positions, dose);
+    const { latencies, clickLatencies, inputGaps, transforms, tracking } = analyze(gestures, positions, dose);
     for (const gesture of gestures) {
       const before = positions.filter(frame => frame.at < gesture.events[1].at && frame.point).at(-1)!;
       expect(Math.abs(before.point!.x - (marker.x + 8 + gesture.initial.x - preparation.initial.x))).toBeLessThan(1.5);
       expect(Math.abs(before.point!.y - (marker.y + 8 + gesture.initial.y - preparation.initial.y))).toBeLessThan(1.5);
     }
     expect(errors, "Browser runtime errors").toEqual([]);
-    const result = { consumer, dose, observe, browser: browser.version(), preparation, gestures, positions, latencies, clickLatencies, inputGaps, transforms };
+    const result = { consumer, dose, observe, browser: browser.version(), preparation, gestures, positions, latencies, clickLatencies, inputGaps, transforms, tracking };
     await writeFile(info.outputPath("capture.json"), JSON.stringify(result, null, 2));
     return result;
   } finally {
@@ -172,10 +183,10 @@ export async function capture(
 
 async function decodeFrames(page: Page, frames: Frame[], marker: Point & { timeOrigin: number }): Promise<Position[]> {
   const positions: Position[] = [];
-  for (const frame of frames) {
+  for (const frame of [...frames].sort((a, b) => Number(a.metadata.timestamp) - Number(b.metadata.timestamp))) {
     const at = Number(frame.metadata.timestamp) * 1000 - marker.timeOrigin;
     expect(Number.isFinite(at), "Missing surface timestamp").toBe(true);
-    if (positions.length) expect(at, "Surface timestamps must increase").toBeGreaterThan(positions.at(-1)!.at);
+    if (positions.length) expect(at, "Surface timestamps must not decrease").toBeGreaterThanOrEqual(positions.at(-1)!.at);
     const point = await page.evaluate(async ({ data, metadata }) => {
       const bitmap = new Image();
       bitmap.src = `data:image/jpeg;base64,${data}`;
@@ -206,17 +217,23 @@ export function analyze(gestures: Gesture[], positions: Position[], dose: number
   const transforms: (number | null)[] = [];
   const clickLatencies: number[] = [];
   const inputGaps: number[] = [];
+  const tracking: { at: number; lagPx: number }[][] = [];
   const latencies = gestures.map((gesture) => {
-    expect(gesture.events.map(event => event.type)).toEqual(["pointerdown", "pointermove", "pointerup"]);
-    const [down, move, up] = gesture.events;
-    expect(move.x - down.x).toBeCloseTo(80, 1);
-    expect(move.y - down.y).toBeCloseTo(10, 1);
+    const down = gesture.events[0], up = gesture.events.at(-1)!;
+    const moves = gesture.events.slice(1, -1);
+    expect(down.type).toBe("pointerdown");
+    expect(up.type).toBe("pointerup");
+    expect(moves.length).toBeGreaterThan(0);
+    expect(moves.every(event => event.type === "pointermove")).toBe(true);
+    const move = moves[0], last = moves.at(-1)!;
+    expect(last.x - down.x).toBeCloseTo(80, 1);
+    expect(last.y - down.y).toBeCloseTo(10, 1);
     expect(gesture.final, "Missing final transform").toBeDefined();
     expect(gesture.final!.x - gesture.initial.x).toBeCloseTo(80, 0);
     expect(gesture.final!.y - gesture.initial.y).toBeCloseTo(10, 0);
     expect(gesture.final!.k).toBeCloseTo(gesture.initial.k, 6);
     expect(down.buttons === 1 && move.buttons === 1 && up.buttons === 0).toBe(true);
-    for (let index = 1; index < gesture.events.length; index++) expect(gesture.events[index].at).toBeGreaterThan(gesture.events[index - 1].at);
+    for (let index = 1; index < gesture.events.length; index++) expect(gesture.events[index].at).toBeGreaterThanOrEqual(gesture.events[index - 1].at);
     expect(gesture.injections).toHaveLength(1);
     const injection = gesture.injections[0];
     expect(injection.requestedMs).toBe(dose);
@@ -231,6 +248,13 @@ export function analyze(gestures: Gesture[], positions: Position[], dose: number
     const moved = positions.find(frame => frame.at >= move.at && frame.at <= up.at && frame.point &&
       Math.hypot(frame.point.x - before!.point!.x, frame.point.y - before!.point!.y) > 1.5);
     expect(moved, "Missing moved surface observation").toBeDefined();
+    tracking.push(positions.filter(frame => frame.point && frame.at >= move.at && frame.at <= last.at).map(frame => {
+      const input = moves.filter(event => event.at <= frame.at).at(-1)!;
+      return { at: frame.at, lagPx: Math.hypot(
+        input.x - down.x - (frame.point!.x - before!.point!.x),
+        input.y - down.y - (frame.point!.y - before!.point!.y),
+      ) };
+    }));
     const latency = moved!.at - move.at;
     clickLatencies.push(moved!.at - down.at);
     inputGaps.push(move.at - down.at);
@@ -239,5 +263,5 @@ export function analyze(gestures: Gesture[], positions: Position[], dose: number
     transforms.push(transform ? transform.at - move.at : null);
     return latency;
   });
-  return { latencies, clickLatencies, inputGaps, transforms };
+  return { latencies, clickLatencies, inputGaps, transforms, tracking };
 }

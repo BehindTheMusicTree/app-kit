@@ -62,8 +62,8 @@ for (let repeat = 0; repeat < repetitions; repeat++) {
 
 test("audit matching and injected-delay sensitivity", async ({}, info) => {
   const summary = {
-    schemaVersion: 2,
-    gesture: "press-then-immediate-80x10-move",
+    schemaVersion: 3,
+    gesture: "press-then-continuous-80x10-over-944ms",
     revision: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
     fixtureSha256: sha256(fixtureBytes),
     lockfileSha256: sha256(await readFile(new URL("../../../pnpm-lock.yaml", import.meta.url), "utf8")),
@@ -104,4 +104,11 @@ test("audit matching and injected-delay sensitivity", async ({}, info) => {
   } finally {
     await writeFile(info.outputPath("summary.json"), JSON.stringify(summary, null, 2));
   }
+});
+
+test("app-kit continuous drag starts within the 100 ms responsiveness budget", () => {
+  const baseline = results.filter(row => row.consumer === "app-kit" && !row.observe && row.dose === 0);
+  expect(baseline, "Missing baseline captures; measurement validity must pass first").toHaveLength(repetitions);
+  const startup = baseline.flatMap(row => row.clickLatencies);
+  expect(median(startup), `Drag startup regression: median click-to-surface ${median(startup).toFixed(1)} ms across ${startup.length} gestures exceeds the 100 ms budget`).toBeLessThanOrEqual(100);
 });

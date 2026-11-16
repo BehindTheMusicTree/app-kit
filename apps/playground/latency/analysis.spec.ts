@@ -26,3 +26,18 @@ test("surface validity rejects missing frames, interference and a sensor precedi
   expect(() => analyze([{ ...gesture, injections: [] }], positions, 300)).toThrow();
   expect(() => analyze([gesture], [positions[0], { ...positions[1], at: 30 }], 300)).toThrow("Surface precedes injected delay");
 });
+
+test("tracking compares each surface with the latest received pointer position", () => {
+  const continuous = { ...gesture, events: [gesture.events[0],
+    { type: "pointermove", at: 20, x: 120, y: 100, buttons: 1 },
+    { type: "pointermove", at: 40, x: 180, y: 110, buttons: 1 },
+    gesture.events[2],
+  ], injections: [{ start: 20, end: 20, requestedMs: 0 }] };
+  const frames = [positions[0],
+    { at: 30, point: { x: 60, y: 50, count: 256 } },
+    { at: 40, point: { x: 110, y: 60, count: 256 } },
+  ];
+  expect(analyze([continuous], frames, 0).tracking[0]).toEqual([
+    { at: 30, lagPx: 10 }, { at: 40, lagPx: 20 },
+  ]);
+});

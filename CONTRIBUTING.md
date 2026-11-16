@@ -138,8 +138,13 @@ matrix cell. Two repetitions alternate consumer order; `DRAG_LATENCY_REPETITIONS
 integers from 2 to 10. Each cell measures the first drag without preparatory pan/zoom and two
 subsequent drags. Automated mouse input does not establish MacBook trackpad equivalence.
 Each gesture presses the background and immediately moves 80 CSS pixels horizontally and
-10 vertically, with no inserted pause or intermediate moves. It holds for one second after
-the move to capture the response. `latencies` measures move-to-surface time;
+10 vertically across 60 scheduled moves at 16 ms intervals. Dispatch responses are awaited
+only after scheduling completes, so renderer blocking does not pace the input producer.
+It holds for one second after the movement to capture the response. Received events may
+be coalesced; their timestamps in capture.json expose the actual input cadence.
+The per-gesture tracking samples report distance in CSS pixels between the latest received
+pointer position and the captured tree displacement. Screencast frames can be sparse; this
+is not physical display latency. `latencies` measures move-to-surface time;
 `clickLatencies` measures press-to-surface time, and `inputGaps` records the actual
 press-to-move interval so driver delay remains visible.
 
@@ -152,20 +157,21 @@ their observer effect separately. The marker, screencast and event listeners can
 rendering, so these numbers describe an instrumented harness.
 
 Sensor validity is asserted: stationary pre-input and moved marker observations, unambiguous
-marker size/count, strictly ordered timestamps and pointer sequence, one measured injected
+marker size/count, nondecreasing timestamps and pointer sequence, one measured injected
 delay, clean runtime, matching renderer inputs and geometry. A 300 ms injected main-thread
 block must add more than 150 ms to the median captured-surface latency for both consumers,
 with and without style reads, for cold and subsequent drags. This checks sensor sensitivity;
-there is no product latency budget. Missing observations fail the diagnostic.
+the injected controls are excluded from the performance assertion. Missing observations fail
+the diagnostic. The median app-kit click-to-surface delay across baseline continuous gestures
+must be at most 100 ms. This responsiveness budget is not calibrated across hardware.
 
 `latency-results/` contains per-cell JSON events, timing/marker positions and compressed raw
 JPEG frames, plus a final versioned summary with fixture/lockfile/input hashes and calibration
 and observer comparisons. The fixture contains public tree metadata and counts only; requests
 outside the local harness fail. `Drag latency diagnostic` runs on PRs into develop and manually,
-retains evidence for seven days even on failure, and is nonblocking (`continue-on-error`).
-The regular Validate build/lint/unit/browser gates remain mandatory. Inspect repeated CI runs
-and validity/calibration before proposing a product threshold; a green workflow alone is not
-evidence of valid timing because this job is nonblocking.
+retains evidence for seven days even on failure, and fails when the diagnostic fails. The
+repository ruleset currently does not require this job to merge. Raw frame arrival order is
+preserved; analysis orders frames by compositor timestamp.
 
 ### 6. Committing
 
