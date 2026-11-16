@@ -1,5 +1,5 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": { "noEmit": true, "types": ["node"] },
-  "include": ["e2e/**/*.ts", "playwright.config.ts", "latency/**/*.ts", "playwright.latency.config.ts", "playwright.latency-analysis.config.ts", "vite.latency.config.ts"]
+  "include": ["e2e/**/*.ts", "playwright.config.ts", "latency/**/*.ts", "playwright.latency.config.ts", "playwright.pipeline.config.ts", "playwright.latency-analysis.config.ts", "vite.latency.config.ts"]
 }

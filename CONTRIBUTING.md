@@ -187,6 +187,20 @@ The identical 100 ms threshold is not calibrated between modes or runner hardwar
 repository ruleset currently does not require this job to merge. Raw frame arrival order is
 preserved; analysis orders frames by compositor timestamp.
 
+The same lanes also run `pnpm --filter app-kit-playground exec playwright test
+--config playwright.pipeline.config.ts --project=chromium-headless` (or
+`chromium-headless-shell`). This isolated rectangle control compares screencast on/off
+and rendering trace on/off, with two fresh-browser repetitions and three drags per cell.
+`pipeline-results/` includes compressed CDP rendering traces, raw frames, page/host clock
+pairs, input dispatch/receipt times, sampled transforms, decoded marker positions, browser
+arguments and GPU information. Trace-off cells quantify instrumentation effects; no-capture
+cells provide rendering traces rather than a captured-surface metric. Controls validate
+pressed inputs, release, final transform and captured marker movement without imposing a
+new latency threshold. They run even when the original surface budget fails. Existing
+surface artifacts additionally record host frame arrivals, input dispatch acknowledgements,
+page clocks and input event timestamps. Neither trace nor DOM observations establish
+physical-display latency; CI results cannot establish the cause of a local-only delay.
+
 ### 6. Committing
 
 Use [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `chore:`,

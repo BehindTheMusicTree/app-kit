@@ -50,10 +50,15 @@ jobs:
         run: pnpm --filter app-kit-playground exec playwright install --with-deps chromium
       - name: Calibrated surface diagnostic
         run: pnpm --filter app-kit-playground test:latency --project=${{ matrix.project }}
+      - name: Rectangle rendering and screencast controls
+        if: ${{ !cancelled() }}
+        run: pnpm --filter app-kit-playground exec playwright test --config playwright.pipeline.config.ts --project=${{ matrix.project }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: drag-latency-results-${{ matrix.runner }}-${{ matrix.project }}
-          path: apps/playground/latency-results/
+          path: |
+            apps/playground/latency-results/
+            apps/playground/pipeline-results/
           if-no-files-found: error
           retention-days: 7

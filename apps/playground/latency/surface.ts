@@ -8,7 +8,7 @@ export const sha256 = (data: string) => createHash("sha256").update(data).digest
 export type Consumer = "app-kit" | "standalone";
 type Point = { x: number; y: number };
 type Sample = Point & { at: number; k: number };
-type Input = Point & { type: string; at: number; buttons: number };
+type Input = Point & { type: string; at: number; buttons: number; eventTimestamp?: number };
 type Injection = { start: number; end: number; requestedMs: number };
 type Gesture = { initial: Sample; final?: Sample; events: Input[]; samples: Sample[]; injections: Injection[] };
 type Probe = Gesture & { stop: () => void };
@@ -20,6 +20,7 @@ declare global {
 }
 type Frame = {
   data: string;
+  arrivalEpochMs: number;
   metadata: { timestamp?: number; deviceWidth: number; deviceHeight: number };
 };
 type Position = { at: number; point: (Point & { count: number }) | null };
@@ -38,6 +39,8 @@ export async function capture(
   const errors: string[] = [];
   const frames: Frame[] = [];
   const gestures: Gesture[] = [];
+  const dispatches: { gesture: number; step: number; sentEpochMs: number; acknowledgedEpochMs?: number }[] = [];
+  const clocks: { sentEpochMs: number; receivedEpochMs: number; page: { epochMs: number; timeOrigin: number; now: number } }[] = [];
   let marker: Point & { timeOrigin: number } | undefined;
   try {
     page.on("pageerror", error => errors.push(error.message));
@@ -83,7 +86,7 @@ export async function capture(
     });
     const cdp = await context.newCDPSession(page);
     cdp.on("Page.screencastFrame", frame => {
-      frames.push({ data: frame.data, metadata: frame.metadata });
+      frames.push({ data: frame.data, metadata: frame.metadata, arrivalEpochMs: performance.timeOrigin + performance.now() });
       void cdp.send("Page.screencastFrameAck", { sessionId: frame.sessionId }).catch(error => errors.push(String(error)));
     });
     await cdp.send("Page.startScreencast", { format: "jpeg", quality: 50, everyNthFrame: 1 });
@@ -120,7 +123,7 @@ export async function capture(
         let armed = false, running = true;
         const data: Probe = { initial: read(), events: [], samples: [], injections: [], stop: () => {} };
         const record = (event: PointerEvent) => {
-          data.events.push({ type: event.type, at: performance.now(), x: event.clientX, y: event.clientY, buttons: event.buttons });
+          data.events.push({ type: event.type, at: performance.now(), x: event.clientX, y: event.clientY, buttons: event.buttons, eventTimestamp: event.timeStamp });
           if (event.type === "pointerdown") armed = true;
           if (event.type === "pointermove" && armed && event.buttons === 1) {
             armed = false;
@@ -136,6 +139,9 @@ export async function capture(
         if (observe) requestAnimationFrame(frame);
         window.__dragProbe = data;
       }, { dose, observe });
+      const sentEpochMs = performance.timeOrigin + performance.now();
+      const clock = await page.evaluate(() => ({ epochMs: Date.now(), timeOrigin: performance.timeOrigin, now: performance.now() }));
+      clocks.push({ sentEpochMs, receivedEpochMs: performance.timeOrigin + performance.now(), page: clock });
       await page.mouse.down();
       // Send the drag immediately after the press; only hold afterward to observe its response.
       const pending: Promise<unknown>[] = [];
@@ -144,10 +150,12 @@ export async function capture(
         const wait = started + (step - 1) * 16 - performance.now();
         if (wait > 0) await new Promise(resolve => setTimeout(resolve, wait));
         // Do not await dispatch: a blocked renderer must not throttle the input producer.
+        const dispatch = { gesture: index, step, sentEpochMs: performance.timeOrigin + performance.now(), acknowledgedEpochMs: undefined as number | undefined };
+        dispatches.push(dispatch);
         pending.push(cdp.send("Input.dispatchMouseEvent", {
           type: "mouseMoved", x: origin.x + step * 80 / 60,
           y: origin.y + step * 10 / 60, button: "left", buttons: 1,
-        }));
+        }).then(() => { dispatch.acknowledgedEpochMs = performance.timeOrigin + performance.now(); }));
       }
       await Promise.all(pending);
       await page.waitForTimeout(1000);
@@ -176,7 +184,7 @@ export async function capture(
     return result;
   } finally {
     await writeFile(info.outputPath("raw-frames.json.gz"), gzipSync(JSON.stringify({ marker, frames })));
-    await writeFile(info.outputPath("events.json"), JSON.stringify({ gestures, errors }));
+    await writeFile(info.outputPath("events.json"), JSON.stringify({ gestures, errors, clocks, hostTimeOrigin: performance.timeOrigin, dispatches }));
     await context.close();
   }
 }
