@@ -126,9 +126,18 @@ Failed browser tests save traces under `apps/playground/test-results/`; inspect 
 ### Drag latency diagnostic
 
 ```bash
-pnpm --filter app-kit-playground test:latency
-# Installed Chrome: PLAYWRIGHT_CHANNEL=chrome pnpm --filter app-kit-playground test:latency
+pnpm --filter app-kit-playground test:latency:analysis
+pnpm --filter app-kit-playground test:latency --project=chromium-headless
+pnpm --filter app-kit-playground test:latency --project=chromium-headless-shell
 ```
+
+The analysis suite checks the measurement algorithm without a browser or Vite server.
+The browser suite has two projects: `chromium-headless` runs bundled full Chromium headless;
+`chromium-headless-shell` runs Playwright Headless Shell at the same pinned version. Omitting `--project`
+runs both sequentially. `PLAYWRIGHT_CHANNEL` does not affect either diagnostic project.
+Functional desktop/mobile tests remain in `test:e2e` and the regular validation workflow.
+Explicit per-cell launches honor the project's channel and headless setting, including
+`--headed`; headed input must still pass the same pointer-sequence validity checks.
 
 This isolated Chromium suite uses a versioned public reference-tree fixture and a dedicated
 Vite server. It needs no backend or credentials. It compares the full playground with the
@@ -137,6 +146,16 @@ hashes, geometry, dot counts and initial transforms, and starts a fresh browser 
 matrix cell. Two repetitions alternate consumer order; `DRAG_LATENCY_REPETITIONS` accepts
 integers from 2 to 10. Each cell measures the first drag without preparatory pan/zoom and two
 subsequent drags. Automated mouse input does not establish MacBook trackpad equivalence.
+Each gesture presses the background and immediately moves 80 CSS pixels horizontally and
+10 vertically across 60 scheduled moves at 16 ms intervals. Dispatch responses are awaited
+only after scheduling completes, so renderer blocking does not pace the input producer.
+It holds for one second after the movement to capture the response. Received events may
+be coalesced; their timestamps in capture.json expose the actual input cadence.
+The per-gesture tracking samples report distance in CSS pixels between the latest received
+pointer position and the captured tree displacement. Screencast frames can be sparse; this
+is not physical display latency. `latencies` measures move-to-surface time;
+`clickLatencies` measures press-to-surface time, and `inputGaps` records the actual
+press-to-move interval so driver delay remains visible.
 
 The primary observation is the first captured compositor surface whose attached magenta
 marker moves more than 1.5 CSS pixels after the first pressed pointer move. JPEG dimensions
@@ -147,20 +166,26 @@ their observer effect separately. The marker, screencast and event listeners can
 rendering, so these numbers describe an instrumented harness.
 
 Sensor validity is asserted: stationary pre-input and moved marker observations, unambiguous
-marker size/count, strictly ordered timestamps and pointer sequence, one measured injected
+marker size/count, nondecreasing timestamps and pointer sequence, one measured injected
 delay, clean runtime, matching renderer inputs and geometry. A 300 ms injected main-thread
 block must add more than 150 ms to the median captured-surface latency for both consumers,
 with and without style reads, for cold and subsequent drags. This checks sensor sensitivity;
-there is no product latency budget. Missing observations fail the diagnostic.
+the injected controls are excluded from the performance assertion. Missing observations fail
+the diagnostic and invalidate the budget conclusion. A valid measurement above budget fails
+only the budget assertion; a valid measurement within budget passes both stages. The median app-kit click-to-surface delay across baseline continuous gestures
+must be at most 100 ms. This responsiveness budget is not calibrated across hardware.
 
 `latency-results/` contains per-cell JSON events, timing/marker positions and compressed raw
-JPEG frames, plus a final versioned summary with fixture/lockfile/input hashes and calibration
+JPEG frames, plus a budget attachment and a final versioned summary with fixture/lockfile/input hashes and calibration
 and observer comparisons. The fixture contains public tree metadata and counts only; requests
-outside the local harness fail. `Drag latency diagnostic` runs on PRs into develop and manually,
-retains evidence for seven days even on failure, and is nonblocking (`continue-on-error`).
-The regular Validate build/lint/unit/browser gates remain mandatory. Inspect repeated CI runs
-and validity/calibration before proposing a product threshold; a green workflow alone is not
-evidence of valid timing because this job is nonblocking.
+outside the local harness fail. The summary records the project, channel and headless setting.
+`Drag latency diagnostic` runs on PRs into develop and manually. An independent analysis job
+gates the surface matrix: full Chromium on Linux and Intel macOS, and Headless Shell on both platforms. Each lane runs calibration and budget checks with one worker and no retries;
+failure in one lane does not cancel the others. Artifacts have separate platform and mode names,
+retain evidence for seven days even on failure, and jobs fail when the diagnostic fails.
+The identical 100 ms threshold is not calibrated between modes or runner hardware. The
+repository ruleset currently does not require this job to merge. Raw frame arrival order is
+preserved; analysis orders frames by compositor timestamp.
 
 ### 6. Committing
 

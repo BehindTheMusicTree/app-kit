@@ -50,7 +50,7 @@ for (let repeat = 0; repeat < repetitions; repeat++) {
   const consumers: Consumer[] = repeat % 2 ? ["standalone", "app-kit"] : ["app-kit", "standalone"];
   for (const consumer of consumers) for (const observe of [false, true]) for (const dose of [0, 300]) {
     test(`${repeat + 1} ${consumer} style-observer=${observe} delay=${dose}`, async ({ baseURL }, info) => {
-      const browser = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL });
+      const browser = await chromium.launch({ channel: info.project.use.channel, headless: info.project.use.headless });
       try {
         results.push(await capture(browser, baseURL!, consumer, dose, observe, installRoutes, info));
       } finally {
@@ -62,11 +62,13 @@ for (let repeat = 0; repeat < repetitions; repeat++) {
 
 test("audit matching and injected-delay sensitivity", async ({}, info) => {
   const summary = {
-    schemaVersion: 1,
+    schemaVersion: 3,
+    gesture: "press-then-continuous-80x10-over-944ms",
     revision: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
     fixtureSha256: sha256(fixtureBytes),
     lockfileSha256: sha256(await readFile(new URL("../../../pnpm-lock.yaml", import.meta.url), "utf8")),
     platform: process.platform, architecture: process.arch,
+    project: info.project.name, channel: info.project.use.channel ?? "chromium-headless-shell", headless: info.project.use.headless,
     repetitions, valid: false,
     measurements: results.map(({ preparation, gestures: _gestures, positions: _positions, ...result }) => ({
       ...result, rendererNodesSha256: sha256(preparation.nodes),
@@ -103,4 +105,14 @@ test("audit matching and injected-delay sensitivity", async ({}, info) => {
   } finally {
     await writeFile(info.outputPath("summary.json"), JSON.stringify(summary, null, 2));
   }
+});
+
+test("app-kit continuous drag starts within the 100 ms captured-surface budget", async ({}, info) => {
+  const baseline = results.filter(row => row.consumer === "app-kit" && !row.observe && row.dose === 0);
+  expect(baseline, "Missing baseline captures; measurement validity must pass first").toHaveLength(repetitions);
+  const startup = baseline.flatMap(row => row.clickLatencies);
+  const budget = { metric: "press-to-captured-surface", medianMs: median(startup), sampleCount: startup.length,
+    thresholdMs: 100, passed: median(startup) <= 100 };
+  await info.attach("budget", { body: JSON.stringify(budget, null, 2), contentType: "application/json" });
+  expect(median(startup), `Drag startup regression: median click-to-surface ${median(startup).toFixed(1)} ms across ${startup.length} gestures exceeds the 100 ms budget`).toBeLessThanOrEqual(100);
 });

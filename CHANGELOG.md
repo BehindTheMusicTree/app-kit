@@ -13,7 +13,12 @@ easy to spot when bumping.
 
 ### Added
 
-- Nonblocking CI drag-latency diagnostics with matched renderer inputs, captured surfaces, injected-delay calibration, and downloadable evidence.
+- CI drag-latency diagnostics with matched renderer inputs, captured surfaces, injected-delay calibration, and downloadable evidence.
+
+### Changed
+
+- Separate drag measurement-analysis tests from browser diagnostics, and compare bundled full Chromium and Headless Shell on both Linux and Intel macOS in CI, with visible budget failures.
+- Measure continuous drag tracking and fail the diagnostic job when median baseline startup exceeds 100 ms.
 
 ## [43.1.4] - 2026-11-15
 
