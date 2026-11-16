@@ -38,6 +38,8 @@ test("tracking compares each surface with the latest received pointer position",
     { at: 40, point: { x: 110, y: 60, count: 256 } },
     { at: 100, point: { x: 130, y: 60, count: 256 } },
   ];
+  const interrupted = { ...continuous, events: continuous.events.map((event, index) => index === 2 ? { ...event, buttons: 0 } : event) };
+  expect(() => analyze([interrupted], frames, 0)).toThrow();
   expect(analyze([continuous], frames, 0).tracking[0]).toEqual([
     { at: 30, lagPx: 10 }, { at: 40, lagPx: 20 }, { at: 100, lagPx: 0 },
   ]);

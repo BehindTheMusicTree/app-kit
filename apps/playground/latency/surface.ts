@@ -232,7 +232,7 @@ export function analyze(gestures: Gesture[], positions: Position[], dose: number
     expect(gesture.final!.x - gesture.initial.x).toBeCloseTo(80, 0);
     expect(gesture.final!.y - gesture.initial.y).toBeCloseTo(10, 0);
     expect(gesture.final!.k).toBeCloseTo(gesture.initial.k, 6);
-    expect(down.buttons === 1 && move.buttons === 1 && up.buttons === 0).toBe(true);
+    expect(down.buttons === 1 && moves.every(event => event.buttons === 1) && up.buttons === 0).toBe(true);
     for (let index = 1; index < gesture.events.length; index++) expect(gesture.events[index].at).toBeGreaterThanOrEqual(gesture.events[index - 1].at);
     expect(gesture.injections).toHaveLength(1);
     const injection = gesture.injections[0];
