@@ -9,7 +9,8 @@ for (let repetition = 1; repetition <= 2; repetition++) {
   for (const trace of repetition === 1 ? [false, true] : [true, false]) {
     for (const screencast of repetition === 1 ? [false, true] : [true, false]) {
       test(`rectangle repeat=${repetition} trace=${trace} screencast=${screencast}`, async ({}, info) => {
-        const browser = await chromium.launch({ channel: info.project.use.channel, headless: true });
+        const server = await chromium.launchServer({ channel: info.project.use.channel, headless: true });
+        const browser = await chromium.connect(server.wsEndpoint());
         const frames: { data: string; at: number; arrival: number }[] = [];
         const dispatches: { gesture: number; step: number; sent: number; acknowledged?: number }[] = [];
         const clocks: { sent: number; received: number; page: { origin: number; now: number; epoch: number } }[] = [];
@@ -17,7 +18,7 @@ for (let repetition = 1; repetition <= 2; repetition++) {
           const browserSession = await browser.newBrowserCDPSession();
           const environment = {
             version: await browserSession.send("Browser.getVersion"),
-            commandLine: await browserSession.send("Browser.getBrowserCommandLine"),
+            commandLine: server.process().spawnargs,
             system: await browserSession.send("SystemInfo.getInfo"),
             platform: process.platform, architecture: process.arch,
           };
@@ -153,6 +154,7 @@ for (let repetition = 1; repetition <= 2; repetition++) {
         } finally {
           await writeFile(info.outputPath("raw-frames.json.gz"), gzipSync(JSON.stringify({ frames, clocks, dispatches })));
           await browser.close();
+          await server.close();
         }
       });
     }
