@@ -4,6 +4,16 @@ on:
   pull_request:
     branches: [develop]
   workflow_dispatch:
+    inputs:
+      experiment:
+        description: Run sequential browser/backend experiments instead of the regular surface matrix
+        type: boolean
+        default: false
+      order:
+        description: Order of the two calibrated browser controls
+        type: choice
+        options: [full-first, shell-first]
+        default: full-first
 
 permissions:
   contents: read
@@ -23,6 +33,7 @@ jobs:
       - name: Test measurement analysis without a browser
         run: pnpm --filter app-kit-playground test:latency:analysis
   surface:
+    if: ${{ !inputs.experiment }}
     name: Surface (${{ matrix.runner }}, ${{ matrix.project }})
     needs: analysis
     strategy:
@@ -60,5 +71,35 @@ jobs:
           path: |
             apps/playground/latency-results/
             apps/playground/pipeline-results/
+          if-no-files-found: error
+          retention-days: 7
+  experiment:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.experiment }}
+    name: Backend experiment (${{ matrix.runner }}, ${{ inputs.order }})
+    needs: analysis
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version-file: .nvmrc
+      - run: pnpm install --frozen-lockfile
+      - name: Install Chromium
+        run: pnpm --filter app-kit-playground exec playwright install --with-deps chromium
+      - name: Sequential calibrated controls, GPU intervention and traces
+        env:
+          DRAG_EXPERIMENT_ORDER: ${{ inputs.order }}
+        run: pnpm --filter app-kit-playground exec node latency/run-experiment.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: backend-experiment-${{ matrix.runner }}-${{ inputs.order }}
+          path: apps/playground/experiment-results/
           if-no-files-found: error
           retention-days: 7

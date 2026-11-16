@@ -11,6 +11,8 @@ const fixture: Row[] = JSON.parse(fixtureBytes);
 const unaccepted = new Set(fixture.filter(row => row.isUnacceptedRoot).map(row => row.uuid));
 const visible = fixture.filter(row => !row.isUnacceptedRoot && !unaccepted.has(row.root.uuid) && row.criteria);
 const results: Capture[] = [];
+const disableGpu = process.env.DRAG_DIAGNOSTIC_DISABLE_GPU;
+if (disableGpu !== undefined && disableGpu !== "0" && disableGpu !== "1") throw new Error("DRAG_DIAGNOSTIC_DISABLE_GPU must be 0 or 1");
 const repetitions = Number(process.env.DRAG_LATENCY_REPETITIONS ?? "2");
 if (!Number.isInteger(repetitions) || repetitions < 2 || repetitions > 10) throw new Error("DRAG_LATENCY_REPETITIONS must be an integer between 2 and 10");
 const median = (values: number[]) => {
@@ -50,8 +52,20 @@ for (let repeat = 0; repeat < repetitions; repeat++) {
   const consumers: Consumer[] = repeat % 2 ? ["standalone", "app-kit"] : ["app-kit", "standalone"];
   for (const consumer of consumers) for (const observe of [false, true]) for (const dose of [0, 300]) {
     test(`${repeat + 1} ${consumer} style-observer=${observe} delay=${dose}`, async ({ baseURL }, info) => {
-      const browser = await chromium.launch({ channel: info.project.use.channel, headless: info.project.use.headless });
+      const browser = await chromium.launch({
+        channel: info.project.use.channel, headless: info.project.use.headless,
+        args: disableGpu === "1" ? ["--disable-gpu"] : [],
+      });
       try {
+        const session = await browser.newBrowserCDPSession();
+        try {
+          await writeFile(info.outputPath("environment.json"), JSON.stringify({
+            version: await session.send("Browser.getVersion"),
+            commandLine: await session.send("Browser.getBrowserCommandLine"),
+            system: await session.send("SystemInfo.getInfo"),
+            disableGpu: disableGpu === "1", trace: process.env.DRAG_DIAGNOSTIC_TRACE === "1",
+          }, null, 2));
+        } finally { await session.detach(); }
         results.push(await capture(browser, baseURL!, consumer, dose, observe, installRoutes, info));
       } finally {
         await browser.close();

@@ -6,6 +6,8 @@ import type { GenreTreeNode } from "@behindthemusictree/genre-tree-view";
 
 export const sha256 = (data: string) => createHash("sha256").update(data).digest("hex");
 export type Consumer = "app-kit" | "standalone";
+const trace = process.env.DRAG_DIAGNOSTIC_TRACE;
+if (trace !== undefined && trace !== "0" && trace !== "1") throw new Error("DRAG_DIAGNOSTIC_TRACE must be 0 or 1");
 type Point = { x: number; y: number };
 type Sample = Point & { at: number; k: number };
 type Input = Point & { type: string; at: number; buttons: number; eventTimestamp?: number };
@@ -89,6 +91,13 @@ export async function capture(
       frames.push({ data: frame.data, metadata: frame.metadata, arrivalEpochMs: performance.timeOrigin + performance.now() });
       void cdp.send("Page.screencastFrameAck", { sessionId: frame.sessionId }).catch(error => errors.push(String(error)));
     });
+    if (trace === "1") {
+      await cdp.send("Tracing.start", {
+        categories: "devtools.timeline,blink.user_timing,input,cc,viz,benchmark,gpu",
+        transferMode: "ReturnAsStream",
+      });
+      await page.evaluate(() => console.timeStamp(`probe-epoch:${performance.timeOrigin + performance.now()}`));
+    }
     await cdp.send("Page.startScreencast", { format: "jpeg", quality: 50, everyNthFrame: 1 });
     await expect.poll(() => frames.length).toBeGreaterThan(0);
     // The first CDP frame may precede marker composition. Force a stationary
@@ -170,6 +179,21 @@ export async function capture(
       }));
     }
     await cdp.send("Page.stopScreencast");
+    if (trace === "1") {
+      const completed = new Promise<{ stream?: string }>(resolve => cdp.once("Tracing.tracingComplete", resolve));
+      await cdp.send("Tracing.end");
+      const { stream } = await completed;
+      if (!stream) throw new Error("Missing rendering trace stream");
+      const chunks: Buffer[] = [];
+      try {
+        for (;;) {
+          const chunk = await cdp.send("IO.read", { handle: stream });
+          chunks.push(Buffer.from(chunk.data, chunk.base64Encoded ? "base64" : "utf8"));
+          if (chunk.eof) break;
+        }
+      } finally { await cdp.send("IO.close", { handle: stream }); }
+      await writeFile(info.outputPath("render-trace.json.gz"), gzipSync(Buffer.concat(chunks)));
+    }
     const positions = await decodeFrames(page, frames, marker);
     await writeFile(info.outputPath("observations.json"), JSON.stringify({ preparation, positions }, null, 2));
     const { latencies, clickLatencies, inputGaps, transforms, tracking } = analyze(gestures, positions, dose);
