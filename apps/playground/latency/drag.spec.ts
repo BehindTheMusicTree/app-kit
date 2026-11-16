@@ -52,23 +52,27 @@ for (let repeat = 0; repeat < repetitions; repeat++) {
   const consumers: Consumer[] = repeat % 2 ? ["standalone", "app-kit"] : ["app-kit", "standalone"];
   for (const consumer of consumers) for (const observe of [false, true]) for (const dose of [0, 300]) {
     test(`${repeat + 1} ${consumer} style-observer=${observe} delay=${dose}`, async ({ baseURL }, info) => {
-      const browser = await chromium.launch({
+      const server = await chromium.launchServer({
         channel: info.project.use.channel, headless: info.project.use.headless,
         args: disableGpu === "1" ? ["--disable-gpu"] : [],
+      });
+      const browser = await chromium.connect(server.wsEndpoint()).catch(async error => {
+        await server.close();
+        throw error;
       });
       try {
         const session = await browser.newBrowserCDPSession();
         try {
           await writeFile(info.outputPath("environment.json"), JSON.stringify({
             version: await session.send("Browser.getVersion"),
-            commandLine: await session.send("Browser.getBrowserCommandLine"),
+            commandLine: server.process().spawnargs,
             system: await session.send("SystemInfo.getInfo"),
             disableGpu: disableGpu === "1", trace: process.env.DRAG_DIAGNOSTIC_TRACE === "1",
           }, null, 2));
         } finally { await session.detach(); }
         results.push(await capture(browser, baseURL!, consumer, dose, observe, installRoutes, info));
       } finally {
-        await browser.close();
+        try { await browser.close(); } finally { await server.close(); }
       }
     });
   }
