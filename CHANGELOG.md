@@ -21,6 +21,8 @@ easy to spot when bumping.
 
 ### Changed
 
+- Keep local agent plans and temporary files out of Git.
+
 - Separate drag measurement-analysis tests from browser diagnostics, and compare bundled full Chromium and Headless Shell on both Linux and Intel macOS in CI, with visible budget failures.
 - Measure continuous drag tracking and fail the diagnostic job when median baseline startup exceeds 100 ms.
 
