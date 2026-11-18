@@ -26,6 +26,10 @@ easy to spot when bumping.
 - Separate drag measurement-analysis tests from browser diagnostics, and compare bundled full Chromium and Headless Shell on both Linux and Intel macOS in CI, with visible budget failures.
 - Measure continuous drag tracking and fail the diagnostic job when median baseline startup exceeds 100 ms.
 
+### Removed
+
+- Drop the tracked `.agent-plans/.gitignore`: plans now live in the common git directory.
+
 ## [43.1.4] - 2026-11-15
 
 ### Changed
