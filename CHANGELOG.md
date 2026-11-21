@@ -30,6 +30,10 @@ easy to spot when bumping.
 
 - Drop the tracked `.agent-plans/.gitignore`: plans now live in the common git directory.
 
+### CI
+
+- Add canonical workflow-level `concurrency` groups to `agent-drift`, `drag-latency`, `release-tag` and `validate`.
+
 ## [43.1.4] - 2026-11-15
 
 ### Changed
