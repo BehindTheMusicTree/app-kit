@@ -1,0 +1,11 @@
+{
+  "concurrency": {
+    "exemptions": [
+      {
+        "workflow": "publish.yml",
+        "form": "queue",
+        "reason": "Active publishing runs are not cancelled; newer pending runs can supersede older ones per tag."
+      }
+    ]
+  }
+}
