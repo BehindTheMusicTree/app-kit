@@ -16,7 +16,7 @@ jobs:
   tag:
     permissions:
       contents: write
-    uses: BehindTheMusicTree/github-workflows/.github/workflows/release-tag.yml@4849d35ec3ebd270ee1d46a9407323555d006c86
+    uses: BehindTheMusicTree/github-workflows/.github/workflows/release-tag.yml@c1c5d1c8e36902d83e60fb5188e83bf7660c034b
     with:
       app-id: ${{ vars.RELEASE_APP_ID }}
     secrets:
@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: BehindTheMusicTree/github-workflows
-          ref: 4849d35ec3ebd270ee1d46a9407323555d006c86
+          ref: c1c5d1c8e36902d83e60fb5188e83bf7660c034b
           path: .release-foundation
           persist-credentials: false
 
@@ -90,7 +90,7 @@ jobs:
     needs: [tag, publish]
     # Ordinary pushes skip publishing and still reconcile the release PR.
     if: ${{ !cancelled() && needs.tag.result == 'success' && (needs.tag.outputs.tag == '' || needs.publish.result == 'success') }}
-    uses: BehindTheMusicTree/github-workflows/.github/workflows/release-please.yml@4849d35ec3ebd270ee1d46a9407323555d006c86
+    uses: BehindTheMusicTree/github-workflows/.github/workflows/release-please.yml@c1c5d1c8e36902d83e60fb5188e83bf7660c034b
     with:
       app-id: ${{ vars.RELEASE_PR_APP_ID }}
       auto-merge: true
