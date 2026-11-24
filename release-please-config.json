@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "include-component-in-tag": false,
+      "exclude-paths": [
+        "apps/playground/latency"
+      ],
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "packages/app-kit/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "packages/app-kit-ui/package.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    }
+  }
+}

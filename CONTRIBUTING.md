@@ -11,13 +11,12 @@ Changes here affect both apps, so please keep that blast radius in mind.
 - [Development Workflow](#development-workflow)
   - [1. Fork \& Clone](#1-fork--clone)
   - [2. Environment Setup](#2-environment-setup)
-  - [3. Branching (Gitflow)](#3-branching-gitflow)
+  - [3. Branching (GitHub Flow)](#3-branching-github-flow)
   - [4. Developing](#4-developing)
   - [5. Verifying](#5-verifying)
   - [6. Committing](#6-committing)
   - [7. Pull Request Process](#7-pull-request-process)
   - [8. Releasing _(For Maintainers)_](#8-releasing-for-maintainers)
-  - [9. Hotfixing _(For Maintainers)_](#9-hotfixing-for-maintainers)
 - [License \& Attribution](#license--attribution)
 
 ## Contributors vs Maintainers
@@ -25,7 +24,7 @@ Changes here affect both apps, so please keep that blast radius in mind.
 **Contributors** can submit bug reports/feature requests via GitHub Issues, open pull requests,
 improve documentation, and participate in discussions.
 
-**Maintainers** review and merge pull requests, cut releases, and manage the publish workflow
+**Maintainers** review pull requests and maintain the publish workflow
 (`.github/workflows/publish.yml`, which publishes both packages on npm through trusted publishing).
 
 ## Development Workflow
@@ -55,34 +54,10 @@ Requirements:
 pnpm install
 ```
 
-### 3. Branching (Gitflow)
+### 3. Branching (GitHub Flow)
 
-This repo follows strict [Gitflow](https://nvie.com/posts/a-successful-git-branching-model/):
-
-- **`main`** — always reflects the latest released version. CI tags validated version increases on `main`
-  (`vX.Y.Z`). Nothing merges here except `release/*` and `hotfix/*` branches. This is also the
-  GitHub default branch's *sibling of record* for releases, but PRs target `develop` by default.
-- **`develop`** — integration branch, always reflects the latest delivered development changes.
-  All `feature/*` branches are cut from `develop` and merged back into
-  `develop`. This is the GitHub default branch — PRs target it unless noted otherwise.
-- **`feature/<short-description>`** — any non-release, non-hotfix work (features, fixes,
-  chores); branch from `develop`, merge back into `develop` via PR.
-- **`release/<version>`** — branched from `develop` when it's ready to ship (created
-  before running `pnpm release`, see [§8](#8-releasing-for-maintainers)). Only version bump and
-  changelog commits belong here. Merged into both `main` (tagged) and `develop`, then deleted.
-- **`hotfix/<short-description>`** — branched from `main` for urgent production fixes that can't
-  wait for the next `develop` → `release` cycle (see [§9](#9-hotfixing-for-maintainers)). Merged
-  into both `main` (tagged) and `develop`, then deleted.
-
-```
-main       ──●───────────────●───────────────●──   (tags only: v1.0.0, v1.1.0, ...)
-              \             / \             /
-release/*      ●───●───●───●   \           /
-              /             \   \         /
-develop    ──●───●───●───●───●───●───●───●──
-              \     /         \
-feature/*      ●───●           ●
-```
+Branch from `main` and open a pull request back into `main`. Squash merges use the pull
+request title as the commit subject. Pushes to `main` go through pull requests.
 
 ### 4. Developing
 
@@ -179,7 +154,7 @@ must be at most 100 ms. This responsiveness budget is not calibrated across hard
 JPEG frames, plus a budget attachment and a final versioned summary with fixture/lockfile/input hashes and calibration
 and observer comparisons. The fixture contains public tree metadata and counts only; requests
 outside the local harness fail. The summary records the project, channel and headless setting.
-`Drag latency diagnostic` runs on PRs into develop and manually. An independent analysis job
+`Drag latency diagnostic` runs on PRs into main and manually. An independent analysis job
 gates the surface matrix: full Chromium on Linux and Intel macOS, and Headless Shell on both platforms. Each lane runs calibration and budget checks with one worker and no retries;
 failure in one lane does not cancel the others. Artifacts have separate platform and mode names,
 retain evidence for seven days even on failure, and jobs fail when the diagnostic fails.
@@ -228,47 +203,29 @@ runner or establish that a local hardware-specific delay has been reproduced.
 
 ### 6. Committing
 
-Use [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `chore:`,
-`docs:`, `refactor:`) — the release script's changelog entries and the semver bump both key off
-the change being clearly described.
+Use [Conventional Commits](https://www.conventionalcommits.org/) for pull request titles.
+Describe the user-facing change in the title. Release Please uses the squash commit to
+determine the version bump and generate the changelog. Use `feat:` for a minor release,
+`fix:` for a patch and `!` for a breaking change. Commits scoped to the playground latency
+diagnostics are excluded from release calculation.
 
 ### 7. Pull Request Process
 
 1. Ensure build, lint, unit/integration tests, and browser tests pass locally.
-2. Open a PR against `develop` describing what changed and why (never against `main` — see
-   [§3](#3-branching-gitflow)).
-3. Add a bullet to `CHANGELOG.md` under `[Unreleased]` for any user-facing change (new export,
-   behavior change, breaking change). Breaking changes (removed/renamed export, changed prop or
-   function signature, dropped default) go under a `### Breaking` heading, not `### Changed`.
+2. Open a PR against `main` describing what changed and why. Document consumer migration
+   steps for breaking changes.
 
 ### 8. Releasing _(For Maintainers)_
 
-Create a `release/*` branch from current `develop`, then run:
+Release Please updates the changelog and both package versions in a PR that merges
+automatically after the required checks pass. The same main-push workflow validates the
+merged version, creates its annotated tag and publishes both packages to npm with provenance
+through Trusted Publishing. The build packs `app-kit-ui` with an `app-kit` peer range derived
+from the workspace version and publishes `app-kit` first.
 
-```bash
-pnpm release patch   # or minor / major
-```
-
-Preparation requires a clean release or hotfix branch and non-empty Unreleased notes. It
-updates both package versions, app-kit-ui's app-kit peer constraint, the lockfile and the dated
-changelog section without committing, pushing or tagging. Review and commit those files,
-push the branch and open a PR into `main`.
-
-CI validates the merged commit, creates its annotated tag and triggers the existing
-`publish.yml` OIDC workflow. The publisher validates the exact tag, main ancestry and release
-notes, builds and packs both packages, then publishes app-kit before app-kit-ui. Each existing
-npm version is skipped only if its SHA-512 integrity matches the packed artifact. The GitHub
-Release is created after both packages succeed. Do not create or push release tags locally.
-After publication, integrate `main` back into `develop` through a PR.
-
-Activate the shared App credentials and tag rulesets separately once the contract reaches
-`main`. Initial activation does not publish the existing version.
-
-### 9. Hotfixing _(For Maintainers)_
-
-Create `hotfix/*` from current `main`, commit the fix and add Unreleased notes. Run the same
-preparation command on the clean hotfix branch, review and commit the prepared files, and open
-a PR into `main`. CI owns tagging and publication; integrate `main` back into `develop` afterward.
+An existing npm version is skipped only if its SHA-512 integrity matches the packed
+artifact. CI creates the GitHub Release after both packages are available. To recover from
+a partial publication, rerun the failed publication on the same commit.
 
 ## License & Attribution
 
