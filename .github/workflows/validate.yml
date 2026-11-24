@@ -2,9 +2,9 @@ name: Validate
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
 
 concurrency:
   group: validate-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.ref }}
@@ -23,12 +23,6 @@ jobs:
           node-version-file: .nvmrc
 
       - run: pnpm install --frozen-lockfile
-      - name: Release preparation fixtures
-        run: |
-          node --test scripts/release-utils.test.cjs
-          bash scripts/tests/release.sh
-          shellcheck scripts/release.sh scripts/tag-release.sh scripts/tests/release.sh
-
       - run: pnpm build
       - run: pnpm lint
       - run: pnpm test

@@ -13,3 +13,6 @@ test-results/
 graphify-out/
 playwright-report/
 test-results/
+latency-results/
+latency-analysis-results/
+experiment-results/
