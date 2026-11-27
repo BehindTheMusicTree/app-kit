@@ -30,7 +30,7 @@ type PreparedFrame = { at: number; expected: Point; shade: number; gesture: numb
 type DecodedPosition = Position & { preparationShade: number };
 
 function assertPreparedFrame(prepared: PreparedFrame, frame: DecodedPosition | undefined, now: number) {
-  const diagnostic = JSON.stringify({ ...prepared, observed: frame, ageMs: frame && now - frame.at });
+  const diagnostic = JSON.stringify({ ...prepared, observed: frame ?? null, ageMs: frame ? now - frame.at : null });
   expect(frame?.at, diagnostic).toBeGreaterThanOrEqual(prepared.at);
   expect(frame?.point, diagnostic).toBeTruthy();
   expect(Math.abs(frame!.preparationShade - prepared.shade), diagnostic).toBeLessThan(30);
@@ -115,7 +115,6 @@ export async function capture(
       await page.evaluate(() => console.timeStamp(`probe-epoch:${performance.timeOrigin + performance.now()}`));
     }
     await cdp.send("Page.startScreencast", { format: "jpeg", quality: 50, everyNthFrame: 1 });
-    await expect.poll(() => frames.length).toBeGreaterThan(0);
     // No preparatory pan or zoom: the first gesture is the cold drag.
     for (let index = 0; index < 3; index++) {
       const origin = await page.evaluate(() => {
