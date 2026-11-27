@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: Review pull requests against app-kit's decoupling rules, subpath-export wiring, and changelog requirements. Use for any PR touching packages/app-kit/src or its build/publish config.
+description: Review pull requests against app-kit's decoupling rules, subpath-export wiring, and release title requirements. Use for any PR touching packages/app-kit/src or its build/publish config.
 ---
 
 # app-kit code review
@@ -33,16 +33,15 @@ confirm all four are updated together:
 
 A PR that touches only one or two of these is incomplete.
 
-## Changelog (blocking)
+## Release titles (blocking)
 
-Any user-facing change (new export, behavior change, bug fix) needs a
-`CHANGELOG.md` entry under `[Unreleased]`. Flag PRs that change behavior in
-`packages/app-kit/src` without one.
+Use the conventional PR title to describe the user-facing effect and set the semver bump.
+Check that breaking changes use the `!` marker and document consumer migration.
 
 ## Publishing (blocking)
 
-Flag any direct use of `npm publish`. Releases must go through
-`pnpm release <bump>` (`scripts/release.sh`).
+CI tags and publishes both packages through the shared release workflow. Flag release
+changes that let the two manifests diverge or publish app-kit-ui before app-kit.
 
 ## General
 

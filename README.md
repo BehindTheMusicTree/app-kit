@@ -63,23 +63,13 @@ fixtures and runs at desktop and mobile widths. See [verification commands](CONT
 
 ## Branching
 
-Strict Gitflow: `main` is release-only (tagged), `develop` is the integration branch and default
-branch for PRs. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full model.
+Branch from `main` and open PRs against `main`. Squash merges use the PR title.
 
 ## Release
 
-_(For maintainers, run on a clean `release/*` branch from current `develop`, or a `hotfix/*` branch from `main`)_
-
-```bash
-pnpm release patch   # or minor / major
-```
-
-Prepares both package versions, their peer constraint, the lockfile and non-empty release notes.
-Review and commit the files, push the branch and open a PR into `main`. CI creates the annotated
-tag and publishes both packages through the existing OIDC workflow. After publication,
-integrate `main` back into `develop` through a PR. Do not create or push release tags locally.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow, including hotfixes.
+Release Please uses conventional PR titles to update both package versions in a single
+release PR. After it merges, CI tags the version and publishes both packages to npm
+through Trusted Publishing. See [CONTRIBUTING.md](CONTRIBUTING.md#8-releasing-for-maintainers).
 
 ## Genre identity and selection
 

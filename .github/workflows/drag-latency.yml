@@ -2,7 +2,7 @@ name: Drag latency diagnostic
 
 on:
   pull_request:
-    branches: [develop]
+    branches: [main]
   workflow_dispatch:
     inputs:
       experiment:

@@ -140,7 +140,8 @@ the one known gap (a CJS consumer mixing subpath imports of the same shared cont
 - Build: `tsup` (per package; `app-kit-ui` also copies the genre-tree-view stylesheet) — one entry per module (`src/<module>/index.ts`) plus the root barrel, emitting
   ESM + CJS + `.d.ts` per entry into `dist/`.
 - Registry: npmjs (`https://registry.npmjs.org`, scope `@behindthemusictree`), trusted publishing with provenance; versions are published directly by the workflow.
-- Release pipeline: `scripts/release.sh` (invoked as `pnpm release <bump>`) → git tag →
-  `.github/workflows/publish.yml` builds and publishes app-kit, then app-kit-ui, on tag push. `release.sh` sets both versions and app-kit-ui's peer on app-kit to `^X.Y.Z`. Never `npm publish` directly.
-- Branching model: strict Gitflow — see `CONTRIBUTING.md` § Branching (Gitflow) and the
-  "Branching" section of `CLAUDE.md`.
+- Release pipeline: Release Please keeps both package versions in lockstep and generates the changelog.
+  On pushes to `main`, `.github/workflows/publish.yml` tags the validated version, publishes
+  app-kit before app-kit-ui and creates the GitHub Release. Packing resolves app-kit-ui's
+  workspace peer range against app-kit's current version.
+- Branching model: GitHub Flow. See [CONTRIBUTING.md](CONTRIBUTING.md#3-branching-github-flow).

@@ -1,38 +1,7 @@
 # Changelog
 
 All notable changes to `@behindthemusictree/app-kit` are documented here; `@behindthemusictree/app-kit-ui` is versioned in lockstep.
-Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
-
-Any change that requires a consumer to update its own code (removed/renamed export,
-changed prop or function signature, dropped default) must be listed under a
-`### Breaking` heading in its release, in addition to `Added`/`Changed`/`Fixed`. This
-package has many direct consumers across the frontend, so breaking changes must be
-easy to spot when bumping.
-
-## [Unreleased]
-
-### Added
-
-- Manual CI browser/backend experiments with sequential calibrated controls, GPU disable/restore comparisons, and complex-content rendering traces.
-
-- CI rectangle controls with rendering traces and input/frame timing evidence for drag diagnostics.
-
-- CI drag-latency diagnostics with matched renderer inputs, captured surfaces, injected-delay calibration, and downloadable evidence.
-
-### Changed
-
-- Keep local agent plans and temporary files out of Git.
-
-- Separate drag measurement-analysis tests from browser diagnostics, and compare bundled full Chromium and Headless Shell on both Linux and Intel macOS in CI, with visible budget failures.
-- Measure continuous drag tracking and fail the diagnostic job when median baseline startup exceeds 100 ms.
-
-### Removed
-
-- Drop the tracked `.agent-plans/.gitignore`: plans now live in the common git directory.
-
-### CI
-
-- Add canonical workflow-level `concurrency` groups to `agent-drift`, `drag-latency`, `release-tag` and `validate`.
+Release Please generates release notes from conventional commit titles.
 
 ## [43.1.4] - 2026-11-15
 
