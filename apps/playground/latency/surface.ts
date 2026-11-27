@@ -26,6 +26,17 @@ type Frame = {
   metadata: { timestamp?: number; deviceWidth: number; deviceHeight: number };
 };
 type Position = { at: number; point: (Point & { count: number }) | null };
+type PreparedFrame = { at: number; expected: Point; shade: number; gesture: number };
+type DecodedPosition = Position & { preparationShade: number };
+
+function assertPreparedFrame(prepared: PreparedFrame, frame: DecodedPosition | undefined, now: number) {
+  const diagnostic = JSON.stringify({ ...prepared, observed: frame, ageMs: frame && now - frame.at });
+  expect(frame?.at, diagnostic).toBeGreaterThanOrEqual(prepared.at);
+  expect(frame?.point, diagnostic).toBeTruthy();
+  expect(Math.abs(frame!.preparationShade - prepared.shade), diagnostic).toBeLessThan(30);
+  expect(Math.abs(frame!.point!.x - prepared.expected.x), diagnostic).toBeLessThan(1.5);
+  expect(Math.abs(frame!.point!.y - prepared.expected.y), diagnostic).toBeLessThan(1.5);
+}
 export type Capture = {
   consumer: Consumer; dose: number; observe: boolean; browser: string;
   preparation: { viewport: Point & { width: number; height: number }; initial: Sample; dots: number; nodes: string };
@@ -41,6 +52,7 @@ export async function capture(
   const errors: string[] = [];
   const frames: Frame[] = [];
   const gestures: Gesture[] = [];
+  const preparations: PreparedFrame[] = [];
   const dispatches: { gesture: number; step: number; sentEpochMs: number; acknowledgedEpochMs?: number }[] = [];
   const clocks: { sentEpochMs: number; receivedEpochMs: number; page: { epochMs: number; timeOrigin: number; now: number } }[] = [];
   let marker: Point & { timeOrigin: number } | undefined;
@@ -72,6 +84,10 @@ export async function capture(
     expect(preparation.viewport).toEqual({ x: 24, y: 206, width: 1152, height: 584 });
     expect(preparation.dots).toBe(1720);
     marker = await page.evaluate(() => {
+      const patch = document.createElement("div");
+      patch.id = "drag-preparation-patch";
+      patch.style.cssText = "position:fixed;left:0;top:0;width:16px;height:16px;pointer-events:none;z-index:2147483647";
+      document.body.append(patch);
       const viewport = document.querySelector(".gtv-wheel-container")!;
       const stage = viewport.firstElementChild!;
       const r = viewport.getBoundingClientRect();
@@ -100,15 +116,6 @@ export async function capture(
     }
     await cdp.send("Page.startScreencast", { format: "jpeg", quality: 50, everyNthFrame: 1 });
     await expect.poll(() => frames.length).toBeGreaterThan(0);
-    // The first CDP frame may precede marker composition. Force a stationary
-    // visual update and require a decoded marker before sending any pressed input.
-    await page.evaluate(() => {
-      document.getElementById("drag-surface-marker")!.style.outline = "1px solid black";
-    });
-    await expect.poll(async () => {
-      const decoded = await decodeFrames(page, frames.slice(-1), marker!);
-      return Boolean(decoded[0]?.point);
-    }).toBe(true);
     // No preparatory pan or zoom: the first gesture is the cold drag.
     for (let index = 0; index < 3; index++) {
       const origin = await page.evaluate(() => {
@@ -148,6 +155,25 @@ export async function capture(
         if (observe) requestAnimationFrame(frame);
         window.__dragProbe = data;
       }, { dose, observe });
+      // An idle screencast can retain a frame from the previous drag. Invalidate a
+      // stationary region and verify a new surface observation before pressing.
+      const shade = [0, 128, 255][index];
+      const prepared = await page.evaluate(shade => {
+        const element = document.getElementById("drag-preparation-patch")!;
+        const at = performance.now();
+        element.style.backgroundColor = `rgb(${shade},${shade},${shade})`;
+        return { at, initial: window.__dragProbe!.initial };
+      }, shade);
+      const expected = {
+        x: marker.x + 8 + prepared.initial.x - preparation.initial.x,
+        y: marker.y + 8 + prepared.initial.y - preparation.initial.y,
+      };
+      const reference = { at: prepared.at, expected, shade, gesture: index + 1 };
+      preparations.push(reference);
+      await expect(async () => {
+        const [latest] = await decodeFrames(page, frames.slice(-1), marker!);
+        assertPreparedFrame(reference, latest, await page.evaluate(() => performance.now()));
+      }).toPass({ timeout: 5000 });
       const sentEpochMs = performance.timeOrigin + performance.now();
       const clock = await page.evaluate(() => ({ epochMs: Date.now(), timeOrigin: performance.timeOrigin, now: performance.now() }));
       clocks.push({ sentEpochMs, receivedEpochMs: performance.timeOrigin + performance.now(), page: clock });
@@ -197,10 +223,10 @@ export async function capture(
     const positions = await decodeFrames(page, frames, marker);
     await writeFile(info.outputPath("observations.json"), JSON.stringify({ preparation, positions }, null, 2));
     const { latencies, clickLatencies, inputGaps, transforms, tracking } = analyze(gestures, positions, dose);
-    for (const gesture of gestures) {
-      const before = positions.filter(frame => frame.at < gesture.events[1].at && frame.point).at(-1)!;
-      expect(Math.abs(before.point!.x - (marker.x + 8 + gesture.initial.x - preparation.initial.x))).toBeLessThan(1.5);
-      expect(Math.abs(before.point!.y - (marker.y + 8 + gesture.initial.y - preparation.initial.y))).toBeLessThan(1.5);
+    for (const [index, gesture] of gestures.entries()) {
+      const moveAt = gesture.events[1].at;
+      const before = positions.filter(frame => frame.at < moveAt && frame.point).at(-1);
+      assertPreparedFrame(preparations[index], before, moveAt);
     }
     expect(errors, "Browser runtime errors").toEqual([]);
     const result = { consumer, dose, observe, browser: browser.version(), preparation, gestures, positions, latencies, clickLatencies, inputGaps, transforms, tracking };
@@ -208,18 +234,18 @@ export async function capture(
     return result;
   } finally {
     await writeFile(info.outputPath("raw-frames.json.gz"), gzipSync(JSON.stringify({ marker, frames })));
-    await writeFile(info.outputPath("events.json"), JSON.stringify({ gestures, errors, clocks, hostTimeOrigin: performance.timeOrigin, dispatches }));
+    await writeFile(info.outputPath("events.json"), JSON.stringify({ preparations, gestures, errors, clocks, hostTimeOrigin: performance.timeOrigin, dispatches }));
     await context.close();
   }
 }
 
-async function decodeFrames(page: Page, frames: Frame[], marker: Point & { timeOrigin: number }): Promise<Position[]> {
-  const positions: Position[] = [];
+async function decodeFrames(page: Page, frames: Frame[], marker: Point & { timeOrigin: number }): Promise<DecodedPosition[]> {
+  const positions: DecodedPosition[] = [];
   for (const frame of [...frames].sort((a, b) => Number(a.metadata.timestamp) - Number(b.metadata.timestamp))) {
     const at = Number(frame.metadata.timestamp) * 1000 - marker.timeOrigin;
     expect(Number.isFinite(at), "Missing surface timestamp").toBe(true);
     if (positions.length) expect(at, "Surface timestamps must not decrease").toBeGreaterThanOrEqual(positions.at(-1)!.at);
-    const point = await page.evaluate(async ({ data, metadata }) => {
+    const observation = await page.evaluate(async ({ data, metadata }) => {
       const bitmap = new Image();
       bitmap.src = `data:image/jpeg;base64,${data}`;
       await bitmap.decode();
@@ -236,11 +262,13 @@ async function decodeFrames(page: Page, frames: Frame[], marker: Point & { timeO
           minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y); count++;
         }
       }
-      if (count < 100) return null;
+      const preparationShade = pixels[(8 * width + 8) * 4];
+      if (count < 100) return { point: null, preparationShade };
       if (count > 320 || maxX - minX > 20 || maxY - minY > 20) throw new Error("Ambiguous surface marker");
-      return { x: (minX + maxX + 1) / 2, y: (minY + maxY + 1) / 2, count };
+      const x = (minX + maxX + 1) / 2, y = (minY + maxY + 1) / 2;
+      return { point: { x, y, count }, preparationShade };
     }, frame);
-    positions.push({ at, point });
+    positions.push({ at, ...observation });
   }
   return positions;
 }
