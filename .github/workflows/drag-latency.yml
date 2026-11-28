@@ -44,17 +44,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: ubuntu-24.04-arm
+          - runner: macos-15-intel
             project: chromium-headless
-          - runner: ubuntu-24.04-arm
+          - runner: macos-15-intel
             project: chromium-headless-shell
-          - runner: windows-2022
+          - runner: macos-26-intel
             project: chromium-headless
-          - runner: windows-2022
-            project: chromium-headless-shell
-          - runner: windows-2025
-            project: chromium-headless
-          - runner: windows-2025
+          - runner: macos-26-intel
             project: chromium-headless-shell
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 20
@@ -68,6 +64,8 @@ jobs:
       - name: Install Chromium
         run: pnpm --filter app-kit-playground exec playwright install --with-deps chromium
       - name: Calibrated surface diagnostic
+        env:
+          DRAG_DIAGNOSTIC_DISABLE_GPU: '1'
         run: pnpm --filter app-kit-playground test:latency --project=${{ matrix.project }}
       - name: Rectangle rendering and screencast controls
         if: ${{ !cancelled() }}
