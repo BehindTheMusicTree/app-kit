@@ -44,17 +44,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: ubuntu-slim
+          - runner: ubuntu-24.04-arm
             project: chromium-headless
-          - runner: ubuntu-slim
+          - runner: ubuntu-24.04-arm
             project: chromium-headless-shell
-          - runner: macos-26-intel
+          - runner: windows-2022
             project: chromium-headless
-          - runner: macos-26-intel
+          - runner: windows-2022
             project: chromium-headless-shell
-          - runner: macos-15
+          - runner: windows-2025
             project: chromium-headless
-          - runner: macos-15
+          - runner: windows-2025
             project: chromium-headless-shell
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 20
